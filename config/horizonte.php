@@ -168,4 +168,10 @@ return [
         'ufs_per_step' => max(1, (int) env('HORIZONTE_IBGE_CENTROID_UFS_PER_STEP', 1)),
     ],
 
+    /** Importação dedicada de repasses Tesouro (`horizonte:sync-repasses-tesouro`). */
+    'tesouro_repasses_sync' => [
+        'ufs_per_step' => max(1, (int) env('HORIZONTE_TESOURO_REPASSES_UFS_PER_STEP', 1)),
+        'progress_ttl' => max(3600, (int) env('HORIZONTE_TESOURO_REPASSES_PROGRESS_TTL', 604800)),
+    ],
+
 ];

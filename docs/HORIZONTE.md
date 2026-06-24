@@ -127,6 +127,27 @@ Três blocos **complementares** (não somar entre si):
 
 Serviço: `HorizonteFundebRepasseOutlook` · payload `fundeb_realtime_*` em cada marcador.
 
+**Último repasse YTD:** rótulo do último mês com valor em `meta.mensal` ou `imported_at` (`HorizonteFundebTransferTemporal`).
+
+### 6.6 Painel FUNDEB estadual (recorte UF)
+
+No cabeçalho de decisão, com UF seleccionada, bloco **âmbar** com agregados municipais:
+
+| Indicador | Origem |
+|-----------|--------|
+| Receita portaria / complementação | Soma `fundeb_municipio_references` na UF |
+| Avanço YTD | Soma observado × esperado (`fundeb_realtime_*`) |
+| Portaria vigente | Catálogo FNDE + última importação receita/repasses |
+| Comparativo nacional | Posição em receita e % realizado vs média BR |
+
+Payload: `uf_fundeb_insights` · serviço `HorizonteUfFundebInsights`.
+
+### 6.7 Mapa — pan, tela inteira e resumo UF
+
+- **Pan** com rato (arrastar) em horizontal e vertical; limites do Brasil alargados; vista manual preservada após arrastar.
+- **Tela inteira** no painel do mapa; filtros em dock com transição.
+- Botão **«Resumo UF»** (toolbar e controlos flutuantes): centra o estado no mapa e abre modal compacto com KPIs comerciais + bloco FUNDEB (mesmo estilo do tooltip municipal).
+
 ### 6.2 Painéis laterais
 
 | Painel | Conteúdo |

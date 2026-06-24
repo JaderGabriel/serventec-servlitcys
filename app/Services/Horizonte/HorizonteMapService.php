@@ -19,6 +19,7 @@ use App\Support\Brazil\MunicipalityMapOverlapResolver;
 use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteFundebRepasseOutlook;
 use App\Support\Horizonte\HorizonteManagerInsights;
+use App\Support\Horizonte\HorizonteUfFundebInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
@@ -181,7 +182,63 @@ final class HorizonteMapService
             ],
         );
 
+        $refYear = (int) ($full['reference_year'] ?? config('horizonte.reference_year', (int) date('Y') - 1));
+        $currentYear = (int) ($full['current_year'] ?? HorizonteFundebRepasseOutlook::currentYear());
+        $nationalByUf = $this->nationalFundebByUf($refYear, $currentYear);
+        $full['uf_fundeb_insights'] = HorizonteUfFundebInsights::forRegional(
+            $uf,
+            $regional,
+            $refYear,
+            $currentYear,
+            $nationalByUf !== [] ? $nationalByUf : null,
+        );
+
         return $full;
+    }
+
+    /**
+     * Agregados FUNDEB por UF (Brasil) para comparativo no recorte regional.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function nationalFundebByUf(int $refYear, int $currentYear): array
+    {
+        $fingerprint = $this->dataFingerprint();
+        $cacheKey = 'horizonte:map:uf-fundeb-national:v2:'.$refYear.':'.$fingerprint;
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $markers = $this->nationalMarkersForInsights($refYear, $fingerprint);
+        if ($markers === []) {
+            return [];
+        }
+
+        $byUf = HorizonteUfFundebInsights::aggregateNationalByUf($markers, $refYear, $currentYear);
+        $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
+        AdminHomeMapCache::repository()->put($cacheKey, $byUf, $ttl);
+
+        return $byUf;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function nationalMarkersForInsights(int $refYear, string $fingerprint): array
+    {
+        $cacheKey = 'horizonte:map:v2:'.$refYear.':'.$fingerprint;
+        $cached = AdminHomeMapCache::get($cacheKey);
+        if (is_array($cached)) {
+            $markers = is_array($cached['markers'] ?? null) ? $cached['markers'] : [];
+            if ($markers !== []) {
+                return $markers;
+            }
+        }
+
+        $assembled = $this->assemble($refYear, requireCoordinates: false);
+
+        return is_array($assembled['markers'] ?? null) ? $assembled['markers'] : [];
     }
 
     /**
@@ -746,6 +803,9 @@ final class HorizonteMapService
                 'fundeb_realtime_balance' => $fundebRealtime['balance'] ?? null,
                 'fundeb_realtime_pct_done' => $fundebRealtime['pct_done'] ?? null,
                 'fundeb_realtime_months' => $fundebRealtime['months_with_transfers'] ?? null,
+                'fundeb_realtime_last_transfer_month' => $fundebRealtime['last_transfer_month'] ?? null,
+                'fundeb_realtime_last_transfer_label' => $fundebRealtime['last_transfer_label'] ?? null,
+                'fundeb_realtime_last_recorded_at' => $fundebRealtime['last_recorded_at'] ?? null,
                 'fundeb_realtime_outlook' => $fundebRealtime['outlook'] ?? null,
                 'fundeb_realtime_outlook_label' => $fundebRealtime['outlook_label'] ?? null,
                 'fundeb_realtime_expected_source' => $fundebRealtime['expected_source'] ?? null,
@@ -1259,6 +1319,7 @@ final class HorizonteMapService
             'uf_rankings' => [],
             'top_prospects' => [],
             'focus_segments' => [],
+            'uf_fundeb_insights' => null,
             'sge_summary' => HorizonteManagerInsights::sgeSummary([]),
             'meta' => array_merge(
                 HorizonteMapPresenter::refreshMeta(0, HorizonteManagerInsights::dataCoverage([])),

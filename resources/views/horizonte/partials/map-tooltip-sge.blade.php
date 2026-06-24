@@ -46,6 +46,36 @@
 </div>
 
 <div
+    x-show="ufSummaryOpen && isRegionalMode"
+    x-cloak
+    x-transition.opacity.duration.150ms
+    class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--uf"
+    :style="ufSummaryStyle"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="ufLabel(scopeUf)"
+    @click.stop
+    @keydown.escape.window="closeUfSummary()"
+>
+    <div class="serv-horizonte-muni-tooltip__header">
+        <div class="min-w-0 flex-1">
+            <div class="serv-horizonte-muni-tooltip__heading">
+                <h3 class="serv-horizonte-muni-tooltip__name" x-text="ufFundebInsights?.uf_name || ufLabel(scopeUf)"></h3>
+                <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="scopeUf"></span>
+            </div>
+            <p class="serv-horizonte-muni-tooltip__meta" x-text="ufSummaryMetaLabel()"></p>
+        </div>
+        <button
+            type="button"
+            class="serv-horizonte-muni-tooltip__close shrink-0"
+            x-on:click.stop="closeUfSummary()"
+            aria-label="{{ __('Fechar') }}"
+        >&times;</button>
+    </div>
+    <div x-html="ufSummaryBodyHtml()"></div>
+</div>
+
+<div
     x-show="sgeFormOpen"
     x-cloak
     class="serv-horizonte-sge-overlay"

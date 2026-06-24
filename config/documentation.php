@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '5.7.7',
-        'release_tag' => '20260624a-Skuld',
-        'commit_short' => '16e49e0',
+        'version' => '5.8.0',
+        'release_tag' => '20260603g-Thor',
+        'commit_short' => '',
         'commit_number' => null,
-        'revision_date' => '2026-06-24',
+        'revision_date' => '2026-06-03',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

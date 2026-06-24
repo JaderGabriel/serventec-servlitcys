@@ -41,23 +41,102 @@
     }
 
     .serv-horizonte-gis__map {
-        @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden;
+        @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden min-h-0;
     }
 
     .serv-horizonte-gis__map--tall {
+        min-height: min(64vh, 520px);
         height: min(72vh, 560px);
     }
 
     @screen lg {
         .serv-horizonte-gis__map--tall {
+            min-height: min(70vh, 600px);
             height: min(78vh, 680px);
         }
     }
 
     @screen 2xl {
         .serv-horizonte-gis__map--tall {
+            min-height: min(74vh, 640px);
             height: min(82vh, 720px);
         }
+    }
+
+    .serv-horizonte-map-stage.is-filters-collapsed .serv-horizonte-gis__map--tall {
+        min-height: min(68vh, 560px);
+        height: min(76vh, 640px);
+    }
+
+    @screen lg {
+        .serv-horizonte-map-stage.is-filters-collapsed .serv-horizonte-gis__map--tall {
+            min-height: min(74vh, 660px);
+            height: min(84vh, 760px);
+        }
+    }
+
+    @screen 2xl {
+        .serv-horizonte-map-stage.is-filters-collapsed .serv-horizonte-gis__map--tall {
+            min-height: min(78vh, 700px);
+            height: min(88vh, 800px);
+        }
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen,
+    .serv-horizonte-gis:fullscreen {
+        @apply flex flex-col bg-white dark:bg-slate-900;
+        height: 100dvh;
+        max-height: 100dvh;
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-map-stage,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-map-stage {
+        @apply flex-1 min-h-0;
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-map-canvas,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-map-canvas {
+        @apply flex flex-col flex-1 min-h-0 pb-2;
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-gis__map--tall,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-gis__map--tall {
+        @apply mt-0 flex-1 min-h-0;
+        height: auto !important;
+        max-height: none;
+    }
+
+    .serv-horizonte-map-toolbar-btn {
+        @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600
+            ring-1 ring-slate-200/80 bg-white/80 transition-all duration-200 ease-out
+            hover:bg-slate-50 hover:text-serv-navy
+            dark:text-slate-300 dark:ring-slate-600 dark:bg-slate-900/60 dark:hover:bg-slate-800;
+    }
+
+    .serv-horizonte-map-toolbar-btn.is-active {
+        @apply bg-teal-50 text-teal-900 ring-teal-300/80 dark:bg-teal-950/40 dark:text-teal-100 dark:ring-teal-700;
+    }
+
+    .serv-horizonte-map-float-controls {
+        @apply absolute bottom-4 left-4 z-[400] flex flex-col gap-1.5 pointer-events-none;
+    }
+
+    @screen xl {
+        .serv-horizonte-gis:not(.is-map-fullscreen):not(:fullscreen) .serv-horizonte-map-float-controls {
+            @apply hidden;
+        }
+    }
+
+    .serv-horizonte-map-float-btn {
+        @apply pointer-events-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium
+            text-slate-700 bg-white/95 shadow-md ring-1 ring-slate-200/90 backdrop-blur-sm
+            transition-all duration-200 ease-out
+            hover:bg-white hover:text-serv-navy hover:shadow-lg
+            dark:text-slate-200 dark:bg-slate-900/95 dark:ring-slate-600 dark:hover:bg-slate-800;
+    }
+
+    .serv-horizonte-map-float-btn.is-active {
+        @apply bg-teal-50 text-teal-900 ring-teal-400/80 dark:bg-teal-950/60 dark:text-teal-100 dark:ring-teal-600;
     }
 
     .serv-horizonte-kpi {
@@ -137,7 +216,32 @@
     }
 
     .serv-horizonte-gis__map .leaflet-container {
-        @apply rounded-lg;
+        @apply rounded-lg h-full min-h-[inherit] cursor-grab;
+        touch-action: none;
+    }
+
+    .serv-horizonte-gis__map .leaflet-container.leaflet-dragging {
+        @apply cursor-grabbing;
+    }
+
+    .serv-brazil-map-tooltip--uf {
+        @apply z-[210] sm:w-[24rem] max-h-[min(70vh,28rem)];
+        transform-origin: center center;
+    }
+
+    .serv-horizonte-muni-tooltip__pipeline--uf {
+        @apply grid-cols-4;
+    }
+
+    @screen sm {
+        .serv-horizonte-muni-tooltip__pipeline--uf {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .serv-horizonte-muni-tooltip__pipeline--uf .serv-horizonte-muni-tooltip__pipe-arrow {
+            display: none;
+        }
     }
 
     /* Horizonte — centro de decisão (layout v2) */
@@ -178,6 +282,35 @@
 
     .serv-horizonte-cmd__segments {
         @apply mt-4 flex flex-wrap gap-2 overflow-x-auto pb-1;
+    }
+
+    .serv-horizonte-cmd__fundeb {
+        @apply mt-4 overflow-hidden rounded-xl border-2 border-amber-300/90 bg-gradient-to-br from-amber-50 via-white to-amber-50/40 px-4 py-4 shadow-sm
+            dark:border-amber-700/70 dark:from-amber-950/35 dark:via-slate-900/80 dark:to-amber-950/20;
+    }
+
+    .serv-horizonte-cmd__fundeb-head {
+        @apply flex flex-col gap-3 border-b border-amber-200/80 pb-3 dark:border-amber-800/60 sm:flex-row sm:items-start sm:justify-between;
+    }
+
+    .serv-horizonte-cmd__fundeb-portaria {
+        @apply sm:max-w-[55%];
+    }
+
+    .serv-horizonte-cmd__fundeb-metrics {
+        @apply mt-3 grid grid-cols-2 gap-2 lg:grid-cols-4;
+    }
+
+    .serv-horizonte-cmd__fundeb-metric {
+        @apply min-w-0 overflow-hidden rounded-lg border border-amber-200/80 bg-white/80 px-3 py-2.5 dark:border-amber-900/50 dark:bg-slate-900/50;
+    }
+
+    .serv-horizonte-cmd__fundeb-value {
+        @apply font-display text-lg font-semibold tabular-nums text-amber-950 dark:text-amber-100 truncate;
+    }
+
+    .serv-horizonte-cmd__fundeb-value.is-loading {
+        @apply animate-pulse text-slate-400 dark:text-slate-500;
     }
 
     .serv-horizonte-cmd__segment {
@@ -273,17 +406,44 @@
     }
 
     .serv-horizonte-map-stage {
-        @apply flex flex-col xl:flex-row xl:items-stretch min-h-0;
+        @apply flex flex-col xl:flex-row xl:items-stretch min-h-0 flex-1;
+    }
+
+    .serv-horizonte-map-stage.is-filters-collapsed .serv-horizonte-map-canvas {
+        @apply transition-[flex-grow] duration-300 ease-in-out;
+    }
+
+    .serv-horizonte-map-canvas {
+        @apply min-h-0;
     }
 
     .serv-horizonte-filter-dock {
-        @apply hidden xl:flex xl:flex-col xl:w-[17rem] xl:shrink-0 border-b xl:border-b-0 xl:border-r border-slate-200/90
-            bg-slate-50/50 dark:border-slate-700/90 dark:bg-slate-900/30 max-h-[min(72vh,560px)] xl:max-h-none overflow-y-auto;
+        @apply hidden xl:flex xl:flex-col xl:w-[16rem] xl:shrink-0 xl:self-stretch border-b xl:border-b-0 xl:border-r border-slate-200/90
+            bg-slate-50/50 dark:border-slate-700/90 dark:bg-slate-900/30 max-h-[min(72vh,560px)] xl:max-h-none xl:min-h-0 overflow-y-auto
+            transition-[width,opacity,border-color] duration-300 ease-in-out;
+    }
+
+    @screen xl {
+        .serv-horizonte-filter-dock.is-collapsed {
+            @apply w-0 min-w-0 opacity-0 border-r-0 pointer-events-none overflow-hidden;
+        }
     }
 
     .serv-horizonte-filter-dock.is-open {
         @apply flex flex-col fixed inset-x-0 bottom-0 z-40 max-h-[85dvh] rounded-t-2xl border border-slate-200 shadow-2xl
             bg-white dark:bg-slate-900 dark:border-slate-700 xl:static xl:rounded-none xl:shadow-none xl:max-h-none;
+        animation: serv-horizonte-filter-sheet-in 0.35s ease-out;
+    }
+
+    @keyframes serv-horizonte-filter-sheet-in {
+        from {
+            transform: translateY(100%);
+            opacity: 0.6;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
     .serv-horizonte-filter-dock__head {

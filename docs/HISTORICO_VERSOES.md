@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`5.7.7`** · tag de deploy **`20260624a-Skuld`** · ver [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`5.8.0`** · tag de deploy **`20260603g-Thor`** · ver [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **5.7.7** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **5.8.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260624a-Skuld` |
-| **Data de referência** | **24/06/2026** |
-| **Último marco documentado** | **Skuld** — timeline financeira modal, SIDRA pop. total, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) |
+| **Tag de deploy (servidor)** | `20260603g-Thor` |
+| **Data de referência** | **03/06/2026** |
+| **Último marco documentado** | **Thor** — FUNDEB estadual, pan mapa, resumo UF, sync repasses Tesouro — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
@@ -39,6 +39,7 @@ timeline
     2026-06-20 : 5.7.4e Vidar — sync wanted/ensure, reinício pós-TERM
     2026-06-22 : 5.7.5a Mimir — tour/demo Horizonte, repasses modal, import Tesouro
     2026-06-24 : 5.7.7a Skuld — timeline financeira modal, SIDRA pop. total, analytics refactor
+    2026-06-03 : 5.8.0g Thor — FUNDEB estadual, pan mapa, resumo UF, sync repasses Tesouro
     2026-06-22 : 5.7.6b Saga — modal municipal, demo animada, transferências FNDE
 ```
 
@@ -50,7 +51,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 5.7.7** | — / `20260624a-Skuld` → `main` | — | 24/06/2026 | **Produção:** timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
+| **▶ 5.8.0** | — / `20260603g-Thor` → `main` | — | 03/06/2026 | **Produção:** painel FUNDEB estadual, pan mapa + resumo UF, tela inteira, `horizonte:sync-repasses-tesouro`, YTD último repasse — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md). |
+| 5.7.7 | — / `20260624a-Skuld` → `main` | — | 24/06/2026 | Timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
 | 5.7.6 | — / `20260622b-Saga` → `main` | — | 22/06/2026 | Modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |
 | 5.7.5 | — / `20260622a-Mimir` → `main` | — | 22/06/2026 | Tour/demo Horizonte, repasses no modal (FUNDEB/educação), import Tesouro com índice IBGE — [RELEASE_20260622a_MIMIR.md](RELEASE_20260622a_MIMIR.md). |
 | 5.7.4 | — / `20260620e-Vidar` → `main` | — | 20/06/2026 | **Produção:** sync BR wanted/ensure, runner resistente a TERM, `loginctl enable-linger` — [RELEASE_20260620e_VIDAR.md](RELEASE_20260620e_VIDAR.md). |

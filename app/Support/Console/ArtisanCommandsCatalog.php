@@ -485,8 +485,25 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_REFERENCE_YEAR',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, official_check. SAEB e IBGE também aceitam --phase isolado (repetir até concluir; --reset recomeça).'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, official_check. SAEB e IBGE também aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
+                    ],
+                    [
+                        'name' => 'horizonte:sync-repasses-tesouro',
+                        'summary' => __('Repasses Tesouro CKAN — ano vigente (YTD) e opcionalmente referência Horizonte, por UF retomável.'),
+                        'signature' => 'horizonte:sync-repasses-tesouro {--year=} {--with-ref} {--ref-only} {--uf=} {--continue} {--reset} {--ufs-per-step=} {--dry-run}',
+                        'examples' => [
+                            'php artisan horizonte:sync-repasses-tesouro',
+                            'php artisan horizonte:sync-repasses-tesouro --with-ref',
+                            'php artisan horizonte:sync-repasses-tesouro --uf=BA',
+                            'php artisan horizonte:sync-repasses-tesouro --continue',
+                            'php artisan horizonte:sync-repasses-tesouro --dry-run',
+                        ],
+                        'env' => [
+                            'HORIZONTE_TESOURO_REPASSES_UFS_PER_STEP',
+                            'HORIZONTE_REFERENCE_YEAR',
+                        ],
+                        'doc_anchor' => 'horizonte',
                     ],
                     [
                         'name' => 'horizonte:sync-ibge-centroids',

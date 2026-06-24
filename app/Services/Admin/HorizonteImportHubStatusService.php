@@ -185,11 +185,11 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'repasses_tesouro',
                 'label' => __('Repasses Tesouro — FUNDEB CKAN'),
-                'description' => __('Dependência de transferências federais — complementa pressão FUNDEB.'),
+                'description' => __('Dependência de transferências federais — referência Horizonte + ano vigente (YTD).'),
                 'source_id' => 'repasses_tesouro',
                 'hub_anchor' => '#source-repasses_tesouro',
                 'admin_url' => route('admin.public-data.index').'#source-repasses_tesouro',
-                'cli' => 'php artisan horizonte:fortnightly-feed --phase=repasses_tesouro',
+                'cli' => 'php artisan horizonte:sync-repasses-tesouro --with-ref',
                 'ok' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
                     && \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio') >= 100,
                 'metric' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')

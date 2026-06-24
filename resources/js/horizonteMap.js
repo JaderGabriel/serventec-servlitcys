@@ -5,8 +5,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 const BRAZIL_BOUNDS = L.latLngBounds(
-    L.latLng(-33.75, -74.5),
-    L.latLng(5.5, -32.0),
+    L.latLng(-35.5, -76.0),
+    L.latLng(7.0, -30.0),
 );
 
 function escapeHtml(s) {
@@ -89,6 +89,125 @@ function nfCompact(n) {
         return `${Math.round(v / 1000).toLocaleString("pt-BR")}k`;
     }
     return nf(v);
+}
+
+function ufFundebSummaryHtml(insights, refYear, currentYear) {
+    if (!insights || typeof insights !== "object") {
+        return "";
+    }
+    const portaria = insights.portaria || {};
+    const rt = insights.realtime || {};
+    const nat = insights.national || {};
+    const rows = [];
+
+    if (insights.receita_portaria_total != null) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita portaria")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(`Exercício ${insights.exercise_year || refYear}`)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(insights.receita_portaria_total)}</span>` +
+                `</div>`,
+        );
+    }
+    if (insights.complementacao_total != null) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(insights.complementacao_total)}</span>` +
+                `</div>`,
+        );
+    }
+    if (rt.available && rt.pct_done != null) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(`Avanço ${rt.ano || currentYear}`)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(rt.last_transfer_label ? `Último: ${rt.last_transfer_label}` : "Realizado × previsão")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatPercentValue(rt.pct_done) ?? "—"}</span>` +
+                `</div>`,
+        );
+        if (rt.observed_total != null && rt.expected_total != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Repassado YTD")}</span>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma municipal")}</span>` +
+                    `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(rt.observed_total)} / ${formatCurrencyBrl(rt.expected_total)}</span>` +
+                    `</div>`,
+            );
+        }
+    }
+    if (nat.rank_receita) {
+        const natParts = [
+            `${nat.rank_receita}º em receita`,
+            nat.share_receita_pct != null ? `${formatPercentValue(nat.share_receita_pct)} do Brasil` : null,
+            nat.rank_pct_done ? `${nat.rank_pct_done}º em avanço YTD` : null,
+        ].filter(Boolean);
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Comparativo nacional")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(natParts.join(" · "))}</span>` +
+                `</div>`,
+        );
+    }
+
+    if (rows.length === 0) {
+        return "";
+    }
+
+    const portariaLabel = portaria.publication_label || `Portaria FNDE ${insights.exercise_year || refYear}`;
+    const updates = [
+        portaria.fundeb_imported_label ? `Receita FNDE: ${portaria.fundeb_imported_label}` : null,
+        portaria.transfer_imported_label ? `Repasses: ${portaria.transfer_imported_label}` : null,
+    ].filter(Boolean);
+    const body =
+        (updates.length > 0
+            ? `<p class="serv-horizonte-muni-tooltip__finance-note serv-horizonte-muni-tooltip__finance-note--info">${escapeHtml(updates.join(" · "))}</p>`
+            : "") +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>`;
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__finance serv-horizonte-muni-tooltip__finance--uf">` +
+        financeSectionShell(
+            "reference",
+            "FUNDEB estadual",
+            portariaLabel,
+            "reference",
+            HORIZONTE_FINANCE_ICONS.reference,
+            body,
+        ) +
+        `</div>`
+    );
+}
+
+function ufCommercialPipelineHtml(summary, coverage) {
+    const s = summary && typeof summary === "object" ? summary : {};
+    const c = coverage && typeof coverage === "object" ? coverage : {};
+    const cell = (val, label) =>
+        `<div class="serv-horizonte-muni-tooltip__pipe-cell">` +
+        `<span class="serv-horizonte-muni-tooltip__pipe-val">${nf(val ?? 0)}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__pipe-label">${escapeHtml(label)}</span>` +
+        `</div>`;
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__pipeline serv-horizonte-muni-tooltip__pipeline--uf">` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(s.high_pressure, "Alta pressão") +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(s.prospect_count, "Prospectos") +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step">` +
+        cell(s.high_prospect, "Alta propensão") +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
+        `<div class="serv-horizonte-muni-tooltip__pipe-step serv-horizonte-muni-tooltip__pipe-step--final">` +
+        cell(c.prospect_matriculas_censo, "Matr. prospecto") +
+        `</div>` +
+        `</div>` +
+        `<p class="serv-horizonte-muni-tooltip__pipe-hint">${escapeHtml("Indicadores comerciais agregados na UF")}</p>`
+    );
 }
 
 function muniPopulationPipelineHtml(m) {
@@ -347,6 +466,41 @@ function transferTooltipHtml(m, refYear) {
     );
 }
 
+function formatFundebRealtimeTemporal(m) {
+    const label = String(m.fundeb_realtime_last_transfer_label ?? "").trim();
+    if (label !== "") {
+        return label;
+    }
+    const recordedAt = m.fundeb_realtime_last_recorded_at;
+    if (recordedAt) {
+        const parsed = new Date(recordedAt);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            });
+        }
+    }
+    return null;
+}
+
+function fundebRealtimeObservedDesc(m) {
+    const months = m.fundeb_realtime_months;
+    const lastLabel = formatFundebRealtimeTemporal(m);
+    if (lastLabel) {
+        const monthPart =
+            months != null && Number(months) > 0
+                ? `${Number(months)} mês(es) · `
+                : "";
+        return `${monthPart}último valor registado: ${lastLabel}`;
+    }
+    if (months != null && Number(months) > 0) {
+        return `${Number(months)} mês(es) com repasse`;
+    }
+    return "Consolidado Tesouro/CKAN";
+}
+
 function fundebRealtimeHtml(m, currentYear) {
     const ano = m.fundeb_realtime_ano ?? currentYear;
     const observed = m.fundeb_realtime_observed;
@@ -357,6 +511,7 @@ function fundebRealtimeHtml(m, currentYear) {
     const months = m.fundeb_realtime_months;
     const outlook = String(m.fundeb_realtime_outlook ?? "unknown");
     const outlookLabel = String(m.fundeb_realtime_outlook_label ?? "");
+    const lastTemporal = formatFundebRealtimeTemporal(m);
     const hasObserved = observed != null && Number(observed) > 0;
     const hasExpected = expected != null && Number(expected) > 0;
 
@@ -381,7 +536,7 @@ function fundebRealtimeHtml(m, currentYear) {
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Já repassado")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(months != null && Number(months) > 0 ? `${months} mês(es) com repasse` : "Consolidado Tesouro/CKAN")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebRealtimeObservedDesc(m))}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(observed)}</span>` +
                 `</div>`,
@@ -433,16 +588,20 @@ function fundebRealtimeHtml(m, currentYear) {
               `</div></div>`
             : "";
 
+    const yearSubtitle = lastTemporal
+        ? `${escapeHtml(String(ano))} · ${escapeHtml("último valor")} ${escapeHtml(lastTemporal)}`
+        : `${escapeHtml("Ano")} ${escapeHtml(String(ano))}`;
+
     return financeSectionShell(
         "realtime",
         "Repasse FUNDEB",
-        `${escapeHtml("Ano")} ${escapeHtml(String(ano))}`,
+        yearSubtitle,
         "current",
         HORIZONTE_FINANCE_ICONS.realtime,
         progress +
             `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
             financeNoteHtml(
-                "Exercício em curso: compare repasse já observado com a previsão indicativa (portaria ou matrículas × VAAF). Use a aba Finanças → Tempo Real na consultoria para extrato e alertas.",
+                "Exercício em curso: valores parciais (YTD). A data indica a competência do último repasse observado no CKAN Tesouro, não a previsão anual. Use Finanças → Tempo Real na consultoria para extrato mensal.",
                 "realtime",
             ),
     );
@@ -776,6 +935,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
+        ufSummaryOpen: false,
+        ufSummaryStyle: "",
+        _mapUserAdjustedView: false,
         searchQuery: "",
         viewPreset: options.defaultViewFilter?.preset ?? "high_pressure",
         filterTier: options.defaultViewFilter?.tier ?? "prospects",
@@ -816,6 +978,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         nationalUfRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
         nationalUfMapPoints: [],
+        ufFundebInsights: null,
         ufNames:
             options.ufNames && typeof options.ufNames === "object" ? options.ufNames : {},
         prospectSort: "success_score",
@@ -830,7 +993,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         sgeFormSaving: false,
         sgeFormError: null,
         filterPanelOpen: false,
-        filterDockOpen: true,
+        filterDockOpen: false,
+        filtersVisible: true,
+        mapFullscreen: false,
+        _fullscreenChangeHandler: null,
+        _mapLayoutObserver: null,
+        _mapLayoutFrame: null,
+        _mapLayoutDebounceTimer: null,
+        _mapLayoutSize: { w: 0, h: 0 },
+        nationalOverviewSnapshot: null,
         methodologyPanelOpen: false,
         workspaceTab: "actions",
         guideOpen: false,
@@ -1376,6 +1547,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             };
             window.addEventListener("resize", this.tourResizeHandler, { passive: true });
+            this._fullscreenChangeHandler = () => this.onFullscreenChange();
+            document.addEventListener("fullscreenchange", this._fullscreenChangeHandler);
+            this.bindMapLayoutObservers();
             if (this.loadUrl) {
                 await this.fetchOverview();
                 await this.applyInitialNavigation();
@@ -1402,8 +1576,283 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return formatCurrencyBrl(value);
         },
 
+        formatFundebCurrency(value) {
+            if (this.kpiLoading) {
+                return "…";
+            }
+            if (value === null || value === undefined || value === "") {
+                return "—";
+            }
+            return formatCurrencyBrl(value);
+        },
+
+        formatFundebPct(value) {
+            if (this.kpiLoading) {
+                return "…";
+            }
+            if (value === null || value === undefined || value === "") {
+                return "—";
+            }
+            const n = Number(value);
+            if (!Number.isFinite(n)) {
+                return "—";
+            }
+            return `${n.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
+        },
+
+        ufFundebPortariaLabel() {
+            const p = this.ufFundebInsights?.portaria;
+            if (!p) {
+                return "—";
+            }
+            const label = p.publication_label || "";
+            const year = p.exercise_year || this.refYear;
+            return label || `Portaria FNDE ${year}`;
+        },
+
+        ufFundebExerciseLabel() {
+            const year = this.ufFundebInsights?.exercise_year || this.refYear;
+            const mat = this.ufFundebInsights?.matriculas_fundeb;
+            if (mat && Number(mat) > 0) {
+                return `${Number(mat).toLocaleString("pt-BR")} matrículas · exercício ${year}`;
+            }
+            return `Exercício ${year}`;
+        },
+
+        ufFundebMunicipalitiesLabel() {
+            const withFundeb = Number(this.ufFundebInsights?.municipalities_with_fundeb ?? 0);
+            const total = Number(this.ufFundebInsights?.municipalities_total ?? 0);
+            if (total <= 0) {
+                return "";
+            }
+            return `${withFundeb.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")} municípios`;
+        },
+
+        ufFundebRealtimeSubLabel() {
+            const rt = this.ufFundebInsights?.realtime;
+            if (!rt?.available) {
+                return "";
+            }
+            const observed = this.formatFundebCurrency(rt.observed_total);
+            const expected = this.formatFundebCurrency(rt.expected_total);
+            const last = rt.last_transfer_label;
+            const parts = [`${observed} de ${expected}`];
+            if (last) {
+                parts.push(`último: ${last}`);
+            }
+            return parts.join(" · ");
+        },
+
+        ufFundebNationalRankLabel() {
+            const nat = this.ufFundebInsights?.national;
+            if (!nat?.rank_receita) {
+                return "—";
+            }
+            const rank = nat.rank_receita;
+            const total = nat.total_ufs || 27;
+            return `${rank}º em receita`;
+        },
+
+        ufFundebNationalSubLabel() {
+            const nat = this.ufFundebInsights?.national;
+            if (!nat) {
+                return "";
+            }
+            const parts = [];
+            if (nat.share_receita_pct !== null && nat.share_receita_pct !== undefined) {
+                parts.push(
+                    `${Number(nat.share_receita_pct).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}% do Brasil`,
+                );
+            }
+            if (nat.rank_pct_done) {
+                parts.push(`${nat.rank_pct_done}º em avanço YTD`);
+            }
+            if (
+                nat.delta_pct_vs_national !== null &&
+                nat.delta_pct_vs_national !== undefined &&
+                nat.national_avg_pct_done !== null
+            ) {
+                const delta = Number(nat.delta_pct_vs_national);
+                const sign = delta > 0 ? "+" : "";
+                parts.push(
+                    `${sign}${delta.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} p.p. vs média (${Number(nat.national_avg_pct_done).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)`,
+                );
+            }
+            return parts.join(" · ");
+        },
+
+        ufSummaryMetaLabel() {
+            const total = Number(this.markers.length ?? 0);
+            const filtered = Number(this.filteredCount ?? 0);
+            const parts = [
+                `${total.toLocaleString("pt-BR")} municípios com dados`,
+            ];
+            if (filtered !== total) {
+                parts.push(`${filtered.toLocaleString("pt-BR")} no recorte actual`);
+            }
+            return parts.join(" · ");
+        },
+
         openFiltersDock() {
+            this.filtersVisible = true;
             this.filterDockOpen = true;
+        },
+
+        toggleFiltersPanel() {
+            const isDesktop = window.matchMedia("(min-width: 1280px)").matches;
+            if (isDesktop) {
+                this.filtersVisible = !this.filtersVisible;
+                if (!this.filtersVisible) {
+                    this.filterDockOpen = false;
+                }
+            } else {
+                this.filterDockOpen = !this.filterDockOpen;
+                if (this.filterDockOpen) {
+                    this.filtersVisible = true;
+                }
+            }
+        },
+
+        async toggleMapFullscreen() {
+            const el = this.$refs.mapShell;
+            if (!el) {
+                return;
+            }
+            try {
+                if (document.fullscreenElement === el) {
+                    await document.exitFullscreen();
+                } else if (!document.fullscreenElement) {
+                    await el.requestFullscreen();
+                } else {
+                    await document.exitFullscreen();
+                    await el.requestFullscreen();
+                }
+            } catch {
+                this.mapFullscreen = !this.mapFullscreen;
+                this.refreshMapLayout({ immediate: true, force: true });
+            }
+        },
+
+        onFullscreenChange() {
+            const el = this.$refs.mapShell;
+            this.mapFullscreen = el != null && document.fullscreenElement === el;
+            this.refreshMapLayout({ immediate: true, force: true });
+        },
+
+        refreshMapLayout({ immediate = false, force = false } = {}) {
+            const map = this.map;
+            if (!map) {
+                return;
+            }
+
+            if (!force && (this.pageLoading || this.regionalLoading || this.mapRendering)) {
+                return;
+            }
+
+            const run = () => {
+                const liveMap = this.map;
+                if (!liveMap) {
+                    return;
+                }
+                if (!force && (this.pageLoading || this.regionalLoading || this.mapRendering)) {
+                    return;
+                }
+
+                const center = liveMap.getCenter();
+                const zoom = liveMap.getZoom();
+                liveMap.invalidateSize({ animate: false });
+                const size = liveMap.getSize();
+                if (!size || size.x <= 0 || size.y <= 0) {
+                    return;
+                }
+
+                const prev = this._mapLayoutSize;
+                const changed =
+                    force ||
+                    !prev ||
+                    prev.w !== size.x ||
+                    prev.h !== size.y;
+                this._mapLayoutSize = { w: size.x, h: size.y };
+
+                if (!changed) {
+                    return;
+                }
+
+                liveMap.setView(center, zoom, { animate: false });
+                this.refreshCanvasMarkersAfterZoom();
+                this.repositionFloatingPanels();
+            };
+
+            const schedule = () => {
+                if (this._mapLayoutFrame !== null) {
+                    cancelAnimationFrame(this._mapLayoutFrame);
+                }
+                this._mapLayoutFrame = requestAnimationFrame(() => {
+                    this._mapLayoutFrame = null;
+                    run();
+                });
+            };
+
+            if (this._mapLayoutDebounceTimer !== null) {
+                clearTimeout(this._mapLayoutDebounceTimer);
+                this._mapLayoutDebounceTimer = null;
+            }
+
+            if (immediate) {
+                schedule();
+                return;
+            }
+
+            this._mapLayoutDebounceTimer = window.setTimeout(() => {
+                this._mapLayoutDebounceTimer = null;
+                schedule();
+            }, 120);
+        },
+
+        bindMapLayoutObservers() {
+            const canvas = this.$refs.mapCanvas;
+            if (!(canvas instanceof HTMLElement)) {
+                return;
+            }
+
+            const onLayoutChange = () => {
+                if (this.pageLoading || this.regionalLoading || this.mapRendering) {
+                    return;
+                }
+                this.refreshMapLayout();
+            };
+
+            if (typeof ResizeObserver !== "undefined") {
+                this._mapLayoutObserver = new ResizeObserver(onLayoutChange);
+                this._mapLayoutObserver.observe(canvas);
+            }
+
+            window.addEventListener("resize", onLayoutChange, { passive: true });
+
+            const dock = this.$refs.filterDock;
+            if (dock instanceof HTMLElement) {
+                dock.addEventListener("transitionend", (event) => {
+                    if (
+                        event.propertyName === "width" ||
+                        event.propertyName === "opacity" ||
+                        event.propertyName === "transform"
+                    ) {
+                        this.refreshMapLayout({ immediate: true });
+                    }
+                });
+            }
+        },
+
+        mapControlLabelFilters() {
+            const isDesktop = window.matchMedia("(min-width: 1280px)").matches;
+            if (isDesktop) {
+                return this.filtersVisible ? "Ocultar filtros" : "Mostrar filtros";
+            }
+            return this.filterDockOpen ? "Ocultar filtros" : "Mostrar filtros";
+        },
+
+        mapControlLabelFullscreen() {
+            return this.mapFullscreen ? "Sair da tela inteira" : "Tela inteira";
         },
 
         onHorizonteGuide(detail = {}) {
@@ -1866,6 +2315,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.pageLoading = false;
                 window.servDataLoading?.finish?.();
                 await this.refreshMapLayers();
+                this.$nextTick(() =>
+                    this.refreshMapLayout({ immediate: true, force: true }),
+                );
             }
         },
 
@@ -1930,21 +2382,36 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.filteredMarkersList = [];
             this.ufMapPoints = Array.isArray(data.uf_map_points) ? data.uf_map_points : [];
             this.nationalUfMapPoints = this.ufMapPoints;
+            this.nationalOverviewSnapshot = {
+                summary: data.summary,
+                topProspects: data.top_prospects,
+                focusSegments: data.focus_segments,
+                sgeSummary: data.sge_summary,
+                meta: data.meta,
+            };
             if (Array.isArray(data.uf_rankings) && data.uf_rankings.length > 0) {
                 this.nationalUfRankings = data.uf_rankings;
             }
+            this.ufFundebInsights = null;
             this.applyCommonPayload(data);
             this.setOverviewNotice();
+            this._mapUserAdjustedView = false;
         },
 
         applyRegionalPayload(data, uf) {
             if (!data || typeof data !== "object") {
                 return;
             }
+            this._mapUserAdjustedView = false;
+            this.closeUfSummary();
             this.mapMode = "regional";
             this.scopeUf = uf;
             this.markers = Array.isArray(data.markers) ? data.markers : [];
             this.ufMapPoints = [];
+            this.ufFundebInsights =
+                data.uf_fundeb_insights && typeof data.uf_fundeb_insights === "object"
+                    ? data.uf_fundeb_insights
+                    : null;
             this.applyCommonPayload(data);
             this.recomputeFilteredMarkers();
             this._filterSignature = this.filterSignature();
@@ -2052,13 +2519,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             this.map = L.map(this.$refs.map, {
                 zoomControl: true,
+                dragging: true,
+                touchZoom: true,
                 scrollWheelZoom: true,
+                doubleClickZoom: true,
+                boxZoom: false,
+                keyboard: true,
                 preferCanvas: false,
                 maxZoom: 12,
                 zoomSnap: 0.5,
                 zoomDelta: 0.5,
                 maxBounds: BRAZIL_BOUNDS,
-                maxBoundsViscosity: 0.85,
+                maxBoundsViscosity: 0.3,
                 minZoom: 3,
             });
             this.canvasRenderer = L.canvas({ padding: 0.5 });
@@ -2089,11 +2561,24 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.map.on("click", () => {
                 if (!this.sgeFormOpen) {
                     this.closeTooltip();
+                    this.closeUfSummary();
                 }
+            });
+
+            this.map.on("dragend", () => {
+                this._mapUserAdjustedView = true;
+                this.repositionFloatingPanels();
             });
 
             this.map.on("zoomend", () => {
                 this.refreshCanvasMarkersAfterZoom();
+                this.repositionFloatingPanels();
+            });
+
+            this.map.on("move", () => {
+                if (this.ufSummaryOpen || (this.tooltipPinned && this.active)) {
+                    this.repositionFloatingPanels();
+                }
             });
 
             const onFilterChange = () => {
@@ -2386,8 +2871,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
         },
 
-        fitMapBounds(bounds, fallbackZoom = 4) {
+        fitMapBounds(bounds, fallbackZoom = 4, force = false) {
             if (!this.map) {
+                return;
+            }
+            if (this._mapUserAdjustedView && !force) {
                 return;
             }
             const valid = bounds.filter(([la, ln]) => isValidCoord(la, ln));
@@ -2499,14 +2987,44 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.scopeUf = "";
             this.markers = [];
             this.mapMode = "overview";
+            this.ufFundebInsights = null;
+            this.ufSummaryOpen = false;
+            this._mapUserAdjustedView = false;
             this.showAllOnMap = false;
-            if (this.ufMapPoints.length === 0 && this.nationalUfMapPoints.length > 0) {
+            if (this.nationalUfMapPoints.length > 0) {
                 this.ufMapPoints = this.nationalUfMapPoints;
+                const snap = this.nationalOverviewSnapshot;
+                if (snap && typeof snap === "object") {
+                    if (snap.summary && typeof snap.summary === "object") {
+                        this.summary = snap.summary;
+                    }
+                    if (Array.isArray(snap.topProspects)) {
+                        this.topProspects = snap.topProspects;
+                    }
+                    if (Array.isArray(snap.focusSegments)) {
+                        this.focusSegments = snap.focusSegments;
+                    }
+                    if (snap.sgeSummary && typeof snap.sgeSummary === "object") {
+                        this.sgeSummary = snap.sgeSummary;
+                    }
+                    if (snap.meta && typeof snap.meta === "object") {
+                        this.meta = snap.meta;
+                        this.displayPolicy =
+                            this.meta.display_policy &&
+                            typeof this.meta.display_policy === "object"
+                                ? this.meta.display_policy
+                                : null;
+                    }
+                }
+                this.setOverviewNotice();
+                await this.scheduleMapRefresh();
+                return;
             }
             await this.fetchOverview();
         },
 
         selectMarker(m, ev = null) {
+            this.closeUfSummary();
             this.active = m;
             this.tooltipPinned = true;
             window.requestAnimationFrame(() => {
@@ -2563,6 +3081,173 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         closeTooltip() {
             this.active = null;
             this.tooltipPinned = false;
+        },
+
+        closeUfSummary() {
+            this.ufSummaryOpen = false;
+            this.ufSummaryStyle = "";
+        },
+
+        resolveUfCenter(uf) {
+            const code = String(uf ?? "")
+                .trim()
+                .toUpperCase();
+            if (!code) {
+                return [-14.2, -51.9];
+            }
+            const points =
+                this.nationalUfMapPoints.length > 0
+                    ? this.nationalUfMapPoints
+                    : this.ufMapPoints;
+            const fromPoint = points.find((p) => p.uf === code);
+            if (fromPoint) {
+                const lat = Number(fromPoint.lat);
+                const lng = Number(fromPoint.lng);
+                if (isValidCoord(lat, lng)) {
+                    return [lat, lng];
+                }
+            }
+            const coords = this.markers
+                .filter((m) => String(m.uf ?? "").toUpperCase() === code)
+                .map((m) => [Number(m.lat), Number(m.lng)])
+                .filter(([la, ln]) => isValidCoord(la, ln));
+            if (coords.length > 0) {
+                const lat = coords.reduce((sum, p) => sum + p[0], 0) / coords.length;
+                const lng = coords.reduce((sum, p) => sum + p[1], 0) / coords.length;
+                return [lat, lng];
+            }
+            return [-14.2, -51.9];
+        },
+
+        regionalUfZoom() {
+            const heavy = Boolean(this.regionalDisplayPolicy?.heavy_regional);
+            const count = this.markers.length;
+            if (heavy) {
+                return 6.5;
+            }
+            if (count > 120) {
+                return 6;
+            }
+            if (count > 40) {
+                return 6.5;
+            }
+            return 7;
+        },
+
+        async centerSelectedUfAndSummary() {
+            if (!this.isRegionalMode || !this.scopeUf || !this.map) {
+                return;
+            }
+            this.closeTooltip();
+            const [lat, lng] = this.resolveUfCenter(this.scopeUf);
+            const zoom = Math.max(this.regionalUfZoom(), this.map.getZoom());
+            this._mapUserAdjustedView = true;
+            await new Promise((resolve) => {
+                const done = () => {
+                    this.map?.off("moveend", done);
+                    resolve();
+                };
+                this.map.once("moveend", done);
+                this.map.flyTo([lat, lng], zoom, { duration: 0.65 });
+            });
+            this.ufSummaryOpen = true;
+            this.$nextTick(() => this.positionUfSummaryModal());
+        },
+
+        repositionFloatingPanels() {
+            if (this.tooltipPinned && this.active) {
+                const lat = Number(this.active.lat);
+                const lng = Number(this.active.lng);
+                if (this.map && isValidCoord(lat, lng)) {
+                    this.positionTooltip({
+                        containerPoint: this.map.latLngToContainerPoint([lat, lng]),
+                    });
+                }
+            }
+            if (this.ufSummaryOpen) {
+                this.positionUfSummaryModal();
+            }
+        },
+
+        positionUfSummaryModal() {
+            const mapEl = this.$refs.map;
+            if (!mapEl) {
+                return;
+            }
+            const margin = 16;
+            const rect = mapEl.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            this.ufSummaryStyle = `left:${Math.round(centerX)}px;top:${Math.round(centerY)}px;transform:translate(-50%,-50%);visibility:hidden;`;
+            this.$nextTick(() => {
+                const tooltip = this.$el?.querySelector?.(".serv-brazil-map-tooltip--uf");
+                if (!tooltip) {
+                    return;
+                }
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const maxH = Math.min(vh - margin * 2, rect.height - margin * 2);
+                tooltip.style.maxHeight = `${Math.max(200, maxH)}px`;
+                const tw = tooltip.offsetWidth;
+                const th = Math.min(tooltip.scrollHeight, maxH);
+                let left = centerX;
+                let top = centerY;
+                if (left - tw / 2 < margin) {
+                    left = margin + tw / 2;
+                }
+                if (left + tw / 2 > vw - margin) {
+                    left = vw - margin - tw / 2;
+                }
+                if (top - th / 2 < margin) {
+                    top = margin + th / 2;
+                }
+                if (top + th / 2 > vh - margin) {
+                    top = vh - margin - th / 2;
+                }
+                this.ufSummaryStyle = `left:${Math.round(left)}px;top:${Math.round(top)}px;transform:translate(-50%,-50%);max-height:${Math.round(maxH)}px;overflow-y:auto;visibility:visible;`;
+            });
+        },
+
+        ufSummaryBodyHtml() {
+            const lines = ['<div class="serv-horizonte-muni-tooltip__body">'];
+            lines.push(ufCommercialPipelineHtml(this.summary, this.coverage));
+            const fundeb = ufFundebSummaryHtml(
+                this.ufFundebInsights,
+                this.refYear,
+                this.currentYear,
+            );
+            if (fundeb) {
+                lines.push(fundeb);
+            }
+            const cov = this.coverage || {};
+            const insights = this.ufFundebInsights || {};
+            const sources = [
+                cov.with_fundeb > 0 ? `FUNDEB ${nf(cov.with_fundeb)}` : null,
+                cov.with_censo > 0 ? `Censo ${nf(cov.with_censo)}` : null,
+                cov.with_saeb > 0 ? `SAEB ${nf(cov.with_saeb)}` : null,
+                cov.with_cadunico > 0 ? `CadÚnico ${nf(cov.with_cadunico)}` : null,
+            ].filter(Boolean);
+            if (sources.length > 0 || insights.municipalities_total) {
+                lines.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
+                if (insights.municipalities_total) {
+                    lines.push(
+                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Municípios")}</dt><dd>${nf(insights.municipalities_with_fundeb ?? 0)} ${escapeHtml("com FUNDEB")} · ${nf(insights.municipalities_total)} ${escapeHtml("no recorte")}</dd>`,
+                    );
+                }
+                if (sources.length > 0) {
+                    lines.push(
+                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Cobertura")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
+                    );
+                }
+                if (this.summary?.consultoria_active != null) {
+                    lines.push(
+                        `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Consultoria")}</dt><dd>${nf(this.summary.consultoria_active)} ${escapeHtml("municípios activos")}</dd>`,
+                    );
+                }
+                lines.push(`</dl>`);
+            }
+            lines.push(`</div>`);
+            return lines.join("");
         },
 
         pickSearch(m) {

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\MunicipalTransferSnapshot;
 use App\Support\Horizonte\HorizonteFundebRepasseOutlook;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
@@ -38,7 +39,17 @@ final class HorizonteFundebRepasseOutlookTest extends TestCase
             ],
             null,
             null,
-            ['observed' => 25000.0, 'rows' => []],
+            ['observed' => 25000.0, 'rows' => [
+                MunicipalTransferSnapshot::make([
+                    'ibge_municipio' => '2921500',
+                    'ano' => $currentYear,
+                    'fonte' => 'tesouro_csv',
+                    'programa_id' => 'fundeb',
+                    'valor' => 25000.0,
+                    'meta' => ['mensal' => [1 => 10000.0, 3 => 15000.0]],
+                    'imported_at' => now()->setDate($currentYear, 4, 12),
+                ]),
+            ]],
         );
 
         $this->assertNotNull($pack);
@@ -47,5 +58,7 @@ final class HorizonteFundebRepasseOutlookTest extends TestCase
         $this->assertSame(100000.0, $pack['expected']);
         $this->assertSame('portaria_receita', $pack['expected_source']);
         $this->assertSame(25.0, $pack['pct_done']);
+        $this->assertSame(3, $pack['last_transfer_month']);
+        $this->assertSame('mar/'.$currentYear, $pack['last_transfer_label']);
     }
 }

@@ -59,6 +59,51 @@ final class HorizonteTesouroTransferSyncServiceTest extends TestCase
     }
 
     #[Test]
+    public function repasses_importa_ano_referencia_e_vigente_quando_ambos_existem_no_csv(): void
+    {
+        Cache::flush();
+
+        $this->mock(MunicipalTransferSnapshotRepository::class, function ($mock): void {
+            $mock->shouldReceive('upsertBatch')
+                ->twice()
+                ->with(null, Mockery::type('array'))
+                ->andReturn(1, 1);
+        });
+
+        config([
+            'horizonte.reference_year' => 2025,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_enabled' => true,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
+                'fundeb' => [
+                    'resource_id' => 'test-fundeb-dual',
+                    'programa_id' => 'fundeb',
+                    'name' => 'FUNDEB dual',
+                    'url' => 'https://example.test/fundeb-dual.csv',
+                ],
+            ],
+        ]);
+
+        $csv = (string) file_get_contents(base_path('tests/Fixtures/tesouro-fundeb-dual-year-snippet.csv'));
+
+        Http::fake([
+            'example.test/fundeb-dual.csv' => Http::response($csv, 200, ['Content-Type' => 'text/csv']),
+            'servicodados.ibge.gov.br/api/v1/localidades/estados/*/municipios' => Http::response([
+                ['id' => 2911105, 'nome' => 'Formosa do Rio Preto'],
+            ], 200),
+        ]);
+
+        $this->travelTo('2026-06-15');
+
+        $result = app(HorizonteTesouroTransferSyncService::class)->syncNationalFundeb(2025);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(2, $result['imported']);
+        $this->assertArrayHasKey(2025, $result['imported_by_year'] ?? []);
+        $this->assertArrayHasKey(2026, $result['imported_by_year'] ?? []);
+        $this->assertStringContainsString('2026', (string) $result['message']);
+    }
+
+    #[Test]
     public function repasses_importa_com_uf_vazia_como_no_feed_nacional(): void
     {
         Cache::flush();

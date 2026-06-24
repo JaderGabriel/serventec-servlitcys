@@ -140,10 +140,13 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | Comando | Descrição |
 |---------|-----------|
 | `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
+| `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
 
 ```bash
+php artisan horizonte:sync-repasses-tesouro --with-ref
+php artisan horizonte:sync-repasses-tesouro --uf=BA --year=2026
 php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset

@@ -44,6 +44,9 @@ final class HorizonteFundebRepasseOutlook
      *     balance: ?float,
      *     pct_done: ?float,
      *     months_with_transfers: int,
+     *     last_transfer_month: ?int,
+     *     last_transfer_label: ?string,
+     *     last_recorded_at: ?string,
      *     outlook: string,
      *     outlook_label: string,
      *     expected_source: string
@@ -112,6 +115,9 @@ final class HorizonteFundebRepasseOutlook
      *     balance: ?float,
      *     pct_done: ?float,
      *     months_with_transfers: int,
+     *     last_transfer_month: ?int,
+     *     last_transfer_label: ?string,
+     *     last_recorded_at: ?string,
      *     outlook: string,
      *     outlook_label: string,
      *     expected_source: string
@@ -150,6 +156,7 @@ final class HorizonteFundebRepasseOutlook
 
         $periodic = FundebPortariaExpectation::periodicSchedule($expected, $currentYear, $rows);
         $outlook = FinanceRealtimeYearEndOutlook::build($expected, $observed, $currentYear, $periodic);
+        $temporal = HorizonteFundebTransferTemporal::lastRecorded($rows, $currentYear);
 
         $pctDone = $expected > 0
             ? round(min(100.0, ($observed / $expected) * 100.0), 1)
@@ -167,6 +174,11 @@ final class HorizonteFundebRepasseOutlook
                 : null,
             'pct_done' => $pctDone,
             'months_with_transfers' => (int) ($outlook['months_with_transfers'] ?? 0),
+            'last_transfer_month' => $temporal !== null && ($temporal['month'] ?? 0) > 0
+                ? (int) $temporal['month']
+                : null,
+            'last_transfer_label' => $temporal['label'] ?? null,
+            'last_recorded_at' => $temporal['recorded_at'] ?? null,
             'outlook' => (string) ($outlook['outlook'] ?? 'unknown'),
             'outlook_label' => (string) ($outlook['outlook_label'] ?? ''),
             'expected_source' => (string) ($expectation['source'] ?? 'matricula_vaaf'),
