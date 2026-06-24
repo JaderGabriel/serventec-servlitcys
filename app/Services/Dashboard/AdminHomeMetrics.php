@@ -5,6 +5,7 @@ namespace App\Services\Dashboard;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
+use App\Models\User;
 use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxFundebPortariaChart;
 
