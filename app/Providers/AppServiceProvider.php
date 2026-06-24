@@ -21,9 +21,12 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Models\User;
-use App\Policies\AdminSyncTaskPolicy;
+use App\Authorization\PublicDataHub;
+use App\Policies\PublicDataAdminPolicy;
+use App\Policies\PlatformFeaturePolicy;
 use App\Observers\CityCadunicoSyncObserver;
 use App\Observers\CityFundebSyncObserver;
+use App\Policies\AdminSyncTaskPolicy;
 use App\Policies\AnalyticsReportExportPolicy;
 use App\Policies\CityPolicy;
 use App\Policies\UserPolicy;
@@ -81,6 +84,14 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(AnalyticsReportExport::class, AnalyticsReportExportPolicy::class);
         Gate::policy(AdminSyncTask::class, AdminSyncTaskPolicy::class);
+        Gate::policy(PublicDataHub::class, PublicDataAdminPolicy::class);
+
+        $platform = PlatformFeaturePolicy::class;
+        Gate::define('importOrConfigure', [$platform, 'importOrConfigure']);
+        Gate::define('viewHorizonte', [$platform, 'viewHorizonte']);
+        Gate::define('exportAnalyticsPdf', [$platform, 'exportAnalyticsPdf']);
+        Gate::define('exportInclusionNee', [$platform, 'exportInclusionNee']);
+        Gate::define('viewSyncQueue', [$platform, 'viewSyncQueue']);
 
         View::composer('*', static function ($view): void {
             $user = auth()->user();

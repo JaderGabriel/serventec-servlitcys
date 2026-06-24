@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Authorization\PublicDataHub;
 use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\City;
@@ -22,6 +23,8 @@ use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Services\Horizonte\HorizonteDataBundleService;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
+use App\Http\Requests\Admin\PublicDataImportIndexRequest;
+use App\Http\Requests\Admin\PublicDataImportRunRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -34,7 +37,7 @@ class PublicDataImportController extends Controller
         private AdminSyncQueueService $syncQueue,
     ) {}
 
-    public function index(Request $request): View
+    public function index(PublicDataImportIndexRequest $request): View
     {
         $hubActive = AdminImportHubCatalog::resolveHubActive($request->query('hub'));
 
@@ -70,6 +73,8 @@ class PublicDataImportController extends Controller
         if ($request->isMethod('GET')) {
             return redirect()->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub');
         }
+
+        $this->authorize('sync', PublicDataHub::class);
 
         if (! (bool) config('horizonte.enabled', true)) {
             return redirect()
@@ -249,19 +254,11 @@ class PublicDataImportController extends Controller
             ]);
     }
 
-    public function run(Request $request): RedirectResponse
+    public function run(PublicDataImportRunRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'source_id' => 'required|string|max:64',
-            'action_key' => 'required|string|max:64',
-            'city_id' => 'nullable|integer|exists:cities,id',
-            'ano' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'ano_from' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'ano_to' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'use_nearest_year' => 'sometimes|boolean',
-            'import_mode' => 'sometimes|string|in:'.FundebImportMode::REPLACE.','.FundebImportMode::UPDATE,
-            'include_cached_years' => 'sometimes|boolean',
-        ]);
+        $this->authorize('import', PublicDataHub::class);
+
+        $validated = $request->validatedPayload();
 
         $source = PublicDataImportCatalog::findSource($validated['source_id']);
         if ($source === null) {

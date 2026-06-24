@@ -4,7 +4,9 @@ namespace App\Models;
 
 use App\Enums\AdminSyncDomain;
 use App\Enums\AdminSyncTaskStatus;
+use App\Models\User;
 use App\Services\AdminSync\AdminSyncTaskCitiesResolver;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -45,6 +47,71 @@ class AdminSyncTask extends Model
     public function queuedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'queued_by');
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            AdminSyncTaskStatus::Pending->value,
+            AdminSyncTaskStatus::Processing->value,
+        ]);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', AdminSyncTaskStatus::Failed->value);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForDomain(Builder $query, AdminSyncDomain|string $domain): Builder
+    {
+        $value = $domain instanceof AdminSyncDomain ? $domain->value : $domain;
+
+        return $query->where('domain', $value);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeQueuedByUser(Builder $query, User|int $user): Builder
+    {
+        $id = $user instanceof User ? $user->id : $user;
+
+        return $query->where('queued_by', $id);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeVisibleToUser(Builder $query, User $user): Builder
+    {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->queuedByUser($user);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeCreatedSince(Builder $query, \DateTimeInterface $since): Builder
+    {
+        return $query->where('created_at', '>=', $since);
     }
 
     public function domainEnum(): AdminSyncDomain

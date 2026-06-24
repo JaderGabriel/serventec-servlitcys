@@ -15,11 +15,7 @@ final class SyncQueueUserScope
      */
     public static function applyToTasks(Builder $query, User $user): Builder
     {
-        if ($user->isAdmin()) {
-            return $query;
-        }
-
-        return $query->where('queued_by_id', $user->id);
+        return $query->visibleToUser($user);
     }
 
     /**
@@ -28,11 +24,7 @@ final class SyncQueueUserScope
      */
     public static function applyToPdfExports(Builder $query, User $user): Builder
     {
-        if ($user->isAdmin()) {
-            return $query;
-        }
-
-        return $query->where('user_id', $user->id);
+        return $query->visibleToUser($user);
     }
 
     public static function routePrefix(?User $user = null): string

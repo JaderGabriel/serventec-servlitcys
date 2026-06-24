@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\AnalyticsReportExportStatus;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -40,6 +42,40 @@ class AnalyticsReportExport extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->whereIn('status', [
+            AnalyticsReportExportStatus::Pending->value,
+            AnalyticsReportExportStatus::Processing->value,
+        ]);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', AnalyticsReportExportStatus::Failed->value);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeVisibleToUser(Builder $query, User $user): Builder
+    {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->where('user_id', $user->id);
     }
 
     public function statusEnum(): AnalyticsReportExportStatus

@@ -1,37 +1,8 @@
 @props(['fundebData', 'yearFilterReady' => false, 'chartExportContext' => [], 'municipalityContext' => null])
 
 @php
-    $publicSources = is_array($fundebData['public_data_sources'] ?? null) ? $fundebData['public_data_sources'] : [];
-    $proj = is_array($fundebData['resource_projection'] ?? null) ? $fundebData['resource_projection'] : [];
-    $projAvailable = (bool) ($proj['available'] ?? false);
-    $distLegal = is_array($proj['distribuicao_legal'] ?? null) ? $proj['distribuicao_legal'] : [];
-    $distItens = is_array($distLegal['itens'] ?? null) ? $distLegal['itens'] : [];
-    $porEtapa = is_array($proj['por_etapa'] ?? null) ? $proj['por_etapa'] : [];
-    $informe = is_array($fundebData['complementacao_informe'] ?? null) ? $fundebData['complementacao_informe'] : [];
-    $informeBlocos = is_array($informe['blocos'] ?? null) ? $informe['blocos'] : [];
-    $moduleRing = static fn (string $s): string => match ($s) {
-        'success' => 'border-l-teal-500',
-        'warning' => 'border-l-amber-500',
-        'danger' => 'border-l-rose-500',
-        default => 'border-l-slate-400',
-    };
-    $informeRing = static fn (string $s): string => match ($s) {
-        'success' => 'border-l-teal-500',
-        'warning' => 'border-l-amber-500',
-        'danger' => 'border-l-rose-500',
-        default => 'border-l-slate-400',
-    };
-@endphp
-
-@php
-    $fundebMeta = null;
-    if (filled($fundebData['city_name'] ?? null) || filled($fundebData['year_label'] ?? null)) {
-        $fundebMeta = '<span class="font-medium">'.e(__('Contexto')).':</span> '
-            .e($fundebData['city_name'] ?? '');
-        if (filled($fundebData['year_label'] ?? null)) {
-            $fundebMeta .= ' — '.e($fundebData['year_label']);
-        }
-    }
+    $presented = \App\Support\Dashboard\Presenters\FundebTabPresenter::present($fundebData);
+    extract($presented, EXTR_SKIP);
 @endphp
 
 <x-dashboard.consultoria-tab-frame

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Policies\PlatformFeaturePolicy;
 use App\Support\Contact\ContactChannels;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -109,42 +110,42 @@ class User extends Authenticatable
 
     public function canImportOrConfigure(): bool
     {
-        return $this->is_active && $this->isAdmin();
+        return app(PlatformFeaturePolicy::class)->importOrConfigure($this);
     }
 
     /** Documentação interna (leitor Markdown). */
     public function canViewDocumentation(): bool
     {
-        return $this->is_active;
+        return app(PlatformFeaturePolicy::class)->viewDocumentation($this);
     }
 
     /** Fila de exportações e tarefas enfileiradas pelo próprio utilizador. */
     public function canViewSyncQueue(): bool
     {
-        return $this->is_active && ($this->isAdmin() || $this->isUsuário() || $this->isMunicipal());
+        return app(PlatformFeaturePolicy::class)->viewSyncQueue($this);
     }
 
     /** Exportação detalhada NEE (CSV/Excel) na aba Inclusão. */
     public function canExportInclusionNee(): bool
     {
-        return $this->is_active && ($this->isAdmin() || $this->isUsuário() || $this->isMunicipal());
+        return app(PlatformFeaturePolicy::class)->exportInclusionNee($this);
     }
 
     public function canViewAdminDashboard(): bool
     {
-        return $this->is_active && $this->isAdmin();
+        return app(PlatformFeaturePolicy::class)->viewAdminDashboard($this);
     }
 
     /** Mapa Horizonte (oportunidade territorial): administrador e utilizador da plataforma. */
     public function canViewHorizonte(): bool
     {
-        return $this->is_active && ($this->isAdmin() || $this->isUsuário());
+        return app(PlatformFeaturePolicy::class)->viewHorizonte($this);
     }
 
     /** Relatório PDF completo (aba Serventec): administrador e usuário da plataforma. */
     public function canExportAnalyticsPdf(): bool
     {
-        return $this->is_active && ($this->isAdmin() || $this->isUsuário());
+        return app(PlatformFeaturePolicy::class)->exportAnalyticsPdf($this);
     }
 
     /**

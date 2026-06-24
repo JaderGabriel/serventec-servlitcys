@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByIbge;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -9,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class CadunicoMunicipioSnapshot extends Model
 {
+    use ScopesByIbge;
+
     protected $table = 'cadunico_municipio_snapshots';
 
     protected $fillable = [
@@ -58,5 +62,36 @@ class CadunicoMunicipioSnapshot extends Model
             + (int) $this->criancas_6_10
             + (int) $this->criancas_11_14
             + (int) $this->criancas_15_17;
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForReferenceYear(Builder $query, int $year): Builder
+    {
+        return $query->where('ano_referencia', $year);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeBetweenReferenceYears(Builder $query, int $from, int $to): Builder
+    {
+        return $query->whereBetween('ano_referencia', [$from, $to]);
+    }
+
+    /**
+     * Último snapshot disponível até ao ano indicado (inclusive).
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeLatestUpToYear(Builder $query, int $year): Builder
+    {
+        return $query
+            ->where('ano_referencia', '<=', $year)
+            ->orderByDesc('ano_referencia');
     }
 }

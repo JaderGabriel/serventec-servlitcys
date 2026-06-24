@@ -2,12 +2,9 @@
 
 namespace App\Services\Dashboard;
 
-use App\Enums\AdminSyncTaskStatus;
-use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
-use App\Models\User;
 use App\Support\Pulse\PulseOperationRecorder;
 use App\Support\Rx\RxFundebPortariaChart;
 
@@ -62,19 +59,12 @@ final class AdminHomeMetrics
         ];
 
         $ops = [
-            'sync_pending' => AdminSyncTask::query()
-                ->whereIn('status', [AdminSyncTaskStatus::Pending->value, AdminSyncTaskStatus::Processing->value])
-                ->count(),
+            'sync_pending' => AdminSyncTask::query()->pending()->count(),
             'sync_failed_24h' => AdminSyncTask::query()
-                ->where('status', AdminSyncTaskStatus::Failed->value)
-                ->where('created_at', '>=', $now->copy()->subDay())
+                ->failed()
+                ->createdSince($now->copy()->subDay())
                 ->count(),
-            'pdf_pending' => AnalyticsReportExport::query()
-                ->whereIn('status', [
-                    AnalyticsReportExportStatus::Pending->value,
-                    AnalyticsReportExportStatus::Processing->value,
-                ])
-                ->count(),
+            'pdf_pending' => AnalyticsReportExport::query()->pending()->count(),
             'pgsql' => City::query()->active()->where('db_driver', City::DRIVER_PGSQL)->count(),
             'mysql' => City::query()->active()->where('db_driver', City::DRIVER_MYSQL)->count(),
         ];

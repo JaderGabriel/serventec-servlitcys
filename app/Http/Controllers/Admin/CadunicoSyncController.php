@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Authorization\PublicDataHub;
 use App\Enums\AdminSyncDomain;
 use App\Http\Controllers\Controller;
 use App\Models\CadunicoMunicipioSnapshot;
@@ -16,6 +17,8 @@ use App\Services\Cadunico\CadunicoSagiMisocialClient;
 use App\Services\Cadunico\CadunicoTerritorioCsvImportService;
 use App\Support\Cadunico\CadunicoCecadUpload;
 use App\Support\Cadunico\CadunicoStoragePaths;
+use App\Http\Requests\Admin\CadunicoSyncIndexRequest;
+use App\Http\Requests\Admin\CadunicoSyncRunRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -31,7 +34,7 @@ class CadunicoSyncController extends Controller
         private CadunicoTerritorioCsvImportService $territorioImport,
     ) {}
 
-    public function index(Request $request): View
+    public function index(CadunicoSyncIndexRequest $request): View
     {
         $cities = City::query()->forAnalytics()->orderBy('name')->get(['id', 'name', 'uf', 'ibge_municipio']);
         $refYear = CadunicoOpenDataImportService::suggestedImportYear();
@@ -74,7 +77,7 @@ class CadunicoSyncController extends Controller
         $ibgeList = array_values(array_unique($ibgeList));
 
         $snapshotRows = CadunicoMunicipioSnapshot::query()
-            ->when($ibgeList !== [], fn ($q) => $q->whereIn('ibge_municipio', $ibgeList))
+            ->forIbges($ibgeList)
             ->get(['ibge_municipio', 'ano_referencia', 'imported_at']);
 
         $municipiosComDados = $snapshotRows->pluck('ibge_municipio')->unique()->count();
@@ -136,18 +139,11 @@ class CadunicoSyncController extends Controller
         ]);
     }
 
-    public function run(Request $request): RedirectResponse
+    public function run(CadunicoSyncRunRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,upload_territorio,import_all_cities_year,sync_territorio_flow_city,sync_territorio_city,sync_territorio_all',
-            'city_id' => 'nullable|integer|exists:cities,id',
-            'ano' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'csv_file' => 'required_if:action,import_csv,upload_cecad,upload_territorio|file|max:20480',
-            'auto_import' => 'sometimes|boolean',
-        ]);
-
-        $action = $validated['action'];
-        $ano = isset($validated['ano']) ? (int) $validated['ano'] : CadunicoOpenDataImportService::suggestedImportYear();
+        $validated = $request->validatedPayload();
+        $action = $request->action();
+        $ano = $request->year();
 
         if (in_array($action, ['import_city_year', 'upload_territorio', 'sync_territorio_flow_city', 'sync_territorio_city'], true) && empty($validated['city_id'])) {
             return redirect()

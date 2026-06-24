@@ -64,7 +64,7 @@ final class HorizonteTransferBreakdown
      */
     private static function aggregateForYear(int $year, ?string $ibgePrefix): array
     {
-        $query = MunicipalTransferSnapshot::query()->where('ano', $year);
+        $query = MunicipalTransferSnapshot::query()->forYear($year);
         if ($ibgePrefix !== null && $ibgePrefix !== '') {
             $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
         }

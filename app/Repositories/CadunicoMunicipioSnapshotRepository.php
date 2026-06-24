@@ -30,8 +30,8 @@ class CadunicoMunicipioSnapshotRepository
         }
 
         $row = CadunicoMunicipioSnapshot::query()
-            ->where('ibge_municipio', $ibge)
-            ->where('ano_referencia', $year)
+            ->forIbge($ibge)
+            ->forReferenceYear($year)
             ->first();
 
         if ($row !== null) {
@@ -39,9 +39,8 @@ class CadunicoMunicipioSnapshotRepository
         }
 
         return CadunicoMunicipioSnapshot::query()
-            ->where('ibge_municipio', $ibge)
-            ->where('ano_referencia', '<=', $year)
-            ->orderByDesc('ano_referencia')
+            ->forIbge($ibge)
+            ->latestUpToYear($year)
             ->first();
     }
 
@@ -56,7 +55,7 @@ class CadunicoMunicipioSnapshotRepository
         }
 
         return CadunicoMunicipioSnapshot::query()
-            ->where('ibge_municipio', $ibge)
+            ->forIbge($ibge)
             ->orderByDesc('ano_referencia')
             ->get();
     }
@@ -113,7 +112,7 @@ class CadunicoMunicipioSnapshotRepository
 
         $snapshotsByIbge = [];
         foreach (CadunicoMunicipioSnapshot::query()
-            ->whereBetween('ano_referencia', [$yearFrom, $yearTo])
+            ->betweenReferenceYears($yearFrom, $yearTo)
             ->get() as $row) {
             $ibge = (string) $row->ibge_municipio;
             $ano = (int) $row->ano_referencia;

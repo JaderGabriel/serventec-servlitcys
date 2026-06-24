@@ -2,11 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopesByIbge;
+use App\Models\Concerns\ScopesByYear;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FundebMunicipioReference extends Model
 {
+    use ScopesByIbge;
+    use ScopesByYear;
+
     protected $fillable = [
         'city_id',
         'ibge_municipio',
@@ -52,5 +58,23 @@ class FundebMunicipioReference extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForCity(Builder $query, City $city): Builder
+    {
+        return $query->where('city_id', $city->id);
+    }
+
+    /**
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeLatestYear(Builder $query): Builder
+    {
+        return $query->orderByDesc('ano');
     }
 }
