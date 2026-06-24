@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '6.0.0',
         'release_tag' => '20260603h-Odin',
-        'commit_short' => null,
+        'commit_short' => 'df7d9b3',
         'commit_number' => null,
         'revision_date' => '2026-06-03',
         'in_production' => true,
