@@ -41,10 +41,13 @@
         <p class="serv-horizonte-filters__note" x-show="isOverviewMode" x-cloak>
             {{ __('No Brasil, abra uma UF para aplicar filtros municipais.') }}
         </p>
+        <p class="serv-horizonte-filters__note" x-show="isMesoOverviewMode" x-cloak>
+            {{ __('Os filtros refinam o coroplético por mesorregião antes de abrir os municípios.') }}
+        </p>
     </div>
 
     {{-- 2. Refinar (sliders) --}}
-    <div class="serv-horizonte-filters__section" x-show="isRegionalMode" x-cloak>
+    <div class="serv-horizonte-filters__section" x-show="isUfScopedMode" x-cloak>
         <div class="serv-horizonte-filters__section-head">
             <span class="serv-horizonte-filters__step">2</span>
             <div>
@@ -118,7 +121,7 @@
     </div>
 
     {{-- 3. Mapa & dados --}}
-    <div class="serv-horizonte-filters__section" x-show="isRegionalMode" x-cloak>
+    <div class="serv-horizonte-filters__section" x-show="isUfScopedMode" x-cloak>
         <div class="serv-horizonte-filters__section-head">
             <span class="serv-horizonte-filters__step">3</span>
             <div>
@@ -159,7 +162,7 @@
         </div>
     </div>
 
-    <div class="serv-horizonte-filters__footer" x-show="isRegionalMode" x-cloak>
+    <div class="serv-horizonte-filters__footer" x-show="isUfScopedMode" x-cloak>
         <button type="button" class="serv-btn-secondary text-xs w-full" @click="resetFilters()" :disabled="pageLoading">
             {{ __('Repor vista padrão') }}
         </button>

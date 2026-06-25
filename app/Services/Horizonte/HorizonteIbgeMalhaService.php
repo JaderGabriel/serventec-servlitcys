@@ -49,6 +49,11 @@ final class HorizonteIbgeMalhaService
     private function loadGeoJson(string $cacheKey, string $url): array
     {
         if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+            $bundled = $this->loadBundledGeoJson($cacheKey);
+            if ($bundled !== null) {
+                return $bundled;
+            }
+
             throw new RuntimeException('URL de malha IBGE não permitida.');
         }
 
@@ -68,12 +73,16 @@ final class HorizonteIbgeMalhaService
         }
 
         $timeout = max(15, (int) config('horizonte.geo_malha.http_timeout', 60));
-        $response = Http::timeout($timeout)
-            ->retry(2, 500)
-            ->accept('application/vnd.geo+json, application/json')
-            ->get($url);
+        try {
+            $response = Http::timeout($timeout)
+                ->retry(2, 500)
+                ->accept('application/vnd.geo+json, application/json')
+                ->get($url);
+        } catch (\Throwable) {
+            $response = null;
+        }
 
-        if (! $response->successful()) {
+        if ($response === null || ! $response->successful()) {
             if ($disk->exists($path)) {
                 $stale = $this->decodeGeoJson((string) $disk->get($path));
                 if ($stale !== null) {
@@ -81,11 +90,26 @@ final class HorizonteIbgeMalhaService
                 }
             }
 
-            throw new RuntimeException('Falha ao obter malha IBGE (HTTP '.$response->status().').');
+            $bundled = $this->loadBundledGeoJson($cacheKey);
+            if ($bundled !== null) {
+                return $bundled;
+            }
+
+            $status = $response?->status();
+            throw new RuntimeException(
+                $status !== null
+                    ? 'Falha ao obter malha IBGE (HTTP '.$status.').'
+                    : 'Falha ao obter malha IBGE (rede indisponível).',
+            );
         }
 
         $decoded = $this->decodeGeoJson((string) $response->body());
         if ($decoded === null) {
+            $bundled = $this->loadBundledGeoJson($cacheKey);
+            if ($bundled !== null) {
+                return $bundled;
+            }
+
             throw new RuntimeException('Resposta de malha IBGE inválida.');
         }
 
@@ -106,5 +130,24 @@ final class HorizonteIbgeMalhaService
         }
 
         return $decoded;
+    }
+
+    /**
+     * Malha estática embarcada (visão nacional) quando a API IBGE está indisponível.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function loadBundledGeoJson(string $cacheKey): ?array
+    {
+        if ($cacheKey !== 'brazil-uf') {
+            return null;
+        }
+
+        $path = resource_path('geo/brazil-uf.json');
+        if (! is_readable($path)) {
+            return null;
+        }
+
+        return $this->decodeGeoJson((string) file_get_contents($path));
     }
 }

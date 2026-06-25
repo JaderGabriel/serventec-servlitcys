@@ -59,8 +59,8 @@
             <p class="serv-horizonte-demo__caption">{{ __('Visão nacional — coroplético IBGE por UF (indicadores fictícios por estado)') }}</p>
         </div>
 
-        {{-- Cena 2: UF Bahia — mesorregiões e municípios --}}
-        <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--regional">
+        {{-- Cena 2: mesorregiões IBGE --}}
+        <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--meso">
             <div class="serv-horizonte-demo__map-frame serv-horizonte-demo__map-frame--regional">
                 <svg
                     class="serv-horizonte-demo__regional-svg"
@@ -75,9 +75,41 @@
                         class="serv-horizonte-demo__regional-bg"
                     />
                     <path d="{{ $demoBaPath }}" class="serv-horizonte-demo__regional-land" />
-                    <rect x="{{ $demoBaView['x'] + 18 }}" y="{{ $demoBaView['y'] + 24 }}" width="72" height="58" rx="4" fill="#fecdd3" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
-                    <rect x="{{ $demoBaView['x'] + 96 }}" y="{{ $demoBaView['y'] + 18 }}" width="68" height="64" rx="4" fill="#fde68a" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
-                    <rect x="{{ $demoBaView['x'] + 28 }}" y="{{ $demoBaView['y'] + 92 }}" width="88" height="62" rx="4" fill="#bbf7d0" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
+                    <rect x="{{ $demoBaView['x'] + 18 }}" y="{{ $demoBaView['y'] + 24 }}" width="72" height="58" rx="4" fill="#fecdd3" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" class="serv-horizonte-demo__meso-region" />
+                    <rect x="{{ $demoBaView['x'] + 96 }}" y="{{ $demoBaView['y'] + 18 }}" width="68" height="64" rx="4" fill="#fde68a" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" class="serv-horizonte-demo__meso-region" />
+                    <rect x="{{ $demoBaView['x'] + 28 }}" y="{{ $demoBaView['y'] + 92 }}" width="88" height="62" rx="4" fill="#bbf7d0" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" class="serv-horizonte-demo__meso-region" />
+                    @foreach ($demoMuniDots as $dot)
+                        <circle
+                            cx="{{ $dot['x'] + $demoBaView['x'] }}"
+                            cy="{{ $dot['y'] + $demoBaView['y'] }}"
+                            r="{{ max(2, $dot['r'] - 2) }}"
+                            fill="{{ HorizonteGuideDemo::heatColor($dot['heat']) }}"
+                            fill-opacity="0.35"
+                            stroke="#ffffff"
+                            stroke-width="1"
+                        />
+                    @endforeach
+                </svg>
+            </div>
+            <p class="serv-horizonte-demo__caption">{{ __('Mesorregiões IBGE — hover e clique para abrir municípios (fictício)') }}</p>
+        </div>
+
+        {{-- Cena 3: detalhe municipal --}}
+        <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--municipal">
+            <div class="serv-horizonte-demo__map-frame serv-horizonte-demo__map-frame--regional">
+                <svg
+                    class="serv-horizonte-demo__regional-svg"
+                    viewBox="{{ $demoBaView['x'] }} {{ $demoBaView['y'] }} {{ $demoBaView['w'] }} {{ $demoBaView['h'] }}"
+                    aria-hidden="true"
+                >
+                    <rect
+                        x="{{ $demoBaView['x'] }}"
+                        y="{{ $demoBaView['y'] }}"
+                        width="{{ $demoBaView['w'] }}"
+                        height="{{ $demoBaView['h'] }}"
+                        class="serv-horizonte-demo__regional-bg"
+                    />
+                    <path d="{{ $demoBaPath }}" class="serv-horizonte-demo__regional-land" />
                     @foreach ($demoMuniDots as $dot)
                         @php
                             $cx = $dot['x'] + $demoBaView['x'];
@@ -110,10 +142,10 @@
                     />
                 </svg>
             </div>
-            <p class="serv-horizonte-demo__caption">{{ __('UF extensa — mesorregiões IBGE e pontos municipais por pressão FUNDEB (fictício)') }}</p>
+            <p class="serv-horizonte-demo__caption">{{ __('Pontos municipais por pressão FUNDEB — Marcadores ou Calor (fictício)') }}</p>
         </div>
 
-        {{-- Cena 3: painel de filtros --}}
+        {{-- Cena 4: painel de filtros --}}
         <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--filters">
             <div class="serv-horizonte-demo__map-frame serv-horizonte-demo__map-frame--filters">
                 <div class="serv-horizonte-demo__filter-dock">
@@ -146,7 +178,7 @@
             <p class="serv-horizonte-demo__caption">{{ __('Lentes de decisão no painel lateral') }}</p>
         </div>
 
-        {{-- Cena 4: ficha do município --}}
+        {{-- Cena 5: ficha do município --}}
         <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--modal">
             <div class="serv-horizonte-demo__map-frame serv-horizonte-demo__map-frame--modal">
                 <svg
@@ -203,18 +235,20 @@
         </div>
     </div>
 
-    <ol class="serv-horizonte-demo__steps">
-        @foreach ($methodology['map_guide'] ?? [] as $step)
-            @php($stepNum = (int) $step['step'])
-            <li class="serv-horizonte-demo__step serv-horizonte-demo__step--{{ $stepNum }}">
-                <span class="serv-horizonte-demo__step-num serv-horizonte-demo__step-num--{{ $stepNum }}">{{ $stepNum }}</span>
-                <div class="serv-horizonte-demo__step-body">
-                    <span class="serv-horizonte-demo__step-title">{{ $step['title'] }}</span>
-                    <span class="serv-horizonte-demo__step-text">{{ $step['text'] }}</span>
-                </div>
-            </li>
-        @endforeach
-    </ol>
+    <div class="serv-horizonte-demo__aside">
+        <ol class="serv-horizonte-demo__steps">
+            @foreach ($methodology['map_guide'] ?? [] as $step)
+                @php($stepNum = (int) $step['step'])
+                <li class="serv-horizonte-demo__step serv-horizonte-demo__step--{{ $stepNum }}">
+                    <span class="serv-horizonte-demo__step-num serv-horizonte-demo__step-num--{{ $stepNum }}">{{ $stepNum }}</span>
+                    <div class="serv-horizonte-demo__step-body">
+                        <span class="serv-horizonte-demo__step-title">{{ $step['title'] }}</span>
+                        <span class="serv-horizonte-demo__step-text">{{ $step['text'] }}</span>
+                    </div>
+                </li>
+            @endforeach
+        </ol>
+    </div>
 
     <p class="serv-horizonte-demo__attribution">
         {{ __('Mapa base: MapSVG / svg-maps (CC BY 4.0). Valores da animação são fictícios.') }}

@@ -109,7 +109,7 @@
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'markers' ? 'bg-sky-100 text-sky-900 dark:bg-sky-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')" :disabled="regionalDisplayPolicy?.heavy_regional">{{ __('Calor') }}</button>
                         </div>
-                        <div class="flex flex-wrap items-center gap-1" x-show="isRegionalMode" x-cloak>
+                        <div class="flex flex-wrap items-center gap-1" x-show="isUfScopedMode" x-cloak>
                             <button
                                 type="button"
                                 class="serv-horizonte-map-toolbar-btn"
@@ -126,8 +126,7 @@
                                 type="button"
                                 class="serv-horizonte-map-toolbar-btn"
                                 :class="ufSummaryOpen ? 'is-active' : ''"
-                                x-show="isUfScopedMode && scopeUf"
-                                x-cloak
+                                x-show="scopeUf"
                                 @click="toggleUfSummaryPanel()"
                                 :title="mapControlLabelUfSummary()"
                                 :aria-expanded="ufSummaryOpen"
@@ -166,7 +165,9 @@
                                 class="tabular-nums"
                                 :class="mapRenderTruncated ? 'font-medium text-amber-800 dark:text-amber-200' : 'text-slate-600 dark:text-slate-300'"
                             >
-                                <span x-text="mapInteractionStats.onMap.toLocaleString('pt-BR')"></span> {{ __('desenhados no mapa') }}
+                                <span x-text="mapInteractionStats.onMap.toLocaleString('pt-BR')"></span>
+                                <span x-show="isMesoOverviewMode" x-cloak>{{ __('mesorregiões no mapa') }}</span>
+                                <span x-show="isRegionalMode" x-cloak>{{ __('desenhados no mapa') }}</span>
                             </span>
                             <span class="text-slate-400">·</span>
                             <span class="text-slate-500" x-text="decisionLensLabel"></span>
@@ -191,7 +192,7 @@
                                 @click="restoreMapRenderCap()"
                             >{{ __('Limitar mapa') }}</button>
                             <button type="button" class="serv-link text-[11px]" @click="toggleFiltersPanel()" x-show="!filtersVisible && !filterDockOpen">{{ __('Mostrar filtros') }}</button>
-                            <button type="button" class="serv-link text-[11px]" @click="toggleUfSummaryVisibility()" x-show="isRegionalMode && scopeUf && !ufSummaryOpen">{{ __('Mostrar resumo estadual') }}</button>
+                            <button type="button" class="serv-link text-[11px]" @click="toggleUfSummaryVisibility()" x-show="isUfScopedMode && scopeUf && !ufSummaryOpen">{{ __('Mostrar resumo estadual') }}</button>
                         </div>
                     </div>
 
@@ -273,7 +274,7 @@
                                 'is-open': filterDockOpen,
                                 'is-collapsed': !filtersVisible && !filterDockOpen,
                             }"
-                            x-show="isRegionalMode"
+                            x-show="isUfScopedMode"
                             x-cloak
                             aria-label="{{ __('Filtros do mapa') }}"
                             :aria-hidden="!filtersVisible && !filterDockOpen ? 'true' : 'false'"
@@ -349,7 +350,7 @@
                             <button
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
-                                x-show="isRegionalMode"
+                                x-show="isUfScopedMode"
                                 x-cloak
                                 :class="(filtersVisible || filterDockOpen) ? 'is-active' : ''"
                                 @click="toggleFiltersPanel()"
