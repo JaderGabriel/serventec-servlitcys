@@ -123,27 +123,62 @@
     >
         <div class="serv-horizonte-cmd__hero">
             <div class="serv-horizonte-cmd__primary">
-                <p class="text-[10px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">{{ __('Prioridade comercial') }}</p>
+                <div class="serv-horizonte-cmd__primary-head">
+                    <span class="serv-horizonte-cmd__primary-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9" />
+                            <circle cx="12" cy="12" r="4.5" />
+                            <circle cx="12" cy="12" r="0.6" fill="currentColor" />
+                        </svg>
+                    </span>
+                    <p class="serv-horizonte-cmd__primary-label">{{ __('Prioridade comercial') }}</p>
+                </div>
                 <p class="serv-horizonte-cmd__primary-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_pressure)">…</p>
-                <p class="mt-1 text-sm text-rose-900/80 dark:text-rose-100/80 line-clamp-3">
+                <p class="serv-horizonte-cmd__primary-desc">
                     {{ __('Municípios em alta pressão FUNDEB (≥ :min) ou alta propensão — camada inicial do mapa.', ['min' => $pressureMin]) }}
                 </p>
             </div>
             <div class="serv-horizonte-cmd__metrics">
-                <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_count']['hint'] ?? '' }}">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Prospectos') }}</p>
+                <div class="serv-horizonte-cmd__metric serv-horizonte-cmd__metric--blue" title="{{ $kpiHints['prospect_count']['hint'] ?? '' }}">
+                    <span class="serv-horizonte-cmd__metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                    </span>
+                    <p class="serv-horizonte-cmd__metric-label">{{ __('Prospectos') }}</p>
                     <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.prospect_count)">…</p>
                 </div>
-                <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['high_prospect']['hint'] ?? '' }}">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Alta propensão') }}</p>
+                <div class="serv-horizonte-cmd__metric serv-horizonte-cmd__metric--rose" title="{{ $kpiHints['high_prospect']['hint'] ?? '' }}">
+                    <span class="serv-horizonte-cmd__metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                            <polyline points="17 6 23 6 23 12" />
+                        </svg>
+                    </span>
+                    <p class="serv-horizonte-cmd__metric-label">{{ __('Alta propensão') }}</p>
                     <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.high_prospect)">…</p>
                 </div>
-                <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['consultoria_active']['hint'] ?? '' }}">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Consultoria') }}</p>
+                <div class="serv-horizonte-cmd__metric serv-horizonte-cmd__metric--emerald" title="{{ $kpiHints['consultoria_active']['hint'] ?? '' }}">
+                    <span class="serv-horizonte-cmd__metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                    </span>
+                    <p class="serv-horizonte-cmd__metric-label">{{ __('Consultoria') }}</p>
                     <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(summary.consultoria_active)">…</p>
                 </div>
-                <div class="serv-horizonte-cmd__metric" title="{{ $kpiHints['prospect_matriculas']['hint'] ?? '' }}">
-                    <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 truncate">{{ __('Matr. prospecto') }}</p>
+                <div class="serv-horizonte-cmd__metric serv-horizonte-cmd__metric--indigo" title="{{ $kpiHints['prospect_matriculas']['hint'] ?? '' }}">
+                    <span class="serv-horizonte-cmd__metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 10 12 5 2 10l10 5 10-5Z" />
+                            <path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5" />
+                        </svg>
+                    </span>
+                    <p class="serv-horizonte-cmd__metric-label">{{ __('Matr. prospecto') }}</p>
                     <p class="serv-horizonte-cmd__metric-value" :class="kpiLoading ? 'is-loading' : ''" x-text="formatKpiCount(coverage.prospect_matriculas_censo)">…</p>
                 </div>
             </div>

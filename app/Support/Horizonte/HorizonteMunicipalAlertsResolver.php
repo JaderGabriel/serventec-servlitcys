@@ -34,7 +34,7 @@ final class HorizonteMunicipalAlertsResolver
 
         $syncedAt = is_array($meta) ? trim((string) ($meta['synced_at'] ?? '')) : '';
         if ($syncedAt === '') {
-            return $this->unavailable(__('Sem verificação — execute horizonte:sync-municipal-alerts'));
+            return $this->unavailable(__('Verificação de pendências em preparação'));
         }
 
         $items = is_array($entry['items'] ?? null) ? array_values($entry['items']) : [];

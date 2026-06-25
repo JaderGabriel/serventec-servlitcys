@@ -38,6 +38,7 @@ final class ChartExportMeta
         $author = trim((string) config('chart_export.author'));
 
         $logoUrl = self::exportLogoUrl();
+        $logoUrlDark = self::exportLogoUrl(true);
 
         if ($city === null) {
             return [
@@ -50,6 +51,7 @@ final class ChartExportMeta
                 'copyrightLine' => $appName,
                 'poweredByLine' => $author !== '' ? $author : '',
                 'logoUrl' => $logoUrl,
+                'logoUrlDark' => $logoUrlDark,
             ];
         }
 
@@ -72,11 +74,21 @@ final class ChartExportMeta
             'copyrightLine' => $appName,
             'poweredByLine' => $author !== '' ? $author : '',
             'logoUrl' => $logoUrl,
+            'logoUrlDark' => $logoUrlDark,
         ];
     }
 
-    public static function exportLogoUrl(): string
+    public static function exportLogoUrl(bool $dark = false): string
     {
+        if ($dark) {
+            $customDark = trim((string) config('chart_export.logo_url_dark', ''));
+            if ($customDark !== '') {
+                return $customDark;
+            }
+
+            return asset('images/servlitcys-logo-export-dark.svg');
+        }
+
         $custom = trim((string) config('chart_export.logo_url', ''));
         if ($custom !== '') {
             return $custom;

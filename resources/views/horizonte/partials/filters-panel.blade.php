@@ -144,6 +144,17 @@
                     <span>{{ __('Só sem SGE') }}</span>
                 </label>
             @endif
+            <label class="serv-horizonte-toggle-pill serv-horizonte-toggle-pill--rose">
+                <input type="checkbox" x-model="onlyWithAlerts" @change="markFiltersCustom()" class="rounded border-gray-300 text-rose-600" :disabled="pageLoading" />
+                <span class="inline-flex items-center gap-1">
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    {{ __('Só com alerta MEC/FNDE') }}
+                </span>
+            </label>
         </div>
         <p class="serv-horizonte-filters__field-label mt-3 mb-1.5">{{ __('Exigir fontes') }}</p>
         <div class="flex flex-wrap gap-1.5">

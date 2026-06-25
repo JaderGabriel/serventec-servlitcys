@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 64" fill="none" role="img" aria-label="ServLitcys">
+    <!-- Isotipo (variante para fundo escuro: barra alta clara) -->
+    <g transform="translate(6 12) scale(1.66)">
+        <path d="M2.6 17.8 Q10.5 8 19 8.2" fill="none" stroke="#fbbf24" stroke-width="1.55" stroke-linecap="round" />
+        <rect x="2.5" y="12.8" width="3" height="6.7" rx="0.6" fill="#93c5fd" />
+        <rect x="6.4" y="9.6" width="3" height="9.9" rx="0.6" fill="#60a5fa" />
+        <rect x="10.3" y="6.3" width="3" height="13.2" rx="0.6" fill="#ffffff" />
+        <path d="M11.8 6.6 V2.5" stroke="#cbd5e1" stroke-width="0.85" stroke-linecap="round" />
+        <path d="M12.2 2.7 H15.3 L14.5 3.75 15.3 4.8 H12.2 Z" fill="#2dd4bf" />
+        <path d="M12.85 3.7 l0.5 0.5 1 -1.05" fill="none" stroke="#0f172a" stroke-width="0.62" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M15.5 10.6 H22.5" stroke="#fbbf24" stroke-width="1" stroke-linecap="round" />
+        <circle cx="19" cy="7.9" r="2.4" fill="#fcd34d" />
+        <circle cx="19" cy="7.9" r="0.95" fill="#fffbeb" opacity="0.6" />
+    </g>
+    <path d="M12 50.5 Q128 41 246 45" fill="none" stroke="#fbbf24" stroke-width="2.3" stroke-linecap="round" />
+    <text x="56" y="41.5" font-family="'Poppins','Segoe UI',system-ui,Arial,sans-serif" font-size="29" font-weight="700" letter-spacing="-0.5">
+        <tspan fill="#93c5fd">Serv</tspan><tspan fill="#ffffff">Litcys</tspan>
+    </text>
+</svg>

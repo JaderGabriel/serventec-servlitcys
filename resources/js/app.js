@@ -2227,7 +2227,13 @@ document.addEventListener("alpine:init", () => {
                     wrap.style.minHeight = "280px";
                 }
 
+                const prefersDarkExport =
+                    typeof document !== "undefined" &&
+                    document.documentElement.classList.contains("dark");
                 const logoUrl =
+                    (prefersDarkExport &&
+                        (this._exportMeta?.logoUrlDark ||
+                            this._exportMeta?.logo_url_dark)) ||
                     this._exportMeta?.logoUrl ||
                     this._exportMeta?.logo_url ||
                     "";

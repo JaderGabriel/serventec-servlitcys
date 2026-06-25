@@ -20,6 +20,7 @@
         <title>{{ config('app.name', 'Laravel') }} — {{ __('Monitorização (Pulse)') }}</title>
 
         <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="{{ asset('images/servlitcys-icon.svg') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

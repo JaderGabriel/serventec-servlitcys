@@ -1500,6 +1500,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         requireSaeb: false,
         requireCadunico: false,
         onlyMissingSge: false,
+        onlyWithAlerts: false,
         hideConsultoria: options.defaultViewFilter?.hide_consultoria !== false,
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         nationalUfRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
@@ -1813,6 +1814,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.requireSaeb,
                 this.requireCadunico,
                 this.onlyMissingSge,
+                this.onlyWithAlerts,
                 this.hideConsultoria,
                 this.searchQuery.trim().toLowerCase(),
                 this.pressureThreshold,
@@ -1880,6 +1882,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return false;
                 }
                 if (this.onlyMissingSge && (m.in_catalog ?? false)) {
+                    return false;
+                }
+                if (this.onlyWithAlerts && (m.muni_alerts_status ?? "") !== "found") {
                     return false;
                 }
                 if (q === "") {
@@ -1998,6 +2003,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.requireSaeb ||
                 this.requireCadunico ||
                 this.onlyMissingSge ||
+                this.onlyWithAlerts ||
                 this.searchQuery.trim() !== "" ||
                 (this.viewPreset === "all" && this.hideConsultoria) ||
                 !this.hideApproxOnMap
@@ -2018,6 +2024,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (this.requireSaeb) count += 1;
             if (this.requireCadunico) count += 1;
             if (this.onlyMissingSge) count += 1;
+            if (this.onlyWithAlerts) count += 1;
             if (this.viewPreset === "all" && this.hideConsultoria) count += 1;
             if (!this.hideApproxOnMap) count += 1;
             if (this.searchQuery.trim() !== "") count += 1;
@@ -2101,6 +2108,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             if (this.onlyMissingSge) {
                 chips.push({ key: "sge", label: "Sem SGE", removable: true });
+            }
+            if (this.onlyWithAlerts) {
+                chips.push({ key: "alerts", label: "Com alerta MEC/FNDE", removable: true });
             }
             if (this.viewPreset === "all" && this.hideConsultoria) {
                 chips.push({ key: "hide_consultoria", label: "Sem consultoria", removable: true });
@@ -2743,6 +2753,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.requireSaeb = false;
             this.requireCadunico = false;
             this.onlyMissingSge = false;
+            this.onlyWithAlerts = false;
             this.searchQuery = "";
         },
 
@@ -2868,6 +2879,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 case "sge":
                     this.onlyMissingSge = false;
                     break;
+                case "alerts":
+                    this.onlyWithAlerts = false;
+                    break;
                 case "hide_consultoria":
                     this.hideConsultoria = false;
                     break;
@@ -2898,6 +2912,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.requireSaeb ||
                     this.requireCadunico ||
                     this.onlyMissingSge ||
+                    this.onlyWithAlerts ||
                     this.searchQuery.trim() !== "" ||
                     (this.viewPreset === "all" && this.hideConsultoria) ||
                     !this.hideApproxOnMap)
@@ -3344,6 +3359,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 "requireSaeb",
                 "requireCadunico",
                 "onlyMissingSge",
+                "onlyWithAlerts",
                 "hideConsultoria",
                 "searchQuery",
                 "pressureThreshold",
@@ -4610,6 +4626,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (f.only_missing_sge) {
                 this.onlyMissingSge = true;
                 this.filterTier = f.tier || "prospects";
+            }
+            if (f.only_with_alerts) {
+                this.onlyWithAlerts = true;
             }
             if (f.min_social != null) {
                 this.minSocialDemand = Number(f.min_social);

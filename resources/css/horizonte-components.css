@@ -439,8 +439,28 @@
             dark:border-rose-900/50 dark:from-rose-950/40 dark:to-slate-900/60;
     }
 
+    .serv-horizonte-cmd__primary-head {
+        @apply flex items-center gap-2;
+    }
+
+    .serv-horizonte-cmd__primary-icon {
+        @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-rose-600 text-white shadow-sm dark:bg-rose-500;
+    }
+
+    .serv-horizonte-cmd__primary-icon svg {
+        @apply h-4 w-4;
+    }
+
+    .serv-horizonte-cmd__primary-label {
+        @apply text-[11px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300;
+    }
+
     .serv-horizonte-cmd__primary-value {
-        @apply font-display text-4xl font-bold tabular-nums tracking-tight text-rose-800 dark:text-rose-200 sm:text-5xl break-words overflow-hidden;
+        @apply mt-1 font-display text-4xl font-bold tabular-nums tracking-tight text-rose-800 dark:text-rose-200 sm:text-5xl break-words overflow-hidden;
+    }
+
+    .serv-horizonte-cmd__primary-desc {
+        @apply mt-1 text-sm text-rose-900/80 dark:text-rose-100/80 line-clamp-3;
     }
 
     .serv-horizonte-cmd__primary-value.is-loading,
@@ -449,15 +469,48 @@
     }
 
     .serv-horizonte-cmd__metrics {
-        @apply grid grid-cols-2 gap-2 sm:grid-cols-4 lg:w-[min(100%,28rem)] lg:shrink-0 min-w-0;
+        @apply grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:w-[min(100%,30rem)] lg:shrink-0 min-w-0;
     }
 
     .serv-horizonte-cmd__metric {
-        @apply min-w-0 overflow-hidden rounded-lg border border-slate-200/80 bg-slate-50/80 px-3 py-2 dark:border-slate-700/80 dark:bg-slate-900/50;
+        @apply flex min-w-0 flex-col gap-1 overflow-hidden rounded-xl border border-slate-200/80 bg-white/90 px-3 py-2.5 shadow-sm transition
+            hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/80 dark:bg-slate-900/60;
+    }
+
+    .serv-horizonte-cmd__metric-icon {
+        @apply inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300;
+    }
+
+    .serv-horizonte-cmd__metric-icon svg {
+        @apply h-4 w-4;
+    }
+
+    .serv-horizonte-cmd__metric-label {
+        @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 truncate;
     }
 
     .serv-horizonte-cmd__metric-value {
-        @apply font-display text-lg font-semibold tabular-nums text-serv-navy dark:text-slate-100 truncate;
+        @apply font-display text-xl font-bold tabular-nums text-serv-navy dark:text-slate-100 truncate;
+    }
+
+    .serv-horizonte-cmd__metric--blue .serv-horizonte-cmd__metric-icon {
+        @apply bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300;
+    }
+
+    .serv-horizonte-cmd__metric--rose .serv-horizonte-cmd__metric-icon {
+        @apply bg-rose-100 text-rose-600 dark:bg-rose-950/50 dark:text-rose-300;
+    }
+
+    .serv-horizonte-cmd__metric--rose .serv-horizonte-cmd__metric-value {
+        @apply text-rose-700 dark:text-rose-300;
+    }
+
+    .serv-horizonte-cmd__metric--emerald .serv-horizonte-cmd__metric-icon {
+        @apply bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-300;
+    }
+
+    .serv-horizonte-cmd__metric--indigo .serv-horizonte-cmd__metric-icon {
+        @apply bg-indigo-100 text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300;
     }
 
     .serv-horizonte-cmd__segments {
@@ -825,6 +878,11 @@
 
     .serv-horizonte-toggle-pill--amber {
         @apply has-[:checked]:ring-amber-400 has-[:checked]:bg-amber-50/80 dark:has-[:checked]:bg-amber-950/30;
+    }
+
+    .serv-horizonte-toggle-pill--rose {
+        @apply has-[:checked]:ring-rose-400 has-[:checked]:bg-rose-50/80 has-[:checked]:text-rose-700
+            dark:has-[:checked]:bg-rose-950/30 dark:has-[:checked]:text-rose-300;
     }
 
     .serv-horizonte-source-pill {

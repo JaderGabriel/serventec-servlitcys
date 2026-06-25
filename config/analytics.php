@@ -238,7 +238,7 @@ return [
         'brand' => [
             'system_name' => (string) env('ANALYTICS_PDF_SYSTEM_NAME', env('APP_NAME', 'SERVLITCYS')),
             'system_tagline' => (string) env('ANALYTICS_PDF_SYSTEM_TAGLINE', 'Consultoria, gráficos e Horizonte municipal'),
-            'icon_path' => (string) env('ANALYTICS_PDF_ICON_PATH', 'favicon.svg'),
+            'icon_path' => (string) env('ANALYTICS_PDF_ICON_PATH', 'images/servlitcys-icon.svg'),
             'serventec_name' => (string) env('ANALYTICS_PDF_SERVENTEC_NAME', 'Serventec Assessoria'),
             'serventec_url' => (string) env('ANALYTICS_PDF_SERVENTEC_URL', 'https://analise.serventecassessoria.com.br/'),
             'serventec_display_url' => (string) env('ANALYTICS_PDF_SERVENTEC_DISPLAY_URL', 'analise.serventecassessoria.com.br'),

@@ -167,6 +167,14 @@ return [
                 'HORIZONTE_MUNICIPAL_ALERTS_TESOURO_BLOQUEADOS_URL',
                 'https://www.tesourotransparente.gov.br/consultas/consulta-aos-entes-bloqueados',
             ),
+            'fnde_vaar' => env(
+                'HORIZONTE_MUNICIPAL_ALERTS_FNDE_VAAR_URL',
+                'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026',
+            ),
+            'pnae_suspensas' => env(
+                'HORIZONTE_MUNICIPAL_ALERTS_PNAE_URL',
+                'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/pnae/consultas/entidades-suspensas-1/entidades-suspensas',
+            ),
         ],
         'sources' => [
             'fnde_vaat_inabilitados' => [
@@ -192,6 +200,36 @@ return [
                     'HORIZONTE_FNDE_VAAT_INABILITADOS_STORAGE_PATH',
                     'horizonte/alerts/fnde_vaat_inabilitados.pdf',
                 ),
+            ],
+
+            /** FNDE — lista de entes não habilitados/não beneficiários à complementação VAAR (CSV). */
+            'fnde_vaar_nao_habilitados' => [
+                'enabled' => filter_var(env('HORIZONTE_FNDE_VAAR_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+                'exercise_year' => max(2007, (int) env('HORIZONTE_FNDE_VAAR_YEAR', (int) date('Y'))),
+                'csv_url' => env(
+                    'HORIZONTE_FNDE_VAAR_CSV_URL',
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2026-1/ListaentesbeneficiariosenaobeneficiariosacomplementacaoVAARdoFundeb2026.csv',
+                ),
+                'csv_storage_path' => env(
+                    'HORIZONTE_FNDE_VAAR_CSV_STORAGE_PATH',
+                    'horizonte/alerts/fnde_vaar_nao_habilitados.csv',
+                ),
+                'detail_page_url' => env('HORIZONTE_FNDE_VAAR_DETAIL_URL', ''),
+            ],
+
+            /** FNDE/PNAE — relação de Entidades Executoras com repasse suspenso (XLSX). */
+            'pnae_entidades_suspensas' => [
+                'enabled' => filter_var(env('HORIZONTE_PNAE_SUSPENSAS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+                'exercise_year' => max(2007, (int) env('HORIZONTE_PNAE_SUSPENSAS_YEAR', (int) date('Y'))),
+                'xlsx_url' => env(
+                    'HORIZONTE_PNAE_SUSPENSAS_XLSX_URL',
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/programas/pnae/consultas/entidades-suspensas-1/ENTIDADESSUSPENSAS_29_12_2025.xlsx',
+                ),
+                'storage_path' => env(
+                    'HORIZONTE_PNAE_SUSPENSAS_STORAGE_PATH',
+                    'horizonte/alerts/pnae_entidades_suspensas.xlsx',
+                ),
+                'detail_page_url' => env('HORIZONTE_PNAE_SUSPENSAS_DETAIL_URL', ''),
             ],
         ],
     ],

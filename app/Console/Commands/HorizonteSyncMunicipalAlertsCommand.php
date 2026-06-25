@@ -10,11 +10,11 @@ class HorizonteSyncMunicipalAlertsCommand extends Command
 {
     protected $signature = 'horizonte:sync-municipal-alerts
                             {--uf= : Restringir merge a uma UF (ex.: BA)}
-                            {--skip-fnde : Ignorar lista FNDE VAAT inabilitados (CSV/PDF)}
+                            {--skip-fnde : Ignorar listas FNDE (VAAT, VAAR e PNAE)}
                             {--dry-run : Simular importação sem gravar cache}
                             {--reset : Limpar cache antes de sincronizar}';
 
-    protected $description = 'Importa alertas oficiais MEC/FNDE (VAAT inabilitados, registo manual) para o modal municipal Horizonte';
+    protected $description = 'Importa alertas oficiais MEC/FNDE (VAAT inabilitados, VAAR não habilitados, PNAE suspensos, registo manual) para o modal municipal Horizonte';
 
     public function handle(HorizonteMunicipalAlertsSyncService $sync): int
     {

@@ -3,6 +3,8 @@
 namespace App\Services\Horizonte;
 
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Support\Horizonte\FndePnaeEntidadesSuspensasParser;
+use App\Support\Horizonte\FndeVaarNaoHabilitadosCsvParser;
 use App\Support\Horizonte\FndeVaatInabilitadosCsvParser;
 use App\Support\Horizonte\FndeVaatInabilitadosParser;
 use App\Support\Horizonte\HorizonteMunicipalAlertsCache;
@@ -59,6 +61,26 @@ final class HorizonteMunicipalAlertsSyncService
             }
             if ($fnde['source'] !== '') {
                 $sources[] = $fnde['source'];
+            }
+
+            $vaar = $this->importFndeVaarNaoHabilitados($options, $warnings);
+            if ($vaar['entries'] !== []) {
+                foreach ($vaar['entries'] as $ibge => $row) {
+                    $index[$ibge] = $this->mergeEntry($index[$ibge] ?? null, $row);
+                }
+            }
+            if ($vaar['source'] !== '') {
+                $sources[] = $vaar['source'];
+            }
+
+            $pnae = $this->importPnaeEntidadesSuspensas($options, $warnings);
+            if ($pnae['entries'] !== []) {
+                foreach ($pnae['entries'] as $ibge => $row) {
+                    $index[$ibge] = $this->mergeEntry($index[$ibge] ?? null, $row);
+                }
+            }
+            if ($pnae['source'] !== '') {
+                $sources[] = $pnae['source'];
             }
         }
 
@@ -280,6 +302,126 @@ final class HorizonteMunicipalAlertsSyncService
         } catch (\Throwable $e) {
             Log::warning('horizonte.municipal_alerts_fnde_csv_failed', ['message' => $e->getMessage()]);
             $warnings[] = __('FNDE VAAT inabilitados (CSV): :msg', ['msg' => $e->getMessage()]);
+
+            return ['entries' => [], 'source' => ''];
+        }
+    }
+
+    /**
+     * Lista FNDE de entes não habilitados à complementação VAAR (CSV oficial Fundeb).
+     *
+     * @param  array<string, mixed>  $options
+     * @param  list<string>  $warnings
+     * @return array{entries: array<string, array<string, mixed>>, source: string}
+     */
+    private function importFndeVaarNaoHabilitados(array $options, array &$warnings): array
+    {
+        $sourceConfig = config('horizonte.municipal_alerts.sources.fnde_vaar_nao_habilitados', []);
+        if (! filter_var($sourceConfig['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return ['entries' => [], 'source' => ''];
+        }
+
+        $csvUrl = trim((string) ($sourceConfig['csv_url'] ?? ''));
+        if ($csvUrl === '' || ! SafeOutboundUrl::isAllowedHttpUrl($csvUrl)) {
+            return ['entries' => [], 'source' => ''];
+        }
+
+        $exerciseYear = max(2007, (int) ($sourceConfig['exercise_year'] ?? (int) date('Y')));
+        $detailUrl = trim((string) ($sourceConfig['detail_page_url'] ?? ''));
+        if ($detailUrl === '') {
+            $detailUrl = (string) config('horizonte.municipal_alerts.detail_urls.fnde_vaar', '');
+        }
+
+        try {
+            $response = $this->fndeHttp()->get($csvUrl);
+            if (! $response->successful()) {
+                $warnings[] = __('FNDE VAAR não habilitados (CSV): HTTP :status.', ['status' => (string) $response->status()]);
+
+                return ['entries' => [], 'source' => ''];
+            }
+
+            $body = $response->body();
+            $storagePath = trim((string) ($sourceConfig['csv_storage_path'] ?? 'horizonte/alerts/fnde_vaar_nao_habilitados.csv'));
+            if ($storagePath !== '' && ! ((bool) ($options['dry_run'] ?? false))) {
+                Storage::disk('local')->put($storagePath, $body);
+            }
+
+            $parsed = FndeVaarNaoHabilitadosCsvParser::parse($body, $exerciseYear, $detailUrl);
+            if ($parsed === []) {
+                $warnings[] = __('FNDE VAAR não habilitados (CSV): nenhum ente com pendência encontrado.');
+
+                return ['entries' => [], 'source' => ''];
+            }
+
+            return [
+                'entries' => $this->normalizeFndeEntries($parsed),
+                'source' => 'fnde_vaar_nao_habilitados',
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.municipal_alerts_vaar_failed', ['message' => $e->getMessage()]);
+            $warnings[] = __('FNDE VAAR não habilitados (CSV): :msg', ['msg' => $e->getMessage()]);
+
+            return ['entries' => [], 'source' => ''];
+        }
+    }
+
+    /**
+     * Relação FNDE de Entidades Executoras com repasse PNAE suspenso (XLSX oficial).
+     *
+     * @param  array<string, mixed>  $options
+     * @param  list<string>  $warnings
+     * @return array{entries: array<string, array<string, mixed>>, source: string}
+     */
+    private function importPnaeEntidadesSuspensas(array $options, array &$warnings): array
+    {
+        $sourceConfig = config('horizonte.municipal_alerts.sources.pnae_entidades_suspensas', []);
+        if (! filter_var($sourceConfig['enabled'] ?? true, FILTER_VALIDATE_BOOLEAN)) {
+            return ['entries' => [], 'source' => ''];
+        }
+
+        $xlsxUrl = trim((string) ($sourceConfig['xlsx_url'] ?? ''));
+        if ($xlsxUrl === '' || ! SafeOutboundUrl::isAllowedHttpUrl($xlsxUrl)) {
+            return ['entries' => [], 'source' => ''];
+        }
+
+        $exerciseYear = max(2007, (int) ($sourceConfig['exercise_year'] ?? (int) date('Y')));
+        $detailUrl = trim((string) ($sourceConfig['detail_page_url'] ?? ''));
+        if ($detailUrl === '') {
+            $detailUrl = (string) config('horizonte.municipal_alerts.detail_urls.pnae_suspensas', '');
+        }
+
+        try {
+            $response = $this->fndeHttp()->get($xlsxUrl);
+            if (! $response->successful()) {
+                $warnings[] = __('PNAE entidades suspensas (XLSX): HTTP :status.', ['status' => (string) $response->status()]);
+
+                return ['entries' => [], 'source' => ''];
+            }
+
+            $binary = $response->body();
+            $storagePath = trim((string) ($sourceConfig['storage_path'] ?? 'horizonte/alerts/pnae_entidades_suspensas.xlsx'));
+            if ($storagePath !== '' && ! ((bool) ($options['dry_run'] ?? false))) {
+                Storage::disk('local')->put($storagePath, $binary);
+            }
+
+            $parsed = FndePnaeEntidadesSuspensasParser::parse($binary, $exerciseYear, $detailUrl);
+            if (($parsed['unmatched'] ?? 0) > 0) {
+                $warnings[] = __('PNAE entidades suspensas: :n ente(s) sem correspondência IBGE (ex.: secretarias estaduais).', [
+                    'n' => (string) $parsed['unmatched'],
+                ]);
+            }
+
+            if (($parsed['entries'] ?? []) === []) {
+                return ['entries' => [], 'source' => ''];
+            }
+
+            return [
+                'entries' => $parsed['entries'],
+                'source' => 'pnae_entidades_suspensas',
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.municipal_alerts_pnae_failed', ['message' => $e->getMessage()]);
+            $warnings[] = __('PNAE entidades suspensas (XLSX): :msg', ['msg' => $e->getMessage()]);
 
             return ['entries' => [], 'source' => ''];
         }

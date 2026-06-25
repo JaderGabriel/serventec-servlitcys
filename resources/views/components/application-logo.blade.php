@@ -1,14 +1,16 @@
 {{--
-    Marca ServLitcys v5 — tríade colorida em 24×24.
-    Azul: dados / consultoria · Teal: educação · Âmbar: Horizonte (sol + arco).
+    Marca ServLitcys — isotipo (símbolo) em 24×24, igual ao favicon.
+    Azul: dados/consultoria · Teal: meta/validação · Âmbar: Horizonte (sol + curva).
 --}}
 <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" preserveAspectRatio="xMidYMid meet" role="img" aria-hidden="true" {{ $attributes }}>
-    <rect x="2" y="14" width="3.25" height="6" rx="0.7" fill="#93c5fd" />
-    <rect x="6.5" y="10.5" width="3.25" height="9.5" rx="0.7" fill="#3b82f6" />
-    <rect x="11" y="7" width="3.25" height="13" rx="0.7" fill="#1d4ed8" />
-    <path fill="#0d9488" d="M11 7h3.25L14.625 4.65 17.25 7Z" />
-    <path d="M14.625 4.65v1.55" stroke="#5eead4" stroke-width="1.15" stroke-linecap="round" />
-    <path d="M3.25 16.25Q12.75 4.5 20.5 8" stroke="#f59e0b" stroke-width="2.05" stroke-linecap="round" />
-    <circle cx="20.5" cy="8" r="2.85" fill="#fbbf24" />
-    <circle cx="20.5" cy="8" r="1.15" fill="#fff7ed" opacity="0.6" />
+    <path d="M2.6 17.8 Q10.5 8 19 8.2" fill="none" stroke="#f59e0b" stroke-width="1.55" stroke-linecap="round" />
+    <rect x="2.5" y="12.8" width="3" height="6.7" rx="0.6" fill="#93c5fd" />
+    <rect x="6.4" y="9.6" width="3" height="9.9" rx="0.6" fill="#3b82f6" />
+    <rect x="10.3" y="6.3" width="3" height="13.2" rx="0.6" fill="#1d4ed8" />
+    <path d="M11.8 6.6 V2.5" stroke="#94a3b8" stroke-width="0.85" stroke-linecap="round" />
+    <path d="M12.2 2.7 H15.3 L14.5 3.75 15.3 4.8 H12.2 Z" fill="#14b8a6" />
+    <path d="M12.85 3.7 l0.5 0.5 1 -1.05" fill="none" stroke="#ffffff" stroke-width="0.62" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M15.5 10.6 H22.5" stroke="#f59e0b" stroke-width="1" stroke-linecap="round" />
+    <circle cx="19" cy="7.9" r="2.4" fill="#fbbf24" />
+    <circle cx="19" cy="7.9" r="0.95" fill="#fff7ed" opacity="0.55" />
 </svg>
