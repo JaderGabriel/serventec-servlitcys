@@ -287,10 +287,13 @@
         width: 100%;
     }
 
-    .serv-horizonte-gis__map .leaflet-pane.leaflet-overlay-pane,
-    .serv-horizonte-gis__map .leaflet-pane.leaflet-horizonteChoropleth-pane {
-        width: 100%;
-        height: 100%;
+    /* Canvas regional invisível por cima do coroplético bloqueava cliques na visão nacional. */
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-overlay-pane canvas {
+        pointer-events: none !important;
+    }
+
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-pane.leaflet-horizonteChoropleth-pane {
+        pointer-events: auto;
     }
 
     .serv-horizonte-gis__map .leaflet-container.leaflet-dragging {

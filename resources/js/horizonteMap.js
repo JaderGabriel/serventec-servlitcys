@@ -807,15 +807,28 @@ const MESO_PALETTE = [
 ];
 
 function ensureHorizonteChoroplethPane(map) {
-    if (!map || map.getPane("horizonteChoropleth")) {
+    if (!map) {
         return;
     }
 
-    map.createPane("horizonteChoropleth");
+    if (!map.getPane("horizonteChoropleth")) {
+        map.createPane("horizonteChoropleth");
+    }
+
     const pane = map.getPane("horizonteChoropleth");
     if (pane) {
-        pane.style.zIndex = "420";
+        pane.style.zIndex = "450";
+        pane.style.pointerEvents = "auto";
     }
+}
+
+function isLeafletRenderer(layer) {
+    return (
+        layer instanceof L.Renderer ||
+        (layer != null &&
+            typeof layer === "object" &&
+            layer._container instanceof HTMLCanvasElement)
+    );
 }
 
 function ibgeCodareaToUf(codarea) {
@@ -3293,12 +3306,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }, 180);
         },
 
+        setChoroplethOverviewUi(active) {
+            const el = this.$refs.map;
+            if (el instanceof HTMLElement) {
+                el.classList.toggle("is-choropleth-overview", active);
+            }
+        },
+
         setOverviewLayerVisibility() {
             if (!this.map) {
                 return;
             }
 
             if (this.isOverviewMode || this.isMesoOverviewMode) {
+                this.setChoroplethOverviewUi(true);
+                if (this.map.hasLayer(this.clusterGroup)) {
+                    this.map.removeLayer(this.clusterGroup);
+                }
                 if (this.map.hasLayer(this.heatLayer)) {
                     this.map.removeLayer(this.heatLayer);
                 }
@@ -3313,6 +3337,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
 
+            this.setChoroplethOverviewUi(false);
             this._lastChoroplethLayer = null;
             if (!this.map.hasLayer(this.layer)) {
                 this.layer.addTo(this.map);
@@ -3322,14 +3347,32 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
-        /** Canvas regional fica por cima dos círculos SVG do overview e bloqueia cliques. */
+        /** Canvas regional cobre o coroplético SVG e bloqueia hover/clique na visão nacional. */
         detachCanvasRendererForOverview() {
-            if (!this.map || !this.canvasRenderer) {
+            if (!this.map) {
                 return;
             }
-            if (this.map.hasLayer(this.canvasRenderer)) {
-                this.map.removeLayer(this.canvasRenderer);
+
+            this.clusterGroup.clearLayers();
+            if (this.map.hasLayer(this.clusterGroup)) {
+                this.map.removeLayer(this.clusterGroup);
             }
+            this.heatLayer.clearLayers();
+            this.layer.clearLayers();
+
+            this.map.eachLayer((layer) => {
+                if (isLeafletRenderer(layer)) {
+                    this.map.removeLayer(layer);
+                }
+            });
+
+            const overlay = this.map.getPane("overlayPane");
+            if (overlay) {
+                overlay.querySelectorAll("canvas").forEach((canvas) => {
+                    canvas.style.pointerEvents = "none";
+                });
+            }
+
             this.canvasRenderer = L.canvas({ padding: 0.5 });
         },
 
@@ -3473,6 +3516,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async renderUfOverview() {
+            this.detachCanvasRendererForOverview();
             this.layer.clearLayers();
             this.heatLayer.clearLayers();
             this.clusterGroup.clearLayers();
@@ -3496,8 +3540,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
 
+            this.map.invalidateSize({ animate: false });
+
             const geoLayer = L.geoJSON(geo, {
                 pane: "horizonteChoropleth",
+                interactive: true,
                 style: (feature) => {
                     const uf = ibgeCodareaToUf(feature?.properties?.codarea);
                     const p = byUf.get(uf);
@@ -3531,6 +3578,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.ufLayer.addTo(this.map);
             }
             this.ufLayer.bringToFront();
+            geoLayer.eachLayer((layer) => {
+                if (typeof layer.bringToFront === "function") {
+                    layer.bringToFront();
+                }
+            });
             this.syncChoroplethMapLayout(geoLayer, { maxZoom: 5, padding: [48, 48] });
         },
 
@@ -3576,6 +3628,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async renderMesoOverview() {
+            this.detachCanvasRendererForOverview();
             this.layer.clearLayers();
             this.heatLayer.clearLayers();
             this.clusterGroup.clearLayers();
@@ -3600,8 +3653,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const mesoColors = buildMesoAdjacencyColorMap(geo);
 
+            this.map.invalidateSize({ animate: false });
+
             const geoLayer = L.geoJSON(geo, {
                 pane: "horizonteChoropleth",
+                interactive: true,
                 style: (feature) => {
                     const mesoId = String(feature?.properties?.codarea ?? "");
                     const p = byMeso.get(mesoId);
@@ -3649,6 +3705,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.ufLayer.addTo(this.map);
             }
             this.ufLayer.bringToFront();
+            geoLayer.eachLayer((layer) => {
+                if (typeof layer.bringToFront === "function") {
+                    layer.bringToFront();
+                }
+            });
             this.syncChoroplethMapLayout(geoLayer, { maxZoom: 8, padding: [40, 40] });
         },
 
