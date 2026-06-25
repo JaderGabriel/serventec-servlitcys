@@ -44,6 +44,24 @@ final class SaebPlanilhaInepConverter
             default => IOFactory::createReaderForFile($spreadsheetPath),
         };
         $reader->setReadDataOnly(true);
+        // Planilhas nacionais têm várias abas (Brasil/Estados/Municípios + erros amostrais).
+        // Carregar só a aba de municípios reduz drasticamente a memória (evita OOM no XLSX 2023).
+        try {
+            $names = $reader->listWorksheetNames($spreadsheetPath);
+            $target = null;
+            foreach ($names as $nm) {
+                $trimmed = trim((string) $nm);
+                if (in_array($trimmed, self::SHEET_MUNICIPIOS_NAMES, true) || stripos($trimmed, 'munic') !== false) {
+                    $target = $nm;
+                    break;
+                }
+            }
+            if ($target !== null) {
+                $reader->setLoadSheetsOnly($target);
+            }
+        } catch (\Throwable) {
+            // Sem lista de abas: segue carregando o ficheiro inteiro.
+        }
         $spreadsheet = $reader->load($spreadsheetPath);
         $sheet = $this->resolveMunicipiosSheet($spreadsheet, $warnings);
         if ($sheet === null) {

@@ -13,10 +13,19 @@ final class SaebPointsDedupe
     public static function fromRaw(array $p): ?string
     {
         $ids = $p['city_ids'] ?? [];
-        if (! is_array($ids) || $ids === []) {
-            return null;
+        $cityId = is_array($ids) && $ids !== [] ? (int) ($ids[0] ?? 0) : 0;
+
+        // Escopo por cidade cadastrada (c<id>) ou, em cobertura nacional, por IBGE (m<ibge>).
+        $scope = '';
+        if ($cityId > 0) {
+            $scope = 'c'.$cityId;
+        } else {
+            $ibge = preg_replace('/\D/', '', (string) ($p['municipio_ibge'] ?? '')) ?? '';
+            if (strlen($ibge) === 7) {
+                $scope = 'm'.$ibge;
+            }
         }
-        $cityId = (int) ($ids[0] ?? 0);
+
         $year = 0;
         if (isset($p['ano'])) {
             $year = (int) $p['ano'];
@@ -28,11 +37,11 @@ final class SaebPointsDedupe
         $st = strtolower((string) ($p['status'] ?? 'final'));
         $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : 0;
 
-        if ($year <= 0 || $disc === '' || $cityId <= 0) {
+        if ($year <= 0 || $disc === '' || $scope === '') {
             return null;
         }
 
-        return $cityId.'|'.$year.'|'.$disc.'|'.$etapa.'|'.$eid.'|'.$st;
+        return $scope.'|'.$year.'|'.$disc.'|'.$etapa.'|'.$eid.'|'.$st;
     }
 
     /**

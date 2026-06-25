@@ -32,29 +32,45 @@ final class SaebHistoricoDatabase
             $pontos = [];
         }
 
-        DB::transaction(function () use ($meta, $pontos, $decoded): void {
+        $cityIdsGlobal = isset($decoded['city_ids']) && is_array($decoded['city_ids']) ? $decoded['city_ids'] : null;
+        $now = now();
+
+        DB::transaction(function () use ($meta, $pontos, $cityIdsGlobal, $now): void {
             SaebIndicatorPoint::query()->delete();
             SaebImportMeta::query()->updateOrCreate(
                 ['id' => self::META_ROW_ID],
                 ['meta' => $meta]
             );
 
+            // Inserção em lotes: cobertura nacional gera dezenas de milhares de linhas;
+            // create() por linha torna a importação inviável em base remota (latência por round-trip).
+            $batch = [];
+            $seen = [];
+
             foreach ($pontos as $raw) {
                 if (! is_array($raw)) {
                     continue;
                 }
                 $dedupe = SaebPointsDedupe::ensureKey($raw);
+                if (isset($seen[$dedupe])) {
+                    continue;
+                }
+                $seen[$dedupe] = true;
+
                 $ibge = $this->ibgeFromRaw($raw);
                 $cityId = $this->firstCityId($raw);
                 $norm = SaebPointsNormalizer::normalizeDecodedPayload([
                     'pontos' => [$raw],
-                    'city_ids' => isset($decoded['city_ids']) && is_array($decoded['city_ids']) ? $decoded['city_ids'] : null,
+                    'city_ids' => $cityIdsGlobal,
                 ]);
                 $n = $norm[0] ?? null;
 
-                SaebIndicatorPoint::create([
+                $escolaIds = is_array($n) ? ($n['escola_ids'] ?? null) : null;
+                $cityIdsCol = is_array($n) ? ($n['city_ids'] ?? null) : null;
+
+                $batch[] = [
                     'dedupe_key' => $dedupe,
-                    'raw_point' => $raw,
+                    'raw_point' => json_encode($raw, JSON_UNESCAPED_UNICODE),
                     'city_id' => $cityId > 0 ? $cityId : null,
                     'ibge_municipio' => $ibge !== '' ? $ibge : '0000000',
                     'ano' => (int) ($raw['ano'] ?? $raw['year'] ?? 0),
@@ -62,16 +78,27 @@ final class SaebHistoricoDatabase
                     'etapa' => isset($raw['etapa']) ? substr((string) $raw['etapa'], 0, 64) : null,
                     'valor' => is_array($n) && isset($n['value']) && is_numeric($n['value'])
                         ? $n['value']
-                        : (isset($raw['valor']) && is_numeric($raw['valor']) ? $raw['valor'] : ($raw['value'] ?? null)),
+                        : (isset($raw['valor']) && is_numeric($raw['valor']) ? $raw['valor'] : (isset($raw['value']) && is_numeric($raw['value']) ? $raw['value'] : null)),
                     'series_key' => is_array($n) ? ($n['series_key'] ?? null) : null,
-                    'is_final' => is_array($n) ? (bool) ($n['is_final'] ?? true) : true,
+                    'is_final' => (int) (is_array($n) ? (bool) ($n['is_final'] ?? true) : true),
                     'status' => isset($raw['status']) ? substr((string) $raw['status'], 0, 32) : null,
                     'escola_id' => is_array($n) ? ($n['escola_id'] ?? null) : null,
-                    'escola_ids' => is_array($n) ? ($n['escola_ids'] ?? null) : null,
-                    'city_ids' => is_array($n) ? ($n['city_ids'] ?? null) : null,
+                    'escola_ids' => $escolaIds !== null ? json_encode($escolaIds, JSON_UNESCAPED_UNICODE) : null,
+                    'city_ids' => $cityIdsCol !== null ? json_encode($cityIdsCol, JSON_UNESCAPED_UNICODE) : null,
                     'fonte' => 'import',
                     'payload' => null,
-                ]);
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                if (count($batch) >= 500) {
+                    SaebIndicatorPoint::query()->insert($batch);
+                    $batch = [];
+                }
+            }
+
+            if ($batch !== []) {
+                SaebIndicatorPoint::query()->insert($batch);
             }
         });
     }

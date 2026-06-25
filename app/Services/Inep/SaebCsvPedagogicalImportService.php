@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Models\City;
+use App\Support\Inep\SaebPointsDedupe;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -97,7 +98,7 @@ final class SaebCsvPedagogicalImportService
         }
 
         $headerLine = array_shift($lines);
-        $headers = str_getcsv((string) $headerLine, $delimiter);
+        $headers = str_getcsv((string) $headerLine, $delimiter, '"', '\\');
         $headers = array_map(static function (string $h): string {
             $h = strtolower(trim($h));
             $h = str_replace([' ', '-', '.'], '_', $h);
@@ -124,7 +125,7 @@ final class SaebCsvPedagogicalImportService
         $inepUnmapped = 0;
 
         foreach ($lines as $n => $line) {
-            $row = str_getcsv($line, $delimiter);
+            $row = str_getcsv($line, $delimiter, '"', '\\');
             if (count($row) < 1) {
                 continue;
             }
@@ -141,15 +142,9 @@ final class SaebCsvPedagogicalImportService
                 continue;
             }
 
+            // Cidade cadastrada (consultoria) é opcional: na cobertura nacional Horizonte
+            // gravamos o ponto ao nível municipal (apenas por IBGE), sem city_ids.
             $city = $ibgeToCity[$ibge] ?? null;
-            if ($city === null) {
-                $avisos[] = __('Linha :n: município IBGE :ibge não corresponde a nenhuma cidade activa com base configurada.', [
-                    'n' => (string) ($n + 2),
-                    'ibge' => $ibge,
-                ]);
-
-                continue;
-            }
 
             $yearStr = $col['year'] !== null ? ($assoc[$headers[$col['year']]] ?? '') : '';
             $year = $this->parseInt($yearStr);
@@ -190,9 +185,11 @@ final class SaebCsvPedagogicalImportService
                 'valor' => (float) $valStr,
                 'status' => $status,
                 'unidade' => $unidade,
-                'city_ids' => [(int) $city->getKey()],
                 'municipio_ibge' => $ibge,
             ];
+            if ($city !== null) {
+                $ponto['city_ids'] = [(int) $city->getKey()];
+            }
 
             $inepVal = null;
             if ($col['inep'] !== null && isset($headers[$col['inep']])) {
@@ -206,7 +203,7 @@ final class SaebCsvPedagogicalImportService
 
             if ($codIe !== null && $codIe > 0) {
                 $ponto['escola_id'] = $codIe;
-            } elseif ($inepVal !== null && $inepVal > 0) {
+            } elseif ($inepVal !== null && $inepVal > 0 && $city !== null) {
                 if ($resolveInep) {
                     $codEscola = $this->inepResolver->resolve($city, $inepVal);
                     if ($codEscola !== null) {
@@ -327,27 +324,8 @@ final class SaebCsvPedagogicalImportService
      */
     private static function staticSignatureFromPonto(array $p): ?string
     {
-        $ids = $p['city_ids'] ?? [];
-        if (! is_array($ids) || $ids === []) {
-            return null;
-        }
-        $cityId = (int) ($ids[0] ?? 0);
-        $year = 0;
-        if (isset($p['ano'])) {
-            $year = (int) $p['ano'];
-        } elseif (isset($p['year'])) {
-            $year = (int) $p['year'];
-        }
-        $disc = strtolower((string) ($p['disciplina'] ?? $p['disc'] ?? ''));
-        $etapa = strtolower((string) ($p['etapa'] ?? ''));
-        $st = strtolower((string) ($p['status'] ?? 'final'));
-        $eid = isset($p['escola_id']) && is_numeric($p['escola_id']) ? (int) $p['escola_id'] : 0;
-
-        if ($year <= 0 || $disc === '' || $cityId <= 0) {
-            return null;
-        }
-
-        return $cityId.'|'.$year.'|'.$disc.'|'.$etapa.'|'.$eid.'|'.$st;
+        // Mesma lógica de SaebPointsDedupe::fromRaw (escopo cidade ou IBGE municipal).
+        return SaebPointsDedupe::fromRaw($p);
     }
 
     /**
