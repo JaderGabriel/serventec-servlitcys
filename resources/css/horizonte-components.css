@@ -290,6 +290,13 @@
     /* Canvas regional invisível por cima do coroplético bloqueava cliques na visão nacional. */
     .serv-horizonte-gis__map.is-choropleth-overview .leaflet-pane canvas {
         pointer-events: none !important;
+        visibility: hidden !important;
+    }
+
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-horizonte-choropleth-pane,
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-horizonte-choropleth-pane svg,
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-horizonte-choropleth-pane path {
+        pointer-events: auto !important;
     }
 
     .serv-horizonte-gis__map.is-choropleth-overview .leaflet-overlay-pane svg {

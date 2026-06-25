@@ -818,6 +818,18 @@ function isLeafletCanvasRenderer(layer) {
     return layer._container instanceof HTMLCanvasElement;
 }
 
+function isLeafletSvgRenderer(layer) {
+    if (layer == null || typeof layer !== "object") {
+        return false;
+    }
+
+    if (typeof L.SVG !== "undefined" && layer instanceof L.SVG) {
+        return true;
+    }
+
+    return layer._container instanceof SVGSVGElement;
+}
+
 function ibgeCodareaToUf(codarea) {
     const digits = String(codarea ?? "").replace(/\D/g, "");
     if (digits.length < 2) {
@@ -1065,7 +1077,7 @@ function mesoOverviewTooltipHtml(p) {
     );
 }
 
-function addCapitalMarkers(layerGroup, points) {
+function addCapitalMarkers(layerGroup, points, pane = "") {
     for (const p of points) {
         const lat = Number(p.capital_lat ?? p.lat);
         const lng = Number(p.capital_lng ?? p.lng);
@@ -1073,7 +1085,7 @@ function addCapitalMarkers(layerGroup, points) {
             continue;
         }
 
-        L.circleMarker([lat, lng], {
+        const markerOpts = {
             radius: 7,
             fillColor: "#ffffff",
             color: "#f59e0b",
@@ -1082,9 +1094,8 @@ function addCapitalMarkers(layerGroup, points) {
             opacity: 1,
             interactive: false,
             className: "serv-horizonte-capital-marker serv-horizonte-capital-marker--halo",
-        }).addTo(layerGroup);
-
-        L.circleMarker([lat, lng], {
+        };
+        const coreOpts = {
             radius: 4,
             fillColor: "#f59e0b",
             color: "#ffffff",
@@ -1093,7 +1104,15 @@ function addCapitalMarkers(layerGroup, points) {
             opacity: 1,
             interactive: false,
             className: "serv-horizonte-capital-marker serv-horizonte-capital-marker--core",
-        }).addTo(layerGroup);
+        };
+        if (pane) {
+            markerOpts.pane = pane;
+            coreOpts.pane = pane;
+        }
+
+        L.circleMarker([lat, lng], markerOpts).addTo(layerGroup);
+
+        L.circleMarker([lat, lng], coreOpts).addTo(layerGroup);
     }
 }
 
@@ -1414,6 +1433,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         currentYear: Number(options.currentYear) || new Date().getFullYear(),
         loadUrl: typeof options.loadUrl === "string" ? options.loadUrl : "",
         mapGeoUrl: typeof options.mapGeoUrl === "string" ? options.mapGeoUrl : "",
+        mapGeoFallbackUrl:
+            typeof options.mapGeoFallbackUrl === "string"
+                ? options.mapGeoFallbackUrl
+                : "",
         _geoCache: {},
         pageLoading: Boolean(options.loadUrl),
         regionalLoading: false,
@@ -1438,6 +1461,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         cmdBarExpanded: false,
         _cmdDockObserver: null,
         _lastChoroplethLayer: null,
+        choroplethLayer: null,
+        _choroplethPaneReady: false,
         _mapUserAdjustedView: false,
         searchQuery: "",
         viewPreset: options.defaultViewFilter?.preset ?? "high_pressure",
@@ -1462,7 +1487,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         _filterSignature: "",
         _tooltipHtmlCache: {},
         canvasRenderer: null,
-        choroplethRenderer: null,
         mapRefreshDebounceMs: 150,
         minSuccessScore: 0,
         minBenefitScore: 0,
@@ -2441,9 +2465,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         animate: false,
                     });
                     this.applyChoroplethPointerPolicy(true);
-                    if (typeof this.choroplethRenderer?._update === "function") {
-                        this.choroplethRenderer._update();
-                    }
+                    this.redrawChoroplethLayer();
                     this.refreshCanvasMarkersAfterZoom();
                     this.repositionFloatingPanels();
 
@@ -3095,7 +3117,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 data.meta?.meso_overview && typeof data.meta.meso_overview === "object"
                     ? data.meta.meso_overview
                     : null;
-            if (mesoMeta?.enabled && this.mesoMapPoints.length >= 2) {
+            if (mesoMeta?.enabled && this.mesoMapPoints.length >= 1) {
                 this.mapMode = "meso_overview";
             } else {
                 this.mesoMapPoints = [];
@@ -3242,7 +3264,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 minZoom: 3,
             });
             this.canvasRenderer = L.canvas({ padding: 0.5 });
-            this.choroplethRenderer = L.svg({ padding: 0.5 });
 
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 maxZoom: 12,
@@ -3250,9 +3271,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
             }).addTo(this.map);
 
-            this.layer = L.layerGroup().addTo(this.map);
-            this.ufLayer = L.layerGroup().addTo(this.map);
-            this.heatLayer = L.layerGroup().addTo(this.map);
+            this.layer = L.layerGroup();
+            this.ufLayer = L.layerGroup();
+            this.heatLayer = L.layerGroup();
             this.clusterGroup = L.markerClusterGroup({
                 chunkedLoading: true,
                 chunkInterval: 100,
@@ -3400,9 +3421,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.isOverviewMode || this.isMesoOverviewMode) {
                     fit();
                     this.applyChoroplethPointerPolicy(true);
-                    if (typeof this.choroplethRenderer?._update === "function") {
-                        this.choroplethRenderer._update();
-                    }
+                    this.redrawChoroplethLayer();
                 }
             }, 180);
         },
@@ -3461,12 +3480,82 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.canvasRenderer;
         },
 
-        ensureChoroplethSvgRenderer() {
-            if (!this.choroplethRenderer) {
-                this.choroplethRenderer = L.svg({ padding: 0.5 });
+        ensureChoroplethPane() {
+            if (!this.map || this._choroplethPaneReady) {
+                return;
             }
 
-            return this.choroplethRenderer;
+            if (!this.map.getPane("horizonteChoropleth")) {
+                this.map.createPane("horizonteChoropleth");
+                const pane = this.map.getPane("horizonteChoropleth");
+                if (pane) {
+                    pane.style.zIndex = "450";
+                }
+            }
+
+            this._choroplethPaneReady = true;
+        },
+
+        clearChoroplethLayer() {
+            if (this.choroplethLayer && this.map) {
+                this.map.removeLayer(this.choroplethLayer);
+            }
+            this.choroplethLayer = null;
+            this._lastChoroplethLayer = null;
+        },
+
+        redrawChoroplethLayer() {
+            if (!this.map || !this.choroplethLayer) {
+                return;
+            }
+
+            this.map.invalidateSize({ animate: false });
+            this.choroplethLayer.eachLayer((layer) => {
+                if (typeof layer.redraw === "function") {
+                    layer.redraw();
+                }
+            });
+        },
+
+        purgeBlockingOverlays(active = true) {
+            if (!this.map) {
+                return;
+            }
+
+            const remove = [];
+            this.map.eachLayer((layer) => {
+                if (isLeafletCanvasRenderer(layer) || isLeafletSvgRenderer(layer)) {
+                    remove.push(layer);
+                }
+            });
+            for (const layer of remove) {
+                this.map.removeLayer(layer);
+            }
+
+            if (this.canvasRenderer) {
+                try {
+                    this.map.removeLayer(this.canvasRenderer);
+                } catch {
+                    /* já removido */
+                }
+                this.canvasRenderer = null;
+            }
+
+            for (const paneName of [
+                "tilePane",
+                "overlayPane",
+                "markerPane",
+                "shadowPane",
+            ]) {
+                const pane = this.map.getPane(paneName);
+                if (!pane) {
+                    continue;
+                }
+                pane.querySelectorAll("canvas").forEach((canvas) => {
+                    canvas.style.pointerEvents = active ? "none" : "";
+                    canvas.style.visibility = active ? "hidden" : "";
+                });
+            }
         },
 
         setOverviewLayerVisibility() {
@@ -3485,17 +3574,19 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.map.hasLayer(this.layer)) {
                     this.map.removeLayer(this.layer);
                 }
-                if (!this.map.hasLayer(this.ufLayer)) {
-                    this.ufLayer.addTo(this.map);
+                if (this.choroplethLayer && !this.map.hasLayer(this.choroplethLayer)) {
+                    this.choroplethLayer.addTo(this.map);
                 }
-                this.ufLayer.bringToFront();
+                if (this.choroplethLayer) {
+                    this.choroplethLayer.bringToFront();
+                }
 
                 return;
             }
 
             this.setChoroplethOverviewUi(false);
-            this._lastChoroplethLayer = null;
-            this.applyChoroplethPointerPolicy(false);
+            this.clearChoroplethLayer();
+            this.purgeBlockingOverlays(false);
             this.ensureRegionalCanvasRenderer();
             if (!this.map.hasLayer(this.layer)) {
                 this.layer.addTo(this.map);
@@ -3517,26 +3608,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.heatLayer.clearLayers();
             this.layer.clearLayers();
-
-            if (this.canvasRenderer) {
-                try {
-                    this.map.removeLayer(this.canvasRenderer);
-                } catch {
-                    /* renderer já removido */
-                }
-                this.canvasRenderer = null;
-            }
-
-            const canvasLayers = [];
-            this.map.eachLayer((layer) => {
-                if (isLeafletCanvasRenderer(layer)) {
-                    canvasLayers.push(layer);
-                }
-            });
-            for (const layer of canvasLayers) {
-                this.map.removeLayer(layer);
-            }
-
+            this.ufLayer.clearLayers();
+            this.clearChoroplethLayer();
+            this.purgeBlockingOverlays(true);
             this.setChoroplethOverviewUi(true);
         },
 
@@ -3617,17 +3691,41 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (this._geoCache[key]) {
                 return this._geoCache[key];
             }
-            if (!this.mapGeoUrl) {
-                throw new Error("mapGeoUrl indisponível");
+
+            const urls = [];
+            if (this.mapGeoUrl) {
+                const apiUrl = new URL(this.mapGeoUrl, window.location.origin);
+                apiUrl.searchParams.set(
+                    "scope",
+                    scope === "meso" ? "meso" : "brazil",
+                );
+                if (scope === "meso" && uf) {
+                    apiUrl.searchParams.set("uf", uf);
+                }
+                urls.push(apiUrl.toString());
+            }
+            if (scope !== "meso" && this.mapGeoFallbackUrl) {
+                urls.push(this.mapGeoFallbackUrl);
             }
 
-            const url = new URL(this.mapGeoUrl, window.location.origin);
-            url.searchParams.set("scope", scope === "meso" ? "meso" : "brazil");
-            if (scope === "meso" && uf) {
-                url.searchParams.set("uf", uf);
+            let lastError = null;
+            for (const url of urls) {
+                try {
+                    const geo = await this.fetchGeoJsonFromUrl(url);
+                    this._geoCache[key] = geo;
+
+                    return geo;
+                } catch (error) {
+                    lastError = error;
+                    console.warn("horizonte geo malha", scope, uf || "brazil", error);
+                }
             }
 
-            const res = await fetch(url.toString(), {
+            throw lastError ?? new Error("malha indisponível");
+        },
+
+        async fetchGeoJsonFromUrl(url) {
+            const res = await fetch(url, {
                 headers: { Accept: "application/json" },
                 credentials: "same-origin",
             });
@@ -3640,12 +3738,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 throw new Error("malha inválida");
             }
 
-            this._geoCache[key] = geo;
-
             return geo;
         },
 
         renderUfOverviewFallback(points) {
+            this.ensureChoroplethPane();
+            const group = L.layerGroup();
             const bounds = [];
 
             for (const p of points) {
@@ -3657,6 +3755,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 bounds.push([lat, lng]);
                 const intensity = Math.max(0.15, Number(p.heat_intensity ?? 0));
                 const circle = L.circleMarker([lat, lng], {
+                    pane: "horizonteChoropleth",
                     radius: 10,
                     fillColor: heatColor(intensity),
                     color: "#ffffff",
@@ -3673,9 +3772,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     L.DomEvent.stopPropagation(e);
                     void this.selectUfFromOverview(p.uf);
                 });
-                circle.addTo(this.ufLayer);
+                group.addLayer(circle);
             }
 
+            this.choroplethLayer = group;
+            group.addTo(this.map);
+            this._lastChoroplethLayer = group;
+            this.applyChoroplethPointerPolicy(true);
             this.fitMapBounds(bounds, 4);
         },
 
@@ -3684,6 +3787,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer.clearLayers();
             this.clusterGroup.clearLayers();
             this.ufLayer.clearLayers();
+            this.clearChoroplethLayer();
             this.markerLayers = [];
 
             const points =
@@ -3696,19 +3800,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch (error) {
                 console.warn("horizonte geo malha (brazil)", error);
                 this.renderUfOverviewFallback(points);
-                if (!this.map.hasLayer(this.ufLayer)) {
-                    this.ufLayer.addTo(this.map);
-                }
-                this.ufLayer.bringToFront();
 
                 return;
             }
 
             await this.whenMapHasSize();
+            this.ensureChoroplethPane();
 
             const geoLayer = L.geoJSON(geo, {
+                pane: "horizonteChoropleth",
                 interactive: true,
-                renderer: this.ensureChoroplethSvgRenderer(),
                 style: (feature) => {
                     const uf = ibgeCodareaToUf(feature?.properties?.codarea);
                     const p = byUf.get(uf);
@@ -3735,13 +3836,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 },
             });
 
-            geoLayer.addTo(this.ufLayer);
-            addCapitalMarkers(this.ufLayer, points);
+            addCapitalMarkers(geoLayer, points, "horizonteChoropleth");
 
-            if (!this.map.hasLayer(this.ufLayer)) {
-                this.ufLayer.addTo(this.map);
-            }
-            this.ufLayer.bringToFront();
+            this.choroplethLayer = geoLayer;
+            geoLayer.addTo(this.map);
+            this._lastChoroplethLayer = geoLayer;
             geoLayer.eachLayer((layer) => {
                 if (typeof layer.bringToFront === "function") {
                     layer.bringToFront();
@@ -3756,6 +3855,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         renderMesoOverviewFallback(points) {
+            this.ensureChoroplethPane();
+            const group = L.layerGroup();
             const bounds = [];
 
             for (const p of points) {
@@ -3769,6 +3870,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const idx = bounds.length - 1;
                 const base = mesoPaletteColor(p.meso_id, idx);
                 const circle = L.circleMarker([lat, lng], {
+                    pane: "horizonteChoropleth",
                     radius: 10,
                     fillColor: base,
                     color: "#ffffff",
@@ -3785,8 +3887,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     L.DomEvent.stopPropagation(e);
                     void this.selectMesoFromOverview(p.meso_id);
                 });
-                circle.addTo(this.ufLayer);
+                group.addLayer(circle);
             }
+
+            this.choroplethLayer = group;
+            group.addTo(this.map);
+            this._lastChoroplethLayer = group;
+            this.applyChoroplethPointerPolicy(true);
 
             if (bounds.length > 0) {
                 this.fitMapBounds(bounds, 6);
@@ -3801,6 +3908,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.heatLayer.clearLayers();
             this.clusterGroup.clearLayers();
             this.ufLayer.clearLayers();
+            this.clearChoroplethLayer();
             this.markerLayers = [];
 
             const points = this.activeMesoMapPoints;
@@ -3812,10 +3920,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch (error) {
                 console.warn("horizonte geo malha (meso)", this.scopeUf, error);
                 this.renderMesoOverviewFallback(points);
-                if (!this.map.hasLayer(this.ufLayer)) {
-                    this.ufLayer.addTo(this.map);
-                }
-                this.ufLayer.bringToFront();
 
                 return;
             }
@@ -3823,10 +3927,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const mesoColors = buildMesoAdjacencyColorMap(geo);
 
             await this.whenMapHasSize();
+            this.ensureChoroplethPane();
 
             const geoLayer = L.geoJSON(geo, {
+                pane: "horizonteChoropleth",
                 interactive: true,
-                renderer: this.ensureChoroplethSvgRenderer(),
                 style: (feature) => {
                     const mesoId = String(feature?.properties?.codarea ?? "");
                     const p = byMeso.get(mesoId);
@@ -3866,12 +3971,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 },
             });
 
-            geoLayer.addTo(this.ufLayer);
-
-            if (!this.map.hasLayer(this.ufLayer)) {
-                this.ufLayer.addTo(this.map);
-            }
-            this.ufLayer.bringToFront();
+            this.choroplethLayer = geoLayer;
+            geoLayer.addTo(this.map);
+            this._lastChoroplethLayer = geoLayer;
             geoLayer.eachLayer((layer) => {
                 if (typeof layer.bringToFront === "function") {
                     layer.bringToFront();
@@ -4094,7 +4196,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async backToMesoOverview() {
-            if (!this.scopeUf || this.mesoMapPoints.length < 2) {
+            if (!this.scopeUf || this.mesoMapPoints.length < 1) {
                 await this.backToOverview();
                 return;
             }

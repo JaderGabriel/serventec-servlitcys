@@ -8,6 +8,7 @@
     $heatLegend = \App\Support\Horizonte\HorizonteMapPresenter::heatLegendItems();
     $mapDataUrl = $mapDataUrl ?? route('dashboard.horizonte.map-data');
     $mapGeoUrl = $mapGeoUrl ?? route('dashboard.horizonte.map-geo');
+    $mapGeoFallbackUrl = asset('geo/brazil-uf.json');
     $docUrl = route(auth()->user()?->isAdmin() ? 'admin.documentation.show' : 'documentation.show', ['doc' => 'docs/HORIZONTE.md']);
     $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
     $canManageSge = (bool) ($canManageSge ?? false);
@@ -54,6 +55,7 @@
         x-data="horizonteMap([], @js($colors), @js([
             'loadUrl' => $mapDataUrl,
             'mapGeoUrl' => $mapGeoUrl,
+            'mapGeoFallbackUrl' => $mapGeoFallbackUrl,
             'refYear' => $refYear,
             'currentYear' => $currentYear,
             'legend' => $legend,
@@ -305,7 +307,7 @@
                             <button
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
-                                x-show="mapFullscreen && isRegionalMode && mesoMapPoints.length >= 2"
+                                x-show="mapFullscreen && isRegionalMode && mesoMapPoints.length >= 1"
                                 x-cloak
                                 @click="backToMesoOverview()"
                                 :disabled="pageLoading || regionalLoading"

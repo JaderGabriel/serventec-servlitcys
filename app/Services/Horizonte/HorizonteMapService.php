@@ -181,9 +181,8 @@ final class HorizonteMapService
         $full['sge_summary'] = HorizonteManagerInsights::sgeSummary($regional);
         $full['top_prospects'] = array_slice($topProspects, 0, 25);
         $full['uf_map_points'] = [];
-        $mesoThreshold = max(40, (int) config('horizonte.map_display.meso_overview_threshold', 60));
         $mesoPoints = $this->buildMesoMapPoints($regional);
-        $useMesoOverview = count($regional) >= $mesoThreshold && count($mesoPoints) >= 2;
+        $useMesoOverview = count($mesoPoints) >= 1;
         $full['meso_map_points'] = $mesoPoints;
         $full['meta'] = array_merge(
             is_array($full['meta'] ?? null) ? $full['meta'] : [],
@@ -191,10 +190,10 @@ final class HorizonteMapService
                 'regional_display_policy' => HorizonteMapPresenter::regionalDisplayPolicy(count($regional)),
                 'meso_overview' => [
                     'enabled' => $useMesoOverview,
-                    'threshold' => $mesoThreshold,
+                    'threshold' => 0,
                     'meso_count' => count($mesoPoints),
                     'reason' => $useMesoOverview
-                        ? __('UF com :total municípios — escolha uma mesorregião para ver todos os pontos com filtros e qualidade.', [
+                        ? __('Escolha uma mesorregião IBGE para ver os municípios com filtros e qualidade (:total no estado).', [
                             'total' => number_format(count($regional), 0, ',', '.'),
                         ])
                         : null,

@@ -34,7 +34,7 @@
         <button
             type="button"
             class="serv-horizonte-map-float-btn serv-horizonte-map-fullscreen-nav__btn"
-            x-show="isRegionalMode && mesoMapPoints.length >= 2"
+            x-show="isRegionalMode && mesoMapPoints.length >= 1"
             x-cloak
             @click="backToMesoOverview()"
             :disabled="pageLoading || regionalLoading"

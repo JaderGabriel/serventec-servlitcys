@@ -35,7 +35,7 @@
                 </span>
                 <button
                     type="button"
-                    x-show="isRegionalMode && mesoMapPoints.length >= 2"
+                    x-show="isRegionalMode && mesoMapPoints.length >= 1"
                     x-cloak
                     class="serv-btn-secondary text-xs shrink-0"
                     @click="backToMesoOverview()"
