@@ -2,9 +2,9 @@
 
 **Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
 
-> **Índice:** [README.md](README.md) · **Analytics:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md)
+> **Índice:** [README.md](README.md) · **Analytics:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Escala:** [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md)
 
-Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis quando disponível no servidor.
+Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis quando disponível no servidor. Para **pool de conexões, balanceamento de carga e alto volume de dados/requisições/API**, ver [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md).
 
 ## Painel Analytics — Diagnóstico e Finanças
 

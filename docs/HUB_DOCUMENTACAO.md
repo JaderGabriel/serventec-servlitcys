@@ -156,6 +156,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 | Implantação produção | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) |
 | Variáveis ambiente | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) |
 | Comandos Artisan | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
+| Performance e Redis | [PERFORMANCE.md](PERFORMANCE.md) |
+| Escalabilidade e infraestrutura | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) |
 | Segurança | [SEGURANCA.md](SEGURANCA.md) |
 
 ---

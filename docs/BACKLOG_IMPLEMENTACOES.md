@@ -29,6 +29,10 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 | INF-02 | P2 | Monitorização de erros (Sentry ou similar) em cloud | Pendente | Idem |
 | INF-03 | P2 | Política de backup/recuperação documentada com infra | Pendente | Idem |
 | INF-04 | P1 | CI com `pdo_sqlite` ou MySQL de testes dedicado | Em andamento | [DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md](DOCUMENTO_EXECUTIVO_REVISAO_PROJETO.md) |
+| INF-05 | **P1** | Tuning InnoDB (buffer pool) + isolar telemetria Pulse (Redis) — raiz da contenção/lock wait | Pendente | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) §3, §7 etapa 1 |
+| INF-06 | P2 | App stateless (Redis sessão/cache/fila) + PDO persistente na base principal | Pendente | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) §6, §7 etapas 2–3 |
+| INF-07 | P2 | Pool HTTP de saída (`Http::pool` + backoff) e filas escaláveis (Horizon) | Pendente | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) §5.3, §7 etapas 4–5 |
+| INF-08 | P3 | Pooling externo (ProxySQL/PgBouncer), balanceamento HTTP, réplicas de leitura, Octane | Pendente | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) §2, §4, §7 etapas 6–9 |
 
 ---
 

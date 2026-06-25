@@ -173,6 +173,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) | Deploy, filas, cron |
 | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) | CLI (incl. repasses §4.1) |
 | [PERFORMANCE.md](PERFORMANCE.md) | Redis e performance |
+| [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) | Pool de conexões, balanceamento, alto volume |
 | [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md) | Estratégia de testes |
 
 ### 7. Entregas escalonadas
