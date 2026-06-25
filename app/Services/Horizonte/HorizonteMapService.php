@@ -141,7 +141,8 @@ final class HorizonteMapService
     {
         $markers = is_array($full['markers'] ?? null) ? $full['markers'] : [];
         $full['mode'] = 'overview';
-        $full['uf_map_points'] = $this->buildUfMapPoints($markers);
+        $ufPoints = $this->buildUfMapPoints($markers);
+        $full['uf_map_points'] = $ufPoints !== [] ? $ufPoints : $this->buildDefaultUfMapPoints();
         $full['markers'] = [];
 
         return $full;
@@ -586,6 +587,39 @@ final class HorizonteMapService
             ?: ($b['high_prospect'] <=> $a['high_prospect'])
             ?: ($b['avg_benefit'] <=> $a['avg_benefit'])
             ?: strcmp((string) $a['uf'], (string) $b['uf']));
+
+        return $points;
+    }
+
+    /**
+     * Pontos por UF só com capitais — garante mapa nacional clicável mesmo sem dados agregados.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function buildDefaultUfMapPoints(): array
+    {
+        $points = [];
+        foreach (IbgeMunicipalityCatalog::brazilianUfs() as $uf) {
+            [$capitalLat, $capitalLng] = BrazilStateCapitals::latLng($uf);
+            $points[] = [
+                'uf' => $uf,
+                'uf_name' => BrazilUfNames::name($uf),
+                'lat' => $capitalLat,
+                'lng' => $capitalLng,
+                'capital_lat' => $capitalLat,
+                'capital_lng' => $capitalLng,
+                'total' => 0,
+                'prospect_count' => 0,
+                'high_prospect' => 0,
+                'high_pressure' => 0,
+                'without_consultoria' => 0,
+                'avg_success' => 0,
+                'avg_benefit' => 0,
+                'heat_intensity' => 0.08,
+            ];
+        }
+
+        usort($points, static fn (array $a, array $b): int => strcmp((string) $a['uf'], (string) $b['uf']));
 
         return $points;
     }

@@ -292,7 +292,7 @@
         pointer-events: none !important;
     }
 
-    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-pane.leaflet-horizonteChoropleth-pane {
+    .serv-horizonte-gis__map.is-choropleth-overview .leaflet-overlay-pane svg {
         pointer-events: auto;
     }
 
