@@ -515,7 +515,57 @@ function financeTimelineConsultoriaNote(m, refYear) {
     );
 }
 
-function muniDimensionsHtml(m, transferAno) {
+function muniDimensionMetaByKey(methodology) {
+    const map = new Map();
+    for (const dim of methodology?.dimensions ?? []) {
+        if (dim?.key) {
+            map.set(String(dim.key), dim);
+        }
+    }
+
+    return map;
+}
+
+function muniDimensionsGlossaryHtml(dims, methodology) {
+    const metaByKey = muniDimensionMetaByKey(methodology);
+    const items = [];
+
+    for (const d of dims) {
+        const meta = metaByKey.get(d.key);
+        if (!meta) {
+            continue;
+        }
+        const label = String(meta.label ?? d.label);
+        const weight = meta.weight ? `<span class="serv-horizonte-muni-tooltip__dim-glossary-weight">${escapeHtml(String(meta.weight))}</span>` : "";
+        const formula = meta.formula ? String(meta.formula) : "";
+        const detects = meta.detects ? String(meta.detects) : "";
+
+        items.push(
+            `<div class="serv-horizonte-muni-tooltip__dim-glossary-item">` +
+                `<p class="serv-horizonte-muni-tooltip__dim-glossary-term">${escapeHtml(label)}${weight}</p>` +
+                (formula
+                    ? `<p class="serv-horizonte-muni-tooltip__dim-glossary-desc">${escapeHtml(formula)}</p>`
+                    : "") +
+                (detects
+                    ? `<p class="serv-horizonte-muni-tooltip__dim-glossary-detects"><span>${escapeHtml("Detecta:")}</span> ${escapeHtml(detects)}</p>`
+                    : "") +
+                `</div>`,
+        );
+    }
+
+    if (items.length === 0) {
+        return "";
+    }
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__dims-glossary">` +
+            `<p class="serv-horizonte-muni-tooltip__dims-glossary-title">${escapeHtml("O que significa cada dimensão")}</p>` +
+            `<div class="serv-horizonte-muni-tooltip__dims-glossary-grid">${items.join("")}</div>` +
+        `</div>`
+    );
+}
+
+function muniDimensionsHtml(m, transferAno, methodology = null) {
     const dims = [
         { key: "financial_pressure", label: "Pressão FUNDEB" },
         { key: "pedagogical_gap", label: "Pedagógica" },
@@ -548,6 +598,7 @@ function muniDimensionsHtml(m, transferAno) {
         );
     }
     rows.push(`</div>`);
+    rows.push(muniDimensionsGlossaryHtml(dims, methodology));
 
     return rows.join("");
 }
@@ -3956,7 +4007,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--dims">');
-            lines.push(muniDimensionsHtml(m, transferAno));
+            lines.push(muniDimensionsHtml(m, transferAno, this.methodology));
             lines.push("</div>");
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--propensity">');
