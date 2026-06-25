@@ -657,6 +657,92 @@ function muniMetaHtml(m) {
     return `<div class="serv-horizonte-muni-tooltip__meta-row">${line}${link}</div>`;
 }
 
+// Base de conhecimento por tipo de pendência MEC/FNDE: explicação leiga + como resolver.
+const HORIZONTE_ALERT_KNOWLEDGE = {
+    vaat_inabilitado: {
+        lay: "A rede municipal ficou impedida de receber a complementação VAAT do Fundeb (reforço federal por aluno) por falhas de transparência ou prestação de contas.",
+        fix: "Regularizar o envio das informações ao SIOPE e a Matriz de Saldos Contábeis (MSC) ao Siconfi, dentro dos prazos do FNDE. A habilitação é reavaliada após a correção.",
+    },
+    vaar_nao_habilitado: {
+        lay: "O município não foi habilitado à complementação VAAR do Fundeb (parcela paga por desempenho) porque não cumpriu as condicionalidades de melhoria da gestão exigidas.",
+        fix: "Implementar e comprovar as condicionalidades do art. 14 da Lei 14.113/2020 (instrumentos de gestão, avaliação e regime de colaboração) e prestar as informações ao FNDE. A lista de habilitados é reeditada no exercício seguinte.",
+    },
+    pnae_suspenso: {
+        lay: "O repasse do PNAE (verba federal da merenda escolar) está suspenso para o município, geralmente por pendência na prestação de contas.",
+        fix: "Apresentar/regularizar a prestação de contas no SiGPC – Contas Online do FNDE e sanar as pendências apontadas pelo CAE/FNDE. Aprovada a análise, o repasse é reativado.",
+    },
+};
+
+const HORIZONTE_ALERT_SEVERITY = {
+    danger: { label: "Crítico", cls: "is-danger" },
+    warning: { label: "Atenção", cls: "is-warning" },
+    info: { label: "Informativo", cls: "is-info" },
+};
+
+function muniAlertsHtml(m) {
+    const alerts = m && typeof m.muni_alerts === "object" ? m.muni_alerts : null;
+    if (!alerts || alerts.status !== "found") {
+        return "";
+    }
+    const items = Array.isArray(alerts.items) ? alerts.items : [];
+    if (items.length === 0) {
+        return "";
+    }
+
+    const order = { danger: 0, warning: 1, info: 2 };
+    const sorted = [...items].sort(
+        (a, b) =>
+            (order[a?.severity] ?? 9) - (order[b?.severity] ?? 9),
+    );
+
+    const cards = sorted
+        .map((item) => {
+            const severity = HORIZONTE_ALERT_SEVERITY[item?.severity] || HORIZONTE_ALERT_SEVERITY.warning;
+            const knowledge = HORIZONTE_ALERT_KNOWLEDGE[item?.kind] || null;
+            const title = escapeHtml(String(item?.title || "Pendência MEC/FNDE"));
+            const year = item?.exercise_year ? `<span class="serv-horizonte-muni-tooltip__alert-year">${escapeHtml(String(item.exercise_year))}</span>` : "";
+            const detail = String(item?.detail || "").trim();
+            const reason = detail !== ""
+                ? `<p class="serv-horizonte-muni-tooltip__alert-line"><span class="serv-horizonte-muni-tooltip__alert-tag">Motivo oficial</span> ${escapeHtml(detail)}</p>`
+                : "";
+            const lay = knowledge?.lay
+                ? `<p class="serv-horizonte-muni-tooltip__alert-line"><span class="serv-horizonte-muni-tooltip__alert-tag">O que significa</span> ${escapeHtml(knowledge.lay)}</p>`
+                : "";
+            const fix = knowledge?.fix
+                ? `<p class="serv-horizonte-muni-tooltip__alert-line serv-horizonte-muni-tooltip__alert-line--fix"><span class="serv-horizonte-muni-tooltip__alert-tag">Como resolver</span> ${escapeHtml(knowledge.fix)}</p>`
+                : "";
+            const link = item?.detail_url
+                ? `<a href="${escapeHtml(String(item.detail_url))}" target="_blank" rel="noopener noreferrer" class="serv-horizonte-muni-tooltip__alert-source">Fonte oficial ↗</a>`
+                : "";
+
+            return (
+                `<li class="serv-horizonte-muni-tooltip__alert-item ${severity.cls}">` +
+                `<div class="serv-horizonte-muni-tooltip__alert-head">` +
+                `<span class="serv-horizonte-muni-tooltip__alert-title">${title}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__alert-sev">${escapeHtml(severity.label)}</span>` +
+                year +
+                `</div>` +
+                reason +
+                lay +
+                fix +
+                link +
+                `</li>`
+            );
+        })
+        .join("");
+
+    const heading = items.length > 1
+        ? `${escapeHtml("Pendências MEC/FNDE")} <span class="serv-horizonte-muni-tooltip__alert-count">${items.length}</span>`
+        : escapeHtml("Pendência MEC/FNDE");
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__alerts">` +
+        `<h4 class="serv-horizonte-muni-tooltip__alerts-title">${heading}</h4>` +
+        `<ul class="serv-horizonte-muni-tooltip__alerts-list">${cards}</ul>` +
+        `</section>`
+    );
+}
+
 function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
     const sideClass =
         side === "current"
@@ -1464,6 +1550,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         choroplethLayer: null,
         _choroplethPaneReady: false,
         _mapUserAdjustedView: false,
+        _preserveViewOnNextRender: false,
         searchQuery: "",
         viewPreset: options.defaultViewFilter?.preset ?? "high_pressure",
         filterTier: options.defaultViewFilter?.tier ?? "prospects",
@@ -2948,11 +3035,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async applyInitialNavigation() {
             this.applyDefaultDecisionView();
-            const queryUf = String(options.initialUf ?? "").trim().toUpperCase();
-            const policyUf = String(this.displayPolicy?.initial_uf ?? "")
-                .trim()
-                .toUpperCase();
-            const uf = queryUf || policyUf;
+            // Só faz deep-link automático quando há ?uf=XX explícito na URL.
+            // A sugestão do backend (displayPolicy.initial_uf) NÃO deve navegar:
+            // a vista inicial é sempre o mapa do Brasil (overview nacional).
+            const uf = String(options.initialUf ?? "").trim().toUpperCase();
             if (uf !== "" && !this.pageError) {
                 await this.selectUf(uf, false);
             }
@@ -3125,6 +3211,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             this._mapUserAdjustedView = false;
+            this._preserveViewOnNextRender = false;
             this.closeUfSummary();
             this.scopeMeso = "";
             this.mesoMapPoints = Array.isArray(data.meso_map_points) ? data.meso_map_points : [];
@@ -3340,6 +3427,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.recomputeFilteredMarkers();
                 this.showAllOnMap = false;
                 this.renderCapDismissed = false;
+                // Refinar filtros (ex.: "Só coord. IBGE") não deve reposicionar a câmera:
+                // re-enquadrar provoca zoom inesperado e desalinha o hit-area do canvas
+                // (marcadores aparecem mas ficam "não clicáveis"). Preserva a vista atual.
+                // Só vale para a vista de marcadores; em coroplético (UF/meso) não há marcador.
+                if (this.isRegionalMode) {
+                    this._preserveViewOnNextRender = true;
+                }
                 void this.scheduleMapRefresh();
             };
 
@@ -3652,6 +3746,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             try {
                 if (this.isOverviewMode) {
+                    this._preserveViewOnNextRender = false;
                     if (this.map.hasLayer(this.clusterGroup)) {
                         this.map.removeLayer(this.clusterGroup);
                     }
@@ -3659,6 +3754,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.setOverviewLayerVisibility();
                     await this.renderUfOverview();
                 } else if (this.isMesoOverviewMode) {
+                    this._preserveViewOnNextRender = false;
                     if (this.map.hasLayer(this.clusterGroup)) {
                         this.map.removeLayer(this.clusterGroup);
                     }
@@ -4039,10 +4135,19 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             }
 
-            const bounds = list
-                .map((m) => [Number(m.lat), Number(m.lng)])
-                .filter(([la, ln]) => isValidCoord(la, ln));
-            this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
+            // Garante que o canvas dos marcadores receba cliques (a política de
+            // pointer-events pode ter ficado desativada vinda de uma vista coroplética).
+            this.applyChoroplethPointerPolicy(false);
+
+            if (this._preserveViewOnNextRender) {
+                this._preserveViewOnNextRender = false;
+                this.refreshCanvasMarkersAfterZoom();
+            } else {
+                const bounds = list
+                    .map((m) => [Number(m.lat), Number(m.lng)])
+                    .filter(([la, ln]) => isValidCoord(la, ln));
+                this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
+            }
         },
 
         async renderHeatLayer() {
@@ -4096,7 +4201,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             }
 
-            this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
+            this.applyChoroplethPointerPolicy(false);
+
+            if (this._preserveViewOnNextRender) {
+                this._preserveViewOnNextRender = false;
+                this.refreshCanvasMarkersAfterZoom();
+            } else {
+                this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
+            }
         },
 
         fitMapBounds(bounds, fallbackZoom = 4, force = false) {
@@ -4189,6 +4301,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.showAllOnMap = false;
             this.renderCapDismissed = false;
             this._mapUserAdjustedView = false;
+            this._preserveViewOnNextRender = false;
             const mesoPoint = this.mesoMapPoints.find(
                 (p) => String(p.meso_id) === scoped,
             );
@@ -4669,6 +4782,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 lines.push(
                     `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--info">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,
                 );
+            }
+
+            const alertsBlock = muniAlertsHtml(m);
+            if (alertsBlock) {
+                lines.push(alertsBlock);
             }
 
             const transferAno =

@@ -356,6 +356,202 @@
     color: rgb(226 232 240);
 }
 
+/* Lista de pendências MEC/FNDE no corpo do modal */
+.serv-horizonte-muni-tooltip__alerts {
+    border-radius: 0.625rem;
+    border: 1px solid rgb(254 215 170 / 0.9);
+    background: rgb(255 247 237 / 0.7);
+    padding: 0.5rem 0.625rem;
+}
+
+.dark .serv-horizonte-muni-tooltip__alerts {
+    border-color: rgb(120 53 15 / 0.55);
+    background: rgb(67 20 7 / 0.28);
+}
+
+.serv-horizonte-muni-tooltip__alerts-title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin: 0 0 0.375rem;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: rgb(154 52 18);
+}
+
+.dark .serv-horizonte-muni-tooltip__alerts-title {
+    color: rgb(253 186 116);
+}
+
+.serv-horizonte-muni-tooltip__alert-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background: rgb(234 88 12);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.serv-horizonte-muni-tooltip__alerts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.serv-horizonte-muni-tooltip__alert-item {
+    border-radius: 0.5rem;
+    border: 1px solid rgb(226 232 240);
+    border-left-width: 3px;
+    background: rgb(255 255 255 / 0.85);
+    padding: 0.4rem 0.55rem;
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-item {
+    border-color: rgb(51 65 85);
+    background: rgb(15 23 42 / 0.55);
+}
+
+.serv-horizonte-muni-tooltip__alert-item.is-danger {
+    border-left-color: rgb(220 38 38);
+}
+
+.serv-horizonte-muni-tooltip__alert-item.is-warning {
+    border-left-color: rgb(234 88 12);
+}
+
+.serv-horizonte-muni-tooltip__alert-item.is-info {
+    border-left-color: rgb(2 132 199);
+}
+
+.serv-horizonte-muni-tooltip__alert-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.25rem;
+}
+
+.serv-horizonte-muni-tooltip__alert-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgb(30 41 59);
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-title {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-muni-tooltip__alert-sev {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.05rem 0.4rem;
+    border-radius: 9999px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.is-danger .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(254 226 226);
+    color: rgb(153 27 27);
+}
+
+.is-warning .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(255 237 213);
+    color: rgb(154 52 18);
+}
+
+.is-info .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(224 242 254);
+    color: rgb(7 89 133);
+}
+
+.dark .is-danger .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(127 29 29 / 0.5);
+    color: rgb(254 202 202);
+}
+
+.dark .is-warning .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(124 45 18 / 0.5);
+    color: rgb(254 215 170);
+}
+
+.dark .is-info .serv-horizonte-muni-tooltip__alert-sev {
+    background: rgb(12 74 110 / 0.5);
+    color: rgb(186 230 253);
+}
+
+.serv-horizonte-muni-tooltip__alert-year {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 600;
+    color: rgb(100 116 139);
+}
+
+.serv-horizonte-muni-tooltip__alert-line {
+    margin: 0.2rem 0 0;
+    font-size: 11px;
+    line-height: 1.45;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-line {
+    color: rgb(203 213 225);
+}
+
+.serv-horizonte-muni-tooltip__alert-line--fix {
+    color: rgb(22 101 52);
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-line--fix {
+    color: rgb(134 239 172);
+}
+
+.serv-horizonte-muni-tooltip__alert-tag {
+    font-weight: 700;
+    color: rgb(71 85 105);
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-tag {
+    color: rgb(148 163 184);
+}
+
+.serv-horizonte-muni-tooltip__alert-line--fix .serv-horizonte-muni-tooltip__alert-tag {
+    color: rgb(21 128 61);
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-line--fix .serv-horizonte-muni-tooltip__alert-tag {
+    color: rgb(74 222 128);
+}
+
+.serv-horizonte-muni-tooltip__alert-source {
+    display: inline-block;
+    margin-top: 0.3rem;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgb(13 110 253);
+    text-decoration: none;
+}
+
+.serv-horizonte-muni-tooltip__alert-source:hover {
+    text-decoration: underline;
+}
+
+.dark .serv-horizonte-muni-tooltip__alert-source {
+    color: rgb(125 211 252);
+}
+
 .serv-horizonte-muni-tooltip__fundeb {
     border-radius: 0.75rem;
     border: 1px solid rgb(254 205 211 / 0.8);

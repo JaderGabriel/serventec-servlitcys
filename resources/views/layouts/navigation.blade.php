@@ -20,7 +20,16 @@
                         title="{{ Auth::user()->canViewAdminDashboard() ? __('Início — :app', ['app' => config('app.name')]) : config('app.name') }}"
                         aria-label="{{ Auth::user()->canViewAdminDashboard() ? __('Início') : config('app.name') }}"
                     >
-                        <x-application-logo class="block h-9 w-9 shrink-0 transition group-hover:scale-[1.03]" />
+                        <img
+                            src="{{ asset('images/servlitcys-logo-export.svg') }}"
+                            alt="{{ config('app.name') }}"
+                            class="block dark:hidden h-9 w-auto shrink-0 transition group-hover:scale-[1.03]"
+                        />
+                        <img
+                            src="{{ asset('images/servlitcys-logo-export-dark.svg') }}"
+                            alt="{{ config('app.name') }}"
+                            class="hidden dark:block h-9 w-auto shrink-0 transition group-hover:scale-[1.03]"
+                        />
                     </a>
                 </div>
 
