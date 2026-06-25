@@ -1,6 +1,6 @@
 # Power BI — estudo de integração no servlitcys
 
-**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · **Arquitectura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
 

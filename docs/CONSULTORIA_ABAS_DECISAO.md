@@ -1,6 +1,6 @@
 # Consultoria municipal — decisão sobre abas, menus e dados
 
-**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
 
 > **Índice:** [README.md](README.md) · **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 

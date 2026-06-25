@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **6.0.0** · release `20260603h-Odin` · **Ramo:** `main` · **Última revisão:** 03/06/2026
+**Versão em produção:** **6.1.0** · release `20260624-Horizonte` · **Ramo:** `main` · **Última revisão:** 24/06/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (6.0.0)
+## Mapa de capacidades (6.1.0)
 
 ```mermaid
 flowchart TB

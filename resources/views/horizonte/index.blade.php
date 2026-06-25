@@ -126,7 +126,7 @@
                                 type="button"
                                 class="serv-horizonte-map-toolbar-btn"
                                 :class="ufSummaryOpen ? 'is-active' : ''"
-                                x-show="isRegionalMode && scopeUf"
+                                x-show="isUfScopedMode && scopeUf"
                                 x-cloak
                                 @click="toggleUfSummaryPanel()"
                                 :title="mapControlLabelUfSummary()"
@@ -327,7 +327,7 @@
                                 type="button"
                                 class="serv-horizonte-map-float-btn"
                                 :class="ufSummaryOpen ? 'is-active' : ''"
-                                x-show="isRegionalMode && scopeUf"
+                                x-show="isUfScopedMode && scopeUf"
                                 @click="toggleUfSummaryPanel()"
                                 :title="mapControlLabelUfSummary()"
                                 :aria-expanded="ufSummaryOpen"

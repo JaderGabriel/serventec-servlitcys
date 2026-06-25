@@ -73,6 +73,10 @@ final class HorizonteMapPresenter
                     'label' => __('Tesouro Transparente (CKAN)'),
                     'feeds' => __('Repasses federais agregados — dependência de transferências (FUNDEB + educação).'),
                 ],
+                [
+                    'label' => __('Alertas MEC/FNDE (VAAT)'),
+                    'feeds' => __('Lista oficial FNDE de municípios inabilitados ao VAAT — chip no modal municipal (importação periódica).'),
+                ],
             ],
             'scenarios_title' => __('Cenários no mapa'),
             'scenarios_intro' => __('Cada município recebe um tier (cor) e scores 0–100. Prospectos usam limiares configuráveis; clientes e catálogo têm regras próprias.'),
@@ -137,6 +141,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('financial_pressure'),
                     'formula' => __('Complementação FUNDEB ÷ receita vs mediana nacional; fallback por complementação / matrícula.'),
                     'detects' => __('Complementação total FUNDEB, receita municipal e razão compl./receita da amostra actual.'),
+                    'indicates' => __('Quanto maior, mais o município depende de complementação FUNDEB (VAAR/VAAT) face à receita; quanto menor, menor pressão financeira relativa.'),
                     'scenarios' => [
                         __('Alto (≥70): complementação representa parcela elevada da receita vs mediana — município depende do VAAR/VAAT.'),
                         __('Médio: compl./matrícula elevada sem receita declarada.'),
@@ -149,6 +154,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('pedagogical_gap'),
                     'formula' => __('SAEB LP/MAT abaixo do percentil 25 da amostra (P25 calculado na geração).'),
                     'detects' => __('Média LP+MAT do município comparada ao P25 de todos os municípios com SAEB na geração.'),
+                    'indicates' => __('Quanto maior, pior o desempenho SAEB relativo à amostra (mais déficit pedagógico); quanto menor, proficiência mais próxima ou acima do P25.'),
                     'scenarios' => [
                         __('Alto: proficiência abaixo do P25 — déficit relativo à amostra nacional/regional carregada.'),
                         __('Médio (35): sem SAEB, assume lacuna moderada.'),
@@ -161,6 +167,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('scale'),
                     'formula' => __('log₁₀(matriculas Censo); fallback população 4–17 SIDRA × 0,85.'),
                     'detects' => __('Matrículas Censo INEP; se ausentes, população escolar estimada via SIDRA.'),
+                    'indicates' => __('Quanto maior, mais matrículas ou população escolar — rede maior e maior potencial de impacto; quanto menor, município pequeno.'),
                     'scenarios' => [
                         __('Alto: redes grandes (log matrículas próximo de 5 → ~100).'),
                         __('Baixo: municípios pequenos ou só população SIDRA disponível.'),
@@ -172,6 +179,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('social_demand'),
                     'formula' => __('CadÚnico escolar vs Censo/SIDRA e % crianças PBF (pressão social indicativa).'),
                     'detects' => __('Razão CadÚnico/Censo (ou SIDRA), percentual de crianças no Bolsa Família.'),
+                    'indicates' => __('Quanto maior, mais demanda social indicada (CadÚnico ou PBF acima do esperado); quanto menor, perfil social menos pressionado na amostra.'),
                     'scenarios' => [
                         __('Alto: muitas crianças no CadÚnico vs matrículas declaradas ou alta % PBF.'),
                         __('Baixo: CadÚnico alinhado ao Censo e baixa pressão PBF.'),
@@ -183,6 +191,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('transfer_dependency'),
                     'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional; sem CKAN, usa complementação FNDE como proxy.'),
                     'detects' => __('Soma repasses CKAN (FUNDEB + educação) ou complementação FUNDEB quando repasses não importados.'),
+                    'indicates' => __('Quanto maior, mais o município depende de transferências federais versus receita própria; quanto menor, menor peso dos repasses no financiamento.'),
                     'scenarios' => [
                         __('Alto: repasses federais pesam mais que a mediana — dependência de transferências constitucionais.'),
                         __('Parcial: só FUNDEB FNDE — complementação estima dependência até importar repasses_tesouro.'),
@@ -195,6 +204,7 @@ final class HorizonteMapPresenter
                     'weight' => $pct('data_readiness'),
                     'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses).'),
                     'detects' => __('Contagem de fontes disponíveis por IBGE — não mede qualidade do cadastro escolar.'),
+                    'indicates' => __('Quanto maior, mais fontes públicas disponíveis e score de propensão mais confiável; quanto menor, dados parciais ou ausentes.'),
                     'scenarios' => [
                         __('Alto (≥75): triad FUNDEB+Censo+SAEB + CadÚnico e bónus demografia/repasses.'),
                         __('Baixo: só uma ou duas fontes — score de propensão menos fiável.'),
@@ -220,22 +230,27 @@ final class HorizonteMapPresenter
                 [
                     'step' => 1,
                     'title' => __('Visão nacional'),
-                    'text' => __('Bolhas por UF no mapa do Brasil — clique num estado ou use «Recorte» para abrir municípios.'),
+                    'text' => __('Coroplético IBGE por UF com capitais — passe o mouse para ver KPIs agregados; clique num estado ou use «Recorte» para aprofundar.'),
                 ],
                 [
                     'step' => 2,
-                    'title' => __('Camada municipal'),
-                    'text' => __('Pontos coloridos por pressão FUNDEB no estado escolhido — vista Marcadores ou Calor.'),
+                    'title' => __('Mesorregiões (UF extensa)'),
+                    'text' => __('Estados com muitos municípios abrem malha por mesorregião IBGE — hover para dados, clique para municípios da região; «Regiões» volta ao mapa estadual.'),
                 ],
                 [
                     'step' => 3,
-                    'title' => __('Filtros laterais'),
-                    'text' => __('Lentes de decisão (alta pressão, prospectos…) e refinamento de scores no painel à esquerda.'),
+                    'title' => __('Detalhe municipal'),
+                    'text' => __('Pontos por pressão FUNDEB (Marcadores ou Calor). «Resumo UF» centra o estado ou a mesorregião activa e abre KPIs estaduais.'),
                 ],
                 [
                     'step' => 4,
+                    'title' => __('Filtros laterais'),
+                    'text' => __('Lentes de decisão (alta pressão, prospectos…) e refinamento de scores — activos com UF aberta; no telemóvel use «Filtros» no mapa.'),
+                ],
+                [
+                    'step' => 5,
                     'title' => __('Ficha do município'),
-                    'text' => __('Clique no ponto ou na lista — propensão, pressão, matrículas, repasses e registo SGE.'),
+                    'text' => __('Clique no ponto ou na lista — layout horizontal, timeline FUNDEB em 3 colunas, glossário «Detecta / Indica» por dimensão, alertas MEC/FNDE VAAT e registo SGE.'),
                 ],
             ],
             'map_legend_notes' => [

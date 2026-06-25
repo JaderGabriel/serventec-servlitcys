@@ -1095,6 +1095,10 @@
         animation: serv-horizonte-demo-step-4 16s ease-in-out infinite;
     }
 
+    .serv-horizonte-demo__step--5 {
+        animation: serv-horizonte-demo-step-5 16s ease-in-out infinite;
+    }
+
     .serv-horizonte-demo__step-num {
         @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums;
     }
@@ -1108,10 +1112,14 @@
     }
 
     .serv-horizonte-demo__step-num--3 {
-        @apply bg-violet-100 text-violet-900 dark:bg-violet-950/60 dark:text-violet-100;
+        @apply bg-emerald-100 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-100;
     }
 
     .serv-horizonte-demo__step-num--4 {
+        @apply bg-violet-100 text-violet-900 dark:bg-violet-950/60 dark:text-violet-100;
+    }
+
+    .serv-horizonte-demo__step-num--5 {
         @apply bg-rose-100 text-rose-900 dark:bg-rose-950/60 dark:text-rose-100;
     }
 
@@ -1304,9 +1312,27 @@
             background-color: rgb(255 255 255 / 0.72);
         }
         29%,
-        48% {
+        38% {
             border-color: rgb(14 165 233 / 0.55);
             background-color: rgb(240 249 255 / 0.92);
+        }
+        42%,
+        100% {
+            border-color: rgb(226 232 240 / 0.75);
+            background-color: rgb(255 255 255 / 0.72);
+        }
+    }
+
+    @keyframes serv-horizonte-demo-step-3 {
+        0%,
+        38% {
+            border-color: rgb(226 232 240 / 0.75);
+            background-color: rgb(255 255 255 / 0.72);
+        }
+        39%,
+        48% {
+            border-color: rgb(20 184 166 / 0.55);
+            background-color: rgb(240 253 250 / 0.92);
         }
         52%,
         100% {
@@ -1315,7 +1341,7 @@
         }
     }
 
-    @keyframes serv-horizonte-demo-step-3 {
+    @keyframes serv-horizonte-demo-step-4 {
         0%,
         52% {
             border-color: rgb(226 232 240 / 0.75);
@@ -1333,7 +1359,7 @@
         }
     }
 
-    @keyframes serv-horizonte-demo-step-4 {
+    @keyframes serv-horizonte-demo-step-5 {
         0%,
         76% {
             border-color: rgb(226 232 240 / 0.75);

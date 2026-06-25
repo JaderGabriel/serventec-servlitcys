@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **6.0.0**, linha **6.x** (Horizonte GIS + identidade azul + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **6.1.0**, linha **6.x** (Horizonte GIS coroplético + identidade azul + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **6.0.0** |
-| **Tag de deploy** | `20260603h-Odin` |
-| **Data de referência** | 2026-06-03 |
-| **Release** | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) |
-| **Marco** | **Odin** — marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, notificação dados públicos agrupada |
+| **Versão semântica** | **6.1.0** |
+| **Tag de deploy** | `20260624-Horizonte` |
+| **Data de referência** | 2026-06-24 |
+| **Release** | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) |
+| **Marco** | **Horizonte** — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app |
 
 ---
 
@@ -71,7 +71,8 @@ flowchart TD
 
 | Versão | Codename | Data (ref.) | Commit # |
 |--------|----------|-------------|----------|
-| **6.0.0** | **Odin** | 03/06 h | **433** (`df7d9b3`) |
+| **6.1.0** | **Horizonte** | 24/06 | **441** (`c5d6fc2`) |
+| **6.0.0** | Odin | 03/06 h | **433** (`df7d9b3`) |
 | **5.8.0** | Thor | 03/06 g | **431** (`0bf9b2f`) |
 | **5.7.7** | Skuld | 24/06 a | **427** (`16e49e0`) |
 | **5.7.6** | Saga | 22/06 b | **419** (`ed7fccf`) |
@@ -84,13 +85,14 @@ flowchart TD
 
 ```mermaid
 timeline
-    title Marcos 4.x → 6.0
+    title Marcos 4.x → 6.1
     2026-06-04 : 4.0.0 Hestia
     2026-06-05 : 4.1.0 Athena
     2026-06-19 : 5.0.0 Horizonte
     2026-06-19 : 5.5.0 Helios
     2026-06-24 : 5.7.7 Skuld
     2026-06-03 : 6.0.0 Odin
+    2026-06-24 : 6.1.0 Horizonte
 ```
 
 Detalhe completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
@@ -162,6 +164,7 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **6.1.0** | Horizonte | 24/06 | **441** | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) — coroplético IBGE, mesorregiões, alertas VAAT |
 | **6.0.0** | Odin | 03/06 h | **433** | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) — marca azul, barra cmd fixa, resumo UF inline, SAEB feed |
 | **5.8.0** | Thor | 03/06 g | **431** | [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) — FUNDEB estadual, pan mapa, sync repasses Tesouro |
 | **5.7.7** | Skuld | 24/06 a | **427** | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) — timeline financeira modal, SIDRA pop. total |

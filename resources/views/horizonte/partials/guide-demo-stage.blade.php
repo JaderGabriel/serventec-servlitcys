@@ -11,7 +11,7 @@
 
 <div class="serv-horizonte-demo" aria-hidden="true">
     <div class="serv-horizonte-demo__stage">
-        {{-- Cena 1: Brasil — bolhas por UF --}}
+        {{-- Cena 1: Brasil — visão nacional --}}
         <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--national">
             <div class="serv-horizonte-demo__map-frame">
                 <img src="{{ $demoMapUrl }}" alt="" class="serv-horizonte-demo__land" loading="lazy" decoding="async" />
@@ -56,10 +56,10 @@
                     />
                 </svg>
             </div>
-            <p class="serv-horizonte-demo__caption">{{ __('Visão nacional — contornos por UF e capitais (dados fictícios)') }}</p>
+            <p class="serv-horizonte-demo__caption">{{ __('Visão nacional — coroplético IBGE por UF (indicadores fictícios por estado)') }}</p>
         </div>
 
-        {{-- Cena 2: UF Bahia — municípios --}}
+        {{-- Cena 2: UF Bahia — mesorregiões e municípios --}}
         <div class="serv-horizonte-demo__scene serv-horizonte-demo__scene--regional">
             <div class="serv-horizonte-demo__map-frame serv-horizonte-demo__map-frame--regional">
                 <svg
@@ -75,6 +75,9 @@
                         class="serv-horizonte-demo__regional-bg"
                     />
                     <path d="{{ $demoBaPath }}" class="serv-horizonte-demo__regional-land" />
+                    <rect x="{{ $demoBaView['x'] + 18 }}" y="{{ $demoBaView['y'] + 24 }}" width="72" height="58" rx="4" fill="#fecdd3" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
+                    <rect x="{{ $demoBaView['x'] + 96 }}" y="{{ $demoBaView['y'] + 18 }}" width="68" height="64" rx="4" fill="#fde68a" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
+                    <rect x="{{ $demoBaView['x'] + 28 }}" y="{{ $demoBaView['y'] + 92 }}" width="88" height="62" rx="4" fill="#bbf7d0" fill-opacity="0.55" stroke="#fff" stroke-width="1.5" />
                     @foreach ($demoMuniDots as $dot)
                         @php
                             $cx = $dot['x'] + $demoBaView['x'];
@@ -107,7 +110,7 @@
                     />
                 </svg>
             </div>
-            <p class="serv-horizonte-demo__caption">{{ __('Recorte BA — pontos municipais por pressão FUNDEB (fictício)') }}</p>
+            <p class="serv-horizonte-demo__caption">{{ __('UF extensa — mesorregiões IBGE e pontos municipais por pressão FUNDEB (fictício)') }}</p>
         </div>
 
         {{-- Cena 3: painel de filtros --}}
@@ -163,6 +166,9 @@
                 </svg>
                 <div class="serv-horizonte-demo__muni-card">
                     <p class="serv-horizonte-demo__muni-card-title">{{ __('Salvador') }} <span>BA</span></p>
+                    <p class="mt-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-medium text-rose-800">
+                        {{ __('Alerta VAAT — pendência MEC/FNDE (exemplo)') }}
+                    </p>
                     <div class="serv-horizonte-demo__muni-scores">
                         <div class="serv-horizonte-demo__muni-score-cell">
                             <span class="serv-horizonte-demo__muni-score-val">87</span>
@@ -193,7 +199,7 @@
                     </div>
                 </div>
             </div>
-            <p class="serv-horizonte-demo__caption">{{ __('Ficha municipal — scores e complementação FUNDEB') }}</p>
+            <p class="serv-horizonte-demo__caption">{{ __('Ficha municipal — timeline FUNDEB, glossário Detecta/Indica e alertas VAAT') }}</p>
         </div>
     </div>
 

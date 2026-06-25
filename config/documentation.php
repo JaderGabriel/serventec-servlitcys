@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '6.0.0',
-        'release_tag' => '20260603h-Odin',
-        'commit_short' => 'df7d9b3',
-        'commit_number' => 433,
-        'revision_date' => '2026-06-03',
+        'version' => '6.1.0',
+        'release_tag' => '20260624-Horizonte',
+        'commit_short' => 'c5d6fc2',
+        'commit_number' => 441,
+        'revision_date' => '2026-06-24',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

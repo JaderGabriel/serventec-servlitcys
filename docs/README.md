@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 6.0.0 · tag `20260603h-Odin` · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.1.0 · tag `20260624-Horizonte` · **Última revisão:** 2026-06-24
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -140,6 +140,7 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) | **6.1.0** — Horizonte (coroplético IBGE, mesorregiões, alertas VAAT) |
 | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) | **6.0.0** — Odin (marca azul, barra cmd fixa, resumo UF inline, dados públicos agrupados) |
 | [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) | **5.8.0** — Thor (FUNDEB estadual, pan mapa, sync repasses Tesouro) |
 | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) | **5.7.7** — Skuld (timeline financeira modal, SIDRA pop. total, analytics refactor) |

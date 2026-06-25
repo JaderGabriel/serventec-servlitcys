@@ -10,7 +10,7 @@ class HorizonteSyncMunicipalAlertsCommand extends Command
 {
     protected $signature = 'horizonte:sync-municipal-alerts
                             {--uf= : Restringir merge a uma UF (ex.: BA)}
-                            {--skip-fnde : Ignorar lista FNDE VAAT inabilitados (PDF)}
+                            {--skip-fnde : Ignorar lista FNDE VAAT inabilitados (CSV/PDF)}
                             {--dry-run : Simular importação sem gravar cache}
                             {--reset : Limpar cache antes de sincronizar}';
 
@@ -38,6 +38,17 @@ class HorizonteSyncMunicipalAlertsCommand extends Command
         $this->info(__('Horizonte — alertas MEC/FNDE (portarias / VAAT / registo manual)'));
         if ($ufRaw !== '') {
             $this->line(__('Âmbito: UF :uf', ['uf' => (string) HorizonteUfScope::normalize($ufRaw)]));
+        }
+        if (! (bool) $this->option('skip-fnde')) {
+            $csvUrl = trim((string) config(
+                'horizonte.municipal_alerts.sources.fnde_vaat_inabilitados.csv_url',
+                '',
+            ));
+            if ($csvUrl !== '') {
+                $this->line(__('CSV FNDE (HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL): :url', [
+                    'url' => $csvUrl,
+                ]));
+            }
         }
 
         $result = $sync->sync([

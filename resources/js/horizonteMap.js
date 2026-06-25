@@ -539,6 +539,7 @@ function muniDimensionsGlossaryHtml(dims, methodology) {
         const weight = meta.weight ? `<span class="serv-horizonte-muni-tooltip__dim-glossary-weight">${escapeHtml(String(meta.weight))}</span>` : "";
         const formula = meta.formula ? String(meta.formula) : "";
         const detects = meta.detects ? String(meta.detects) : "";
+        const indicates = meta.indicates ? String(meta.indicates) : "";
 
         items.push(
             `<div class="serv-horizonte-muni-tooltip__dim-glossary-item">` +
@@ -548,6 +549,9 @@ function muniDimensionsGlossaryHtml(dims, methodology) {
                     : "") +
                 (detects
                     ? `<p class="serv-horizonte-muni-tooltip__dim-glossary-detects"><span>${escapeHtml("Detecta:")}</span> ${escapeHtml(detects)}</p>`
+                    : "") +
+                (indicates
+                    ? `<p class="serv-horizonte-muni-tooltip__dim-glossary-indicates"><span>${escapeHtml("Indica:")}</span> ${escapeHtml(indicates)}</p>`
                     : "") +
                 `</div>`,
         );
@@ -604,10 +608,14 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
 }
 
 function muniMetaHtml(m) {
-    const parts = [];
+    const segments = [];
+
     if (m.benefit_score != null) {
-        parts.push(
-            `<p class="serv-horizonte-muni-tooltip__benefit">${escapeHtml("Benefício estimado")}: <span class="serv-horizonte-muni-tooltip__benefit-val">${formatScoreValue(m.benefit_score)}/100</span></p>`,
+        segments.push(
+            `<span class="serv-horizonte-muni-tooltip__meta-item">` +
+                `<span class="serv-horizonte-muni-tooltip__meta-label">${escapeHtml("Benefício estimado")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__meta-value">${formatScoreValue(m.benefit_score)}/100</span>` +
+                `</span>`,
         );
     }
 
@@ -617,31 +625,36 @@ function muniMetaHtml(m) {
         m.has_saeb ? "SAEB" : null,
         m.has_cadunico ? "CadÚnico" : null,
     ].filter(Boolean);
-    const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
-    if (sources.length > 0 || sge) {
-        parts.push(`<dl class="serv-horizonte-muni-tooltip__sources">`);
-        if (sources.length > 0) {
-            parts.push(
-                `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("Fontes")}</dt><dd>${escapeHtml(sources.join(" · "))}</dd>`,
-            );
-        }
-        if (sge) {
-            parts.push(
-                `<dt class="serv-horizonte-muni-tooltip__sources-dt">${escapeHtml("SGE")}</dt><dd>${escapeHtml(sge.system_label || sge.system || "—")}</dd>`,
-            );
-        }
-        parts.push(`</dl>`);
-    }
-
-    if (m.analytics_url) {
-        parts.push(
-            `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__link">${escapeHtml("Abrir consultoria")}</a>`,
+    if (sources.length > 0) {
+        segments.push(
+            `<span class="serv-horizonte-muni-tooltip__meta-item">` +
+                `<span class="serv-horizonte-muni-tooltip__meta-label">${escapeHtml("Fontes")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__meta-value">${escapeHtml(sources.join(" · "))}</span>` +
+                `</span>`,
         );
     }
 
-    return parts.length > 0
-        ? `<div class="serv-horizonte-muni-tooltip__meta-row">${parts.join("")}</div>`
+    const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
+    if (sge) {
+        segments.push(
+            `<span class="serv-horizonte-muni-tooltip__meta-item">` +
+                `<span class="serv-horizonte-muni-tooltip__meta-label">${escapeHtml("SGE")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__meta-value">${escapeHtml(sge.system_label || sge.system || "Desconhecido")}</span>` +
+                `</span>`,
+        );
+    }
+
+    if (segments.length === 0 && !m.analytics_url) {
+        return "";
+    }
+
+    const sep = '<span class="serv-horizonte-muni-tooltip__meta-sep" aria-hidden="true">·</span>';
+    const line = segments.join(sep);
+    const link = m.analytics_url
+        ? `${line ? sep : ""}<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__meta-link">${escapeHtml("Abrir consultoria")}</a>`
         : "";
+
+    return `<div class="serv-horizonte-muni-tooltip__meta-row">${line}${link}</div>`;
 }
 
 function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
@@ -654,7 +667,7 @@ function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
     const content =
         bodyHtml !== ""
             ? `<div class="serv-horizonte-muni-tooltip__year-col-body">${bodyHtml}</div>`
-            : `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml(emptyMsg)}</p>`;
+            : `<div class="serv-horizonte-muni-tooltip__year-col-body serv-horizonte-muni-tooltip__year-col-body--empty"><p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml(emptyMsg)}</p></div>`;
 
     return (
         `<section class="serv-horizonte-muni-tooltip__year-col ${sideClass}">` +
@@ -730,7 +743,7 @@ function financeTimelineHtml(m, refYear, currentYear) {
     );
 }
 
-const HORIZONTE_TOUR_STORAGE_KEY = "horizonte_onboarding_v1";
+const HORIZONTE_TOUR_STORAGE_KEY = "horizonte_onboarding_v2";
 
 function uniqueSortedUfs(markers) {
     return [...new Set(markers.map((m) => String(m.uf ?? "").trim()).filter(Boolean))].sort();
@@ -1452,7 +1465,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="recorte"]',
                     title: "Recorte geográfico",
-                    text: "Brasil mostra contornos por UF e capitais. Escolha um estado para carregar municípios no mapa e na lista.",
+                    text: "Brasil em coroplético IBGE por UF. Escolha um estado para mesorregiões (UF extensa) ou municípios no mapa e na lista.",
                 },
                 {
                     target: '[data-horizonte-tour="segments"]',
@@ -1462,12 +1475,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="map"]',
                     title: "Mapa GIS",
-                    text: "Passe o mouse sobre um estado ou região para ver os dados. Clique para abrir o recorte. Pontos municipais também são clicáveis.",
+                    text: "Hover em UF, mesorregião ou município para ver dados. Clique para navegar. Use «Resumo UF» para centrar o estado ou a região activa.",
                 },
                 {
                     target: '[data-horizonte-tour="filters"]',
                     title: "Filtros laterais",
-                    text: "Lentes de decisão e refinamento — activos com UF aberta. No telemóvel use o botão «Filtros».",
+                    text: "Lentes de decisão e refinamento — activos com UF aberta. No telemóvel use o botão «Filtros» sobre o mapa.",
                     openFilters: true,
                 },
                 {
@@ -1478,7 +1491,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="workspace"]',
                     title: "Área de trabalho",
-                    text: "Lista de prospecção, cobertura de dados públicos e metodologia dos scores.",
+                    text: "Lista de prospecção, cobertura de dados, metodologia com glossário Detecta/Indica e passos «Como usar».",
                 },
             ];
         },
@@ -2192,6 +2205,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         mapControlLabelUfSummary() {
             if (this.ufSummaryOpen) {
                 return "Ocultar resumo estadual";
+            }
+            const meso = this.mesoScopeLabel();
+            if (meso) {
+                return `Centrar ${meso} e mostrar resumo estadual`;
+            }
+            const uf = String(this.scopeUf ?? "").trim().toUpperCase();
+            if (this.isMesoOverviewMode && uf) {
+                return `Centrar ${uf} e mostrar resumo estadual`;
             }
             return "Centrar UF e mostrar resumo estadual";
         },
@@ -3236,7 +3257,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         /** Corrige desalinhamento SVG/canvas quando o contentor muda após o GeoJSON. */
-        syncChoroplethMapLayout(geoLayer, { maxZoom = 5, padding = [48, 48] } = {}) {
+        syncChoroplethMapLayout(
+            geoLayer,
+            { maxZoom = 5, padding = [48, 48], force = false } = {},
+        ) {
             if (!this.map || !geoLayer) {
                 return;
             }
@@ -3249,14 +3273,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this._lastChoroplethLayer = geoLayer;
 
             const fit = () => {
-                if (!this.map || this._mapUserAdjustedView) {
+                if (!this.map || (this._mapUserAdjustedView && !force)) {
                     return;
                 }
                 this.map.invalidateSize({ animate: false });
                 this.map.fitBounds(bounds, {
                     padding,
                     maxZoom,
-                    animate: false,
+                    animate: force,
                 });
             };
 
@@ -3808,6 +3832,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             this.closeTooltip();
+            this.closeUfSummary();
             this.scopeMeso = scoped;
             this.mapMode = "regional";
             this.showAllOnMap = false;
@@ -3979,13 +4004,90 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         toggleUfSummaryVisibility() {
-            if (!this.isRegionalMode || !this.scopeUf) {
+            if (!this.isUfScopedMode || !this.scopeUf) {
                 return;
             }
             this.ufSummaryOpen = !this.ufSummaryOpen;
             if (this.ufSummaryOpen) {
                 this.$nextTick(() => this.refreshMapLayout({ immediate: true }));
             }
+        },
+
+        /** Recentra o mapa na mesorregião activa ou no estado inteiro. */
+        async centerMapToCurrentScope({ force = true } = {}) {
+            if (!this.map || !this.scopeUf) {
+                return;
+            }
+
+            if (force) {
+                this._mapUserAdjustedView = false;
+            }
+
+            const mesoId = String(this.scopeMeso ?? "").trim();
+
+            if (this.isRegionalMode && mesoId !== "") {
+                const bounds = this.markers
+                    .filter((m) => String(m.meso_id ?? "") === mesoId)
+                    .map((m) => [Number(m.lat), Number(m.lng)])
+                    .filter(([la, ln]) => isValidCoord(la, ln));
+                if (bounds.length > 0) {
+                    this.fitMapBounds(bounds, 7, force);
+                    return;
+                }
+                const mesoPoint = this.mesoMapPoints.find(
+                    (p) => String(p.meso_id) === mesoId,
+                );
+                const lat = Number(mesoPoint?.lat);
+                const lng = Number(mesoPoint?.lng);
+                if (isValidCoord(lat, lng)) {
+                    this.map.flyTo([lat, lng], 8, { duration: 0.65 });
+                }
+                return;
+            }
+
+            if (
+                this.isMesoOverviewMode &&
+                this._lastChoroplethLayer?.getBounds?.()?.isValid?.()
+            ) {
+                this.map.invalidateSize({ animate: false });
+                this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
+                    padding: [40, 40],
+                    maxZoom: 8,
+                    animate: true,
+                });
+                return;
+            }
+
+            if (this.isRegionalMode) {
+                const bounds = this.markers
+                    .map((m) => [Number(m.lat), Number(m.lng)])
+                    .filter(([la, ln]) => isValidCoord(la, ln));
+                if (bounds.length > 0) {
+                    this.fitMapBounds(bounds, this.scopeUf ? 5 : 4, force);
+                    return;
+                }
+            }
+
+            if (this.isMesoOverviewMode) {
+                await this.scheduleMapRefresh();
+                window.setTimeout(() => {
+                    if (
+                        !this.map ||
+                        !this._lastChoroplethLayer?.getBounds?.()?.isValid?.()
+                    ) {
+                        return;
+                    }
+                    this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
+                        padding: [40, 40],
+                        maxZoom: 8,
+                        animate: false,
+                    });
+                }, 250);
+                return;
+            }
+
+            const [lat, lng] = this.resolveUfCenter(this.scopeUf);
+            this.map.flyTo([lat, lng], this.regionalUfZoom(), { duration: 0.65 });
         },
 
         resolveUfCenter(uf) {
@@ -4035,7 +4137,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async toggleUfSummaryPanel() {
-            if (!this.isRegionalMode || !this.scopeUf || !this.map) {
+            if (!this.isUfScopedMode || !this.scopeUf || !this.map) {
                 return;
             }
             if (this.ufSummaryOpen) {
@@ -4043,19 +4145,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             this.closeTooltip();
-            const [lat, lng] = this.resolveUfCenter(this.scopeUf);
-            const zoom = Math.max(this.regionalUfZoom(), this.map.getZoom());
+            await this.centerMapToCurrentScope({ force: true });
             this._mapUserAdjustedView = true;
-            await new Promise((resolve) => {
-                const done = () => {
-                    this.map?.off("moveend", done);
-                    resolve();
-                };
-                this.map.once("moveend", done);
-                this.map.flyTo([lat, lng], zoom, { duration: 0.65 });
-            });
             this.ufSummaryOpen = true;
-            this.$nextTick(() => this.refreshMapLayout({ immediate: true }));
+            this.$nextTick(() =>
+                this.refreshMapLayout({ immediate: true, force: true }),
+            );
         },
 
         repositionFloatingPanels() {

@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`6.0.0`** · tag de deploy **`20260603h-Odin`** · ver [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`6.1.0`** · tag de deploy **`20260624-Horizonte`** · ver [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **6.0.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **6.1.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260603h-Odin` |
-| **Data de referência** | **03/06/2026** |
-| **Último marco documentado** | **Odin** — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos agrupados — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) |
+| **Tag de deploy (servidor)** | `20260624-Horizonte` |
+| **Data de referência** | **24/06/2026** |
+| **Último marco documentado** | **Horizonte** — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release (#433)** | `df7d9b3` — selo doc-only `#434` (`5521b6d`) não altera versão semântica |
+| **Commit de release (#441)** | `c5d6fc2` |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -43,6 +43,7 @@ timeline
     2026-06-24 : 5.7.7a Skuld — timeline financeira modal, SIDRA pop. total, analytics refactor
     2026-06-03 : 5.8.0g Thor — FUNDEB estadual, pan mapa, resumo UF, sync repasses Tesouro
     2026-06-03 : 6.0.0h Odin — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos
+    2026-06-24 : 6.1.0 Horizonte — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -53,7 +54,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 6.0.0** | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | **Produção:** marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |
+| **▶ 6.1.0** | `c5d6fc2` / `20260624-Horizonte` → `main` | **441** | 24/06/2026 | **Produção:** coroplético IBGE UF/mesorregiões, alertas VAAT, modal municipal, resumo UF, tour/demo — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md). |
+| 6.0.0 | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | Marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |
 | 5.8.0 | `0bf9b2f` / `20260603g-Thor` → `main` | **431** | 03/06/2026 | Painel FUNDEB estadual, pan mapa + resumo UF, tela inteira, `horizonte:sync-repasses-tesouro`, YTD último repasse — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md). |
 | 5.7.7 | `16e49e0` / `20260624a-Skuld` → `main` | **427** | 24/06/2026 | Timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |
 | 5.7.6 | `ed7fccf` / `20260622b-Saga` → `main` | **419** | 22/06/2026 | Modal municipal (pipeline, propensão, CSS), demo com números/cores, transferências FNDE no score — [RELEASE_20260622b_SAGA.md](RELEASE_20260622b_SAGA.md). |

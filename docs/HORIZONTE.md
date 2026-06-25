@@ -1,6 +1,6 @@
 # Horizonte — mapa de oportunidade municipal
 
-**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
@@ -105,17 +105,21 @@ Calculados **na mesma geração do mapa** (amostra actual):
 ### 6.1 Mapa
 
 - Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
+- **Visão nacional:** coroplético IBGE por UF (malha oficial) + marcadores de capitais; hover para KPIs agregados; clique abre o estado.
+- **UF extensa** (≥60 municípios, `HORIZONTE_MAP_MESO_THRESHOLD`): vista intermédia por **mesorregião IBGE** — malha colorida (vizinhos com tons distintos); hover para dados; clique abre só municípios da região; botão **«Regiões»** volta ao mapa estadual.
+- **UF pequena** ou mesorregião seleccionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
+- **Bases nacionais grandes** (>800 municípios): overview nacional restringe vista inicial (UF prioritária + alta pressão).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
-- **Bases nacionais grandes** (>800 municípios): overview por UF (bolhas = volume de alta pressão).
-- **UF extensa** (≥60 municípios, `HORIZONTE_MAP_MESO_THRESHOLD`): vista intermédia por **mesorregião IBGE** — bolhas agregadas; clique abre só municípios da região (filtros + cap adaptativo por meso, «Desenhar todos» viável).
-- **UF pequena** ou mesorregião seleccionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip: scores, pipeline população → CadÚnico → matrículas, **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, fontes, atalho Consultoria.
+- Tooltip municipal: scores, pipeline população → CadÚnico → matrículas, **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, **alertas MEC/FNDE VAAT**, fontes, atalho Consultoria.
+- Malha IBGE servida por `GET /dashboard/horizonte/map-geo` (`HorizonteIbgeMalhaService`, cache em `storage/app/horizonte/geo/`).
 
 ### 6.5 Modal municipal — leitura financeira (consultoria)
 
-Layout **horizontal** (~42rem): coluna esquerda (pipeline, propensão, dimensões) + coluna direita (timeline financeira em grelha 3 colunas). Altura máxima ~58dvh.
+Layout **horizontal** (~42rem): coluna esquerda (pipeline, propensão, dimensões com glossário **Detecta / Indica**) + coluna direita (timeline financeira em grelha 3 colunas). Meta numa linha (benefício · fontes · SGE · consultoria). Altura máxima ~58dvh.
+
+**Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (correr `horizonte:sync-municipal-alerts`). Fonte principal: CSV oficial FNDE VAAT inabilitados.
 
 Três blocos **complementares** (não somar entre si):
 
@@ -151,8 +155,19 @@ Payload: `uf_fundeb_insights` · serviço `HorizonteUfFundebInsights`.
 ### 6.7 Mapa — pan, tela inteira e resumo UF
 
 - **Pan** com rato (arrastar) em horizontal e vertical; limites do Brasil alargados; vista manual preservada após arrastar.
-- **Tela inteira** no painel do mapa; filtros em dock com transição.
-- Botão **«Resumo UF»** (toolbar e controlos flutuantes): centra o estado no mapa e abre modal compacto com KPIs comerciais + bloco FUNDEB (mesmo estilo do tooltip municipal).
+- **Tela inteira** no painel do mapa; filtros em dock com transição; navegação **Brasil / Regiões** conforme o nível activo.
+- Botão **«Resumo UF»** (toolbar e controlos flutuantes): disponível em vista estadual e mesorregiões; **centra o estado inteiro ou a mesorregião activa** e abre painel compacto com KPIs comerciais + bloco FUNDEB (mesmo estilo do cabeçalho de decisão).
+
+### 6.8 Ajuda in-app
+
+| Entrada | Conteúdo |
+|---------|----------|
+| **Como usar** | Tour guiado (7 passos) — KPIs, recorte, mapa, filtros, rail, área de trabalho |
+| **Demonstração** | Animação SVG do fluxo Brasil → mesorregiões → municípios → filtros → ficha |
+| **Documentação** | Ligação a este ficheiro (`docs/HORIZONTE.md`) |
+| **Metodologia** (aba) | Fórmulas, tiers, dimensões com **Detecta / Indica**, discrepâncias i-Educar |
+
+Textos partilhados via `HorizonteMapPresenter::methodologyUi()` — passos «Como usar» também na aba **Resumo** da área de trabalho.
 
 ### 6.2 Painéis laterais
 
@@ -221,22 +236,27 @@ HorizonteController
         ├── fundebByIbge / censoByIbge / saebByIbge
         ├── IbgeMunicipalityCatalog (nome + coordenadas)
         ├── HorizonteMunicipalSgeResolver + HorizonteMunicipalSgeRegistryService (cache)
+        ├── HorizonteMunicipalAlertsResolver (alertas VAAT em cache)
         └── HorizonteOpportunityScorer
 ```
 
 | Ficheiro | Função |
 |----------|--------|
-| `app/Http/Controllers/HorizonteController.php` | Entrada HTTP |
+| `app/Http/Controllers/HorizonteController.php` | Entrada HTTP + endpoint malha `map-geo` |
 | `app/Services/Horizonte/HorizonteMapService.php` | Agregação e cache |
+| `app/Services/Horizonte/HorizonteIbgeMalhaService.php` | Malha UF/mesorregião IBGE (coroplético) |
+| `app/Services/Horizonte/HorizonteMunicipalAlertsSyncService.php` | Importação alertas MEC/FNDE VAAT |
 | `app/Services/Horizonte/HorizonteOpportunityScorer.php` | Scores |
-| `app/Support/Horizonte/HorizonteMapPresenter.php` | Cores e legenda |
+| `app/Support/Horizonte/HorizonteMapPresenter.php` | Cores, legenda, metodologia UI |
+| `app/Support/Horizonte/HorizonteGuideDemo.php` | Pontos fictícios da demonstração animada |
 | `app/Support/Brazil/IbgeMunicipalityCatalog.php` | Metadados IBGE |
 | `app/Support/Horizonte/HorizonteMunicipalSgeResolver.php` | SGE por IBGE (catálogo + registo) |
 | `app/Services/Horizonte/HorizonteMunicipalSgeRegistryService.php` | Import JSON/URL do registo SGE |
-| `resources/js/horizonteMap.js` | Mapa Alpine + busca |
+| `resources/js/horizonteMap.js` | Mapa Alpine + busca + tour |
 | `resources/views/horizonte/index.blade.php` | UI |
 | `app/Services/Horizonte/HorizonteFortnightlyFeedService.php` | Rotina bimestral de dados públicos |
 | `app/Console/Commands/HorizonteFortnightlyFeedCommand.php` | CLI `horizonte:fortnightly-feed` |
+| `app/Console/Commands/HorizonteSyncMunicipalAlertsCommand.php` | CLI `horizonte:sync-municipal-alerts` |
 
 ---
 
@@ -262,6 +282,11 @@ HorizonteController
 | `HORIZONTE_CADUNICO_FILL_GAPS` | `false` | CadÚnico: preencher lacunas via API SAGI no feed |
 | `HORIZONTE_MAP_HEAVY_THRESHOLD` | `800` | Acima disto, vista inicial restringe UF + prospectos |
 | `HORIZONTE_MAP_MAX_RENDER` | `400` | Máximo de pontos desenhados no mapa por defeito |
+| `HORIZONTE_MAP_MESO_THRESHOLD` | `60` | UF com ≥ N municípios abre vista mesorregião |
+| `HORIZONTE_MUNICIPAL_ALERTS_ENABLED` | `true` | Alertas MEC/FNDE no modal |
+| `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | CSV FNDE oficial | Fonte VAAT inabilitados (ver §9.1c) |
+
+Variáveis completas: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
 ---
 
@@ -372,11 +397,25 @@ O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância),
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 
+### 9.1c Alertas MEC/FNDE (VAAT inabilitados)
+
+Comando: **`horizonte:sync-municipal-alerts`** — importa lista oficial FNDE de municípios **inabilitados ao VAAT** (CSV primário; PDF fallback) + registo JSON manual opcional. Resultado em cache para o chip do modal municipal.
+
+```bash
+php artisan horizonte:sync-municipal-alerts
+php artisan horizonte:sync-municipal-alerts --dry-run
+php artisan horizonte:sync-municipal-alerts --uf=BA
+php artisan horizonte:sync-municipal-alerts --skip-fnde   # só registo JSON local
+php artisan horizonte:sync-municipal-alerts --reset
+```
+
+Variáveis: `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL`, `HORIZONTE_MUNICIPAL_ALERTS_PATH` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
+
 ### 9.2 Uso comercial (gestores)
 
-1. **Enriquecer dados:** garantir rotina **bimestral** activa + importações pontuais em Dados públicos.
-2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; overlay de carregamento.
-3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB.
+1. **Enriquecer dados:** garantir rotina **bimestral** activa + importações pontuais em Dados públicos; correr **`horizonte:sync-municipal-alerts`** após deploy ou quando o FNDE publicar nova lista VAAT.
+2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; use **Como usar** / **Demonstração** no topo para onboarding da equipa.
+3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB; em UFs extensas, navegue por **mesorregião** antes do detalhe municipal.
 4. **Onboarding:** criar cidade no catálogo → configurar conexão → tier passa a `catalog_pending` → `consultoria_active`.
 
 ### 9.3 Abastecimento offline (local → produção, sem git)
@@ -424,8 +463,8 @@ Após activar Consultoria, use **Painel analítico → Diagnóstico** para indic
 |------|----------|
 | **v1 (actual)** | Mapa IBGE conhecidos + scores + busca + rankings UF/prospectos |
 | **v1.1** | Importação nacional por UF (job batch) sem cadastrar cidade |
-| **v1.2** | Choropleth UF + export CSV prospectos |
-| **v2 (parcial)** | CadÚnico no feed + dimensão demanda social + filtro mapa · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 |
+| **v1.2 (feito)** | Coroplético IBGE UF + mesorregiões + export CSV prospectos |
+| **v2 (parcial)** | CadÚnico no feed + dimensão demanda social + filtro mapa · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 · alertas MEC/FNDE VAAT |
 | **v2** | Comparativo antes/depois para clientes (delta compliance_score) |
 
 Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
@@ -442,4 +481,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-06-03 · Módulo Horizonte v2 — camada alta pressão GIS, CadÚnico, SIDRA, repasses*
+*Última revisão: 2026-06-24 · Módulo Horizonte v6.1 — coroplético IBGE, mesorregiões, alertas VAAT, modal e resumo UF*

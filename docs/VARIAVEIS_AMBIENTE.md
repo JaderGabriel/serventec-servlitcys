@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 6.0.0 · **Última revisão:** 2026-06-03
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
 
 > **Índice:** [README.md](README.md) · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
@@ -292,8 +292,12 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_SGE_ENABLED` | `true` | Activa fase SGE no feed |
 | `HORIZONTE_SGE_REGISTRY_PATH` | `horizonte/sge_registry.json` | JSON local IBGE→SGE |
 | `HORIZONTE_SGE_REGISTRY_URL` | — | URL remota alternativa (opcional) |
+| `HORIZONTE_MUNICIPAL_ALERTS_ENABLED` | `true` | Alertas MEC/FNDE no modal municipal |
+| `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | [CSV FNDE VAAT 2026](https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/vaat/lista-dos-entes-habilitados-e-inabilitados-ao-vaat-2026-posicao-final-com-ajuste-de-decisao-judicial-edit-csv.csv/@@download/file) | Fonte principal — lista oficial de inabilitados VAAT |
+| `HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL` | PDF FNDE (fallback) | Usado se o CSV falhar |
+| `HORIZONTE_MUNICIPAL_ALERTS_PATH` | `horizonte/municipal_alerts_registry.json` | Registo JSON manual/complementar |
 
-Ver [HORIZONTE.md](HORIZONTE.md) §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
+Comando: `php artisan horizonte:sync-municipal-alerts` · Ver [HORIZONTE.md](HORIZONTE.md) §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

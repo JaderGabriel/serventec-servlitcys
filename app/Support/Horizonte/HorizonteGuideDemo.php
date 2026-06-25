@@ -6,6 +6,7 @@ use App\Support\Brazil\BrazilUfCentroids;
 
 /**
  * Coordenadas e pontos fictícios para a demonstração animada do Horizonte (mapa SVG).
+ * A animação ilustra o fluxo coroplético nacional → mesorregiões → municípios → filtros → ficha.
  */
 final class HorizonteGuideDemo
 {

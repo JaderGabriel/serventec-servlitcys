@@ -3,10 +3,12 @@
 namespace App\Services\Horizonte;
 
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Support\Horizonte\FndeVaatInabilitadosCsvParser;
 use App\Support\Horizonte\FndeVaatInabilitadosParser;
 use App\Support\Horizonte\HorizonteMunicipalAlertsCache;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\Http\SafeOutboundUrl;
+use App\Support\Pdf\PdfTextExtractor;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -178,18 +180,33 @@ final class HorizonteMunicipalAlertsSyncService
             return ['entries' => [], 'source' => ''];
         }
 
-        $url = trim((string) ($sourceConfig['pdf_url'] ?? ''));
-        if ($url === '' || ! SafeOutboundUrl::isAllowedHttpUrl($url)) {
-            $warnings[] = __('PDF FNDE VAAT inabilitados não configurado ou URL inválida.');
+        $exerciseYear = max(2007, (int) ($sourceConfig['exercise_year'] ?? (int) date('Y')));
+        $detailUrl = trim((string) ($sourceConfig['detail_page_url'] ?? ''));
+        if ($detailUrl === '') {
+            $detailUrl = (string) config('horizonte.municipal_alerts.detail_urls.siconfi_vaat', '');
+        }
+
+        $csvUrl = trim((string) ($sourceConfig['csv_url'] ?? ''));
+        if ($csvUrl !== '' && SafeOutboundUrl::isAllowedHttpUrl($csvUrl)) {
+            $csvResult = $this->importFndeVaatFromCsv($csvUrl, $sourceConfig, $options, $exerciseYear, $detailUrl, $warnings);
+            if ($csvResult['entries'] !== []) {
+                return $csvResult;
+            }
+        }
+
+        $pdfUrl = trim((string) ($sourceConfig['pdf_url'] ?? ''));
+        if ($pdfUrl === '' || ! SafeOutboundUrl::isAllowedHttpUrl($pdfUrl)) {
+            if ($csvUrl === '') {
+                $warnings[] = __('Fonte FNDE VAAT inabilitados não configurada (CSV ou PDF).');
+            }
 
             return ['entries' => [], 'source' => ''];
         }
 
         try {
-            $timeout = max(15, min(120, (int) config('horizonte.municipal_alerts.http_timeout', 45)));
-            $response = Http::timeout($timeout)->get($url);
+            $response = $this->fndeHttp()->get($pdfUrl);
             if (! $response->successful()) {
-                $warnings[] = __('FNDE VAAT inabilitados: HTTP :status.', ['status' => (string) $response->status()]);
+                $warnings[] = __('FNDE VAAT inabilitados (PDF): HTTP :status.', ['status' => (string) $response->status()]);
 
                 return ['entries' => [], 'source' => ''];
             }
@@ -200,68 +217,101 @@ final class HorizonteMunicipalAlertsSyncService
                 Storage::disk('local')->put($storagePath, $binary);
             }
 
-            $text = $this->extractPdfText($binary);
+            $text = PdfTextExtractor::fromBinary($binary);
             if (trim($text) === '') {
-                $warnings[] = __('FNDE VAAT inabilitados: não foi possível extrair texto do PDF.');
+                $warnings[] = __('FNDE VAAT inabilitados: não foi possível extrair texto do PDF (use CSV oficial ou instale pdftotext).');
 
                 return ['entries' => [], 'source' => ''];
             }
 
-            $exerciseYear = max(2007, (int) ($sourceConfig['exercise_year'] ?? (int) date('Y')));
-            $detailUrl = trim((string) ($sourceConfig['detail_page_url'] ?? ''));
-            if ($detailUrl === '') {
-                $detailUrl = (string) config('horizonte.municipal_alerts.detail_urls.siconfi_vaat', '');
-            }
-
             $parsed = FndeVaatInabilitadosParser::parse($text, $exerciseYear, $detailUrl);
-            $entries = [];
-            foreach ($parsed as $ibge => $row) {
-                $entries[$ibge] = [
-                    'items' => $row['items'] ?? [],
-                    'uf' => $row['uf'] ?? '',
-                    'name' => $row['name'] ?? '',
-                ];
-            }
 
-            return ['entries' => $entries, 'source' => 'fnde_vaat_inabilitados'];
+            return [
+                'entries' => $this->normalizeFndeEntries($parsed),
+                'source' => 'fnde_vaat_inabilitados_pdf',
+            ];
         } catch (\Throwable $e) {
-            Log::warning('horizonte.municipal_alerts_fnde_failed', ['message' => $e->getMessage()]);
-            $warnings[] = __('FNDE VAAT inabilitados: :msg', ['msg' => $e->getMessage()]);
+            Log::warning('horizonte.municipal_alerts_fnde_pdf_failed', ['message' => $e->getMessage()]);
+            $warnings[] = __('FNDE VAAT inabilitados (PDF): :msg', ['msg' => $e->getMessage()]);
 
             return ['entries' => [], 'source' => ''];
         }
     }
 
-    private function extractPdfText(string $binary): string
-    {
-        $tmp = tempnam(sys_get_temp_dir(), 'sl_pdf_');
-        if ($tmp === false) {
-            return $this->extractPdfTextFallback($binary);
-        }
-
+    /**
+     * @param  array<string, mixed>  $sourceConfig
+     * @param  array<string, mixed>  $options
+     * @param  list<string>  $warnings
+     * @return array{entries: array<string, array<string, mixed>>, source: string}
+     */
+    private function importFndeVaatFromCsv(
+        string $csvUrl,
+        array $sourceConfig,
+        array $options,
+        int $exerciseYear,
+        string $detailUrl,
+        array &$warnings,
+    ): array {
         try {
-            file_put_contents($tmp, $binary);
-            $pdftotext = trim((string) shell_exec('command -v pdftotext'));
-            if ($pdftotext !== '') {
-                $output = shell_exec('pdftotext '.escapeshellarg($tmp).' - 2>/dev/null');
-                if (is_string($output) && trim($output) !== '') {
-                    return $output;
-                }
-            }
-        } finally {
-            @unlink($tmp);
-        }
+            $response = $this->fndeHttp()->get($csvUrl);
+            if (! $response->successful()) {
+                $warnings[] = __('FNDE VAAT inabilitados (CSV): HTTP :status.', ['status' => (string) $response->status()]);
 
-        return $this->extractPdfTextFallback($binary);
+                return ['entries' => [], 'source' => ''];
+            }
+
+            $body = $response->body();
+            $storagePath = trim((string) ($sourceConfig['csv_storage_path'] ?? 'horizonte/alerts/fnde_vaat_inabilitados.csv'));
+            if ($storagePath !== '' && ! ((bool) ($options['dry_run'] ?? false))) {
+                Storage::disk('local')->put($storagePath, $body);
+            }
+
+            $parsed = FndeVaatInabilitadosCsvParser::parse($body, $exerciseYear, $detailUrl);
+            if ($parsed === []) {
+                $warnings[] = __('FNDE VAAT inabilitados (CSV): nenhum município inabilitado encontrado no ficheiro.');
+
+                return ['entries' => [], 'source' => ''];
+            }
+
+            return [
+                'entries' => $this->normalizeFndeEntries($parsed),
+                'source' => 'fnde_vaat_inabilitados_csv',
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.municipal_alerts_fnde_csv_failed', ['message' => $e->getMessage()]);
+            $warnings[] = __('FNDE VAAT inabilitados (CSV): :msg', ['msg' => $e->getMessage()]);
+
+            return ['entries' => [], 'source' => ''];
+        }
     }
 
-    private function extractPdfTextFallback(string $binary): string
+    /**
+     * @param  array<string, array<string, mixed>>  $parsed
+     * @return array<string, array<string, mixed>>
+     */
+    private function normalizeFndeEntries(array $parsed): array
     {
-        if (preg_match_all('/\d{7}\s+Inobservância[\x09\x20-\x7E\xC0-\xFF]+/u', $binary, $matches)) {
-            return implode("\n", $matches[0]);
+        $entries = [];
+        foreach ($parsed as $ibge => $row) {
+            $entries[$ibge] = [
+                'items' => $row['items'] ?? [],
+                'uf' => $row['uf'] ?? '',
+                'name' => $row['name'] ?? '',
+            ];
         }
 
-        return '';
+        return $entries;
+    }
+
+    private function fndeHttp(): \Illuminate\Http\Client\PendingRequest
+    {
+        $timeout = max(15, min(120, (int) config('horizonte.municipal_alerts.http_timeout', 45)));
+        $userAgent = trim((string) config('horizonte.municipal_alerts.http_user_agent', 'Mozilla/5.0 (compatible; Servlitcys-Horizonte/1.0)'));
+
+        return Http::timeout($timeout)->withHeaders([
+            'User-Agent' => $userAgent !== '' ? $userAgent : 'Servlitcys-Horizonte/1.0',
+            'Accept' => '*/*',
+        ]);
     }
 
     /**

@@ -37,6 +37,14 @@ final class ProductReleaseTagTest extends TestCase
         );
     }
 
+    public function test_release_doc_path_sem_sufixo(): void
+    {
+        $this->assertSame(
+            'docs/RELEASE_20260624_HORIZONTE.md',
+            ProductReleaseTag::releaseDocPath('20260624-Horizonte')
+        );
+    }
+
     public function test_sort_key_ordena_mesmo_dia_sem_e_com_letra(): void
     {
         $this->assertGreaterThan(

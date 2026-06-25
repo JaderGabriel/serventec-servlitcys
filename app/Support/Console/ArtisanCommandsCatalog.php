@@ -533,11 +533,12 @@ final class ArtisanCommandsCatalog
                         ],
                         'env' => [
                             'HORIZONTE_MUNICIPAL_ALERTS_ENABLED',
+                            'HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL',
                             'HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL',
                             'HORIZONTE_MUNICIPAL_ALERTS_PATH',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Consulta a lista FNDE de inabilitados VAAT (PDF portaria Lei 14.113) e registo JSON opcional. Três estados no modal: pendência encontrada, sem pendências, não verificado.'),
+                        'details' => __('Fonte principal: CSV oficial FNDE VAAT inabilitados (HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL). Fallback PDF se o CSV falhar. Registo JSON opcional. Três estados no modal: pendência encontrada, sem pendências, não verificado.'),
                     ],
                     [
                         'name' => 'horizonte:export-data-bundle',

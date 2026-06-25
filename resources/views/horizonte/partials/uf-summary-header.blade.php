@@ -1,5 +1,5 @@
 <div
-    x-show="ufSummaryOpen && isRegionalMode && scopeUf"
+    x-show="ufSummaryOpen && isUfScopedMode && scopeUf"
     x-cloak
     @keydown.escape.window="if (ufSummaryOpen) toggleUfSummaryVisibility()"
     x-transition:enter="transition ease-out duration-200"

@@ -52,6 +52,20 @@ final class FndeVaatInabilitadosParser
     }
 
     /**
+     * @return array{ibge: string, uf: string, name: string, detail: string, items: list<array<string, mixed>>}
+     */
+    public static function entryForMunicipality(
+        string $ibge,
+        string $uf,
+        string $name,
+        string $detail,
+        int $exerciseYear,
+        string $detailUrl,
+    ): array {
+        return self::entry($ibge, $uf, $name, $detail, $exerciseYear, $detailUrl);
+    }
+
+    /**
      * @return array<string, array{ibge: string, uf: string, name: string, detail: string, items: list<array<string, mixed>>}>
      */
     private static function parseFallback(string $text, int $exerciseYear, string $detailUrl): array

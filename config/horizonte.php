@@ -136,8 +136,8 @@ return [
     | Alertas oficiais MEC/FNDE — bloqueios, inabilitações VAAT, avisos
     |--------------------------------------------------------------------------
     |
-    | Fontes públicas consultáveis: lista FNDE VAAT inabilitados (PDF portaria),
-    | registo JSON local/remoto (Simec, Tesouro, alertas manuais).
+    | Fontes públicas consultáveis: CSV oficial FNDE VAAT inabilitados (primário),
+    | PDF portaria (fallback), registo JSON local/remoto (Simec, Tesouro, alertas manuais).
     | Não existe API REST única — importação periódica via horizonte:sync-municipal-alerts.
     |
     */
@@ -148,6 +148,10 @@ return [
         'registry_url' => env('HORIZONTE_MUNICIPAL_ALERTS_URL'),
         'snapshot_path' => env('HORIZONTE_MUNICIPAL_ALERTS_SNAPSHOT_PATH', 'horizonte/municipal_alerts_snapshot.json'),
         'http_timeout' => max(5, min(120, (int) env('HORIZONTE_MUNICIPAL_ALERTS_HTTP_TIMEOUT', 45))),
+        'http_user_agent' => env(
+            'HORIZONTE_MUNICIPAL_ALERTS_USER_AGENT',
+            'Mozilla/5.0 (compatible; Servlitcys-Horizonte/1.0; +https://serventecassessoria.com.br)',
+        ),
         'cache_ttl' => max(3600, (int) env('HORIZONTE_MUNICIPAL_ALERTS_CACHE_TTL', 604800)),
         'detail_urls' => [
             'fnde_consultas' => env(
@@ -157,7 +161,7 @@ return [
             'simec' => env('HORIZONTE_MUNICIPAL_ALERTS_SIMEC_URL', 'https://simec.mec.gov.br/'),
             'siconfi_vaat' => env(
                 'HORIZONTE_MUNICIPAL_ALERTS_SICONFI_VAAT_URL',
-                'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=44703',
+                'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=51903',
             ),
             'tesouro_bloqueados' => env(
                 'HORIZONTE_MUNICIPAL_ALERTS_TESOURO_BLOQUEADOS_URL',
@@ -168,13 +172,21 @@ return [
             'fnde_vaat_inabilitados' => [
                 'enabled' => filter_var(env('HORIZONTE_FNDE_VAAT_INABILITADOS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
                 'exercise_year' => max(2007, (int) env('HORIZONTE_FNDE_VAAT_INABILITADOS_YEAR', (int) date('Y'))),
+                'csv_url' => env(
+                    'HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL',
+                    'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/vaat/lista-dos-entes-habilitados-e-inabilitados-ao-vaat-2026-posicao-final-com-ajuste-de-decisao-judicial-edit-csv.csv/@@download/file',
+                ),
+                'csv_storage_path' => env(
+                    'HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_STORAGE_PATH',
+                    'horizonte/alerts/fnde_vaat_inabilitados.csv',
+                ),
                 'pdf_url' => env(
                     'HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL',
                     'https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/2025-1/ListapreliminarinabilitadosVAAT202623Jun2025.pdf',
                 ),
                 'detail_page_url' => env(
                     'HORIZONTE_FNDE_VAAT_INABILITADOS_DETAIL_URL',
-                    'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=44703',
+                    'https://siconfi.tesouro.gov.br/siconfi/pages/public/conteudo/conteudo.jsf?id=51903',
                 ),
                 'storage_path' => env(
                     'HORIZONTE_FNDE_VAAT_INABILITADOS_STORAGE_PATH',

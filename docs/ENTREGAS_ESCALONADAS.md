@@ -1,6 +1,6 @@
 # Entregas escalonadas
 
-> **Versão em produção:** **6.0.0** · tag **`20260603h-Odin`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md)
+> **Versão em produção:** **6.1.0** · tag **`20260624-Horizonte`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md)
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas **por mês civil** e ligadas às **releases** (`RELEASE_*.md`). Cada documento mensal lista as tags e versões semânticas do período; o detalhe técnico de cada marco está na nota de release correspondente.
 
@@ -16,7 +16,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas **por 
 
 | Mês | Intervalo de versões | Documento | Releases |
 |-----|----------------------|-----------|----------|
-| **Junho/2026** | 3.5.0 → **6.0.0** | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | 35+ tags |
+| **Junho/2026** | 3.5.0 → **6.1.0** | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | 36+ tags |
 | **Maio/2026** *(arquivo)* | 2.3.6 → 3.4.0 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | 11 tags |
 
 ```mermaid
