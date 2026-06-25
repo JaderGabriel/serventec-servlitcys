@@ -51,7 +51,11 @@
     }
 
     .serv-horizonte-gis__map {
-        @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden min-h-0;
+        @apply rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-700/80 overflow-hidden min-h-0 w-full z-0;
+    }
+
+    .serv-horizonte-gis__map .leaflet-container {
+        @apply h-full w-full rounded-lg font-sans;
     }
 
     .serv-horizonte-gis__map--tall {
@@ -280,6 +284,13 @@
     .serv-horizonte-gis__map .leaflet-container {
         @apply rounded-lg h-full min-h-[inherit] cursor-grab;
         touch-action: none;
+        width: 100%;
+    }
+
+    .serv-horizonte-gis__map .leaflet-pane.leaflet-overlay-pane,
+    .serv-horizonte-gis__map .leaflet-pane.leaflet-horizonteChoropleth-pane {
+        width: 100%;
+        height: 100%;
     }
 
     .serv-horizonte-gis__map .leaflet-container.leaflet-dragging {

@@ -419,7 +419,7 @@
                             <span x-show="!canShowAllOnMap" class="ms-2 text-amber-800/80">{{ __('Use a lista ou zoom nos clusters.') }}</span>
                         </div>
 
-                        <div x-ref="map" data-horizonte-tour="map" class="serv-brazil-map serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3 min-h-0 flex-1" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
+                        <div x-ref="map" data-horizonte-tour="map" class="serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3 min-h-0 flex-1" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
 
                         </div>
                     </div>
