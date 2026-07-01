@@ -74,6 +74,44 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
         $this->assertSame('line', $result['chart']['type']);
         $this->assertSame(['2020', '2021', '2022'], $result['chart']['labels']);
         $this->assertCount(5, $result['chart']['datasets']);
+        $this->assertSame(10000.0, $result['chart']['datasets'][0]['data'][0]);
+        $this->assertSame(11000.0, $result['chart']['datasets'][0]['data'][2]);
+    }
+
+    #[Test]
+    public function usa_janela_nacional_de_cinco_anos_com_lacunas_locais(): void
+    {
+        foreach ([2020, 2021, 2022, 2023, 2024] as $year) {
+            InepCensoMunicipioMatricula::query()->create([
+                'ibge_municipio' => '3550308',
+                'ano' => $year,
+                'matriculas_total' => 500000,
+            ]);
+        }
+
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2022,
+            'matriculas_total' => 10000,
+        ]);
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2024,
+            'matriculas_total' => 11000,
+        ]);
+
+        $result = $this->service->forIbge('2927408', 5);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(['2020', '2021', '2022', '2023', '2024'], $result['chart']['labels']);
+        $total = $result['chart']['datasets'][0]['data'];
+        $this->assertNull($total[0]);
+        $this->assertNull($total[1]);
+        $this->assertSame(10000.0, $total[2]);
+        $this->assertNull($total[3]);
+        $this->assertSame(11000.0, $total[4]);
+        $this->assertStringContainsString('2020', (string) $result['footnote']);
+        $this->assertStringContainsString('2023', (string) $result['footnote']);
     }
 
     #[Test]

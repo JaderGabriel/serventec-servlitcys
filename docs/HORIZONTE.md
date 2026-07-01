@@ -147,7 +147,7 @@ Secção no modal municipal **apenas para municípios sem Consultoria activa** (
 |---------|---------|
 | **Fonte** | `inep_censo_municipio_matriculas` (microdados Educacenso agregados por município/ano) |
 | **Carregamento** | Lazy — `GET /dashboard/horizonte/municipality/{ibge}/enrollment-series` ao abrir o modal |
-| **Anos** | Últimos N anos (default **5**; `HORIZONTE_ENROLLMENT_SERIES_YEARS`, mín. 2, máx. 10) |
+| **Anos** | Últimos **N** anos consecutivos do Educacenso (default **5**), terminando no ano mais recente indexado nacionalmente; lacunas municipais aparecem sem ponto |
 | **Linhas** | Total · Regular · EJA · Educação especial · Complementar / integral |
 | **Segmentos** | Colunas `matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar` — preenchidas na reindexação Censo; sem elas aparece só **Total** + nota para reimportar |
 

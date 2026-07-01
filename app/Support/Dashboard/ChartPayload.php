@@ -358,7 +358,7 @@ final class ChartPayload
      * @param  list<array{label: string, data: list<int|float>}>  $series
      * @return array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}
      */
-    public static function lineMulti(string $title, array $labels, array $series, array $extraOptions = []): array
+    public static function lineMulti(string $title, array $labels, array $series, array $extraOptions = [], bool $preserveNull = false): array
     {
         $colors = self::palette();
         $datasets = [];
@@ -366,7 +366,16 @@ final class ChartPayload
             $c = $colors[$i % max(1, count($colors))];
             $datasets[] = [
                 'label' => (string) ($s['label'] ?? ''),
-                'data' => array_values(array_map(static fn ($v) => is_numeric($v) ? (float) $v : 0.0, $s['data'] ?? [])),
+                'data' => array_values(array_map(
+                    static function ($v) use ($preserveNull) {
+                        if ($v === null || $v === '') {
+                            return $preserveNull ? null : 0.0;
+                        }
+
+                        return is_numeric($v) ? (float) $v : ($preserveNull ? null : 0.0);
+                    },
+                    $s['data'] ?? [],
+                )),
                 'borderColor' => $c,
                 'backgroundColor' => $c.'22',
                 'fill' => false,

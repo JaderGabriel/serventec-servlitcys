@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Dashboard\ChartPayload;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -53,16 +54,15 @@ final class HorizonteMunicipioEnrollmentSeriesService
         }
 
         $limit = max(2, min(10, $years ?? (int) config('horizonte.enrollment_series.years', 5)));
+        $targetYears = $this->resolvePublishedCensoYears($limit);
 
-        $rows = InepCensoMunicipioMatricula::query()
+        $rowsByYear = InepCensoMunicipioMatricula::query()
             ->where('ibge_municipio', $ibge)
-            ->orderByDesc('ano')
-            ->limit($limit)
+            ->whereIn('ano', $targetYears)
             ->get()
-            ->sortBy('ano')
-            ->values();
+            ->keyBy(static fn (InepCensoMunicipioMatricula $row): int => (int) $row->ano);
 
-        if ($rows->isEmpty()) {
+        if (! $this->municipalityHasAnyEnrollmentInWindow($rowsByYear, $targetYears)) {
             return [
                 'ok' => false,
                 'status' => 404,
@@ -70,7 +70,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             ];
         }
 
-        $labels = $rows->map(static fn (InepCensoMunicipioMatricula $row): string => (string) $row->ano)->all();
+        $labels = array_map(static fn (int $year): string => (string) $year, $targetYears);
 
         $seriesDefs = [
             ['key' => 'total', 'label' => __('Total'), 'column' => 'matriculas_total'],
@@ -82,12 +82,18 @@ final class HorizonteMunicipioEnrollmentSeriesService
 
         $series = [];
         $hasSegments = false;
+        $missingYears = [];
 
         foreach ($seriesDefs as $def) {
             $values = [];
             $hasAny = false;
-            foreach ($rows as $row) {
-                $val = (int) ($row->{$def['column']} ?? 0);
+            foreach ($targetYears as $year) {
+                /** @var InepCensoMunicipioMatricula|null $row */
+                $row = $rowsByYear->get($year);
+                if ($row === null && $def['key'] === 'total') {
+                    $missingYears[$year] = true;
+                }
+                $val = $row !== null ? (int) ($row->{$def['column']} ?? 0) : 0;
                 if ($def['key'] !== 'total' && $val > 0) {
                     $hasSegments = true;
                 }
@@ -115,11 +121,10 @@ final class HorizonteMunicipioEnrollmentSeriesService
                     ],
                 ],
             ],
+            preserveNull: true,
         );
 
-        $footnote = $hasSegments
-            ? __('Fonte: microdados Censo INEP (Educacenso), agregado por município. Segmentos dependem das colunas disponíveis na importação.')
-            : __('Fonte: Censo INEP (total municipal). Reimporte o Censo para ver EJA, educação especial, regular e complementar.');
+        $footnote = $this->buildFootnote($hasSegments, $missingYears, $targetYears);
 
         return [
             'ok' => true,
@@ -129,6 +134,67 @@ final class HorizonteMunicipioEnrollmentSeriesService
             'footnote' => $footnote,
             'chart' => $chart,
         ];
+    }
+
+    /**
+     * Últimos N anos consecutivos do Educacenso (terminando no ano mais recente indexado nacionalmente).
+     *
+     * @return list<int>
+     */
+    private function resolvePublishedCensoYears(int $limit): array
+    {
+        $anchor = (int) (InepCensoMunicipioMatricula::query()->max('ano') ?? 0);
+        if ($anchor < 2000) {
+            $anchor = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+        }
+
+        $years = [];
+        for ($offset = $limit - 1; $offset >= 0; $offset--) {
+            $years[] = $anchor - $offset;
+        }
+
+        return $years;
+    }
+
+    /**
+     * @param  Collection<int, InepCensoMunicipioMatricula>  $rowsByYear
+     * @param  list<int>  $targetYears
+     */
+    private function municipalityHasAnyEnrollmentInWindow(Collection $rowsByYear, array $targetYears): bool
+    {
+        foreach ($targetYears as $year) {
+            $row = $rowsByYear->get($year);
+            if ($row !== null && (int) $row->matriculas_total > 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, true>  $missingYears
+     * @param  list<int>  $targetYears
+     */
+    private function buildFootnote(bool $hasSegments, array $missingYears, array $targetYears): string
+    {
+        $parts = [];
+
+        if ($hasSegments) {
+            $parts[] = __('Fonte: microdados Censo INEP (Educacenso), agregado por município.');
+        } else {
+            $parts[] = __('Fonte: Censo INEP (total municipal). Reimporte o Censo para ver EJA, educação especial, regular e complementar.');
+        }
+
+        if ($missingYears !== []) {
+            ksort($missingYears);
+            $missingList = implode(', ', array_map(static fn (int $year): string => (string) $year, array_keys($missingYears)));
+            $parts[] = __('Anos sem dados indexados para este município: :anos (reimporte com horizonte:fortnightly-feed --phase=censo_matriculas).', [
+                'anos' => $missingList,
+            ]);
+        }
+
+        return implode(' ', $parts);
     }
 
     private function isConsultoriaActive(string $ibge): bool

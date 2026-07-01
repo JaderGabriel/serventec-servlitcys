@@ -71,6 +71,8 @@ function styleEnrollmentDataset(dataset, index) {
         ENROLLMENT_SERIES_STYLES[index % ENROLLMENT_SERIES_STYLES.length];
     const color = style.color;
     const pointBorder = enrollmentChartIsDark() ? "#0f172a" : "#ffffff";
+    const baseRadius = style.pointRadius;
+    const hoverRadius = style.pointHoverRadius;
 
     return {
         ...dataset,
@@ -80,9 +82,6 @@ function styleEnrollmentDataset(dataset, index) {
         borderWidth: style.borderWidth,
         tension: 0.32,
         fill: false,
-        pointRadius: style.pointRadius,
-        pointHoverRadius: style.pointHoverRadius,
-        pointHitRadius: 12,
         pointStyle: "circle",
         pointBackgroundColor: color,
         pointBorderColor: pointBorder,
@@ -90,6 +89,14 @@ function styleEnrollmentDataset(dataset, index) {
         pointHoverBackgroundColor: color,
         pointHoverBorderColor: pointBorder,
         pointHoverBorderWidth: 2.5,
+        pointRadius: (ctx) => {
+            const value = ctx.dataset.data?.[ctx.dataIndex];
+            return value == null || Number.isNaN(Number(value)) ? 0 : baseRadius;
+        },
+        pointHoverRadius: (ctx) => {
+            const value = ctx.dataset.data?.[ctx.dataIndex];
+            return value == null || Number.isNaN(Number(value)) ? 0 : hoverRadius;
+        },
     };
 }
 
