@@ -6,6 +6,217 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import Chart from "chart.js/auto";
 import { cartesianInteractionDefaults } from "./chartVisualDefaults.js";
 
+/** Paleta multi-linha (estilo gráfico de linhas clássico — pontos visíveis por ano). */
+const ENROLLMENT_SERIES_STYLES = [
+    { color: "#2563eb", borderWidth: 3, pointRadius: 6, pointHoverRadius: 8 },
+    { color: "#0d9488", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
+    { color: "#7c3aed", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
+    { color: "#ea580c", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
+    { color: "#059669", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
+];
+
+function enrollmentChartIsDark() {
+    return document.documentElement.classList.contains("dark");
+}
+
+function enrollmentChartTextColor() {
+    return enrollmentChartIsDark() ? "#e2e8f0" : "#334155";
+}
+
+function enrollmentChartMutedColor() {
+    return enrollmentChartIsDark() ? "#94a3b8" : "#64748b";
+}
+
+function enrollmentChartGridColor() {
+    return enrollmentChartIsDark()
+        ? "rgba(148,163,184,0.18)"
+        : "rgba(100,116,139,0.16)";
+}
+
+function enrollmentChartFont(size = 12, weight = "500") {
+    return {
+        family: 'Outfit, "DM Sans", ui-sans-serif, system-ui, sans-serif',
+        size,
+        weight,
+    };
+}
+
+function formatEnrollmentAxisValue(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) {
+        return "";
+    }
+    if (Math.abs(n) >= 10000) {
+        const k = n / 1000;
+        return `${k >= 100 ? Math.round(k) : k.toFixed(1).replace(/\.0$/, "")}k`;
+    }
+
+    return n.toLocaleString("pt-BR");
+}
+
+function formatEnrollmentDataLabel(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) {
+        return "";
+    }
+    if (n >= 10000) {
+        return `${Math.round(n / 1000)}k`;
+    }
+
+    return n.toLocaleString("pt-BR");
+}
+
+function styleEnrollmentDataset(dataset, index) {
+    const style =
+        ENROLLMENT_SERIES_STYLES[index % ENROLLMENT_SERIES_STYLES.length];
+    const color = style.color;
+    const pointBorder = enrollmentChartIsDark() ? "#0f172a" : "#ffffff";
+
+    return {
+        ...dataset,
+        spanGaps: true,
+        borderColor: color,
+        backgroundColor: `${color}18`,
+        borderWidth: style.borderWidth,
+        tension: 0.32,
+        fill: false,
+        pointRadius: style.pointRadius,
+        pointHoverRadius: style.pointHoverRadius,
+        pointHitRadius: 12,
+        pointStyle: "circle",
+        pointBackgroundColor: color,
+        pointBorderColor: pointBorder,
+        pointBorderWidth: 2,
+        pointHoverBackgroundColor: color,
+        pointHoverBorderColor: pointBorder,
+        pointHoverBorderWidth: 2.5,
+    };
+}
+
+function enrollmentSeriesChartOptions() {
+    const text = enrollmentChartTextColor();
+    const muted = enrollmentChartMutedColor();
+    const grid = enrollmentChartGridColor();
+
+    return {
+        ...cartesianInteractionDefaults(),
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: { top: 8, right: 6, bottom: 2, left: 2 },
+        },
+        plugins: {
+            legend: {
+                display: true,
+                position: "bottom",
+                align: "start",
+                labels: {
+                    color: text,
+                    usePointStyle: true,
+                    pointStyle: "circle",
+                    boxWidth: 8,
+                    boxHeight: 8,
+                    padding: 14,
+                    font: enrollmentChartFont(11, "600"),
+                },
+            },
+            tooltip: {
+                backgroundColor: enrollmentChartIsDark()
+                    ? "rgba(15,23,42,0.94)"
+                    : "rgba(255,255,255,0.98)",
+                titleColor: text,
+                bodyColor: muted,
+                borderColor: enrollmentChartIsDark()
+                    ? "rgba(51,65,85,0.9)"
+                    : "rgba(226,232,240,0.95)",
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6,
+                titleFont: enrollmentChartFont(12, "700"),
+                bodyFont: enrollmentChartFont(11, "500"),
+                footerFont: enrollmentChartFont(10, "500"),
+                displayColors: true,
+                usePointStyle: true,
+                callbacks: {
+                    title(items) {
+                        const item = items?.[0];
+                        if (!item) {
+                            return "";
+                        }
+
+                        return `Ano ${item.label}`;
+                    },
+                    label(context) {
+                        const value = context.parsed?.y;
+                        if (value == null || Number.isNaN(value)) {
+                            return `${context.dataset.label}: —`;
+                        }
+
+                        return `${context.dataset.label}: ${Number(value).toLocaleString("pt-BR")}`;
+                    },
+                },
+            },
+            datalabels: {
+                display: (ctx) => ctx.datasetIndex === 0,
+                color: text,
+                anchor: "end",
+                align: "top",
+                offset: 4,
+                clip: false,
+                font: enrollmentChartFont(10, "700"),
+                formatter: (value) => formatEnrollmentDataLabel(value),
+            },
+        },
+        scales: {
+            x: {
+                border: { display: false },
+                grid: {
+                    display: true,
+                    color: grid,
+                    drawTicks: false,
+                },
+                ticks: {
+                    color: text,
+                    font: enrollmentChartFont(11, "600"),
+                    maxRotation: 0,
+                    autoSkip: false,
+                    padding: 8,
+                },
+                title: {
+                    display: true,
+                    text: "Ano",
+                    color: muted,
+                    font: enrollmentChartFont(10, "600"),
+                    padding: { top: 4 },
+                },
+            },
+            y: {
+                beginAtZero: true,
+                border: { display: false },
+                grid: {
+                    color: grid,
+                    drawTicks: false,
+                },
+                ticks: {
+                    color: muted,
+                    font: enrollmentChartFont(10, "500"),
+                    precision: 0,
+                    maxTicksLimit: 6,
+                    padding: 6,
+                    callback: (value) => formatEnrollmentAxisValue(value),
+                },
+                title: {
+                    display: true,
+                    text: "Matrículas",
+                    color: muted,
+                    font: enrollmentChartFont(10, "600"),
+                    padding: { bottom: 4 },
+                },
+            },
+        },
+    };
+}
+
 const BRAZIL_BOUNDS = L.latLngBounds(
     L.latLng(-35.5, -76.0),
     L.latLng(7.0, -30.0),
@@ -4867,62 +5078,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
 
-            const interaction = cartesianInteractionDefaults();
+            const datasets = (Array.isArray(payload.datasets)
+                ? payload.datasets
+                : []
+            ).map((dataset, index) => styleEnrollmentDataset(dataset, index));
 
             this._enrollmentSeriesChart = new Chart(ctx, {
                 type: "line",
                 data: {
                     labels: Array.isArray(payload.labels) ? payload.labels : [],
-                    datasets: (Array.isArray(payload.datasets)
-                        ? payload.datasets
-                        : []
-                    ).map((dataset) => ({
-                        ...dataset,
-                        spanGaps: true,
-                    })),
+                    datasets,
                 },
-                options: {
-                    ...interaction,
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: "bottom",
-                            labels: {
-                                boxWidth: 10,
-                                font: { size: 10 },
-                                padding: 8,
-                            },
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label(context) {
-                                    const value = context.parsed?.y;
-                                    if (value == null || Number.isNaN(value)) {
-                                        return `${context.dataset.label}: —`;
-                                    }
-
-                                    return `${context.dataset.label}: ${Number(value).toLocaleString("pt-BR")}`;
-                                },
-                            },
-                        },
-                    },
-                    scales: {
-                        x: {
-                            ticks: { maxRotation: 0, autoSkip: true },
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0,
-                                callback(value) {
-                                    return Number(value).toLocaleString("pt-BR");
-                                },
-                            },
-                        },
-                    },
-                },
+                options: enrollmentSeriesChartOptions(),
             });
         },
 

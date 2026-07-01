@@ -109,23 +109,9 @@ final class HorizonteMunicipioEnrollmentSeriesService
             $labels,
             $series,
             [
-                'plugins' => [
-                    'legend' => [
-                        'display' => true,
-                        'position' => 'bottom',
-                        'labels' => [
-                            'boxWidth' => 10,
-                            'padding' => 10,
-                            'font' => ['size' => 10],
-                        ],
-                    ],
-                ],
                 'scales' => [
                     'y' => [
                         'beginAtZero' => true,
-                        'ticks' => [
-                            'precision' => 0,
-                        ],
                     ],
                 ],
             ],
