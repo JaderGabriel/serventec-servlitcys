@@ -65,6 +65,7 @@
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-gray-700 dark:text-gray-300">
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_fundeb" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar FUNDEB') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_censo" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar Censo') }}</label>
+                    <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_educacenso" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar Educacenso') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_cadunico" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar CadÚnico') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_sidra" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar SIDRA') }}</label>
                     <label class="flex items-center gap-1.5"><input type="checkbox" name="skip_repasses" value="1" class="rounded border-gray-300 text-sky-600" /> {{ __('Ignorar repasses') }}</label>

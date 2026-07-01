@@ -467,11 +467,12 @@ final class ArtisanCommandsCatalog
                 'commands' => [
                     [
                         'name' => 'horizonte:fortnightly-feed',
-                        'summary' => __('Pipeline bimestral Horizonte — 9 fases nacionais (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, IBGE, SGE, verify).'),
+                        'summary' => __('Pipeline bimestral Horizonte — fases nacionais (FUNDEB, Censo, Educacenso, SAEB, CadÚnico, SIDRA, repasses, IBGE, SGE, alertas, verify).'),
                         'signature' => 'horizonte:fortnightly-feed {--dry-run} {--all} {--staged} {--continue} {--reset} {--phase=} {--skip-*} {--uf=}',
                         'examples' => [
                             'php artisan horizonte:fortnightly-feed --staged --reset',
                             'php artisan horizonte:fortnightly-feed --staged --continue',
+                            'php artisan horizonte:fortnightly-feed --phase=educacenso',
                             'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas',
                             'php artisan horizonte:fortnightly-feed --phase=ibge_catalog',
                             'php artisan horizonte:fortnightly-feed --dry-run',
@@ -483,9 +484,11 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_FORTNIGHTLY_FEED_STAGED',
                             'HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL',
                             'HORIZONTE_REFERENCE_YEAR',
+                            'HORIZONTE_EDUCACENSO_ENABLED',
+                            'HORIZONTE_EDUCACENSO_YEARS_PER_STEP',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, official_check. SAEB e IBGE também aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE e SIDRA aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [

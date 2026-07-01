@@ -18,12 +18,12 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
         $result = app(HorizonteFortnightlyFeedService::class)->run(['dry_run' => true]);
 
         $this->assertTrue($result['success']);
-        $this->assertCount(9, $result['phases']);
+        $this->assertCount(11, $result['phases']);
         $keys = array_column($result['phases'], 'key');
         $this->assertSame(
             [
-                'fundeb_receita', 'censo_matriculas', 'cadunico_sync', 'sidra_demography',
-                'repasses_tesouro', 'saeb_planilhas', 'ibge_catalog', 'sge_registry', 'official_check',
+                'fundeb_receita', 'censo_matriculas', 'educacenso', 'cadunico_sync', 'sidra_demography',
+                'repasses_tesouro', 'saeb_planilhas', 'ibge_catalog', 'sge_registry', 'municipal_alerts', 'official_check',
             ],
             $keys,
         );
@@ -40,6 +40,7 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
             'dry_run' => true,
             'reset' => true,
             'skip_censo' => true,
+            'skip_educacenso' => true,
             'skip_cadunico' => true,
             'skip_sidra' => true,
             'skip_repasses' => true,
@@ -119,5 +120,23 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
 
         $this->assertTrue($result['success']);
         $this->assertSame([], \App\Support\Horizonte\HorizonteIbgeWarmProgress::doneUfs());
+    }
+
+    #[Test]
+    public function single_phase_reset_clears_educacenso_incremental_progress(): void
+    {
+        config(['horizonte.enabled' => true]);
+        Cache::flush();
+        \App\Support\Horizonte\HorizonteEducacensoImportProgress::markDone(2022);
+
+        $this->assertSame([2022], \App\Support\Horizonte\HorizonteEducacensoImportProgress::doneYears());
+
+        $result = app(HorizonteFortnightlyFeedService::class)->runSinglePhase('educacenso', [
+            'reset' => true,
+            'dry_run' => true,
+        ]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame([], \App\Support\Horizonte\HorizonteEducacensoImportProgress::doneYears());
     }
 }

@@ -55,6 +55,30 @@ final class InepMicrodadosCadastroEscolasPath
         return is_readable($path) ? $path : null;
     }
 
+    public static function resolveForYear(int $year, ?string $configured = null): ?string
+    {
+        if ($year < 2000) {
+            return null;
+        }
+
+        $rel = 'inep/microdados_ed_basica_'.$year.'.csv';
+        $disk = Storage::disk('public');
+        $path = $disk->path($rel);
+        if (is_readable($path)) {
+            return $path;
+        }
+
+        $configured = trim((string) ($configured ?? config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv')));
+        if ($configured === '' || ! str_contains($configured, '*')) {
+            return null;
+        }
+
+        $pattern = $disk->path(str_replace('*', (string) $year, $configured));
+        $matches = glob($pattern) ?: [];
+
+        return isset($matches[0]) && is_readable($matches[0]) ? $matches[0] : null;
+    }
+
     private static function yearFromFilename(string $path): int
     {
         $base = basename($path);

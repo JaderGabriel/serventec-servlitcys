@@ -139,7 +139,7 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 
 | Comando | Descrição |
 |---------|-----------|
-| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=censo_matriculas` (segmentos para gráfico prospectos), `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
+| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, Educacenso (série matrículas), CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=educacenso` (janela do gráfico §6.9), `--phase=censo_matriculas`, `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
 
@@ -149,6 +149,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 php artisan horizonte:sync-repasses-tesouro --with-ref
 php artisan horizonte:sync-repasses-tesouro --uf=BA --year=2026
 php artisan horizonte:fortnightly-feed --phase=censo_matriculas
+php artisan horizonte:fortnightly-feed --phase=educacenso
+php artisan horizonte:fortnightly-feed --phase=educacenso --reset
 php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset

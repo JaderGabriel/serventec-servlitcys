@@ -43,7 +43,8 @@ Classificação de dado (planilha Serventec / PDF): **publicado** (portaria/CKAN
 | FUNDEB município + ano | `fundeb::import_city_year` | `FundebOpenDataImportService` |
 | FUNDEB todos (um ano) | `fundeb::import_bulk_year` | idem |
 | FUNDEB intervalo anos | `fundeb::sync_all_years` | idem |
-| Indexar Censo municipal | `funding::index_censo_matriculas` | `InepCensoMunicipioMatriculasIndexer` — total + segmentos (`matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar`) para o gráfico Horizonte (prospectos) |
+| Indexar Censo municipal | `funding::index_censo_matriculas` | `InepCensoMunicipioMatriculasIndexer` — total + segmentos (`matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar`) |
+| Educacenso — série matrículas Horizonte | `horizonte:fortnightly-feed --phase=educacenso` | `HorizonteEducacensoMatriculasSyncService` — importa **cada ano** da janela do gráfico (§6.9); download INEP por ano se CSV ausente |
 | Repasses município + ano | `funding::import_transfers_city_year` | `MunicipalTransferImportService` (3 extratos FUNDEB + CKAN/Transparência; campo `attempts` no resultado da fila). BB: download automático do CSV — [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) |
 | Repasses todos (um ano) | várias tarefas `funding::import_transfers_city_year` | idem |
 | Rebuild Finanças → Tempo Real | `funding:rebuild-finance-realtime` | Purga `municipal_transfer_snapshots` e reimporta por município/ano (slug `{nome}-{uf}-{ibge}-{ano}`); ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) §3.4 |
@@ -82,12 +83,13 @@ Detalhe: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md), [CONSULTAS_EXTERNAS.md]
 ## 6. Ordem recomendada (primeira carga)
 
 1. **Geo** — microdados INEP no `storage` (passo 3 ou pipeline).
-2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas` ou `horizonte:fortnightly-feed --phase=censo_matriculas`). Após migration de segmentos, **reimportar** para alimentar o gráfico do modal Horizonte (§6.9 em [HORIZONTE.md](HORIZONTE.md)).
-3. **FUNDEB** — importar anos de referência (CKAN + CSV receita).
-4. **Repasses** — Tesouro CSV (`TesouroTransferenciasCsvService`, COD_MUN + nome/UF) e Portal da Transparência (com API key) por município/ano.
-5. **SAEB municipal (IBGE)** — `php artisan saeb:import-planilhas-inep --years=2021,2023` (planilhas INEP; ver [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md)).
-6. **SAEB complementar** — microdados ZIP ou CSV (`saeb:sync-microdados`) quando precisar de agregação escola/rede.
-7. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
+2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas` ou `horizonte:fortnightly-feed --phase=censo_matriculas`).
+3. **Educacenso** — série multi-ano para o gráfico do modal Horizonte (`horizonte:fortnightly-feed --phase=educacenso`; repetir até concluir a janela — §6.9 em [HORIZONTE.md](HORIZONTE.md)).
+4. **FUNDEB** — importar anos de referência (CKAN + CSV receita).
+5. **Repasses** — Tesouro CSV (`TesouroTransferenciasCsvService`, COD_MUN + nome/UF) e Portal da Transparência (com API key) por município/ano.
+6. **SAEB municipal (IBGE)** — `php artisan saeb:import-planilhas-inep --years=2021,2023` (planilhas INEP; ver [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md)).
+7. **SAEB complementar** — microdados ZIP ou CSV (`saeb:sync-microdados`) quando precisar de agregação escola/rede.
+8. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
 
 Depois: gerar relatório PDF na consultoria — secções ATM consomem as tabelas acima; lacunas restantes aparecem em `data_gaps` (ver [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md)).
 

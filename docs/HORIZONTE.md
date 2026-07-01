@@ -155,11 +155,14 @@ Secção no modal municipal **apenas para municípios sem Consultoria activa** (
 
 ```bash
 php artisan migrate --force
+php artisan horizonte:fortnightly-feed --phase=educacenso
+php artisan horizonte:fortnightly-feed --phase=educacenso --reset   # recomeça a janela
+# Repetir até concluir os N anos (default 5) ou usar --all
+# Fase censo_matriculas indexa o CSV mais recente para escala do mapa
 php artisan horizonte:fortnightly-feed --phase=censo_matriculas
-# ou hub admin → «Indexar Censo municipal» + admin-sync:work
 ```
 
-Serviço: `HorizonteMunicipioEnrollmentSeriesService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`.
+Serviço: `HorizonteMunicipioEnrollmentSeriesService` · importação multi-ano: `HorizonteEducacensoMatriculasSyncService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`.
 
 > **Nota:** «Complementar / integral» aproxima `qt_mat_ativ_comp`, `qt_mat_ativ_comp_esp` e `qt_mat_prof` do Censo — taxonomia distinta do i-Educar.
 
@@ -311,6 +314,11 @@ HorizonteController
 | `HORIZONTE_MAP_MESO_THRESHOLD` | `60` | UF com ≥ N municípios abre vista mesorregião |
 | `HORIZONTE_MUNICIPAL_ALERTS_ENABLED` | `true` | Alertas MEC/FNDE no modal |
 | `HORIZONTE_ENROLLMENT_SERIES_YEARS` | `5` | Anos no gráfico de matrículas do modal (prospectos) |
+| `HORIZONTE_EDUCACENSO_ENABLED` | `true` | Fase Educacenso no feed bimestral |
+| `HORIZONTE_EDUCACENSO_FETCH_IF_MISSING` | `true` | Download ZIP INEP por ano se CSV local ausente |
+| `HORIZONTE_EDUCACENSO_SKIP_IF_MISSING` | `true` | Não bloqueia o pipeline se um ano falhar |
+| `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Anos Educacenso por invocação da fase |
+| `HORIZONTE_EDUCACENSO_MEMORY_LIMIT` | `1024M` | RAM da fase Educacenso |
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | CSV FNDE oficial | Fonte VAAT inabilitados (ver §9.1c) |
 
 Variáveis completas: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
@@ -328,7 +336,8 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | Fase | O que faz |
 |------|-----------|
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
-| **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`), incluindo segmentos para o gráfico do modal (§6.9) |
+| **Censo** | Indexa matrículas municipais a partir do microdados INEP mais recente (`inep_censo_municipio_matriculas`), incluindo segmentos |
+| **Educacenso** | Importa **cada ano** da janela do gráfico de matrículas (§6.9) — **1 ano por passo** por defeito; download INEP se CSV local ausente |
 | **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
 | **SIDRA** | População **total** e 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
@@ -343,6 +352,8 @@ php artisan horizonte:fortnightly-feed --staged --reset
 php artisan horizonte:fortnightly-feed --staged --continue
 php artisan horizonte:fortnightly-feed --phase=fundeb_receita
 php artisan horizonte:fortnightly-feed --phase=censo_matriculas
+php artisan horizonte:fortnightly-feed --phase=educacenso
+php artisan horizonte:fortnightly-feed --phase=educacenso --reset
 php artisan horizonte:fortnightly-feed --phase=cadunico_sync
 php artisan horizonte:fortnightly-feed --phase=sidra_demography
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
@@ -359,9 +370,10 @@ php artisan horizonte:fortnightly-feed --all --continue
 php artisan horizonte:fortnightly-feed --all --reset
 
 php artisan horizonte:fortnightly-feed --dry-run
-php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-cadunico --skip-sidra --skip-repasses --skip-sge
+php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo --skip-educacenso --skip-cadunico --skip-sidra --skip-repasses --skip-sge
 
-# Fases incrementais (SAEB / IBGE) — repetir --phase até concluir; --reset recomeça o lote
+# Fases incrementais (Educacenso / SAEB / IBGE / SIDRA) — repetir --phase até concluir; --reset recomeça o lote
+php artisan horizonte:fortnightly-feed --phase=educacenso
 php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog
 

@@ -65,6 +65,18 @@ class InepMicrodadosCadastroEscolasDownloader
     }
 
     /**
+     * Descarrega o ZIP do INEP para um ano específico sem apagar CSVs de outros anos.
+     *
+     * @throws \RuntimeException em falha de rede ou arquivo inválido
+     */
+    public function downloadAndExtractForYear(int $year): string
+    {
+        $this->purgeYearCsv($year);
+
+        return $this->extractYearZip($year);
+    }
+
+    /**
      * Descarrega o ZIP do INEP, extrai o CSV de escolas e devolve o caminho absoluto.
      *
      * @throws \RuntimeException em falha de rede ou arquivo inválido
@@ -72,13 +84,21 @@ class InepMicrodadosCadastroEscolasDownloader
     public function downloadAndExtract(?int $year = null): string
     {
         $year ??= $this->resolveYear();
+        $this->purgeExistingExtractedCsvs();
+
+        return $this->extractYearZip($year);
+    }
+
+    /**
+     * @throws \RuntimeException em falha de rede ou arquivo inválido
+     */
+    private function extractYearZip(int $year): string
+    {
         $template = (string) config(
             'ieducar.inep_geocoding.microdados_download_url_template',
             'http://download.inep.gov.br/dados_abertos/microdados_censo_escolar_{year}.zip'
         );
         $url = str_replace('{year}', (string) $year, $template);
-
-        $this->purgeExistingExtractedCsvs();
 
         $tmpZip = tempnam(sys_get_temp_dir(), 'inep_microdados_');
         if ($tmpZip === false) {
@@ -145,6 +165,15 @@ class InepMicrodadosCadastroEscolasDownloader
             return $destPath;
         } finally {
             @unlink($tmpZip);
+        }
+    }
+
+    private function purgeYearCsv(int $year): void
+    {
+        $disk = Storage::disk('public');
+        $rel = 'inep/microdados_ed_basica_'.$year.'.csv';
+        if ($disk->exists($rel)) {
+            $disk->delete($rel);
         }
     }
 }

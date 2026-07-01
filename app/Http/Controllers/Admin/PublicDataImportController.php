@@ -94,6 +94,7 @@ class PublicDataImportController extends Controller
         $skipOptions = [
             'skip_fundeb' => $request->boolean('skip_fundeb'),
             'skip_censo' => $request->boolean('skip_censo'),
+            'skip_educacenso' => $request->boolean('skip_educacenso'),
             'skip_cadunico' => $request->boolean('skip_cadunico'),
             'skip_sidra' => $request->boolean('skip_sidra'),
             'skip_repasses' => $request->boolean('skip_repasses'),

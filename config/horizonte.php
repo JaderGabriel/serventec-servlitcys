@@ -103,6 +103,12 @@ return [
 
         'censo_skip_if_missing' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_SKIP_IF_MISSING', true), FILTER_VALIDATE_BOOL),
         'censo_allow_empty' => filter_var(env('HORIZONTE_FORTNIGHTLY_CENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
+        'educacenso_enabled' => filter_var(env('HORIZONTE_EDUCACENSO_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'educacenso_fetch_if_missing' => filter_var(env('HORIZONTE_EDUCACENSO_FETCH_IF_MISSING', true), FILTER_VALIDATE_BOOL),
+        'educacenso_skip_if_missing' => filter_var(env('HORIZONTE_EDUCACENSO_SKIP_IF_MISSING', true), FILTER_VALIDATE_BOOL),
+        'educacenso_allow_empty' => filter_var(env('HORIZONTE_EDUCACENSO_ALLOW_EMPTY', false), FILTER_VALIDATE_BOOL),
+        'educacenso_years_per_step' => max(1, min(5, (int) env('HORIZONTE_EDUCACENSO_YEARS_PER_STEP', 1))),
+        'educacenso_memory_limit' => env('HORIZONTE_EDUCACENSO_MEMORY_LIMIT', '1024M'),
         'snapshot_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_SNAPSHOT_CACHE_TTL', 604800)),
         'pipeline_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_PIPELINE_CACHE_TTL', 604800)),
 

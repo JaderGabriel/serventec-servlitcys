@@ -113,6 +113,7 @@
                             $phaseLabel = match ($phaseKey) {
                                 'fundeb_receita' => 'FUNDEB',
                                 'censo_matriculas' => 'Censo',
+                                'educacenso' => 'Educacenso',
                                 'saeb_planilhas' => 'SAEB',
                                 'ibge_catalog' => 'IBGE',
                                 'sge_registry' => 'SGE',

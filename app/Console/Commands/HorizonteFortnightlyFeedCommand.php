@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
+use App\Support\Horizonte\HorizonteEducacensoImportProgress;
+use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedMonolithicProgress;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
@@ -21,7 +23,8 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--reset : Reiniciar pipeline ou execução --all do zero}
                             {--phase= : Executar apenas a fase indicada (fundeb_receita, censo_matriculas, …)}
                             {--skip-fundeb : Ignorar sincronização FUNDEB (CSV receita FNDE)}
-                            {--skip-censo : Ignorar indexação Censo matrículas}
+                            {--skip-censo : Ignorar indexação Censo matrículas (CSV local mais recente)}
+                            {--skip-educacenso : Ignorar importação Educacenso multi-ano (gráfico matrículas)}
                             {--skip-cadunico : Ignorar sincronização CadÚnico}
                             {--skip-sidra : Ignorar população IBGE SIDRA 4–17}
                             {--skip-repasses : Ignorar repasses Tesouro CKAN}
@@ -152,6 +155,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'dry_run' => (bool) $this->option('dry-run'),
             'skip_fundeb' => (bool) $this->option('skip-fundeb'),
             'skip_censo' => (bool) $this->option('skip-censo'),
+            'skip_educacenso' => (bool) $this->option('skip-educacenso'),
             'skip_cadunico' => (bool) $this->option('skip-cadunico'),
             'skip_sidra' => (bool) $this->option('skip-sidra'),
             'skip_repasses' => (bool) $this->option('skip-repasses'),
@@ -182,6 +186,7 @@ class HorizonteFortnightlyFeedCommand extends Command
         $monolithic = HorizonteFortnightlyFeedMonolithicProgress::get();
         $ibgeRemaining = HorizonteIbgeWarmProgress::remainingUfs();
         $saebRemaining = HorizonteSaebImportProgress::remainingYears($this->resolveSaebYearsForCommand());
+        $educacensoRemaining = HorizonteEducacensoImportProgress::remainingYears(HorizonteEducacensoYearWindow::years());
 
         if ($monolithic !== null && ($monolithic['status'] ?? '') === 'running') {
             $remaining = HorizonteFortnightlyFeedMonolithicProgress::remainingPhases();
@@ -201,6 +206,10 @@ class HorizonteFortnightlyFeedCommand extends Command
 
         if ($saebRemaining !== []) {
             $this->line(__('SAEB pendente: :anos', ['anos' => implode(', ', array_map('strval', $saebRemaining))]));
+        }
+
+        if ($educacensoRemaining !== []) {
+            $this->line(__('Educacenso pendente: :anos', ['anos' => implode(', ', array_map('strval', $educacensoRemaining))]));
         }
     }
 
@@ -242,6 +251,7 @@ class HorizonteFortnightlyFeedCommand extends Command
         $label = match ((string) ($phase['key'] ?? '')) {
             'fundeb_receita' => 'FUNDEB',
             'censo_matriculas' => 'Censo',
+            'educacenso' => 'Educacenso',
             'saeb_planilhas' => 'SAEB',
             'ibge_catalog' => 'IBGE',
             'sge_registry' => 'SGE',
@@ -257,6 +267,13 @@ class HorizonteFortnightlyFeedCommand extends Command
             $this->line(__('    · SAEB: :done/:total anos', [
                 'done' => (string) $phase['saeb_done'],
                 'total' => (string) $phase['saeb_total'],
+            ]));
+        }
+
+        if (isset($phase['educacenso_done'], $phase['educacenso_total']) && ($phase['partial'] ?? false)) {
+            $this->line(__('    · Educacenso: :done/:total anos', [
+                'done' => (string) $phase['educacenso_done'],
+                'total' => (string) $phase['educacenso_total'],
             ]));
         }
         if (isset($phase['ibge_done'], $phase['ibge_total']) && ($phase['partial'] ?? false)) {

@@ -42,6 +42,7 @@ final class HorizonteFortnightlyFeedPipeline
     {
         Cache::forget(self::CACHE_KEY);
         HorizonteSaebImportProgress::reset();
+        HorizonteEducacensoImportProgress::reset();
         HorizonteSidraImportProgress::reset();
     }
 

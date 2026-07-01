@@ -10,6 +10,8 @@ use App\Models\SaebIndicatorPoint;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
 use App\Support\Dashboard\AdminHomeMapCache;
+use App\Support\Horizonte\HorizonteEducacensoImportProgress;
+use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
@@ -83,6 +85,15 @@ final class HorizonteImportHubStatusService
             ? MunicipalDemographySnapshot::query()->distinct()->count('ibge_municipio')
             : 0;
 
+        $educacensoWindow = HorizonteEducacensoYearWindow::years();
+        $educacensoYearsIndexed = \Illuminate\Support\Facades\Schema::hasTable('inep_censo_municipio_matriculas')
+            ? (int) InepCensoMunicipioMatricula::query()
+                ->whereIn('ano', $educacensoWindow)
+                ->where('matriculas_total', '>', 0)
+                ->distinct()
+                ->count('ano')
+            : 0;
+
         return [
             'enabled' => (bool) config('horizonte.enabled', true),
             'feed_enabled' => (bool) config('horizonte.fortnightly_feed.enabled', true),
@@ -108,7 +119,7 @@ final class HorizonteImportHubStatusService
                 'censo_latest' => InepCensoMunicipioMatricula::query()->max('imported_at'),
                 'saeb_latest' => SaebIndicatorPoint::query()->max('updated_at'),
             ],
-            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal, $cadunicoCount, $demographyCount),
+            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal, $cadunicoCount, $demographyCount, $educacensoWindow, $educacensoYearsIndexed),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
             'pipeline' => HorizonteFortnightlyFeedPipeline::get(),
             'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
@@ -118,6 +129,7 @@ final class HorizonteImportHubStatusService
             'ibge_warm_done' => HorizonteIbgeWarmProgress::doneUfs(),
             'sidra_import_done' => HorizonteSidraImportProgress::doneUfs(),
             'saeb_import_done' => HorizonteSaebImportProgress::doneYears(),
+            'educacenso_import_done' => HorizonteEducacensoImportProgress::doneYears(),
             'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
@@ -130,7 +142,7 @@ final class HorizonteImportHubStatusService
      * @param  array<string, int>  $saebSet
      * @return list<array<string, mixed>>
      */
-    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal, int $cadunicoCount, int $demographyCount): array
+    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal, int $cadunicoCount, int $demographyCount, array $educacensoWindow, int $educacensoYearsIndexed): array
     {
         $phases = [
             [
@@ -156,6 +168,19 @@ final class HorizonteImportHubStatusService
                 'ok' => count($censoSet) >= 100,
                 'metric' => count($censoSet),
                 'metric_label' => __('municípios'),
+                'needs_microdados' => true,
+            ],
+            [
+                'key' => 'educacenso',
+                'label' => __('Educacenso — série matrículas (gráfico Horizonte)'),
+                'description' => __('Importa microdados INEP ano a ano para a janela do gráfico de matrículas (§6.9).'),
+                'source_id' => 'censo_inep_matriculas',
+                'hub_anchor' => '#source-censo_inep_matriculas',
+                'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-hub',
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=educacenso',
+                'ok' => $educacensoYearsIndexed >= count($educacensoWindow),
+                'metric' => $educacensoYearsIndexed,
+                'metric_label' => __('anos indexados'),
                 'needs_microdados' => true,
             ],
             [

@@ -297,6 +297,12 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL` | PDF FNDE (fallback) | Usado se o CSV falhar |
 | `HORIZONTE_MUNICIPAL_ALERTS_PATH` | `horizonte/municipal_alerts_registry.json` | Registo JSON manual/complementar |
 | `HORIZONTE_ENROLLMENT_SERIES_YEARS` | `5` | Anos no gráfico de matrículas Censo no modal Horizonte (prospectos; mín. 2, máx. 10) |
+| `HORIZONTE_EDUCACENSO_ENABLED` | `true` | Fase Educacenso no feed (`--phase=educacenso`) |
+| `HORIZONTE_EDUCACENSO_FETCH_IF_MISSING` | `true` | Download ZIP INEP por ano se CSV local ausente |
+| `HORIZONTE_EDUCACENSO_SKIP_IF_MISSING` | `true` | Não bloqueia o pipeline se download/indexação de um ano falhar |
+| `HORIZONTE_EDUCACENSO_ALLOW_EMPTY` | `false` | Marca ano como concluído mesmo sem matrículas agregadas |
+| `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Anos Educacenso processados por invocação (máx. 5) |
+| `HORIZONTE_EDUCACENSO_MEMORY_LIMIT` | `1024M` | RAM da fase Educacenso no `horizonte:fortnightly-feed` |
 
 Comando: `php artisan horizonte:sync-municipal-alerts` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9, §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
 

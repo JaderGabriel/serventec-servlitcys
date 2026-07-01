@@ -11,6 +11,8 @@ use App\Services\Ibge\IbgeSidraMunicipalDemographyService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
+use App\Support\Horizonte\HorizonteEducacensoImportProgress;
+use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedMonolithicProgress;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
@@ -39,6 +41,7 @@ final class HorizonteFortnightlyFeedService
         private readonly CadunicoAutoSyncService $cadunicoAutoSync,
         private readonly IbgeSidraMunicipalDemographyService $sidraDemography,
         private readonly HorizonteTesouroTransferSyncService $tesouroTransferSync,
+        private readonly HorizonteEducacensoMatriculasSyncService $educacensoMatriculas,
     ) {}
 
     /**
@@ -168,6 +171,7 @@ final class HorizonteFortnightlyFeedService
     {
         match ($phaseKey) {
             'saeb_planilhas' => HorizonteSaebImportProgress::reset(),
+            'educacenso' => HorizonteEducacensoImportProgress::reset(),
             'ibge_catalog' => HorizonteIbgeWarmProgress::reset(),
             'sidra_demography' => HorizonteSidraImportProgress::reset(),
             default => null,
@@ -186,6 +190,7 @@ final class HorizonteFortnightlyFeedService
         $result = match ($phaseKey) {
             'fundeb_receita' => $this->syncFundebReceitaNacional($refYear, $options),
             'censo_matriculas' => $this->indexCensoMatriculas($options),
+            'educacenso' => $this->importEducacensoMatriculas($options),
             'cadunico_sync' => $this->syncCadunicoNacional($options),
             'sidra_demography' => $this->importSidraDemography($options),
             'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
@@ -227,6 +232,7 @@ final class HorizonteFortnightlyFeedService
             HorizonteFortnightlyFeedMonolithicProgress::forget();
             HorizonteIbgeWarmProgress::reset();
             HorizonteSaebImportProgress::reset();
+            HorizonteEducacensoImportProgress::reset();
             HorizonteSidraImportProgress::reset();
             HorizonteFortnightlyFeedMonolithicProgress::start($queue, $feedOptions);
             $this->debugLog($runtimeOptions, __('Reinício --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
@@ -288,7 +294,7 @@ final class HorizonteFortnightlyFeedService
                 'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
             ]));
 
-            if (in_array($phaseKey, ['ibge_catalog', 'saeb_planilhas', 'sidra_demography'], true)) {
+            if (in_array($phaseKey, ['ibge_catalog', 'saeb_planilhas', 'sidra_demography', 'educacenso'], true)) {
                 do {
                     $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $runtimeOptions);
                     $this->emitPhaseDebugLines($runtimeOptions, $result);
@@ -446,6 +452,7 @@ final class HorizonteFortnightlyFeedService
         return [
             'skip_fundeb' => (bool) ($options['skip_fundeb'] ?? false),
             'skip_censo' => (bool) ($options['skip_censo'] ?? false),
+            'skip_educacenso' => (bool) ($options['skip_educacenso'] ?? false),
             'skip_cadunico' => (bool) ($options['skip_cadunico'] ?? false),
             'skip_sidra' => (bool) ($options['skip_sidra'] ?? false),
             'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
@@ -514,9 +521,11 @@ final class HorizonteFortnightlyFeedService
 
     private function applyResourceLimits(?string $phaseKey = null): void
     {
-        $memoryKey = $phaseKey === 'saeb_planilhas'
-            ? 'horizonte.fortnightly_feed.saeb_memory_limit'
-            : 'horizonte.fortnightly_feed.memory_limit';
+        $memoryKey = match ($phaseKey) {
+            'saeb_planilhas' => 'horizonte.fortnightly_feed.saeb_memory_limit',
+            'educacenso' => 'horizonte.fortnightly_feed.educacenso_memory_limit',
+            default => 'horizonte.fortnightly_feed.memory_limit',
+        };
         $memory = trim((string) config($memoryKey, '512M'));
         if ($memory !== '') {
             @ini_set('memory_limit', $memory);
@@ -696,6 +705,20 @@ final class HorizonteFortnightlyFeedService
                 : __('Censo: nenhuma matrícula agregada no CSV.'),
             'indexed' => $indexed,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function importEducacensoMatriculas(array $options = []): array
+    {
+        $years = HorizonteEducacensoYearWindow::years();
+        $this->debugLog($options, __('Educacenso — janela :anos', [
+            'anos' => implode(', ', array_map('strval', $years)),
+        ]));
+
+        return $this->educacensoMatriculas->syncBatch($options);
     }
 
     /**
@@ -1189,6 +1212,13 @@ final class HorizonteFortnightlyFeedService
             $this->debugLog($options, __('SAEB — progresso :done/:total ano(s).', [
                 'done' => (string) $phaseResult['saeb_done'],
                 'total' => (string) $phaseResult['saeb_total'],
+            ]));
+        }
+
+        if (($phaseResult['partial'] ?? false) && isset($phaseResult['educacenso_done'], $phaseResult['educacenso_total'])) {
+            $this->debugLog($options, __('Educacenso — progresso :done/:total ano(s).', [
+                'done' => (string) $phaseResult['educacenso_done'],
+                'total' => (string) $phaseResult['educacenso_total'],
             ]));
         }
     }

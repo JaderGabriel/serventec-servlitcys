@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Dashboard\ChartPayload;
+use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -54,7 +55,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
         }
 
         $limit = max(2, min(10, $years ?? (int) config('horizonte.enrollment_series.years', 5)));
-        $targetYears = $this->resolvePublishedCensoYears($limit);
+        $targetYears = HorizonteEducacensoYearWindow::years($limit);
 
         $rowsByYear = InepCensoMunicipioMatricula::query()
             ->where('ibge_municipio', $ibge)
@@ -137,26 +138,6 @@ final class HorizonteMunicipioEnrollmentSeriesService
     }
 
     /**
-     * Últimos N anos consecutivos do Educacenso (terminando no ano mais recente indexado nacionalmente).
-     *
-     * @return list<int>
-     */
-    private function resolvePublishedCensoYears(int $limit): array
-    {
-        $anchor = (int) (InepCensoMunicipioMatricula::query()->max('ano') ?? 0);
-        if ($anchor < 2000) {
-            $anchor = (int) config('horizonte.reference_year', (int) date('Y') - 1);
-        }
-
-        $years = [];
-        for ($offset = $limit - 1; $offset >= 0; $offset--) {
-            $years[] = $anchor - $offset;
-        }
-
-        return $years;
-    }
-
-    /**
      * @param  Collection<int, InepCensoMunicipioMatricula>  $rowsByYear
      * @param  list<int>  $targetYears
      */
@@ -189,7 +170,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
         if ($missingYears !== []) {
             ksort($missingYears);
             $missingList = implode(', ', array_map(static fn (int $year): string => (string) $year, array_keys($missingYears)));
-            $parts[] = __('Anos sem dados indexados para este município: :anos (reimporte com horizonte:fortnightly-feed --phase=censo_matriculas).', [
+            $parts[] = __('Anos sem dados indexados para este município: :anos (reimporte com horizonte:fortnightly-feed --phase=educacenso).', [
                 'anos' => $missingList,
             ]);
         }
