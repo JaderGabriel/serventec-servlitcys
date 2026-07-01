@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **6.1.0** · release `20260624-Horizonte` · **Ramo:** `main` · **Última revisão:** 24/06/2026
+**Versão em produção:** **6.1.0** · release `20260624-Horizonte` · **Ramo:** `main` · **Última revisão:** 01/07/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -152,6 +152,7 @@ flowchart TB
 | Horizonte — feed 9 fases (CadÚnico, SIDRA, Repasses) + fix cache Closure | Implementado (5.4.0) |
 | Horizonte — mapa performante (UF prioritária, cap 400 pontos, avisos UI) | Implementado (5.4.0) |
 | Horizonte — registo SGE concorrência (admin, sem duplicar catálogo Consultoria) | Implementado (5.4.0) |
+| Horizonte — gráfico matrículas Censo no modal (prospectos sem Consultoria; série 5 anos) | Implementado — [HORIZONTE.md](HORIZONTE.md) §6.9 |
 | Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |

@@ -1,6 +1,6 @@
 # Horizonte — mapa de oportunidade municipal
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.1.0 · **Última revisão:** 2026-07-01
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
@@ -39,7 +39,7 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 |--------|-----------------|------------------|
 | **Catálogo SERVLITCYS** | `cities` | Presença, UF, ligação Consultoria (`is_active` + credenciais BD) |
 | **FUNDEB** | `fundeb_municipio_references` | Complementação VAAR/VAAT/VAAF, receita, pressão financeira |
-| **Censo INEP** | `inep_censo_municipio_matriculas` | Escala (matrículas municipais) |
+| **Censo INEP** | `inep_censo_municipio_matriculas` | Escala (matrículas municipais); série histórica no modal (prospectos) |
 | **SAEB / IDEB** | `saeb_indicator_points` | Déficit pedagógico (LP, MAT) |
 | **CadÚnico** | `cadunico_municipio_snapshots` | Demanda social (crianças 0–17, PBF), filtro no mapa, dimensão `social_demand` no score |
 | **Demografia IBGE SIDRA** | `municipal_demography_snapshots` | População **total** e 4–17 (Censo 2022, agregado 9514); reimportar com `--phase=sidra_demography --reset` se `populacao_total` estiver vazia |
@@ -112,7 +112,7 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip municipal: scores, pipeline população → CadÚnico → matrículas, **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, **alertas MEC/FNDE VAAT**, fontes, atalho Consultoria.
+- Tooltip municipal: scores, pipeline população → CadÚnico → matrículas, **gráfico de matrículas Censo** (prospectos — ver §6.9), **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, **alertas MEC/FNDE VAAT**, fontes, atalho Consultoria.
 - Malha IBGE servida por `GET /dashboard/horizonte/map-geo` (`HorizonteIbgeMalhaService`, cache em `storage/app/horizonte/geo/`).
 
 ### 6.5 Modal municipal — leitura financeira (consultoria)
@@ -138,6 +138,30 @@ Três blocos **complementares** (não somar entre si):
 Serviço: `HorizonteFundebRepasseOutlook` · payload `fundeb_realtime_*` em cada marcador.
 
 **Último repasse YTD:** rótulo do último mês com valor em `meta.mensal` ou `imported_at` (`HorizonteFundebTransferTemporal`).
+
+### 6.9 Gráfico de matrículas — prospectos (Censo INEP)
+
+Secção no modal municipal **apenas para municípios sem Consultoria activa** (`consultoria_active === false`). Municípios com base i-Educar configurada no catálogo **não** mostram o gráfico (dados em tempo real ficam no Painel analítico).
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Fonte** | `inep_censo_municipio_matriculas` (microdados Educacenso agregados por município/ano) |
+| **Carregamento** | Lazy — `GET /dashboard/horizonte/municipality/{ibge}/enrollment-series` ao abrir o modal |
+| **Anos** | Últimos N anos (default **5**; `HORIZONTE_ENROLLMENT_SERIES_YEARS`, mín. 2, máx. 10) |
+| **Linhas** | Total · Regular · EJA · Educação especial · Complementar / integral |
+| **Segmentos** | Colunas `matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar` — preenchidas na reindexação Censo; sem elas aparece só **Total** + nota para reimportar |
+
+**Reindexar após deploy** (migration + microdados INEP):
+
+```bash
+php artisan migrate --force
+php artisan horizonte:fortnightly-feed --phase=censo_matriculas
+# ou hub admin → «Indexar Censo municipal» + admin-sync:work
+```
+
+Serviço: `HorizonteMunicipioEnrollmentSeriesService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`.
+
+> **Nota:** «Complementar / integral» aproxima `qt_mat_ativ_comp`, `qt_mat_ativ_comp_esp` e `qt_mat_prof` do Censo — taxonomia distinta do i-Educar.
 
 ### 6.6 Painel FUNDEB estadual (recorte UF)
 
@@ -231,7 +255,8 @@ php artisan horizonte:fortnightly-feed --skip-sge   # ignorar registo SGE
 
 ```
 HorizonteController
-  └── HorizonteMapService::build()   [cache AdminHomeMapCache]
+  ├── HorizonteMapService::build()   [cache AdminHomeMapCache]
+  └── enrollmentSeries(ibge)         [lazy — HorizonteMunicipioEnrollmentSeriesService]
         ├── citiesByIbge()
         ├── fundebByIbge / censoByIbge / saebByIbge
         ├── IbgeMunicipalityCatalog (nome + coordenadas)
@@ -242,7 +267,8 @@ HorizonteController
 
 | Ficheiro | Função |
 |----------|--------|
-| `app/Http/Controllers/HorizonteController.php` | Entrada HTTP + endpoint malha `map-geo` |
+| `app/Http/Controllers/HorizonteController.php` | Entrada HTTP + malha `map-geo` + série matrículas |
+| `app/Services/Horizonte/HorizonteMunicipioEnrollmentSeriesService.php` | Série Censo (prospectos) |
 | `app/Services/Horizonte/HorizonteMapService.php` | Agregação e cache |
 | `app/Services/Horizonte/HorizonteIbgeMalhaService.php` | Malha UF/mesorregião IBGE (coroplético) |
 | `app/Services/Horizonte/HorizonteMunicipalAlertsSyncService.php` | Importação alertas MEC/FNDE VAAT |
@@ -284,6 +310,7 @@ HorizonteController
 | `HORIZONTE_MAP_MAX_RENDER` | `400` | Máximo de pontos desenhados no mapa por defeito |
 | `HORIZONTE_MAP_MESO_THRESHOLD` | `60` | UF com ≥ N municípios abre vista mesorregião |
 | `HORIZONTE_MUNICIPAL_ALERTS_ENABLED` | `true` | Alertas MEC/FNDE no modal |
+| `HORIZONTE_ENROLLMENT_SERIES_YEARS` | `5` | Anos no gráfico de matrículas do modal (prospectos) |
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | CSV FNDE oficial | Fonte VAAT inabilitados (ver §9.1c) |
 
 Variáveis completas: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
@@ -301,7 +328,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | Fase | O que faz |
 |------|-----------|
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
-| **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`) |
+| **Censo** | Indexa matrículas municipais a partir do microdados INEP (`inep_censo_municipio_matriculas`), incluindo segmentos para o gráfico do modal (§6.9) |
 | **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
 | **SIDRA** | População **total** e 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
@@ -315,6 +342,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 php artisan horizonte:fortnightly-feed --staged --reset
 php artisan horizonte:fortnightly-feed --staged --continue
 php artisan horizonte:fortnightly-feed --phase=fundeb_receita
+php artisan horizonte:fortnightly-feed --phase=censo_matriculas
 php artisan horizonte:fortnightly-feed --phase=cadunico_sync
 php artisan horizonte:fortnightly-feed --phase=sidra_demography
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
@@ -477,8 +505,8 @@ Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
 php artisan test --filter=Horizonte
 ```
 
-Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, `HorizonteFortnightlyFeedPipelineTest`, `HorizonteDataBundleServiceTest`.
+Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, `HorizonteFortnightlyFeedPipelineTest`, `HorizonteDataBundleServiceTest`, `HorizonteMunicipioEnrollmentSeriesServiceTest`.
 
 ---
 
-*Última revisão: 2026-06-24 · Módulo Horizonte v6.1 — coroplético IBGE, mesorregiões, alertas VAAT, modal e resumo UF*
+*Última revisão: 2026-07-01 · Módulo Horizonte v6.1 — coroplético IBGE, mesorregiões, alertas VAAT, modal, gráfico matrículas prospectos e resumo UF*

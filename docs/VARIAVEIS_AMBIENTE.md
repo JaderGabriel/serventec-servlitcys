@@ -296,8 +296,9 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | [CSV FNDE VAAT 2026](https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/fundeb/vaat/lista-dos-entes-habilitados-e-inabilitados-ao-vaat-2026-posicao-final-com-ajuste-de-decisao-judicial-edit-csv.csv/@@download/file) | Fonte principal — lista oficial de inabilitados VAAT |
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_PDF_URL` | PDF FNDE (fallback) | Usado se o CSV falhar |
 | `HORIZONTE_MUNICIPAL_ALERTS_PATH` | `horizonte/municipal_alerts_registry.json` | Registo JSON manual/complementar |
+| `HORIZONTE_ENROLLMENT_SERIES_YEARS` | `5` | Anos no gráfico de matrículas Censo no modal Horizonte (prospectos; mín. 2, máx. 10) |
 
-Comando: `php artisan horizonte:sync-municipal-alerts` · Ver [HORIZONTE.md](HORIZONTE.md) §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
+Comando: `php artisan horizonte:sync-municipal-alerts` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9, §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

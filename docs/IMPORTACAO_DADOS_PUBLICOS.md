@@ -43,7 +43,7 @@ Classificação de dado (planilha Serventec / PDF): **publicado** (portaria/CKAN
 | FUNDEB município + ano | `fundeb::import_city_year` | `FundebOpenDataImportService` |
 | FUNDEB todos (um ano) | `fundeb::import_bulk_year` | idem |
 | FUNDEB intervalo anos | `fundeb::sync_all_years` | idem |
-| Indexar Censo municipal | `funding::index_censo_matriculas` | `InepCensoMunicipioMatriculasIndexer` |
+| Indexar Censo municipal | `funding::index_censo_matriculas` | `InepCensoMunicipioMatriculasIndexer` — total + segmentos (`matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar`) para o gráfico Horizonte (prospectos) |
 | Repasses município + ano | `funding::import_transfers_city_year` | `MunicipalTransferImportService` (3 extratos FUNDEB + CKAN/Transparência; campo `attempts` no resultado da fila). BB: download automático do CSV — [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) |
 | Repasses todos (um ano) | várias tarefas `funding::import_transfers_city_year` | idem |
 | Rebuild Finanças → Tempo Real | `funding:rebuild-finance-realtime` | Purga `municipal_transfer_snapshots` e reimporta por município/ano (slug `{nome}-{uf}-{ibge}-{ano}`); ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) §3.4 |
@@ -82,7 +82,7 @@ Detalhe: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md), [CONSULTAS_EXTERNAS.md]
 ## 6. Ordem recomendada (primeira carga)
 
 1. **Geo** — microdados INEP no `storage` (passo 3 ou pipeline).
-2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas`).
+2. **Censo** — indexar matrículas municipais (`funding::index_censo_matriculas` ou `horizonte:fortnightly-feed --phase=censo_matriculas`). Após migration de segmentos, **reimportar** para alimentar o gráfico do modal Horizonte (§6.9 em [HORIZONTE.md](HORIZONTE.md)).
 3. **FUNDEB** — importar anos de referência (CKAN + CSV receita).
 4. **Repasses** — Tesouro CSV (`TesouroTransferenciasCsvService`, COD_MUN + nome/UF) e Portal da Transparência (com API key) por município/ano.
 5. **SAEB municipal (IBGE)** — `php artisan saeb:import-planilhas-inep --years=2021,2023` (planilhas INEP; ver [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md)).
