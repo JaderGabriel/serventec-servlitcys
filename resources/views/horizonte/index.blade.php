@@ -8,6 +8,7 @@
     $heatLegend = \App\Support\Horizonte\HorizonteMapPresenter::heatLegendItems();
     $mapDataUrl = $mapDataUrl ?? route('dashboard.horizonte.map-data');
     $mapGeoUrl = $mapGeoUrl ?? route('dashboard.horizonte.map-geo');
+    $enrollmentSeriesUrl = $enrollmentSeriesUrl ?? route('dashboard.horizonte.enrollment-series', ['ibge' => '__IBGE__']);
     $mapGeoFallbackUrl = asset('geo/brazil-uf.json');
     $docUrl = route(auth()->user()?->isAdmin() ? 'admin.documentation.show' : 'documentation.show', ['doc' => 'docs/HORIZONTE.md']);
     $canRefreshData = (bool) ($canRefreshData ?? auth()->user()?->canImportOrConfigure());
@@ -56,6 +57,7 @@
             'loadUrl' => $mapDataUrl,
             'mapGeoUrl' => $mapGeoUrl,
             'mapGeoFallbackUrl' => $mapGeoFallbackUrl,
+            'enrollmentSeriesUrl' => $enrollmentSeriesUrl,
             'refYear' => $refYear,
             'currentYear' => $currentYear,
             'legend' => $legend,

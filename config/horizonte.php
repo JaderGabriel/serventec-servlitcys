@@ -24,6 +24,10 @@ return [
 
     'reference_year' => HorizonteReferenceYear::resolve($horizonteReferenceYearRaw),
 
+    'enrollment_series' => [
+        'years' => max(2, min(10, (int) env('HORIZONTE_ENROLLMENT_SERIES_YEARS', 5))),
+    ],
+
     'high_opportunity_threshold' => max(1, min(99, (int) env('HORIZONTE_HIGH_THRESHOLD', 70))),
 
     'medium_opportunity_threshold' => max(1, min(98, (int) env('HORIZONTE_MEDIUM_THRESHOLD', 40))),

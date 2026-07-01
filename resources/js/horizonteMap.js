@@ -3,6 +3,8 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import Chart from "chart.js/auto";
+import { cartesianInteractionDefaults } from "./chartVisualDefaults.js";
 
 const BRAZIL_BOUNDS = L.latLngBounds(
     L.latLng(-35.5, -76.0),
@@ -1602,6 +1604,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             typeof options.sgeShowUrl === "string" ? options.sgeShowUrl : "",
         sgeRegistryUrl:
             typeof options.sgeRegistryUrl === "string" ? options.sgeRegistryUrl : "",
+        enrollmentSeriesUrl:
+            typeof options.enrollmentSeriesUrl === "string"
+                ? options.enrollmentSeriesUrl
+                : "",
+        enrollmentSeriesLoading: false,
+        enrollmentSeriesError: null,
+        enrollmentSeriesFootnote: "",
+        enrollmentSeriesReady: false,
+        enrollmentSeriesIbge: "",
+        _enrollmentSeriesChart: null,
+        _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
         sgeFormReadOnly: false,
         sgeFormSaving: false,
@@ -4443,6 +4456,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.active = m;
             this.tooltipPinned = true;
             this.positionTooltip();
+            void this.loadEnrollmentSeries(m);
         },
 
         positionTooltip() {
@@ -4458,6 +4472,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         closeTooltip() {
+            this.destroyEnrollmentSeriesChart();
             this.active = null;
             this.tooltipPinned = false;
             this.tooltipStyle = "";
@@ -4761,6 +4776,154 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         tierLabel(m) {
             return m?.tier_label || m?.tier || "";
+        },
+
+        shouldShowEnrollmentSeries(m) {
+            return Boolean(m && !m.consultoria_active);
+        },
+
+        enrollmentSeriesUrlFor(ibge) {
+            return this.enrollmentSeriesUrl.replace(
+                "__IBGE__",
+                encodeURIComponent(String(ibge)),
+            );
+        },
+
+        destroyEnrollmentSeriesChart() {
+            if (this._enrollmentSeriesAbort) {
+                this._enrollmentSeriesAbort.abort();
+                this._enrollmentSeriesAbort = null;
+            }
+            if (this._enrollmentSeriesChart) {
+                this._enrollmentSeriesChart.destroy();
+                this._enrollmentSeriesChart = null;
+            }
+            this.enrollmentSeriesReady = false;
+            this.enrollmentSeriesError = null;
+            this.enrollmentSeriesFootnote = "";
+            this.enrollmentSeriesLoading = false;
+            this.enrollmentSeriesIbge = "";
+        },
+
+        async loadEnrollmentSeries(m) {
+            if (!this.shouldShowEnrollmentSeries(m)) {
+                this.destroyEnrollmentSeriesChart();
+
+                return;
+            }
+            const ibge = String(m.ibge ?? "").trim();
+            if (!ibge) {
+                return;
+            }
+            if (
+                ibge === this.enrollmentSeriesIbge &&
+                (this.enrollmentSeriesReady || this.enrollmentSeriesLoading)
+            ) {
+                return;
+            }
+
+            this.destroyEnrollmentSeriesChart();
+            this.enrollmentSeriesIbge = ibge;
+            this.enrollmentSeriesLoading = true;
+            this.enrollmentSeriesError = null;
+
+            const controller = new AbortController();
+            this._enrollmentSeriesAbort = controller;
+
+            try {
+                const res = await fetch(this.enrollmentSeriesUrlFor(ibge), {
+                    headers: { Accept: "application/json" },
+                    signal: controller.signal,
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data?.ok) {
+                    this.enrollmentSeriesError =
+                        data?.message || "Sem série histórica disponível.";
+
+                    return;
+                }
+                this.enrollmentSeriesFootnote = String(data.footnote ?? "");
+                await this.$nextTick();
+                this.renderEnrollmentSeriesChart(data.chart);
+                this.enrollmentSeriesReady = true;
+            } catch (error) {
+                if (error?.name !== "AbortError") {
+                    this.enrollmentSeriesError =
+                        "Não foi possível carregar a série de matrículas.";
+                }
+            } finally {
+                this.enrollmentSeriesLoading = false;
+                this._enrollmentSeriesAbort = null;
+            }
+        },
+
+        renderEnrollmentSeriesChart(payload) {
+            const canvas = this.$refs.enrollmentSeriesCanvas;
+            if (!canvas || !payload) {
+                return;
+            }
+            const ctx = canvas.getContext("2d");
+            if (!ctx) {
+                return;
+            }
+
+            const interaction = cartesianInteractionDefaults();
+
+            this._enrollmentSeriesChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: Array.isArray(payload.labels) ? payload.labels : [],
+                    datasets: (Array.isArray(payload.datasets)
+                        ? payload.datasets
+                        : []
+                    ).map((dataset) => ({
+                        ...dataset,
+                        spanGaps: true,
+                    })),
+                },
+                options: {
+                    ...interaction,
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: {
+                                boxWidth: 10,
+                                font: { size: 10 },
+                                padding: 8,
+                            },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const value = context.parsed?.y;
+                                    if (value == null || Number.isNaN(value)) {
+                                        return `${context.dataset.label}: —`;
+                                    }
+
+                                    return `${context.dataset.label}: ${Number(value).toLocaleString("pt-BR")}`;
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            ticks: { maxRotation: 0, autoSkip: true },
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                callback(value) {
+                                    return Number(value).toLocaleString("pt-BR");
+                                },
+                            },
+                        },
+                    },
+                },
+            });
         },
 
         tooltipBodyHtml(m) {

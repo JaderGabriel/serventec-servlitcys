@@ -94,6 +94,35 @@
                     aria-label="{{ __('Fechar') }}"
                 >&times;</button>
             </div>
+            <section
+                x-show="active && shouldShowEnrollmentSeries(active)"
+                x-cloak
+                class="serv-horizonte-muni-tooltip__enrollment-series"
+            >
+                <div class="serv-horizonte-muni-tooltip__enrollment-series-head">
+                    <h4 class="serv-horizonte-muni-tooltip__enrollment-series-title">{{ __('Matrículas — últimos 5 anos (Censo INEP)') }}</h4>
+                    <span
+                        x-show="enrollmentSeriesLoading"
+                        class="serv-horizonte-muni-tooltip__enrollment-series-status"
+                    >{{ __('A carregar…') }}</span>
+                </div>
+                <p
+                    x-show="enrollmentSeriesError"
+                    x-text="enrollmentSeriesError"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-error"
+                ></p>
+                <div
+                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap"
+                >
+                    <canvas x-ref="enrollmentSeriesCanvas" height="168" aria-hidden="true"></canvas>
+                </div>
+                <p
+                    x-show="enrollmentSeriesFootnote"
+                    x-text="enrollmentSeriesFootnote"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-footnote"
+                ></p>
+            </section>
             <div x-show="active" x-html="active ? tooltipBodyHtml(active) : ''"></div>
             <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">

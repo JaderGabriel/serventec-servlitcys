@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
 final class InepCensoMunicipioMatriculasIndexer
 {
     /** @var list<string> */
-    private const MATRICULA_COLUMN_ALIASES = [
+    private const MATRICULA_TOTAL_ALIASES = [
         'qt_mat_bas',
         'qt_mat_inf',
         'qt_mat_fund',
@@ -26,6 +26,18 @@ final class InepCensoMunicipioMatriculasIndexer
         'quantidade_matricula',
         'quant_matriculas',
     ];
+
+    /** @var list<string> */
+    private const MATRICULA_REGULAR_ALIASES = ['qt_mat_inf', 'qt_mat_fund', 'qt_mat_med', 'qt_mat_bas'];
+
+    /** @var list<string> */
+    private const MATRICULA_EJA_ALIASES = ['qt_mat_eja'];
+
+    /** @var list<string> */
+    private const MATRICULA_ESPECIAL_ALIASES = ['qt_mat_esp'];
+
+    /** @var list<string> */
+    private const MATRICULA_COMPLEMENTAR_ALIASES = ['qt_mat_ativ_comp', 'qt_mat_ativ_comp_esp', 'qt_mat_prof'];
 
     public function __construct(
         private InepCensoMunicipioMatriculaRepository $repository,
@@ -63,11 +75,15 @@ final class InepCensoMunicipioMatriculasIndexer
         $map = InepMicrodadosEscolasCsv::mapHeader($header);
         $ibgeIdx = $this->ibgeColumnIndex($map);
         $anoIdx = $this->columnIndex($map, ['nu_ano_censo', 'ano']);
-        $matIndices = $this->matriculaColumnIndices($map);
+        $matTotalIndices = $this->matriculaColumnIndices($map, self::MATRICULA_TOTAL_ALIASES);
+        $matRegularIndices = $this->matriculaColumnIndices($map, self::MATRICULA_REGULAR_ALIASES);
+        $matEjaIndices = $this->matriculaColumnIndices($map, self::MATRICULA_EJA_ALIASES);
+        $matEspecialIndices = $this->matriculaColumnIndices($map, self::MATRICULA_ESPECIAL_ALIASES);
+        $matComplementarIndices = $this->matriculaColumnIndices($map, self::MATRICULA_COMPLEMENTAR_ALIASES);
 
         $depIdx = $this->columnIndex($map, ['tp_dependencia', 'dependencia_administrativa', 'tp_dependencia_adm']);
 
-        if ($ibgeIdx === null || $anoIdx === null || $matIndices === []) {
+        if ($ibgeIdx === null || $anoIdx === null || $matTotalIndices === []) {
             fclose($fh);
             Log::warning('INEP censo matrículas: colunas IBGE/ano/matricula não encontradas no CSV.');
 
@@ -90,7 +106,7 @@ final class InepCensoMunicipioMatriculasIndexer
             }
         }
 
-        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int}> $agg */
+        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int, regular: int, eja: int, especial: int, complementar: int}> $agg */
         $agg = [];
 
         while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
@@ -103,20 +119,33 @@ final class InepCensoMunicipioMatriculasIndexer
             if ($ano < 2000) {
                 continue;
             }
-            $mat = 0;
-            foreach ($matIndices as $idx) {
-                if (isset($row[$idx]) && is_numeric($row[$idx])) {
-                    $mat += max(0, (int) $row[$idx]);
-                }
-            }
+            $mat = $this->sumRowColumns($row, $matTotalIndices);
             if ($mat <= 0) {
                 continue;
             }
+            $regular = $this->sumRowColumns($row, $matRegularIndices);
+            $eja = $this->sumRowColumns($row, $matEjaIndices);
+            $especial = $this->sumRowColumns($row, $matEspecialIndices);
+            $complementar = $this->sumRowColumns($row, $matComplementarIndices);
             $key = $ibge.'|'.$ano;
             if (! isset($agg[$key])) {
-                $agg[$key] = ['ano' => $ano, 'mat' => 0, 'escolas' => 0, 'municipal' => 0, 'nao_municipal' => 0];
+                $agg[$key] = [
+                    'ano' => $ano,
+                    'mat' => 0,
+                    'escolas' => 0,
+                    'municipal' => 0,
+                    'nao_municipal' => 0,
+                    'regular' => 0,
+                    'eja' => 0,
+                    'especial' => 0,
+                    'complementar' => 0,
+                ];
             }
             $agg[$key]['mat'] += $mat;
+            $agg[$key]['regular'] += $regular;
+            $agg[$key]['eja'] += $eja;
+            $agg[$key]['especial'] += $especial;
+            $agg[$key]['complementar'] += $complementar;
             $agg[$key]['escolas']++;
             $dep = self::classifyMunicipalDependency($row, $depIdx);
             if ($dep === true) {
@@ -140,6 +169,10 @@ final class InepCensoMunicipioMatriculasIndexer
                 $importedAt,
                 $data['municipal'] > 0 ? $data['municipal'] : null,
                 $data['nao_municipal'] > 0 ? $data['nao_municipal'] : null,
+                $data['regular'] > 0 ? $data['regular'] : null,
+                $data['eja'] > 0 ? $data['eja'] : null,
+                $data['especial'] > 0 ? $data['especial'] : null,
+                $data['complementar'] > 0 ? $data['complementar'] : null,
             );
             $count++;
         }
@@ -181,12 +214,13 @@ final class InepCensoMunicipioMatriculasIndexer
 
     /**
      * @param  array<string, int>  $map
+     * @param  list<string>  $aliases
      * @return list<int>
      */
-    private function matriculaColumnIndices(array $map): array
+    private function matriculaColumnIndices(array $map, array $aliases): array
     {
         $indices = [];
-        foreach (self::MATRICULA_COLUMN_ALIASES as $alias) {
+        foreach ($aliases as $alias) {
             $k = mb_strtolower($alias);
             if (isset($map[$k])) {
                 $indices[] = $map[$k];
@@ -194,6 +228,22 @@ final class InepCensoMunicipioMatriculasIndexer
         }
 
         return array_values(array_unique($indices));
+    }
+
+    /**
+     * @param  list<string|null>  $row
+     * @param  list<int>  $indices
+     */
+    private function sumRowColumns(array $row, array $indices): int
+    {
+        $sum = 0;
+        foreach ($indices as $idx) {
+            if (isset($row[$idx]) && is_numeric($row[$idx])) {
+                $sum += max(0, (int) $row[$idx]);
+            }
+        }
+
+        return $sum;
     }
 
     /**

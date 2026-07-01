@@ -1857,3 +1857,62 @@
 .dark .serv-horizonte-demo__muni-card-title span {
     color: rgb(148 163 184);
 }
+
+.serv-horizonte-muni-tooltip__enrollment-series {
+    margin-top: 0.25rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(226 232 240);
+    background: rgb(248 250 252);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrollment-series {
+    border-color: rgb(51 65 85);
+    background: rgb(15 23 42 / 0.55);
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrollment-series-title {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-status {
+    font-size: 0.68rem;
+    color: rgb(100 116 139);
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-error {
+    font-size: 0.72rem;
+    color: rgb(180 83 9);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrollment-series-error {
+    color: rgb(251 191 36);
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-chart-wrap {
+    position: relative;
+    height: 11.5rem;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-footnote {
+    margin-top: 0.45rem;
+    font-size: 0.64rem;
+    line-height: 1.35;
+    color: rgb(100 116 139);
+}

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\City;
+use App\Models\InepCensoMunicipioMatricula;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,5 +64,48 @@ final class HorizonteAccessTest extends TestCase
         $this->actingAs($municipal)
             ->get(route('dashboard.horizonte.map-data'))
             ->assertForbidden();
+    }
+
+    #[Test]
+    public function admin_obtem_serie_matriculas_para_municipio_sem_consultoria(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2023,
+            'matriculas_total' => 11000,
+            'matriculas_regular' => 9000,
+            'matriculas_eja' => 1000,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson(route('dashboard.horizonte.enrollment-series', ['ibge' => '2927408']))
+            ->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('ibge', '2927408')
+            ->assertJsonStructure(['chart' => ['type', 'labels', 'datasets']]);
+    }
+
+    #[Test]
+    public function serie_matriculas_bloqueia_municipio_com_consultoria_activa(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        City::factory()->create([
+            'ibge_municipio' => '2927408',
+            'is_active' => true,
+        ]);
+
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2023,
+            'matriculas_total' => 11000,
+        ]);
+
+        $this->actingAs($admin)
+            ->getJson(route('dashboard.horizonte.enrollment-series', ['ibge' => '2927408']))
+            ->assertForbidden()
+            ->assertJsonPath('ok', false);
     }
 }

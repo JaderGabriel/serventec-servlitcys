@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Horizonte\HorizonteIbgeMalhaService;
 use App\Services\Horizonte\HorizonteMapService;
+use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteUfScope;
@@ -16,6 +17,7 @@ class HorizonteController extends Controller
     public function __construct(
         private readonly HorizonteMapService $map,
         private readonly HorizonteIbgeMalhaService $malha,
+        private readonly HorizonteMunicipioEnrollmentSeriesService $enrollmentSeries,
     ) {}
 
     public function index(Request $request): View
@@ -27,6 +29,7 @@ class HorizonteController extends Controller
         return view('horizonte.index', [
             'mapDataUrl' => route('dashboard.horizonte.map-data'),
             'mapGeoUrl' => route('dashboard.horizonte.map-geo'),
+            'enrollmentSeriesUrl' => route('dashboard.horizonte.enrollment-series', ['ibge' => '__IBGE__']),
             'refYear' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
             'legend' => HorizonteMapPresenter::legendItems(),
             'colors' => HorizonteMapPresenter::tierColors(),
@@ -79,5 +82,21 @@ class HorizonteController extends Controller
         }
 
         return response()->json($this->malha->brazilUfGeoJson());
+    }
+
+    public function enrollmentSeries(Request $request, string $ibge): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user !== null && $user->canViewHorizonte(), 403);
+        abort_unless((bool) config('horizonte.enabled', true), 404);
+
+        $result = $this->enrollmentSeries->forIbge($ibge);
+        if (! ($result['ok'] ?? false)) {
+            $status = (int) ($result['status'] ?? 404);
+
+            return response()->json($result, $status);
+        }
+
+        return response()->json($result);
     }
 }
