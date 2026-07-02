@@ -423,6 +423,14 @@ final class IbgeMunicipalityCatalog
         $mesoId = is_array($meso) ? (string) ($meso['id'] ?? '') : '';
         $mesoName = is_array($meso) ? trim((string) ($meso['nome'] ?? '')) : '';
 
+        $micro = is_array($item['microrregiao'] ?? null) ? $item['microrregiao'] : null;
+        $microId = is_array($micro) ? (string) ($micro['id'] ?? '') : '';
+        $microName = is_array($micro) ? trim((string) ($micro['nome'] ?? '')) : '';
+
+        $imediata = is_array($item['regiao-imediata'] ?? null) ? $item['regiao-imediata'] : null;
+        $imediataId = is_array($imediata) ? (string) ($imediata['id'] ?? '') : '';
+        $imediataName = is_array($imediata) ? trim((string) ($imediata['nome'] ?? '')) : '';
+
         return [
             'ibge' => $ibge,
             'name' => $name,
@@ -432,6 +440,10 @@ final class IbgeMunicipalityCatalog
             'coord_source' => $source,
             'meso_id' => $mesoId,
             'meso_name' => $mesoName,
+            'micro_id' => $microId,
+            'micro_name' => $microName,
+            'regiao_imediata_id' => $imediataId,
+            'regiao_imediata_name' => $imediataName,
         ];
     }
 

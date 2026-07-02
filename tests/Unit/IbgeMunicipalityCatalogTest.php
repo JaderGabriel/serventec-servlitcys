@@ -19,15 +19,25 @@ final class IbgeMunicipalityCatalogTest extends TestCase
                     'id' => 2927408,
                     'nome' => 'Salvador',
                     'microrregiao' => [
+                        'id' => 31003,
+                        'nome' => 'Salvador',
                         'mesorregiao' => [
+                            'id' => 3101,
+                            'nome' => 'Metropolitana de Salvador',
                             'UF' => ['sigla' => 'BA'],
                         ],
+                    ],
+                    'regiao-imediata' => [
+                        'id' => 310001,
+                        'nome' => 'Salvador',
                     ],
                 ],
                 [
                     'id' => 2903200,
                     'nome' => 'Barreiras',
                     'regiao-imediata' => [
+                        'id' => 290012,
+                        'nome' => 'Barreiras',
                         'regiao-intermediaria' => [
                             'UF' => ['sigla' => 'BA'],
                         ],
@@ -53,6 +63,10 @@ final class IbgeMunicipalityCatalogTest extends TestCase
         $this->assertArrayHasKey('2927408', $catalog);
         $this->assertSame('Salvador', $catalog['2927408']['name']);
         $this->assertSame('BA', $catalog['2927408']['uf']);
+        $this->assertSame('Salvador', $catalog['2927408']['micro_name']);
+        $this->assertSame('Metropolitana de Salvador', $catalog['2927408']['meso_name']);
+        $this->assertSame('Salvador', $catalog['2927408']['regiao_imediata_name']);
+        $this->assertSame('Barreiras', $catalog['2903200']['regiao_imediata_name']);
         $this->assertIsFloat($catalog['2927408']['lat']);
         $this->assertIsFloat($catalog['2927408']['lng']);
     }

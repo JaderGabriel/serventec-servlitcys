@@ -5635,6 +5635,80 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return `IBGE ${m.ibge ?? "—"}`;
         },
 
+        modalHeaderUfLabel(m) {
+            if (!m?.uf) {
+                return "";
+            }
+
+            return this.ufLabel(m.uf);
+        },
+
+        modalHeaderMesoLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const meso = String(m.meso_name ?? "").trim();
+            if (meso !== "") {
+                return meso;
+            }
+
+            const mesoId = String(m.meso_id ?? "").trim();
+            return mesoId !== "" ? `Mesorregião ${mesoId}` : "";
+        },
+
+        modalHeaderMicroLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const micro = String(m.micro_name ?? "").trim();
+            if (micro !== "") {
+                return micro;
+            }
+
+            const microId = String(m.micro_id ?? "").trim();
+            return microId !== "" ? `Microrregião ${microId}` : "";
+        },
+
+        modalHeaderRegiaoImediataLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const name = String(m.regiao_imediata_name ?? "").trim();
+            if (name !== "") {
+                return name;
+            }
+
+            const id = String(m.regiao_imediata_id ?? "").trim();
+            return id !== "" ? `Região imediata ${id}` : "";
+        },
+
+        modalHeaderSaebLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const lp = Number(m.saeb_lp);
+            const mat = Number(m.saeb_mat);
+            const hasLp = Number.isFinite(lp) && lp > 0;
+            const hasMat = Number.isFinite(mat) && mat > 0;
+            if (!hasLp && !hasMat) {
+                return "";
+            }
+
+            const parts = [];
+            if (hasLp) {
+                parts.push(`LP ${Math.round(lp).toLocaleString("pt-BR")}`);
+            }
+            if (hasMat) {
+                parts.push(`MAT ${Math.round(mat).toLocaleString("pt-BR")}`);
+            }
+
+            return `SAEB ${parts.join(" · ")}`;
+        },
+
         shouldShowEnrollmentSeries(m) {
             return Boolean(m && !m.consultoria_active);
         },
@@ -5898,11 +5972,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return this._tooltipHtmlCache[cacheKey];
             }
             const lines = ['<div class="serv-horizonte-muni-tooltip__body">'];
-            if (isApproxCoord(m)) {
-                lines.push(
-                    `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--warn">${escapeHtml("Posição indicativa (centroide IBGE ou dispersão na UF) — use a lista para localizar o município.")}</p>`,
-                );
-            }
             if (m.tier === "data_sparse") {
                 lines.push(
                     `<p class="serv-horizonte-muni-tooltip__notice serv-horizonte-muni-tooltip__notice--info">${escapeHtml("Sem dados públicos importados — score e tier indicativos. Importe FUNDEB, Censo ou SAEB para enriquecer.")}</p>`,

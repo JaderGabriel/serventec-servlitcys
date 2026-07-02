@@ -18,37 +18,79 @@
     >
         <header class="serv-horizonte-muni-modal__chrome">
             <div class="serv-horizonte-muni-modal__chrome-row">
-                <div class="min-w-0 flex-1">
-                    <div class="serv-horizonte-muni-tooltip__heading">
-                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
-                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
+                <div class="serv-horizonte-muni-modal__title-block">
+                    <h3 class="serv-horizonte-muni-modal__name" x-text="active?.name"></h3>
+                    <p class="serv-horizonte-muni-modal__location" x-show="active" x-cloak>
+                        <span class="serv-horizonte-muni-modal__uf" x-text="modalHeaderUfLabel(active)"></span>
+                        <span
+                            class="serv-horizonte-muni-modal__location-sep"
+                            x-show="modalHeaderMesoLabel(active)"
+                            aria-hidden="true"
+                        >·</span>
+                        <span
+                            class="serv-horizonte-muni-modal__meso"
+                            x-show="modalHeaderMesoLabel(active)"
+                            x-text="modalHeaderMesoLabel(active)"
+                        ></span>
+                    </p>
+                    <p
+                        class="serv-horizonte-muni-modal__regions"
+                        x-show="active && (modalHeaderMicroLabel(active) || modalHeaderRegiaoImediataLabel(active))"
+                        x-cloak
+                    >
+                        <span
+                            class="serv-horizonte-muni-modal__micro"
+                            x-show="modalHeaderMicroLabel(active)"
+                            x-text="modalHeaderMicroLabel(active)"
+                        ></span>
+                        <span
+                            class="serv-horizonte-muni-modal__location-sep"
+                            x-show="modalHeaderMicroLabel(active) && modalHeaderRegiaoImediataLabel(active)"
+                            aria-hidden="true"
+                        >·</span>
+                        <span
+                            class="serv-horizonte-muni-modal__regiao-imediata"
+                            x-show="modalHeaderRegiaoImediataLabel(active)"
+                            x-text="modalHeaderRegiaoImediataLabel(active)"
+                        ></span>
+                    </p>
+                    <div class="serv-horizonte-muni-modal__facts" x-show="active" x-cloak>
+                        <span class="serv-horizonte-muni-modal__fact" x-text="modalHeaderMeta(active)"></span>
+                        <span
+                            class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb"
+                            x-show="modalHeaderSaebLabel(active)"
+                            x-text="modalHeaderSaebLabel(active)"
+                        ></span>
+                        <span
+                            class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--approx"
+                            x-show="active?.coord_approximate"
+                        >{{ __('Posição indicativa') }}</span>
                     </div>
                 </div>
-                <button
-                    type="button"
-                    class="serv-horizonte-muni-tooltip__close shrink-0"
-                    x-on:click.stop="closeTooltip()"
-                    aria-label="{{ __('Fechar') }}"
-                >&times;</button>
-            </div>
-            <div class="serv-horizonte-muni-modal__identity">
-                <p class="serv-horizonte-muni-tooltip__meta serv-horizonte-muni-modal__meta" x-text="modalHeaderMeta(active)"></p>
-                <div
-                    class="serv-horizonte-muni-modal__propensity"
-                    x-show="active && (active.success_score != null || propensityLevelShort(active))"
-                    x-cloak
-                >
+                <div class="serv-horizonte-muni-modal__chrome-side">
                     <div
-                        class="serv-horizonte-muni-modal__propensity-ring"
-                        :style="propensityRingStyle(active)"
-                        role="img"
-                        :aria-label="propensityLevelShort(active) + ' — ' + propensityPercentLabel(active)"
+                        class="serv-horizonte-muni-modal__propensity"
+                        x-show="active && (active.success_score != null || propensityLevelShort(active))"
+                        x-cloak
                     >
-                        <span class="serv-horizonte-muni-modal__propensity-ring-inner">
-                            <span class="serv-horizonte-muni-modal__propensity-ring-value" x-text="propensityPercentLabel(active)"></span>
-                        </span>
+                        <div
+                            class="serv-horizonte-muni-modal__propensity-ring"
+                            :style="propensityRingStyle(active)"
+                            role="img"
+                            :aria-label="propensityLevelShort(active) + ' — ' + propensityPercentLabel(active)"
+                        >
+                            <span class="serv-horizonte-muni-modal__propensity-ring-inner">
+                                <span class="serv-horizonte-muni-modal__propensity-ring-value" x-text="propensityPercentLabel(active)"></span>
+                            </span>
+                        </div>
+                        <span class="serv-horizonte-muni-modal__propensity-tier" x-text="propensityLevelShort(active)"></span>
                     </div>
-                    <span class="serv-horizonte-muni-modal__propensity-tier" x-text="propensityLevelShort(active)"></span>
+                    <button
+                        type="button"
+                        class="serv-horizonte-muni-tooltip__close serv-horizonte-muni-modal__close"
+                        x-on:click.stop="closeTooltip()"
+                        aria-label="{{ __('Fechar') }}"
+                    >&times;</button>
                 </div>
             </div>
         </header>
