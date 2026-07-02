@@ -304,19 +304,31 @@ function nfCompact(n) {
 }
 
 
-function muniPopulationPipelineHtml(m) {
+function muniPopulationPipelineHtml(m, matriculasOverride = null, matAnoOverride = undefined) {
     const fmt = (val) => (val != null && Number(val) > 0 ? nfCompact(val) : "—");
+    const fmtMatriculas = (val) =>
+        val != null && Number(val) > 0
+            ? matriculasOverride != null
+                ? nf(val)
+                : nfCompact(val)
+            : "—";
     const yearLine = (year) =>
         year != null
             ? `<span class="serv-horizonte-muni-tooltip__pipe-year">${escapeHtml(String(year))}</span>`
             : `<span class="serv-horizonte-muni-tooltip__pipe-year serv-horizonte-muni-tooltip__pipe-year--empty">—</span>`;
-    const cell = (val, label) =>
+    const cell = (val, label, formatter = fmt) =>
         `<div class="serv-horizonte-muni-tooltip__pipe-cell">` +
-        `<span class="serv-horizonte-muni-tooltip__pipe-val">${fmt(val)}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__pipe-val">${formatter(val)}</span>` +
         `<span class="serv-horizonte-muni-tooltip__pipe-label">${escapeHtml(label)}</span>` +
         `</div>`;
-    const matriculas = m.matriculas_censo ?? m.fundeb_matriculas_base ?? null;
-    const matAno = m.censo_ano ?? m.fundeb_ano ?? null;
+    const matriculas =
+        matriculasOverride != null
+            ? matriculasOverride
+            : m.matriculas_censo ?? m.fundeb_matriculas_base ?? null;
+    const matAno =
+        matAnoOverride !== undefined
+            ? matAnoOverride
+            : m.censo_ano ?? m.fundeb_ano ?? null;
 
     return (
         `<div class="serv-horizonte-muni-tooltip__pipeline">` +
@@ -336,11 +348,11 @@ function muniPopulationPipelineHtml(m) {
         `</div>` +
         `<div class="serv-horizonte-muni-tooltip__pipe-arrow" aria-hidden="true">›</div>` +
         `<div class="serv-horizonte-muni-tooltip__pipe-step serv-horizonte-muni-tooltip__pipe-step--final">` +
-        cell(matriculas, "Matrículas") +
+        cell(matriculas, "Matrículas", fmtMatriculas) +
         yearLine(matAno) +
         `</div>` +
         `</div>` +
-        `<p class="serv-horizonte-muni-tooltip__pipe-hint">${escapeHtml("População municipal → faixa escolar → CadÚnico → matrículas Censo/FUNDEB")}</p>`
+        `<p class="serv-horizonte-muni-tooltip__pipe-hint">${escapeHtml("População municipal → faixa escolar → CadÚnico → matrículas Censo INEP")}</p>`
     );
 }
 
@@ -955,13 +967,25 @@ function muniAlertsHtml(m) {
     );
 }
 
-function muniMunicipalContextHtml(m) {
+function muniMunicipalContextHtml(m, overlay = null) {
     if (!m) {
         return "";
     }
 
     const alerts = muniAlertsHtml(m);
-    const pipeline = muniPopulationPipelineHtml(m);
+    const matOverride =
+        overlay != null &&
+        String(overlay.ibge ?? "") === String(m.ibge ?? "") &&
+        overlay.latestTotal != null
+            ? overlay.latestTotal
+            : null;
+    const anoOverride =
+        overlay != null &&
+        String(overlay.ibge ?? "") === String(m.ibge ?? "") &&
+        overlay.year != null
+            ? overlay.year
+            : undefined;
+    const pipeline = muniPopulationPipelineHtml(m, matOverride, anoOverride);
     if (alerts === "" && pipeline === "") {
         return "";
     }
@@ -5106,35 +5130,47 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             };
             this.enrollmentSeriesDependenciaLabel = shortLabels[scope] ?? "";
 
-            const counters = data?.stage_counters;
-            if (counters && Array.isArray(counters.items) && counters.items.length) {
-                const sum = counters.items.reduce(
-                    (acc, row) => acc + (row?.value != null ? Number(row.value) : 0),
-                    0,
-                );
-                this.enrollmentSeriesLatestTotal = sum > 0 ? sum : null;
+            const summary = data?.latest_summary;
+            if (summary?.total != null && Number(summary.total) > 0) {
+                this.enrollmentSeriesLatestTotal = Number(summary.total);
+                if (summary.ano != null) {
+                    this.enrollmentSeriesStageYear = Number(summary.ano);
+                }
+            } else {
+                const datasets = Array.isArray(chartPayload?.datasets)
+                    ? chartPayload.datasets
+                    : [];
+                const totalDataset =
+                    datasets.find((dataset) =>
+                        /total/i.test(String(dataset?.label ?? "")),
+                    ) ?? datasets[0];
+                const values = Array.isArray(totalDataset?.data)
+                    ? totalDataset.data
+                    : [];
 
-                return;
+                this.enrollmentSeriesLatestTotal = null;
+                for (let i = values.length - 1; i >= 0; i -= 1) {
+                    const value = values[i];
+                    if (value != null && !Number.isNaN(Number(value))) {
+                        this.enrollmentSeriesLatestTotal = Number(value);
+                        const labels = Array.isArray(chartPayload?.labels)
+                            ? chartPayload.labels
+                            : [];
+                        if (labels[i] != null) {
+                            this.enrollmentSeriesStageYear = Number(labels[i]);
+                        }
+                        break;
+                    }
+                }
             }
 
-            const datasets = Array.isArray(chartPayload?.datasets)
-                ? chartPayload.datasets
-                : [];
-            const totalDataset =
-                datasets.find((dataset) =>
-                    /total/i.test(String(dataset?.label ?? "")),
-                ) ?? datasets[0];
-            const values = Array.isArray(totalDataset?.data)
-                ? totalDataset.data
-                : [];
-
-            this.enrollmentSeriesLatestTotal = null;
-            for (let i = values.length - 1; i >= 0; i -= 1) {
-                const value = values[i];
-                if (value != null && !Number.isNaN(Number(value))) {
-                    this.enrollmentSeriesLatestTotal = Number(value);
-                    break;
-                }
+            const counters = data?.stage_counters;
+            if (
+                counters?.ano != null &&
+                (this.enrollmentSeriesStageYear == null ||
+                    Number.isNaN(Number(this.enrollmentSeriesStageYear)))
+            ) {
+                this.enrollmentSeriesStageYear = Number(counters.ano);
             }
         },
 
@@ -5195,10 +5231,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.enrollmentSeriesFootnote = String(data.footnote ?? "");
                 const stageCounters = data?.stage_counters;
                 if (stageCounters && Array.isArray(stageCounters.items)) {
-                    this.enrollmentSeriesStageYear = stageCounters.ano ?? null;
                     this.enrollmentSeriesStageCounters = stageCounters.items;
                 } else {
-                    this.enrollmentSeriesStageYear = null;
                     this.enrollmentSeriesStageCounters = [];
                 }
                 this.updateEnrollmentSeriesSummary(data, data.chart);
@@ -5247,7 +5281,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         tooltipMunicipalContextHtml(m) {
-            return muniMunicipalContextHtml(m);
+            if (!m) {
+                return "";
+            }
+
+            const overlay =
+                this.enrollmentSeriesReady &&
+                String(m.ibge ?? "") === String(this.enrollmentSeriesIbge ?? "")
+                    ? {
+                          ibge: this.enrollmentSeriesIbge,
+                          latestTotal: this.enrollmentSeriesLatestTotal,
+                          year: this.enrollmentSeriesStageYear,
+                      }
+                    : null;
+
+            return muniMunicipalContextHtml(m, overlay);
         },
 
         tooltipBodyHtml(m) {

@@ -28,6 +28,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
      *     has_segments?: bool,
      *     footnote?: string,
      *     stage_counters?: array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null,
+     *     latest_summary?: array{ano: int, total: int}|null,
      *     chart?: array<string, mixed>
      * }
      */
@@ -131,6 +132,8 @@ final class HorizonteMunicipioEnrollmentSeriesService
 
         $footnote = $this->buildFootnote($hasSegments, $missingYears, $targetYears, $dependenciaScope, $totalColumn);
         $stageCounters = $this->buildStageCounters($rowsByYear, $targetYears, $dependenciaScope);
+        $latestSummary = $this->buildLatestSummary($rowsByYear, $targetYears, $dependenciaScope);
+        $footnote = $this->appendStagesTotalDisclaimer($footnote, $stageCounters, $latestSummary);
 
         return [
             'ok' => true,
@@ -141,6 +144,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             'has_segments' => $hasSegments,
             'footnote' => $footnote,
             'stage_counters' => $stageCounters,
+            'latest_summary' => $latestSummary,
             'chart' => $chart,
         ];
     }
@@ -234,6 +238,52 @@ final class HorizonteMunicipioEnrollmentSeriesService
             'ano' => (int) $latestRow->ano,
             'items' => $items,
         ];
+    }
+
+    /**
+     * @param  Collection<int, InepCensoMunicipioMatricula>  $rowsByYear
+     * @param  list<int>  $targetYears
+     * @return array{ano: int, total: int}|null
+     */
+    private function buildLatestSummary(Collection $rowsByYear, array $targetYears, string $dependenciaScope): ?array
+    {
+        $totalColumn = HorizonteEnrollmentDependenciaScope::column('matriculas_total', $dependenciaScope);
+
+        foreach (array_reverse($targetYears) as $year) {
+            /** @var InepCensoMunicipioMatricula|null $row */
+            $row = $rowsByYear->get($year);
+            $total = $row !== null ? (int) ($row->{$totalColumn} ?? 0) : 0;
+            if ($total > 0) {
+                return ['ano' => $year, 'total' => $total];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null  $stageCounters
+     * @param  array{ano: int, total: int}|null  $latestSummary
+     */
+    private function appendStagesTotalDisclaimer(
+        string $footnote,
+        ?array $stageCounters,
+        ?array $latestSummary,
+    ): string {
+        if ($stageCounters === null || $latestSummary === null) {
+            return $footnote;
+        }
+
+        $stagesSum = 0;
+        foreach ($stageCounters['items'] as $item) {
+            $stagesSum += (int) ($item['value'] ?? 0);
+        }
+
+        if ($stagesSum > 0 && $stagesSum < (int) $latestSummary['total']) {
+            $footnote .= ' '.__('As etapas abaixo não somam o total: incluem-se EJA, educação especial e complementar/integral.');
+        }
+
+        return $footnote;
     }
 
     private function rowHasStageCounters(InepCensoMunicipioMatricula $row, string $dependenciaScope): bool

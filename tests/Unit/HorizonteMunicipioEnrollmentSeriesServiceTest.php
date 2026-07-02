@@ -86,6 +86,7 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
         $this->assertSame(2022, $result['stage_counters']['ano']);
         $this->assertCount(5, $result['stage_counters']['items']);
         $this->assertSame(1500, $result['stage_counters']['items'][0]['value']);
+        $this->assertSame(['ano' => 2022, 'total' => 11000], $result['latest_summary']);
     }
 
     #[Test]
@@ -111,6 +112,7 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
         $this->assertSame('municipal', $result['dependencia']);
         $this->assertSame(4200.0, $result['chart']['datasets'][0]['data'][0]);
         $this->assertSame(600, $result['stage_counters']['items'][0]['value']);
+        $this->assertSame(['ano' => 2024, 'total' => 4200], $result['latest_summary']);
     }
 
     #[Test]
@@ -172,5 +174,26 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
 
         $this->assertFalse($result['ok']);
         $this->assertSame(404, $result['status']);
+    }
+
+    #[Test]
+    public function total_oficial_nao_e_soma_das_etapas_e_gera_nota_explicativa(): void
+    {
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2024,
+            'matriculas_total' => 585162,
+            'matriculas_infantil' => 120000,
+            'matriculas_fundamental_1' => 150000,
+            'matriculas_fundamental_2' => 100000,
+            'matriculas_medio' => 60000,
+            'matriculas_profissional' => 28784,
+        ]);
+
+        $result = $this->service->forIbge('2927408', 1);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(['ano' => 2024, 'total' => 585162], $result['latest_summary']);
+        $this->assertStringContainsString('não somam o total', (string) $result['footnote']);
     }
 }
