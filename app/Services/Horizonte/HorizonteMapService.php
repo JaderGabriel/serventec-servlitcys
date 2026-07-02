@@ -9,6 +9,7 @@ use App\Models\InepCensoMunicipioMatricula;
 use App\Models\MunicipalDemographySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
+use App\Repositories\MunicipalAreaSnapshotRepository;
 use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
 use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
 use App\Support\Brazil\BrazilStateCapitals;
@@ -730,6 +731,7 @@ final class HorizonteMapService
         $saebByIbge = $this->saebByIbge($refYear, $ibgePrefix);
         $cadunicoByIbge = $this->cadunicoByIbge($refYear, $ibgePrefix);
         $demographyByIbge = $this->demographyByIbge($refYear, $ibgePrefix);
+        $areaByIbge = $this->areaByIbge($ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
 
         $currentYear = HorizonteFundebRepasseOutlook::currentYear();
@@ -837,6 +839,7 @@ final class HorizonteMapService
             $saeb = $saebByIbge[$ibge] ?? null;
             $cadunico = $cadunicoByIbge[$ibge] ?? null;
             $demography = $demographyByIbge[$ibge] ?? null;
+            $area = $areaByIbge[$ibge] ?? null;
             $transfer = $transfersByIbge[$ibge] ?? null;
             $fundebRealtime = $fundebRealtimeByIbge[$ibge] ?? null;
 
@@ -905,7 +908,7 @@ final class HorizonteMapService
                 $alertsMeta,
             );
 
-            $markers[] = [
+            $markers[] = $this->withMarkerGeoContext([
                 'ibge' => $ibge,
                 'city_id' => $city['id'] ?? null,
                 'name' => (string) $meta['name'],
@@ -943,6 +946,8 @@ final class HorizonteMapService
                 'cadunico_ano' => $cadunico['ano'] ?? null,
                 'populacao_total' => $demography['populacao_total'] ?? null,
                 'demography_ano' => $demography['ano'] ?? null,
+                'area_km2' => $area['area_km2'] ?? null,
+                'area_ano' => $area['ano'] ?? null,
                 'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
                 'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
                 'transfer_total' => $transfer['total'] ?? null,
@@ -1000,13 +1005,17 @@ final class HorizonteMapService
                 'muni_alerts_status' => $muniAlerts['status'] ?? 'unavailable',
                 'coord_source' => $meta['coord_source'] ?? null,
                 'coord_approximate' => in_array((string) ($meta['coord_source'] ?? ''), ['uf_spread', 'overview'], true),
-            ];
+            ]);
         }
 
         usort($markers, static fn (array $a, array $b): int => ($b['success_score'] <=> $a['success_score']) ?: strcasecmp((string) $a['name'], (string) $b['name']));
 
         if ($scopedUf !== null && $this->shouldResolveOverlaps($markers)) {
             $markers = $this->resolveApproximateOverlaps($markers);
+            foreach ($markers as &$m) {
+                $m = $this->withMarkerGeoContext($m);
+            }
+            unset($m);
         }
 
         $summary = $this->buildSummary($markers);
@@ -1340,6 +1349,31 @@ final class HorizonteMapService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<string, array{area_km2: ?float, ano: int}>
+     */
+    private function areaByIbge(?string $ibgePrefix = null): array
+    {
+        return app(MunicipalAreaSnapshotRepository::class)->latestByIbge($ibgePrefix);
+    }
+
+    /**
+     * @param  array<string, mixed>  $marker
+     * @return array<string, mixed>
+     */
+    private function withMarkerGeoContext(array $marker): array
+    {
+        $uf = strtoupper(trim((string) ($marker['uf'] ?? '')));
+        $lat = (float) ($marker['lat'] ?? 0);
+        $lng = (float) ($marker['lng'] ?? 0);
+        $marker['capital_nome'] = $uf !== '' ? BrazilStateCapitals::name($uf) : '';
+        $marker['distancia_capital_km'] = $uf !== ''
+            ? BrazilStateCapitals::distanceKm($lat, $lng, $uf)
+            : null;
+
+        return $marker;
     }
 
     /**

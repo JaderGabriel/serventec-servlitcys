@@ -20,6 +20,24 @@ final class BrazilStateCapitalsTest extends TestCase
     }
 
     #[Test]
+    public function retorna_nome_da_capital(): void
+    {
+        $this->assertSame('Salvador', BrazilStateCapitals::name('BA'));
+        $this->assertSame('', BrazilStateCapitals::name('XX'));
+    }
+
+    #[Test]
+    public function calcula_distancia_ate_capital(): void
+    {
+        // Aramari (BA) ~ centroide aproximado
+        $km = BrazilStateCapitals::distanceKm(-12.12, -38.77, 'BA');
+
+        $this->assertNotNull($km);
+        $this->assertGreaterThan(50, $km);
+        $this->assertLessThan(250, $km);
+    }
+
+    #[Test]
     public function uf_desconhecida_usa_fallback_nacional(): void
     {
         [$lat, $lng] = BrazilStateCapitals::latLng('XX');

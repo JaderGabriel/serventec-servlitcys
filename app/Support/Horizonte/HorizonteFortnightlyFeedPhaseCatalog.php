@@ -19,6 +19,7 @@ final class HorizonteFortnightlyFeedPhaseCatalog
             ['key' => 'repasses_tesouro', 'label' => 'Repasses', 'skip_option' => 'skip_repasses'],
             ['key' => 'saeb_planilhas', 'label' => 'SAEB', 'skip_option' => 'skip_saeb'],
             ['key' => 'ibge_catalog', 'label' => 'IBGE', 'skip_option' => 'skip_ibge'],
+            ['key' => 'ibge_municipal_geo', 'label' => 'IBGE malha', 'skip_option' => 'skip_ibge_municipal_geo'],
             ['key' => 'sge_registry', 'label' => 'SGE', 'skip_option' => 'skip_sge'],
             ['key' => 'municipal_alerts', 'label' => 'Alertas MEC/FNDE', 'skip_option' => 'skip_alerts'],
             ['key' => 'official_check', 'label' => 'Verificação', 'skip_option' => 'skip_verify'],

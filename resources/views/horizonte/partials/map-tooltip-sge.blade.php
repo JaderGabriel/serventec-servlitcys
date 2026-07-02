@@ -51,8 +51,9 @@
                         </div>
                         <span
                             class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--approx"
-                            x-show="active?.coord_approximate"
-                        >{{ __('Posição indicativa') }}</span>
+                            x-show="active?.coord_approximate && modalHeaderApproxPositionLabel(active)"
+                            x-text="modalHeaderApproxPositionLabel(active)"
+                        ></span>
                     </div>
                 </div>
                 <div class="serv-horizonte-muni-modal__chrome-side">

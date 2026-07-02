@@ -1629,6 +1629,23 @@ function heatColor(intensity) {
     return lerpColor("#d97706", "#be123c", (t - 0.5) / 0.5);
 }
 
+const HEAT_CIRCLE_BORDER = {
+    color: "#000000",
+    weight: 1.25,
+    opacity: 1,
+};
+
+function municipalHeatCircleStyle(intensity) {
+    const t = Math.max(0, Math.min(1, Number(intensity) || 0));
+
+    return {
+        radius: 7 + t * 14,
+        fillColor: heatColor(t),
+        ...HEAT_CIRCLE_BORDER,
+        fillOpacity: 0.28 + t * 0.62,
+    };
+}
+
 const IBGE_PREFIX_TO_UF = {
     "11": "RO",
     "12": "AC",
@@ -1885,6 +1902,16 @@ function microRegionOverlayStyle(fillColor) {
         weight: 1.35,
         opacity: 0.5,
         dashArray: "5 4",
+    };
+}
+
+function municipalBoundaryStyle() {
+    return {
+        fillColor: "#64748b",
+        fillOpacity: 0.045,
+        color: "#94a3b8",
+        weight: 0.85,
+        opacity: 0.42,
     };
 }
 
@@ -2345,6 +2372,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         _lastChoroplethLayer: null,
         choroplethLayer: null,
         microOverlayLayer: null,
+        municipalBoundaryLayer: null,
         _choroplethPaneReady: false,
         _mapUserAdjustedView: false,
         _preserveViewOnNextRender: false,
@@ -3465,6 +3493,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.mapFullscreen ? "Sair da tela inteira" : "Tela inteira";
         },
 
+        mapLoadingStatusLabel() {
+            if (this.loadingMessage) {
+                return this.loadingMessage;
+            }
+            if (this.regionalLoading) {
+                const uf = String(this.pendingRegionalUf || this.scopeUf || "")
+                    .trim()
+                    .toUpperCase();
+
+                return uf ? `Carregando UF ${uf}` : "Carregando UF";
+            }
+
+            return "A carregar…";
+        },
+
         onHorizonteGuide(detail = {}) {
             const mode = String(detail?.mode ?? "").toLowerCase();
             if (mode === "tour") {
@@ -3957,7 +4000,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.pendingRegionalUf = scoped;
             this.regionalLoading = true;
             this.pageError = null;
-            this.loadingMessage = `A carregar municípios de ${scoped}… (UF extensa — pode demorar na 1.ª vez)`;
+            this.loadingMessage = `Carregando UF ${scoped}`;
             this.scopeUf = scoped;
 
             try {
@@ -4432,6 +4475,92 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.choroplethLayer = null;
             this._lastChoroplethLayer = null;
             this.clearMicroOverlayLayer();
+            this.clearMunicipalBoundaryLayer();
+        },
+
+        clearMunicipalBoundaryLayer() {
+            if (this.municipalBoundaryLayer && this.map) {
+                this.map.removeLayer(this.municipalBoundaryLayer);
+            }
+            this.municipalBoundaryLayer = null;
+        },
+
+        ensureMunicipalBoundaryPane() {
+            if (!this.map) {
+                return;
+            }
+            if (!this.map.getPane("horizonteMunicipalBoundary")) {
+                this.map.createPane("horizonteMunicipalBoundary");
+                const pane = this.map.getPane("horizonteMunicipalBoundary");
+                if (pane) {
+                    pane.style.zIndex = "398";
+                }
+            }
+        },
+
+        ibgeIdsForScopedMeso() {
+            const mesoId = String(this.scopeMeso ?? "").trim();
+            if (mesoId === "") {
+                return [];
+            }
+            const ids = new Set();
+            for (const m of this.markers) {
+                if (String(m.meso_id ?? "") !== mesoId) {
+                    continue;
+                }
+                const ibge = String(m.ibge ?? "").trim();
+                if (ibge !== "") {
+                    ids.add(ibge);
+                }
+            }
+
+            return [...ids];
+        },
+
+        async renderMunicipalBoundariesOverlay() {
+            this.clearMunicipalBoundaryLayer();
+            if (!this.map || !this.isRegionalMode || !this.scopeUf) {
+                return;
+            }
+            const mesoId = String(this.scopeMeso ?? "").trim();
+            if (mesoId === "") {
+                return;
+            }
+
+            const ibgeIds = this.ibgeIdsForScopedMeso();
+            if (ibgeIds.length === 0) {
+                return;
+            }
+
+            const ibgeSet = new Set(ibgeIds);
+            let geo;
+            try {
+                geo = await this.fetchGeoMalha("municipal", this.scopeUf);
+            } catch (error) {
+                console.warn("horizonte geo malha (municipal)", this.scopeUf, error);
+
+                return;
+            }
+
+            const features = (geo?.features ?? []).filter((feature) =>
+                ibgeSet.has(String(feature?.properties?.codarea ?? "")),
+            );
+            if (features.length === 0) {
+                return;
+            }
+
+            this.ensureMunicipalBoundaryPane();
+            const filtered = { type: "FeatureCollection", features };
+            const geoLayer = L.geoJSON(filtered, {
+                pane: "horizonteMunicipalBoundary",
+                interactive: false,
+                smoothFactor: 1.25,
+                style: () => municipalBoundaryStyle(),
+            });
+
+            this.municipalBoundaryLayer = geoLayer;
+            geoLayer.addTo(this.map);
+            geoLayer.bringToBack();
         },
 
         clearMicroOverlayLayer() {
@@ -4783,7 +4912,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ? `meso:${uf}`
                     : scope === "micro"
                       ? `micro:${uf}`
-                      : "brazil";
+                      : scope === "municipal"
+                        ? `municipal:${uf}`
+                        : "brazil";
             if (this._geoCache[key]) {
                 return this._geoCache[key];
             }
@@ -4793,14 +4924,26 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const apiUrl = new URL(this.mapGeoUrl, window.location.origin);
                 apiUrl.searchParams.set(
                     "scope",
-                    scope === "meso" || scope === "micro" ? scope : "brazil",
+                    scope === "meso" || scope === "micro" || scope === "municipal"
+                        ? scope
+                        : "brazil",
                 );
-                if ((scope === "meso" || scope === "micro") && uf) {
+                if (
+                    (scope === "meso" ||
+                        scope === "micro" ||
+                        scope === "municipal") &&
+                    uf
+                ) {
                     apiUrl.searchParams.set("uf", uf);
                 }
                 urls.push(apiUrl.toString());
             }
-            if (scope !== "meso" && scope !== "micro" && this.mapGeoFallbackUrl) {
+            if (
+                scope !== "meso" &&
+                scope !== "micro" &&
+                scope !== "municipal" &&
+                this.mapGeoFallbackUrl
+            ) {
                 urls.push(this.mapGeoFallbackUrl);
             }
 
@@ -4854,9 +4997,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     pane: "horizonteChoropleth",
                     radius: 10,
                     fillColor: heatColor(intensity),
-                    color: "#ffffff",
-                    weight: 2,
-                    opacity: 1,
+                    ...HEAT_CIRCLE_BORDER,
                     fillOpacity: 0.72,
                 });
                 circle.bindTooltip(ufOverviewTooltipHtml(p, this.ufLabel.bind(this)), {
@@ -5133,6 +5274,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
 
+            await this.renderMunicipalBoundariesOverlay();
             await this.renderMicroRegionsOverlay();
         },
 
@@ -5161,12 +5303,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const intensity = intensityMap.get(ibge) ?? 0.08;
                 const pressure = pressureHeatRaw(m);
                 const circle = L.circleMarker([lat, lng], {
-                    radius: 7 + intensity * 14,
-                    fillColor: heatColor(intensity),
-                    color: intensity >= 0.72 ? "#9f1239" : intensity >= 0.4 ? "#b45309" : "#fbbf24",
-                    weight: 1,
-                    opacity: 0.55,
-                    fillOpacity: 0.28 + intensity * 0.62,
+                    ...municipalHeatCircleStyle(intensity),
                     renderer: this.ensureRegionalCanvasRenderer(),
                 });
                 circle.on("click", (e) => {
@@ -5196,6 +5333,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
 
+            await this.renderMunicipalBoundariesOverlay();
             await this.renderMicroRegionsOverlay();
         },
 
@@ -5837,6 +5975,43 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return mesoId !== "" ? `Mesorregião ${mesoId}` : "";
         },
 
+        modalHeaderApproxPositionLabel(m) {
+            if (!m?.coord_approximate) {
+                return "";
+            }
+
+            const parts = ["Posição indicativa"];
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            if (isValidCoord(lat, lng)) {
+                const latLabel = `${Math.abs(lat).toFixed(3).replace(".", ",")}°${lat < 0 ? "S" : "N"}`;
+                const lngLabel = `${Math.abs(lng).toFixed(3).replace(".", ",")}°${lng < 0 ? "W" : "E"}`;
+                parts.push(`${latLabel} · ${lngLabel}`);
+            }
+
+            const km = Number(m.distancia_capital_km);
+            const capital = String(m.capital_nome ?? "").trim();
+            if (Number.isFinite(km) && km >= 0) {
+                const dist = `${km.toLocaleString("pt-BR", {
+                    maximumFractionDigits: 1,
+                })} km`;
+                parts.push(
+                    capital !== "" ? `${dist} de ${capital}` : `${dist} da capital`,
+                );
+            }
+
+            const area = Number(m.area_km2);
+            if (Number.isFinite(area) && area > 0) {
+                parts.push(
+                    `${area.toLocaleString("pt-BR", {
+                        maximumFractionDigits: 1,
+                    })} km²`,
+                );
+            }
+
+            return parts.join(" · ");
+        },
+
         modalHeaderSaebByYear(m) {
             if (!m) {
                 return [];
@@ -6052,6 +6227,25 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesDependencia = "total";
         },
 
+        async waitForEnrollmentSeriesCanvas(maxFrames = 16) {
+            for (let i = 0; i < maxFrames; i += 1) {
+                const canvas = this.$refs.enrollmentSeriesCanvas;
+                if (
+                    canvas &&
+                    canvas.clientWidth > 0 &&
+                    canvas.clientHeight > 0
+                ) {
+                    return canvas;
+                }
+                await this.$nextTick();
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+            }
+
+            const canvas = this.$refs.enrollmentSeriesCanvas;
+
+            return canvas && canvas.clientWidth > 0 ? canvas : null;
+        },
+
         async loadEnrollmentSeries(m) {
             if (!this.shouldShowEnrollmentSeries(m)) {
                 this.destroyEnrollmentSeriesChart();
@@ -6085,6 +6279,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const controller = new AbortController();
             this._enrollmentSeriesAbort = controller;
+            const requestedIbge = ibge;
             const requestedDependencia = this.enrollmentSeriesDependencia || "total";
 
             try {
@@ -6093,6 +6288,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     signal: controller.signal,
                 });
                 const data = await res.json().catch(() => ({}));
+                if (
+                    controller.signal.aborted ||
+                    String(this.enrollmentSeriesIbge) !== requestedIbge
+                ) {
+                    return;
+                }
                 if (!res.ok || !data?.ok) {
                     this.enrollmentSeriesError =
                         data?.message || "Sem série histórica disponível.";
@@ -6107,18 +6308,33 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.enrollmentSeriesStageCounters = [];
                 }
                 this.updateEnrollmentSeriesSummary(data, data.chart);
-                await this.$nextTick();
-                this.renderEnrollmentSeriesChart(data.chart);
                 this.enrollmentSeriesReady = true;
+                this.enrollmentSeriesLoading = false;
                 this._enrollmentSeriesLoadedDependencia = requestedDependencia;
+
+                await this.$nextTick();
+                if (
+                    controller.signal.aborted ||
+                    String(this.enrollmentSeriesIbge) !== requestedIbge
+                ) {
+                    return;
+                }
+                await this.renderEnrollmentSeriesChart(data.chart);
             } catch (error) {
-                if (error?.name !== "AbortError") {
+                if (
+                    error?.name !== "AbortError" &&
+                    String(this.enrollmentSeriesIbge) === requestedIbge
+                ) {
                     this.enrollmentSeriesError =
                         "Não foi possível carregar a série de matrículas.";
                 }
             } finally {
-                this.enrollmentSeriesLoading = false;
-                this._enrollmentSeriesAbort = null;
+                if (this._enrollmentSeriesAbort === controller) {
+                    this._enrollmentSeriesAbort = null;
+                }
+                if (String(this.enrollmentSeriesIbge) === requestedIbge) {
+                    this.enrollmentSeriesLoading = false;
+                }
             }
         },
 
@@ -6126,9 +6342,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return nf(value);
         },
 
-        renderEnrollmentSeriesChart(payload) {
-            const canvas = this.$refs.enrollmentSeriesCanvas;
-            if (!canvas || !payload) {
+        async renderEnrollmentSeriesChart(payload) {
+            if (!payload) {
+                return;
+            }
+            if (this._enrollmentSeriesChart) {
+                this._enrollmentSeriesChart.destroy();
+                this._enrollmentSeriesChart = null;
+            }
+
+            const canvas = await this.waitForEnrollmentSeriesCanvas();
+            if (!canvas) {
                 return;
             }
             const ctx = canvas.getContext("2d");
@@ -6149,6 +6373,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 },
                 options: enrollmentSeriesChartOptions(),
             });
+            this._enrollmentSeriesChart.resize();
         },
 
         tooltipMunicipalContextHtml(m) {

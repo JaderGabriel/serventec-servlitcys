@@ -23,7 +23,7 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
         $this->assertSame(
             [
                 'fundeb_receita', 'censo_matriculas', 'educacenso', 'cadunico_sync', 'sidra_demography',
-                'repasses_tesouro', 'saeb_planilhas', 'ibge_catalog', 'sge_registry', 'municipal_alerts', 'official_check',
+                'repasses_tesouro', 'saeb_planilhas', 'ibge_catalog', 'ibge_municipal_geo', 'sge_registry', 'municipal_alerts', 'official_check',
             ],
             $keys,
         );

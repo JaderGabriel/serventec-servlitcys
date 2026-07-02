@@ -307,6 +307,22 @@ return [
             'HORIZONTE_GEO_STATE_MICRO_URL',
             'https://servicodados.ibge.gov.br/api/v3/malhas/estados/{id}?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=microrregiao',
         ),
+        'state_municipal_url_template' => env(
+            'HORIZONTE_GEO_STATE_MUNICIPAL_URL',
+            'https://servicodados.ibge.gov.br/api/v3/malhas/estados/{id}?formato=application/vnd.geo+json&qualidade={qualidade}&intrarregiao=municipio',
+        ),
+        'municipal_qualidade' => env('HORIZONTE_GEO_MUNICIPAL_QUALIDADE', 'intermediaria'),
+    ],
+
+    /** Malha municipal + área territorial (km²) para mapa Horizonte. */
+    'municipal_geo' => [
+        'enabled' => filter_var(env('HORIZONTE_MUNICIPAL_GEO_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'ufs_per_step' => max(1, (int) env('HORIZONTE_MUNICIPAL_GEO_UFS_PER_STEP', 1)),
+        'reference_year' => max(2000, (int) env('HORIZONTE_MUNICIPAL_GEO_REFERENCE_YEAR', (int) date('Y'))),
+        'metadados_fallback' => filter_var(env('HORIZONTE_MUNICIPAL_GEO_METADADOS_FALLBACK', true), FILTER_VALIDATE_BOOL),
+        'metadados_delay_ms' => max(0, (int) env('HORIZONTE_MUNICIPAL_GEO_METADADOS_DELAY_MS', 40)),
+        /** Após aquecer catálogo IBGE, importar malha+área da mesma UF. */
+        'with_ibge_catalog' => filter_var(env('HORIZONTE_MUNICIPAL_GEO_WITH_IBGE_CATALOG', true), FILTER_VALIDATE_BOOL),
     ],
 
 ];

@@ -15,12 +15,15 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
         return [
             'skip_fundeb' => false,
             'skip_censo' => true,
+            'skip_educacenso' => true,
             'skip_cadunico' => true,
             'skip_sidra' => true,
             'skip_repasses' => true,
             'skip_saeb' => true,
             'skip_ibge' => false,
+            'skip_ibge_municipal_geo' => true,
             'skip_sge' => true,
+            'skip_alerts' => true,
             'skip_verify' => true,
         ];
     }

@@ -1,6 +1,6 @@
 # Horizonte — mapa de oportunidade municipal
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-07-01
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
@@ -45,6 +45,7 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 | **Demografia IBGE SIDRA** | `municipal_demography_snapshots` | População **total** e 4–17 (Censo 2022, agregado 9514); reimportar com `--phase=sidra_demography --reset` se `populacao_total` estiver vazia |
 | **Repasses Tesouro** | `fundeb_municipio_references` (colunas de transferência) | Dependência de transferências federais — dimensão `transfer_dependency`, complementa FUNDEB |
 | **IBGE** | API localidades (cache) | Nome, UF, centroide para municípios só com dados públicos |
+| **Malha municipal IBGE** | `storage/app/horizonte/geo/municipal-{UF}.json` + `municipal_area_snapshots` | Contornos municipais no mapa (mesorregião) e área km² no modal |
 
 O universo do mapa = **união de IBGE** presentes em qualquer fonte acima ou no catálogo.
 
@@ -106,20 +107,22 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 - Base **Leaflet** + OSM; modos **Calor** (propensão) e **Marcadores** (tiers).
 - **Visão nacional:** coroplético IBGE por UF (malha oficial) + marcadores de capitais; hover para KPIs agregados; clique abre o estado.
-- **UF extensa** (≥60 municípios, `HORIZONTE_MAP_MESO_THRESHOLD`): vista intermédia por **mesorregião IBGE** — malha colorida (vizinhos com tons distintos); hover para dados; clique abre só municípios da região; botão **«Regiões»** volta ao mapa estadual.
+- **UF extensa** (≥60 municípios, `HORIZONTE_MAP_MESO_THRESHOLD`): vista intermédia por **mesorregião IBGE** — malha colorida (vizinhos com tons distintos); hover para dados; clique abre só municípios da região com **contornos municipais** (malha IBGE qualidade intermediária) e overlay de **microrregiões**; botão **«Regiões»** volta ao mapa estadual.
+- **Modo Calor:** círculos por pressão FUNDEB com **borda preta** (legibilidade mesmo em baixa pressão); intensidade normalizada no recorte visível.
+- **Carregamento UF:** overlay «Carregando UF {sigla}» ao abrir um estado.
 - **UF pequena** ou mesorregião seleccionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
 - **Bases nacionais grandes** (>800 municípios): overview nacional restringe vista inicial (UF prioritária + alta pressão).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
 - Tooltip municipal (modal **~48rem**, overlay no `body`): **cabeçalho fixo** (nome, UF, meso/micro/região imediata, IBGE, SAEB LP/MAT, propensão em roda, posição indicativa) + corpo rolável (alertas, pipeline, gráfico Censo §6.9, finanças §6.5, fontes/SGE, dimensões).
-- Malha IBGE servida por `GET /dashboard/horizonte/map-geo` (`HorizonteIbgeMalhaService`, cache em `storage/app/horizonte/geo/`).
+- Malha IBGE servida por `GET /dashboard/horizonte/map-geo` (`scope=brazil|meso|micro|municipal`, `HorizonteIbgeMalhaService`, cache em `storage/app/horizonte/geo/`).
 
 ### 6.5 Modal municipal — leitura financeira (consultoria)
 
 Modal **centrado** (`x-teleport`), altura limitada (~**88dvh** / **45rem**), **cabeçalho fixo** + **corpo rolável**.
 
-**Cabeçalho:** município · UF · mesorregião · microrregião · região imediata · IBGE · SAEB LP/MAT (quando importado) · chip «Posição indicativa» · roda de propensão (% + Alta/Média/Baixa).
+**Cabeçalho:** município · UF · mesorregião · IBGE · SAEB LP/MAT (dois últimos anos, pílulas por ano) · chip «Posição indicativa» (coordenadas, km até capital, km² se importado) · roda de propensão (% + Alta/Média/Baixa).
 
 **Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
 
@@ -170,7 +173,28 @@ php artisan horizonte:sync-educacenso --year=2024 --uf=BA
 php artisan horizonte:fortnightly-feed --phase=educacenso --reset
 ```
 
-Serviço: `HorizonteMunicipioEnrollmentSeriesService` · importação multi-ano: `HorizonteEducacensoMatriculasSyncService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`.
+Serviço: `HorizonteMunicipioEnrollmentSeriesService` · importação multi-ano: `HorizonteEducacensoMatriculasSyncService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`. O gráfico só é desenhado após o canvas ficar visível (evita falhas ao consultar vários municípios em sequência).
+
+### 6.10 Malha municipal e área territorial (IBGE)
+
+Importação **nacional por UF** (27 passos): polígonos municipais para contornos no mapa + área km² em `municipal_area_snapshots`.
+
+| Aspecto | Detalhe |
+|---------|---------|
+| **Comando** | `php artisan horizonte:import-municipal-geo --all` (nacional) · `--uf=BA` (uma UF) · `--force` (rebuscar malha) |
+| **Feed bimestral** | Fase `ibge_municipal_geo` (após `ibge_catalog`); `--skip-ibge-municipal-geo` para ignorar |
+| **Integração IBGE** | Com `HORIZONTE_MUNICIPAL_GEO_WITH_IBGE_CATALOG=true`, aquece malha+área da mesma UF do catálogo |
+| **Progresso** | Persistido pelos ficheiros `municipal-{UF}.json`; hub `#horizonte-municipal-geo-sync` |
+| **API malha** | IBGE v3 `malhas/estados/{id}?intrarregiao=municipio&qualidade=intermediaria` |
+| **Área fallback** | IBGE v4 metadados por município quando a geometria não permite cálculo directo |
+
+```bash
+php artisan migrate   # tabela municipal_area_snapshots
+php artisan horizonte:import-municipal-geo --all
+php artisan horizonte:fortnightly-feed --phase=ibge_municipal_geo
+```
+
+Serviço: `HorizonteIbgeMunicipalGeoImportService` · progresso: `HorizonteIbgeMunicipalGeoImportProgress` · área: `GeoJsonFeatureAreaKm2`.
 
 > **Nota:** «Complementar / integral» aproxima `qt_mat_ativ_comp`, `qt_mat_ativ_comp_esp` e `qt_mat_prof` do Censo — taxonomia distinta do i-Educar.
 
@@ -281,7 +305,9 @@ HorizonteController
 | `app/Http/Controllers/HorizonteController.php` | Entrada HTTP + malha `map-geo` + série matrículas |
 | `app/Services/Horizonte/HorizonteMunicipioEnrollmentSeriesService.php` | Série Censo (prospectos) |
 | `app/Services/Horizonte/HorizonteMapService.php` | Agregação e cache |
-| `app/Services/Horizonte/HorizonteIbgeMalhaService.php` | Malha UF/mesorregião IBGE (coroplético) |
+| `app/Services/Horizonte/HorizonteIbgeMalhaService.php` | Malha UF/meso/micro/municipal IBGE (coroplético + contornos) |
+| `app/Services/Horizonte/HorizonteIbgeMunicipalGeoImportService.php` | Importação malha municipal + área km² |
+| `app/Console/Commands/HorizonteImportMunicipalGeoCommand.php` | CLI `horizonte:import-municipal-geo` |
 | `app/Services/Horizonte/HorizonteMunicipalAlertsSyncService.php` | Importação alertas MEC/FNDE VAAT |
 | `app/Services/Horizonte/HorizonteOpportunityScorer.php` | Scores |
 | `app/Support/Horizonte/HorizonteMapPresenter.php` | Cores, legenda, metodologia UI |
@@ -352,6 +378,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
 | **SAEB** | Planilhas oficiais INEP — **1 ano por passo** por defeito (`HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP=1`) |
 | **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
+| **IBGE malha** | Malha municipal + área km² (**1 UF por passo** — `HORIZONTE_MUNICIPAL_GEO_UFS_PER_STEP=1`; comando `horizonte:import-municipal-geo --all`) |
 | **SGE** | Sincroniza registo opcional de sistemas de gestão educacional (JSON local ou URL) — **não bloqueia** se ausente |
 | **Verificação** | `public-data:check-official --no-notify` (cache no hub, sem notificação) |
 
@@ -372,6 +399,9 @@ php artisan horizonte:fortnightly-feed --phase=saeb_planilhas --reset
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog --reset
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog --uf=SP
+php artisan horizonte:fortnightly-feed --phase=ibge_municipal_geo
+php artisan horizonte:fortnightly-feed --phase=ibge_municipal_geo --reset
+php artisan horizonte:import-municipal-geo --all
 
 # Manual — tudo numa invocação (verbose activo; retomar se interrompido)
 php artisan horizonte:fortnightly-feed --all
@@ -450,7 +480,7 @@ O script `horizonte-sync-br-continue.sh` executa `horizonte:fortnightly-feed --a
 
 O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância), detecta OOM/parcial e exporta `HORIZONTE_SAEB_MEMORY_LIMIT=2048M` por defeito. **Não** corra em paralelo com `php artisan horizonte:fortnightly-feed` manual.
 
-**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painel `#horizonte-hub` — cobertura nacional (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses), botão «Abastecer Horizonte» com skips por fase, **export/import de pacote offline v2** e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
+**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painéis `#horizonte-hub`, `#horizonte-educacenso-sync`, `#horizonte-municipal-geo-sync` — cobertura nacional (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, **malha IBGE**), botão «Abastecer Horizonte» com skips por fase, **export/import de pacote offline v2** e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 
@@ -538,4 +568,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — modal municipal refinado (chrome fixo, finanças em colunas, regiões IBGE)*
+*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — malha municipal IBGE, área km², overlay microrregiões/municipal, modal refinado*

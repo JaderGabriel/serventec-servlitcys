@@ -188,18 +188,19 @@ O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** 
 | Rotina bimestral | `php artisan horizonte:fortnightly-feed` (dia 1 nos meses 1, 3, 5, 7, 9, 11) |
 | Documentação | [HORIZONTE.md](HORIZONTE.md) §9 |
 
-**Fases da rotina:** FUNDEB receita CSV FNDE → Censo matrículas (CSV mais recente) → **Educacenso** (série multi-ano para o gráfico §6.9) → CadÚnico → SIDRA → Repasses Tesouro → SAEB planilhas INEP → catálogo IBGE → SGE → alertas MEC/FNDE → verificação oficial (`--no-notify`).
+**Fases da rotina:** FUNDEB receita CSV FNDE → Censo matrículas (CSV mais recente) → **Educacenso** (série multi-ano para o gráfico §6.9) → CadÚnico → SIDRA → Repasses Tesouro → SAEB planilhas INEP → catálogo IBGE → **malha municipal IBGE + área km²** → SGE → alertas MEC/FNDE → verificação oficial (`--no-notify`).
 
 | Fase | Fonte no hub |
 |------|----------------|
 | FUNDEB receita | `#source-fundeb_fnde` / Compatibilidade i-Educar |
 | Censo | `#source-censo_inep_matriculas` |
-| Educacenso (série gráfico) | `#horizonte-hub` · `--phase=educacenso` |
+| Educacenso (série gráfico) | `#horizonte-educacenso-sync` · `--phase=educacenso` |
 | CadÚnico | `#source-cadunico_cecad` |
 | SIDRA | `#horizonte-hub` |
 | Repasses | `#source-repasses_tesouro` |
 | SAEB | `#source-saeb_inep` / SAEB pedagógico |
 | IBGE centroides | `#source-geo_inep` / Geo |
+| IBGE malha + área | `#horizonte-municipal-geo-sync` · `horizonte:import-municipal-geo --all` |
 | Verificação | `#verificacao-oficial` |
 
 **Auditoria da série Educacenso** (amostra aleatória de municípios):
@@ -212,6 +213,7 @@ php artisan horizonte:verify-educacenso-coverage --sample=50
 |----------|--------|
 | `app/Services/Admin/HorizonteImportHubStatusService.php` | Métricas nacionais + fases |
 | `resources/views/admin/public-data/partials/horizonte-hub-panel.blade.php` | Painel no hub |
+| `resources/views/admin/public-data/partials/horizonte-municipal-geo-sync.blade.php` | Painel malha municipal IBGE + área |
 | `app/Support/Horizonte/HorizonteFortnightlyFeedCache.php` | Cache da última execução |
 
 Comandos: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2b · variáveis `HORIZONTE_FORTNIGHTLY_*` — [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.

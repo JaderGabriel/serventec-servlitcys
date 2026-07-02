@@ -16,6 +16,7 @@ use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedMonolithicProgress;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
+use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
@@ -42,6 +43,7 @@ final class HorizonteFortnightlyFeedService
         private readonly IbgeSidraMunicipalDemographyService $sidraDemography,
         private readonly HorizonteTesouroTransferSyncService $tesouroTransferSync,
         private readonly HorizonteEducacensoMatriculasSyncService $educacensoMatriculas,
+        private readonly HorizonteIbgeMunicipalGeoImportService $municipalGeoImport,
     ) {}
 
     /**
@@ -173,6 +175,7 @@ final class HorizonteFortnightlyFeedService
             'saeb_planilhas' => HorizonteSaebImportProgress::reset(),
             'educacenso' => HorizonteEducacensoImportProgress::reset(),
             'ibge_catalog' => HorizonteIbgeWarmProgress::reset(),
+            'ibge_municipal_geo' => HorizonteIbgeMunicipalGeoImportProgress::reset(),
             'sidra_demography' => HorizonteSidraImportProgress::reset(),
             default => null,
         };
@@ -196,6 +199,7 @@ final class HorizonteFortnightlyFeedService
             'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
             'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
             'ibge_catalog' => $this->warmIbgeCatalog($options),
+            'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
             'sge_registry' => $this->syncSgeRegistry($options),
             'municipal_alerts' => $this->syncMunicipalAlerts($options),
             'official_check' => $this->runOfficialCheck($options),
@@ -234,6 +238,7 @@ final class HorizonteFortnightlyFeedService
             HorizonteSaebImportProgress::reset();
             HorizonteEducacensoImportProgress::reset();
             HorizonteSidraImportProgress::reset();
+            HorizonteIbgeMunicipalGeoImportProgress::reset();
             HorizonteFortnightlyFeedMonolithicProgress::start($queue, $feedOptions);
             $this->debugLog($runtimeOptions, __('Reinício --all — :n fase(s) na fila.', ['n' => (string) count($queue)]));
             $this->debugLog($runtimeOptions, $this->scopeIntroMessage($runtimeOptions));
@@ -294,7 +299,7 @@ final class HorizonteFortnightlyFeedService
                 'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
             ]));
 
-            if (in_array($phaseKey, ['ibge_catalog', 'saeb_planilhas', 'sidra_demography', 'educacenso'], true)) {
+            if (in_array($phaseKey, ['ibge_catalog', 'ibge_municipal_geo', 'saeb_planilhas', 'sidra_demography', 'educacenso'], true)) {
                 do {
                     $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $runtimeOptions);
                     $this->emitPhaseDebugLines($runtimeOptions, $result);
@@ -458,6 +463,7 @@ final class HorizonteFortnightlyFeedService
             'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
+            'skip_ibge_municipal_geo' => (bool) ($options['skip_ibge_municipal_geo'] ?? false),
             'skip_sge' => (bool) ($options['skip_sge'] ?? false),
             'skip_alerts' => (bool) ($options['skip_alerts'] ?? false),
             'skip_verify' => (bool) ($options['skip_verify'] ?? false),
@@ -1030,6 +1036,19 @@ final class HorizonteFortnightlyFeedService
 
     /**
      * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function importIbgeMunicipalGeo(array $options = []): array
+    {
+        $this->debugLog($options, __('IBGE — malha municipal e área territorial por UF…'));
+
+        return $this->municipalGeoImport->importNextUfBatch(array_merge($options, [
+            'ufs_per_step' => (int) config('horizonte.municipal_geo.ufs_per_step', 1),
+        ]));
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
      * @return array{success: bool, message: string, ufs?: int, partial?: bool, ibge_done?: int, ibge_total?: int}
      */
     private function warmIbgeCatalog(array $options = []): array
@@ -1099,6 +1118,16 @@ final class HorizonteFortnightlyFeedService
             ]);
             $debugLines[] = $line;
             $this->debugLog($options, $line);
+            if ((bool) config('horizonte.municipal_geo.with_ibge_catalog', true)) {
+                $geoResult = $this->municipalGeoImport->importUf($uf);
+                $geoLine = __('IBGE malha — UF :uf: :n área(s) de :features polígono(s).', [
+                    'uf' => $uf,
+                    'n' => (string) ($geoResult['imported'] ?? 0),
+                    'features' => (string) ($geoResult['features'] ?? 0),
+                ]);
+                $debugLines[] = $geoLine;
+                $this->debugLog($options, $geoLine);
+            }
             gc_collect_cycles();
         }
 

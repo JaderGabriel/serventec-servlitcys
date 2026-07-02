@@ -151,6 +151,7 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
     Route::post('/admin/dados-publicos/verificar-oficial', [PublicDataImportController::class, 'checkOfficial'])->name('admin.public-data.check-official');
     Route::match(['get', 'post'], '/admin/dados-publicos/horizonte-feed', [PublicDataImportController::class, 'horizonteFeed'])->name('admin.public-data.horizonte-feed');
     Route::post('/admin/dados-publicos/horizonte-educacenso-sync', [PublicDataImportController::class, 'horizonteEducacensoSync'])->name('admin.public-data.horizonte-educacenso-sync');
+    Route::post('/admin/dados-publicos/horizonte-municipal-geo-sync', [PublicDataImportController::class, 'horizonteMunicipalGeoSync'])->name('admin.public-data.horizonte-municipal-geo-sync');
     Route::post('/admin/dados-publicos/horizonte-bundle-export', [PublicDataImportController::class, 'horizonteBundleExport'])->name('admin.public-data.horizonte-bundle-export');
     Route::post('/admin/dados-publicos/horizonte-bundle-import', [PublicDataImportController::class, 'horizonteBundleImport'])->name('admin.public-data.horizonte-bundle-import');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');

@@ -30,6 +30,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-repasses : Ignorar repasses Tesouro CKAN}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
+                            {--skip-ibge-municipal-geo : Ignorar malha municipal IBGE e área territorial}
                             {--skip-sge : Ignorar registo de sistemas de gestão educacional (SGE)}
                             {--skip-alerts : Ignorar alertas MEC/FNDE (VAAT inabilitados / registo manual)}
                             {--skip-verify : Ignorar verificação public-data:check-official}
@@ -161,6 +162,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_repasses' => (bool) $this->option('skip-repasses'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
+            'skip_ibge_municipal_geo' => (bool) $this->option('skip-ibge-municipal-geo'),
             'skip_sge' => (bool) $this->option('skip-sge'),
             'skip_alerts' => (bool) $this->option('skip-alerts'),
             'skip_verify' => (bool) $this->option('skip-verify'),
@@ -254,6 +256,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'educacenso' => 'Educacenso',
             'saeb_planilhas' => 'SAEB',
             'ibge_catalog' => 'IBGE',
+            'ibge_municipal_geo' => 'IBGE malha',
             'sge_registry' => 'SGE',
             'municipal_alerts' => __('Alertas MEC/FNDE'),
             'official_check' => __('Verificação'),

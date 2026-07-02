@@ -64,9 +64,48 @@ final class HorizonteIbgeMalhaService
     }
 
     /**
+     * Malha municipal (polígonos) — qualidade intermediária para contornos suaves no mapa.
+     *
      * @return array<string, mixed>
      */
-    private function loadGeoJson(string $cacheKey, string $url): array
+    public function stateMunicipalGeoJson(string $uf, bool $forceRefresh = false): array
+    {
+        $uf = strtoupper(trim($uf));
+        $stateId = config("horizonte.sidra.uf_n3_codes.{$uf}");
+        if (! is_string($stateId) || $stateId === '') {
+            $stateId = IbgeUfFromCode::ibgePrefixForUf($uf);
+        }
+        if ($stateId === null || $stateId === '') {
+            throw new RuntimeException("UF inválida para malha IBGE: {$uf}");
+        }
+
+        $qualidade = (string) config('horizonte.geo_malha.municipal_qualidade', 'intermediaria');
+        $template = (string) config('horizonte.geo_malha.state_municipal_url_template');
+        $url = str_replace(['{id}', '{qualidade}'], [$stateId, $qualidade], $template);
+
+        return $this->loadGeoJson('municipal-'.$uf, $url, $forceRefresh);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function cachedStateMunicipalGeoJson(string $uf): ?array
+    {
+        $uf = strtoupper(trim($uf));
+        $dir = trim((string) config('horizonte.geo_malha.cache_dir', 'horizonte/geo'), '/');
+        $path = $dir.'/municipal-'.$uf.'.json';
+        $disk = Storage::disk('local');
+        if (! $disk->exists($path)) {
+            return null;
+        }
+
+        return $this->decodeGeoJson((string) $disk->get($path));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function loadGeoJson(string $cacheKey, string $url, bool $forceRefresh = false): array
     {
         if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
             $bundled = $this->loadBundledGeoJson($cacheKey);
@@ -84,7 +123,7 @@ final class HorizonteIbgeMalhaService
 
         if ($disk->exists($path)) {
             $mtime = $disk->lastModified($path);
-            if (time() - $mtime < $ttl) {
+            if (! $forceRefresh && time() - $mtime < $ttl) {
                 $cached = $this->decodeGeoJson((string) $disk->get($path));
                 if ($cached !== null) {
                     return $cached;

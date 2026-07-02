@@ -383,7 +383,7 @@
                             aria-live="polite"
                         >
                             <div class="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" aria-hidden="true"></div>
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="loadingMessage || (regionalLoading ? '{{ __('A carregar UF…') }}' : '{{ __('A carregar…') }}')"></p>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-200" x-text="mapLoadingStatusLabel()"></p>
                         </div>
                         <div
                             x-show="!pageLoading && !regionalLoading && mapRendering"

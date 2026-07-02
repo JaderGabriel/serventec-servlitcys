@@ -111,6 +111,11 @@
         'enabled' => $enabled && $feedEnabled,
     ])
 
+    @include('admin.public-data.partials.horizonte-municipal-geo-sync', [
+        'horizonteHub' => $hub,
+        'enabled' => $enabled && $feedEnabled,
+    ])
+
     <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <x-admin.import-hub.stat label="FUNDEB" :value="number_format((int) ($coverage['fundeb_municipios'] ?? 0))" :hint="__('IBGE nacionais')" tone="amber" />
         <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
@@ -120,6 +125,7 @@
         <x-admin.import-hub.stat label="CadÚnico" :value="number_format((int) ($coverage['cadunico_municipios'] ?? 0))" :hint="__('agregados municipais')" tone="rose" />
         <x-admin.import-hub.stat label="SIDRA" :value="number_format((int) ($coverage['demography_municipios'] ?? 0))" :hint="__('pop. 4–17')" tone="slate" />
         <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/'.$ibgeUfsTotal" :hint="__('UFs com catálogo')" tone="sky" />
+        <x-admin.import-hub.stat :label="__('Malha IBGE')" :value="((int) ($coverage['municipal_geo_ufs_done'] ?? 0)).'/'.((int) ($coverage['municipal_geo_ufs_total'] ?? 27))" :hint="__('UFs com polígonos + área')" tone="indigo" />
     </x-admin.import-hub.stats-grid>
 
     <section id="horizonte-offline-bundle" class="scroll-mt-24 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 p-4 space-y-3">

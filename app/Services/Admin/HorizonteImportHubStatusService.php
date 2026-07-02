@@ -5,6 +5,7 @@ namespace App\Services\Admin;
 use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
+use App\Models\MunicipalAreaSnapshot;
 use App\Models\MunicipalDemographySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Support\Admin\PublicDataImportCatalog;
@@ -15,6 +16,7 @@ use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
 use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
+use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
@@ -78,6 +80,11 @@ final class HorizonteImportHubStatusService
 
         $ibgeUfsWarmed = $this->countIbgeUfsWarmed();
         $ibgeUfsTotal = count(self::BRAZIL_UFS);
+        $ibgeGeoUfsDone = HorizonteIbgeMunicipalGeoImportProgress::doneCount();
+        $ibgeGeoUfsTotal = HorizonteIbgeMunicipalGeoImportProgress::totalUfs();
+        $municipalAreaCount = \Illuminate\Support\Facades\Schema::hasTable('municipal_area_snapshots')
+            ? (int) MunicipalAreaSnapshot::query()->distinct()->count('ibge_municipio')
+            : 0;
         $cadunicoCount = \Illuminate\Support\Facades\Schema::hasTable('cadunico_municipio_snapshots')
             ? CadunicoMunicipioSnapshot::query()->distinct()->count('ibge_municipio')
             : 0;
@@ -119,6 +126,9 @@ final class HorizonteImportHubStatusService
                 'with_full_triad' => $withFullTriad,
                 'ibge_ufs_warmed' => $ibgeUfsWarmed,
                 'ibge_ufs_total' => $ibgeUfsTotal,
+                'municipal_geo_ufs_done' => $ibgeGeoUfsDone,
+                'municipal_geo_ufs_total' => $ibgeGeoUfsTotal,
+                'municipal_area_municipios' => $municipalAreaCount,
                 'microdados_ok' => $microdadosPath !== null && is_readable($microdadosPath),
                 'fundeb_latest' => FundebMunicipioReference::query()->max('imported_at'),
                 'censo_latest' => InepCensoMunicipioMatricula::query()->max('imported_at'),
@@ -140,6 +150,10 @@ final class HorizonteImportHubStatusService
             'educacenso_steps_done' => HorizonteEducacensoImportProgress::doneStepCount(),
             'educacenso_steps_total' => HorizonteEducacensoImportProgress::totalSteps($educacensoWindow),
             'educacenso_recent_steps' => HorizonteEducacensoImportProgress::recentDoneSteps(15),
+            'municipal_geo_ufs_done' => $ibgeGeoUfsDone,
+            'municipal_geo_ufs_total' => $ibgeGeoUfsTotal,
+            'municipal_geo_recent_steps' => HorizonteIbgeMunicipalGeoImportProgress::recentSteps(15),
+            'municipal_area_municipios' => $municipalAreaCount,
             'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
@@ -269,6 +283,22 @@ final class HorizonteImportHubStatusService
                 'ok' => $ibgeUfsWarmed >= $ibgeUfsTotal,
                 'metric' => $ibgeUfsWarmed,
                 'metric_label' => __('UFs aquecidas'),
+            ],
+            [
+                'key' => 'ibge_municipal_geo',
+                'label' => __('Malha municipal IBGE — área km²'),
+                'description' => __('Polígonos por UF (qualidade intermediária) + área territorial em municipal_area_snapshots. :n UF(s) por passo — comando dedicado com --all.', [
+                    'n' => (string) max(1, (int) config('horizonte.municipal_geo.ufs_per_step', 1)),
+                ]),
+                'source_id' => 'geo_inep',
+                'hub_anchor' => '#horizonte-municipal-geo-sync',
+                'admin_url' => route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-municipal-geo-sync',
+                'cli' => 'php artisan horizonte:import-municipal-geo --all',
+                'cli_reset' => 'php artisan horizonte:import-municipal-geo --reset --all',
+                'ok' => HorizonteIbgeMunicipalGeoImportProgress::isComplete(),
+                'metric' => HorizonteIbgeMunicipalGeoImportProgress::doneCount(),
+                'metric_total' => HorizonteIbgeMunicipalGeoImportProgress::totalUfs(),
+                'metric_label' => __('UFs com malha'),
             ],
             [
                 'key' => 'sge_registry',

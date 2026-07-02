@@ -23,8 +23,10 @@ use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Services\Horizonte\HorizonteEducacensoMatriculasSyncService;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Services\Horizonte\HorizonteDataBundleService;
+use App\Services\Horizonte\HorizonteIbgeMunicipalGeoImportService;
 use App\Support\Horizonte\HorizonteEducacensoImportProgress;
 use App\Support\Horizonte\HorizonteEducacensoYearWindow;
+use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Http\Requests\Admin\PublicDataImportIndexRequest;
@@ -190,6 +192,87 @@ class PublicDataImportController extends Controller
                 'completed_steps' => is_array($result['completed_steps'] ?? null) ? $result['completed_steps'] : [],
                 'educacenso_done' => (int) ($result['educacenso_done'] ?? 0),
                 'educacenso_total' => (int) ($result['educacenso_total'] ?? 0),
+            ]);
+    }
+
+    public function horizonteMunicipalGeoSync(Request $request, HorizonteIbgeMunicipalGeoImportService $import): RedirectResponse
+    {
+        $this->authorize('sync', PublicDataHub::class);
+
+        if (! (bool) config('horizonte.enabled', true)) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('Horizonte desactivado (HORIZONTE_ENABLED).'));
+        }
+
+        $mode = (string) $request->input('mode', 'step');
+        @set_time_limit($mode === 'all' ? 3600 : 900);
+        $memory = trim((string) config('horizonte.fortnightly_feed.memory_limit', '512M'));
+        if ($memory !== '') {
+            @ini_set('memory_limit', $memory);
+        }
+
+        $ufRaw = trim((string) $request->input('uf', ''));
+        if ($ufRaw !== '' && HorizonteUfScope::normalize($ufRaw) === null) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('UF inválida: :uf', ['uf' => $ufRaw]));
+        }
+
+        if ($request->boolean('reset')) {
+            HorizonteIbgeMunicipalGeoImportProgress::reset();
+        }
+
+        $ufsPerStep = max(1, min(3, (int) $request->input('ufs_per_step', config('horizonte.municipal_geo.ufs_per_step', 1))));
+
+        $baseOptions = array_filter([
+            'uf' => $ufRaw !== '' ? $ufRaw : null,
+            'ufs_per_step' => $ufsPerStep,
+            'force' => $request->boolean('force'),
+        ], static fn ($v): bool => $v !== null);
+
+        $completedSteps = [];
+        $result = ['success' => false, 'message' => ''];
+
+        if ($mode === 'all') {
+            $iteration = 0;
+            $maxIterations = HorizonteIbgeMunicipalGeoImportProgress::totalUfs() + 5;
+
+            while (! HorizonteIbgeMunicipalGeoImportProgress::isComplete() && $iteration < $maxIterations) {
+                $iteration++;
+                $doneBefore = HorizonteIbgeMunicipalGeoImportProgress::doneCount();
+                $result = $import->importNextUfBatch($baseOptions);
+                $completedSteps = array_merge($completedSteps, is_array($result['steps'] ?? null) ? $result['steps'] : []);
+
+                if ($result['skipped'] ?? false) {
+                    break;
+                }
+
+                if (HorizonteIbgeMunicipalGeoImportProgress::doneCount() === $doneBefore && ($result['partial'] ?? false)) {
+                    break;
+                }
+
+                if ($result['complete'] ?? false) {
+                    break;
+                }
+
+                if (! ($result['partial'] ?? false)) {
+                    break;
+                }
+            }
+        } else {
+            $result = $import->importNextUfBatch($baseOptions);
+            $completedSteps = is_array($result['steps'] ?? null) ? $result['steps'] : [];
+        }
+
+        return redirect()
+            ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-municipal-geo-sync')
+            ->with('horizonte_municipal_geo_sync', [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'completed_steps' => $completedSteps,
+                'municipal_geo_done' => HorizonteIbgeMunicipalGeoImportProgress::doneCount(),
+                'municipal_geo_total' => HorizonteIbgeMunicipalGeoImportProgress::totalUfs(),
             ]);
     }
 

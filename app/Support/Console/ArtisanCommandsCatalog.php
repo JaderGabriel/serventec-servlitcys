@@ -524,6 +524,24 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'horizonte',
                     ],
                     [
+                        'name' => 'horizonte:import-municipal-geo',
+                        'summary' => __('Importa malha municipal IBGE (GeoJSON) e área territorial km² por UF.'),
+                        'signature' => 'horizonte:import-municipal-geo {--reset} {--all} {--ufs-per-step=} {--uf=} {--force} {--skip-malha} {--skip-area}',
+                        'examples' => [
+                            'php artisan horizonte:import-municipal-geo --all',
+                            'php artisan horizonte:import-municipal-geo --reset --all',
+                            'php artisan horizonte:import-municipal-geo --uf=BA',
+                            'php artisan horizonte:import-municipal-geo --uf=BA --force',
+                        ],
+                        'env' => [
+                            'HORIZONTE_MUNICIPAL_GEO_ENABLED',
+                            'HORIZONTE_MUNICIPAL_GEO_UFS_PER_STEP',
+                            'HORIZONTE_GEO_MUNICIPAL_QUALIDADE',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('Grava polígonos em storage/horizonte/geo e áreas em municipal_area_snapshots. Fase ibge_municipal_geo no feed bimestral.'),
+                    ],
+                    [
                         'name' => 'horizonte:sync-ibge-centroids',
                         'summary' => __('Sincroniza centroides IBGE de todos os municípios (UFs menores primeiro, retomável).'),
                         'signature' => 'horizonte:sync-ibge-centroids {--reset} {--ufs-per-step=} {--uf=} {--force} {--dry-run} {--delay=}',
