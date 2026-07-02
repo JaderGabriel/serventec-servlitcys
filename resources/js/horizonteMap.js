@@ -393,18 +393,30 @@ const HORIZONTE_FINANCE_ICONS = {
     realtime: `<svg class="serv-horizonte-muni-tooltip__finance-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>`,
 };
 
-function financeSectionShell(tone, title, yearLabel, yearTag, iconHtml, bodyHtml) {
-    const tag = yearTag
-        ? `<span class="serv-horizonte-muni-tooltip__finance-tag serv-horizonte-muni-tooltip__finance-tag--${escapeHtml(yearTag)}">${escapeHtml(yearLabel)}</span>`
-        : `<span class="serv-horizonte-muni-tooltip__finance-year">${escapeHtml(yearLabel)}</span>`;
+function financeSectionShell(tone, title, yearLabel, yearTag, iconHtml, bodyHtml, headLayout = "default") {
+    const stackedHead = headLayout === "stacked" && yearLabel;
+    const headMain = stackedHead
+        ? `<div class="serv-horizonte-muni-tooltip__finance-head-main">` +
+          `<span class="serv-horizonte-muni-tooltip__finance-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
+          `<div class="serv-horizonte-muni-tooltip__finance-head-titles">` +
+          `<span class="serv-horizonte-muni-tooltip__finance-title">${escapeHtml(title)}</span>` +
+          `<span class="serv-horizonte-muni-tooltip__finance-subtitle">${escapeHtml(yearLabel)}</span>` +
+          `</div></div>`
+        : `<div class="serv-horizonte-muni-tooltip__finance-head-main">` +
+          `<span class="serv-horizonte-muni-tooltip__finance-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
+          `<span class="serv-horizonte-muni-tooltip__finance-title">${escapeHtml(title)}</span>` +
+          `</div>`;
+    const tag =
+        !stackedHead && yearTag
+            ? `<span class="serv-horizonte-muni-tooltip__finance-tag serv-horizonte-muni-tooltip__finance-tag--${escapeHtml(yearTag)}">${escapeHtml(yearLabel)}</span>`
+            : !stackedHead && yearLabel
+              ? `<span class="serv-horizonte-muni-tooltip__finance-year">${escapeHtml(yearLabel)}</span>`
+              : "";
 
     return (
         `<section class="serv-horizonte-muni-tooltip__finance-step serv-horizonte-muni-tooltip__finance-step--${tone}">` +
-        `<div class="serv-horizonte-muni-tooltip__finance-head">` +
-        `<div class="serv-horizonte-muni-tooltip__finance-head-main">` +
-        `<span class="serv-horizonte-muni-tooltip__finance-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
-        `<span class="serv-horizonte-muni-tooltip__finance-title">${escapeHtml(title)}</span>` +
-        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__finance-head${stackedHead ? " serv-horizonte-muni-tooltip__finance-head--stacked" : ""}">` +
+        headMain +
         tag +
         `</div>` +
         bodyHtml +
@@ -591,6 +603,55 @@ function transferTooltipHtml(m, refYear) {
             `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
             footnote,
     );
+}
+
+const FUNDEB_MONTH_LONG_PT = {
+    jan: "janeiro",
+    fev: "fevereiro",
+    mar: "março",
+    abr: "abril",
+    mai: "maio",
+    jun: "junho",
+    jul: "julho",
+    ago: "agosto",
+    set: "setembro",
+    out: "outubro",
+    nov: "novembro",
+    dez: "dezembro",
+};
+
+function formatOutlookDetailHtml(text) {
+    const safe = escapeHtml(String(text ?? "").trim());
+    if (!safe) {
+        return "";
+    }
+    return safe.replace(
+        /(R\$\s?[\d.]+,\d{2})/g,
+        '<span class="serv-horizonte-muni-tooltip__money-inline">$1</span>',
+    );
+}
+
+function formatFundebRealtimeHeadDate(m, currentYear) {
+    const label = String(m.fundeb_realtime_last_transfer_label ?? "").trim();
+    if (label !== "") {
+        const match = /^([a-z]{3})\/(\d{4})$/i.exec(label);
+        if (match) {
+            const month = FUNDEB_MONTH_LONG_PT[match[1].toLowerCase()] ?? match[1];
+            return `${month}/${match[2]}`;
+        }
+        return label;
+    }
+    const recordedAt = m.fundeb_realtime_last_recorded_at;
+    if (recordedAt) {
+        const parsed = new Date(recordedAt);
+        if (!Number.isNaN(parsed.getTime())) {
+            const month = parsed.toLocaleDateString("pt-BR", { month: "long" });
+            const year = parsed.getFullYear();
+            return `${month}/${year}`;
+        }
+    }
+    const ano = m.fundeb_realtime_ano ?? currentYear;
+    return ano != null ? String(ano) : "";
 }
 
 function formatFundebRealtimeTemporal(m) {
@@ -851,14 +912,12 @@ function fundebRealtimeHtml(m, currentYear) {
               (outlookLabel ? `<span class="serv-horizonte-muni-tooltip__finance-outlook serv-horizonte-muni-tooltip__finance-outlook--${outlookTone}">${escapeHtml(outlookLabel)}</span>` : "") +
               `</div>` +
               (outlookDetail
-                  ? `<p class="serv-horizonte-muni-tooltip__finance-outlook-detail">${escapeHtml(outlookDetail)}</p>`
+                  ? `<p class="serv-horizonte-muni-tooltip__finance-outlook-detail">${formatOutlookDetailHtml(outlookDetail)}</p>`
                   : "") +
               `</div>`
             : "";
 
-    const yearSubtitle = lastTemporal
-        ? `${escapeHtml(String(ano))} · ${escapeHtml("último pagamento")} ${escapeHtml(lastTemporal)}`
-        : `${escapeHtml("Exercício")} ${escapeHtml(String(ano))}`;
+    const yearSubtitle = formatFundebRealtimeHeadDate(m, ano);
 
     const ckanBlock =
         rows.length > 0
@@ -870,7 +929,7 @@ function fundebRealtimeHtml(m, currentYear) {
 
     return financeSectionShell(
         "realtime",
-        "Acompanhamento do ano",
+        "Acompanhamento do Ano",
         yearSubtitle,
         "current",
         HORIZONTE_FINANCE_ICONS.realtime,
@@ -882,6 +941,7 @@ function fundebRealtimeHtml(m, currentYear) {
                 "Portaria = planeamento · CKAN = pagamentos observados. Não some estes blocos com o exercício de referência acima. Na consultoria activa, use Finanças → Tempo Real para o extrato mensal.",
                 "realtime",
             ),
+        "stacked",
     );
 }
 

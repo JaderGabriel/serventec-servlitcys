@@ -710,6 +710,12 @@
     color: rgb(148 163 184);
 }
 
+.serv-horizonte-muni-tooltip__money-inline {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 .serv-horizonte-muni-tooltip__fundeb-row {
     display: flex;
     align-items: flex-start;
@@ -1019,6 +1025,28 @@
 
 .serv-horizonte-muni-tooltip__finance-step--realtime .serv-horizonte-muni-tooltip__finance-head {
     border-bottom-color: rgb(167 243 208 / 0.65);
+}
+
+.serv-horizonte-muni-tooltip__finance-head--stacked {
+    align-items: flex-start;
+}
+
+.serv-horizonte-muni-tooltip__finance-head-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    min-width: 0;
+}
+
+.serv-horizonte-muni-tooltip__finance-subtitle {
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.25;
+    color: rgb(5 150 105);
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-subtitle {
+    color: rgb(110 231 183);
 }
 
 .serv-horizonte-muni-tooltip__finance-head-main {
