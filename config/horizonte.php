@@ -303,6 +303,10 @@ return [
             'HORIZONTE_GEO_STATE_MESO_URL',
             'https://servicodados.ibge.gov.br/api/v3/malhas/estados/{id}?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=mesorregiao',
         ),
+        'state_micro_url_template' => env(
+            'HORIZONTE_GEO_STATE_MICRO_URL',
+            'https://servicodados.ibge.gov.br/api/v3/malhas/estados/{id}?formato=application/vnd.geo+json&qualidade=intermediaria&intrarregiao=microrregiao',
+        ),
     ],
 
 ];

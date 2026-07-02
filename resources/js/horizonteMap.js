@@ -1877,6 +1877,17 @@ function mesoChoroplethHoverStyle(baseStyle) {
     };
 }
 
+function microRegionOverlayStyle(fillColor) {
+    return {
+        fillColor,
+        fillOpacity: 0.07,
+        color: fillColor,
+        weight: 1.35,
+        opacity: 0.5,
+        dashArray: "5 4",
+    };
+}
+
 function ufChoroplethStyle(intensity) {
     const t = Math.max(0.08, Number(intensity) || 0.08);
 
@@ -2333,6 +2344,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         _cmdDockObserver: null,
         _lastChoroplethLayer: null,
         choroplethLayer: null,
+        microOverlayLayer: null,
         _choroplethPaneReady: false,
         _mapUserAdjustedView: false,
         _preserveViewOnNextRender: false,
@@ -4419,6 +4431,165 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.choroplethLayer = null;
             this._lastChoroplethLayer = null;
+            this.clearMicroOverlayLayer();
+        },
+
+        clearMicroOverlayLayer() {
+            if (this.microOverlayLayer && this.map) {
+                this.map.removeLayer(this.microOverlayLayer);
+            }
+            this.microOverlayLayer = null;
+        },
+
+        ensureMicroOverlayPane() {
+            if (!this.map) {
+                return;
+            }
+            if (!this.map.getPane("horizonteMicroOverlay")) {
+                this.map.createPane("horizonteMicroOverlay");
+                const pane = this.map.getPane("horizonteMicroOverlay");
+                if (pane) {
+                    pane.style.zIndex = "405";
+                }
+            }
+        },
+
+        microIdsForScopedMeso() {
+            const mesoId = String(this.scopeMeso ?? "").trim();
+            if (mesoId === "") {
+                return [];
+            }
+            const ids = new Set();
+            for (const m of this.markers) {
+                if (String(m.meso_id ?? "") !== mesoId) {
+                    continue;
+                }
+                const microId = String(m.micro_id ?? "").trim();
+                if (microId !== "") {
+                    ids.add(microId);
+                }
+            }
+
+            return [...ids];
+        },
+
+        async renderMicroRegionsOverlay() {
+            this.clearMicroOverlayLayer();
+            if (!this.map || !this.isRegionalMode) {
+                return;
+            }
+            const mesoId = String(this.scopeMeso ?? "").trim();
+            if (mesoId === "" || !this.scopeUf) {
+                return;
+            }
+
+            const microIds = this.microIdsForScopedMeso();
+            if (microIds.length === 0) {
+                return;
+            }
+
+            const microSet = new Set(microIds);
+            let geo;
+            try {
+                geo = await this.fetchGeoMalha("micro", this.scopeUf);
+            } catch (error) {
+                console.warn("horizonte geo malha (micro)", this.scopeUf, error);
+                this.renderMicroRegionsFallback(microIds);
+
+                return;
+            }
+
+            const features = (geo?.features ?? []).filter((feature) =>
+                microSet.has(String(feature?.properties?.codarea ?? "")),
+            );
+            if (features.length === 0) {
+                this.renderMicroRegionsFallback(microIds);
+
+                return;
+            }
+
+            this.ensureMicroOverlayPane();
+            const filtered = { type: "FeatureCollection", features };
+            const geoLayer = L.geoJSON(filtered, {
+                pane: "horizonteMicroOverlay",
+                interactive: false,
+                style: (feature) => {
+                    const microId = String(feature?.properties?.codarea ?? "");
+                    const idx = microIds.indexOf(microId);
+
+                    return microRegionOverlayStyle(
+                        mesoPaletteColor(microId, Math.max(0, idx)),
+                    );
+                },
+            });
+
+            this.microOverlayLayer = geoLayer;
+            geoLayer.addTo(this.map);
+            geoLayer.bringToBack();
+        },
+
+        renderMicroRegionsFallback(microIds) {
+            if (!this.map || microIds.length === 0) {
+                return;
+            }
+
+            const mesoId = String(this.scopeMeso ?? "").trim();
+            const group = L.layerGroup();
+            const byMicro = new Map();
+
+            for (const m of this.markers) {
+                if (mesoId !== "" && String(m.meso_id ?? "") !== mesoId) {
+                    continue;
+                }
+                const microId = String(m.micro_id ?? "").trim();
+                if (!microIds.includes(microId)) {
+                    continue;
+                }
+                const lat = Number(m.lat);
+                const lng = Number(m.lng);
+                if (!isValidCoord(lat, lng)) {
+                    continue;
+                }
+                if (!byMicro.has(microId)) {
+                    byMicro.set(microId, []);
+                }
+                byMicro.get(microId).push([lat, lng]);
+            }
+
+            let idx = 0;
+            for (const [microId, coords] of byMicro.entries()) {
+                if (coords.length === 0) {
+                    continue;
+                }
+                const centerLat =
+                    coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+                const centerLng =
+                    coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+                let maxKm = 8;
+                for (const [lat, lng] of coords) {
+                    const dLat = lat - centerLat;
+                    const dLng = lng - centerLng;
+                    const km = Math.sqrt(dLat * dLat + dLng * dLng) * 111;
+                    maxKm = Math.max(maxKm, km * 1.35);
+                }
+                const fill = mesoPaletteColor(microId, idx++);
+                const circle = L.circle([centerLat, centerLng], {
+                    pane: "horizonteMicroOverlay",
+                    radius: maxKm * 1000,
+                    ...microRegionOverlayStyle(fill),
+                    interactive: false,
+                });
+                group.addLayer(circle);
+            }
+
+            if (group.getLayers().length === 0) {
+                return;
+            }
+
+            this.ensureMicroOverlayPane();
+            this.microOverlayLayer = group;
+            group.addTo(this.map);
+            group.bringToBack();
         },
 
         redrawChoroplethLayer() {
@@ -4607,7 +4778,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async fetchGeoMalha(scope, uf = "") {
-            const key = scope === "meso" ? `meso:${uf}` : "brazil";
+            const key =
+                scope === "meso"
+                    ? `meso:${uf}`
+                    : scope === "micro"
+                      ? `micro:${uf}`
+                      : "brazil";
             if (this._geoCache[key]) {
                 return this._geoCache[key];
             }
@@ -4617,14 +4793,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const apiUrl = new URL(this.mapGeoUrl, window.location.origin);
                 apiUrl.searchParams.set(
                     "scope",
-                    scope === "meso" ? "meso" : "brazil",
+                    scope === "meso" || scope === "micro" ? scope : "brazil",
                 );
-                if (scope === "meso" && uf) {
+                if ((scope === "meso" || scope === "micro") && uf) {
                     apiUrl.searchParams.set("uf", uf);
                 }
                 urls.push(apiUrl.toString());
             }
-            if (scope !== "meso" && this.mapGeoFallbackUrl) {
+            if (scope !== "meso" && scope !== "micro" && this.mapGeoFallbackUrl) {
                 urls.push(this.mapGeoFallbackUrl);
             }
 
@@ -4956,6 +5132,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     .filter(([la, ln]) => isValidCoord(la, ln));
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
+
+            await this.renderMicroRegionsOverlay();
         },
 
         async renderHeatLayer() {
@@ -5017,6 +5195,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } else {
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
+
+            await this.renderMicroRegionsOverlay();
         },
 
         fitMapBounds(bounds, fallbackZoom = 4, force = false) {
@@ -5657,32 +5837,38 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return mesoId !== "" ? `Mesorregião ${mesoId}` : "";
         },
 
-        modalHeaderMicroLabel(m) {
-            if (!m) {
+        modalHeaderSaebSeriesLabel(series, legacyValue) {
+            const normalized = Array.isArray(series)
+                ? series.filter(
+                      (point) =>
+                          point &&
+                          Number.isFinite(Number(point.value)) &&
+                          Number(point.value) > 0,
+                  )
+                : [];
+            const points =
+                normalized.length > 0
+                    ? normalized.slice(0, 2)
+                    : Number.isFinite(Number(legacyValue)) && Number(legacyValue) > 0
+                      ? [{ value: Number(legacyValue) }]
+                      : [];
+            if (points.length === 0) {
                 return "";
             }
 
-            const micro = String(m.micro_name ?? "").trim();
-            if (micro !== "") {
-                return micro;
-            }
+            return points
+                .map((point) => {
+                    const val = Math.round(Number(point.value)).toLocaleString(
+                        "pt-BR",
+                    );
+                    const year = Number(point.year);
+                    if (Number.isFinite(year) && year > 0) {
+                        return `${val} (${year})`;
+                    }
 
-            const microId = String(m.micro_id ?? "").trim();
-            return microId !== "" ? `Microrregião ${microId}` : "";
-        },
-
-        modalHeaderRegiaoImediataLabel(m) {
-            if (!m) {
-                return "";
-            }
-
-            const name = String(m.regiao_imediata_name ?? "").trim();
-            if (name !== "") {
-                return name;
-            }
-
-            const id = String(m.regiao_imediata_id ?? "").trim();
-            return id !== "" ? `Região imediata ${id}` : "";
+                    return val;
+                })
+                .join(" · ");
         },
 
         modalHeaderSaebLabel(m) {
@@ -5690,20 +5876,24 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return "";
             }
 
-            const lp = Number(m.saeb_lp);
-            const mat = Number(m.saeb_mat);
-            const hasLp = Number.isFinite(lp) && lp > 0;
-            const hasMat = Number.isFinite(mat) && mat > 0;
-            if (!hasLp && !hasMat) {
+            const lp = this.modalHeaderSaebSeriesLabel(
+                m.saeb_lp_series,
+                m.saeb_lp,
+            );
+            const mat = this.modalHeaderSaebSeriesLabel(
+                m.saeb_mat_series,
+                m.saeb_mat,
+            );
+            if (lp === "" && mat === "") {
                 return "";
             }
 
             const parts = [];
-            if (hasLp) {
-                parts.push(`LP ${Math.round(lp).toLocaleString("pt-BR")}`);
+            if (lp !== "") {
+                parts.push(`LP ${lp}`);
             }
-            if (hasMat) {
-                parts.push(`MAT ${Math.round(mat).toLocaleString("pt-BR")}`);
+            if (mat !== "") {
+                parts.push(`MAT ${mat}`);
             }
 
             return `SAEB ${parts.join(" · ")}`;

@@ -875,6 +875,8 @@ final class HorizonteMapService
                 'receita_total' => $fundeb['receita_total'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
+                'saeb_lp_series' => array_values($saeb['lp_series'] ?? []),
+                'saeb_mat_series' => array_values($saeb['mat_series'] ?? []),
                 'cadunico_escolar' => $cadunico['escolar'] ?? null,
                 'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
                 'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
@@ -983,6 +985,8 @@ final class HorizonteMapService
                 'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
+                'saeb_lp_series' => array_values($saeb['lp_series'] ?? []),
+                'saeb_mat_series' => array_values($saeb['mat_series'] ?? []),
                 'analytics_url' => $city !== null && $consultoriaActive
                     ? route('dashboard.analytics', ['city_id' => $city['id']])
                     : null,
@@ -1204,7 +1208,7 @@ final class HorizonteMapService
     }
 
     /**
-     * @return array<string, array{lp: ?float, mat: ?float}>
+     * @return array<string, array{lp: ?float, mat: ?float, lp_series: list<array{year: int, value: float}>, mat_series: list<array{year: int, value: float}>}>
      */
     private function saebByIbge(int $refYear, ?string $ibgePrefix = null): array
     {
@@ -1221,9 +1225,10 @@ final class HorizonteMapService
         if ($ibgePrefix !== null && $ibgePrefix !== '') {
             $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
         }
-        $rows = $query->get(['ibge_municipio', 'disciplina', 'valor']);
+        $rows = $query->get(['ibge_municipio', 'ano', 'disciplina', 'valor']);
 
-        $out = [];
+        /** @var array<string, array{lp: list<array{year: int, value: float}>, mat: list<array{year: int, value: float}>}> $series */
+        $series = [];
         foreach ($rows as $row) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
             if ($ibge === null) {
@@ -1234,12 +1239,30 @@ final class HorizonteMapService
             if ($key === null) {
                 continue;
             }
-            if (! isset($out[$ibge])) {
-                $out[$ibge] = ['lp' => null, 'mat' => null];
+            if (! isset($series[$ibge])) {
+                $series[$ibge] = ['lp' => [], 'mat' => []];
             }
-            if ($out[$ibge][$key] === null) {
-                $out[$ibge][$key] = (float) $row->valor;
+            $year = (int) $row->ano;
+            $value = (float) $row->valor;
+            $bucket = &$series[$ibge][$key];
+            foreach ($bucket as $entry) {
+                if ($entry['year'] === $year) {
+                    continue 2;
+                }
             }
+            if (count($bucket) < 2) {
+                $bucket[] = ['year' => $year, 'value' => $value];
+            }
+        }
+
+        $out = [];
+        foreach ($series as $ibge => $data) {
+            $out[$ibge] = [
+                'lp' => $data['lp'][0]['value'] ?? null,
+                'mat' => $data['mat'][0]['value'] ?? null,
+                'lp_series' => $data['lp'],
+                'mat_series' => $data['mat'],
+            ];
         }
 
         return $out;

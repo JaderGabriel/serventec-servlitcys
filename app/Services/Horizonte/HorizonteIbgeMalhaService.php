@@ -46,6 +46,26 @@ final class HorizonteIbgeMalhaService
     /**
      * @return array<string, mixed>
      */
+    public function stateMicroGeoJson(string $uf): array
+    {
+        $uf = strtoupper(trim($uf));
+        $stateId = config("horizonte.sidra.uf_n3_codes.{$uf}");
+        if (! is_string($stateId) || $stateId === '') {
+            $stateId = IbgeUfFromCode::ibgePrefixForUf($uf);
+        }
+        if ($stateId === null || $stateId === '') {
+            throw new RuntimeException("UF inválida para malha IBGE: {$uf}");
+        }
+
+        $template = (string) config('horizonte.geo_malha.state_micro_url_template');
+        $url = str_replace('{id}', $stateId, $template);
+
+        return $this->loadGeoJson('micro-'.$uf, $url);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function loadGeoJson(string $cacheKey, string $url): array
     {
         if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {

@@ -80,6 +80,12 @@ class HorizonteController extends Controller
 
             return response()->json($this->malha->stateMesoGeoJson($uf));
         }
+        if ($scope === 'micro') {
+            $uf = HorizonteUfScope::normalize($request->query('uf'));
+            abort_unless($uf !== null, 422);
+
+            return response()->json($this->malha->stateMicroGeoJson($uf));
+        }
 
         return response()->json($this->malha->brazilUfGeoJson());
     }

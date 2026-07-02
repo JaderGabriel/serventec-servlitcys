@@ -33,27 +33,6 @@
                             x-text="modalHeaderMesoLabel(active)"
                         ></span>
                     </p>
-                    <p
-                        class="serv-horizonte-muni-modal__regions"
-                        x-show="active && (modalHeaderMicroLabel(active) || modalHeaderRegiaoImediataLabel(active))"
-                        x-cloak
-                    >
-                        <span
-                            class="serv-horizonte-muni-modal__micro"
-                            x-show="modalHeaderMicroLabel(active)"
-                            x-text="modalHeaderMicroLabel(active)"
-                        ></span>
-                        <span
-                            class="serv-horizonte-muni-modal__location-sep"
-                            x-show="modalHeaderMicroLabel(active) && modalHeaderRegiaoImediataLabel(active)"
-                            aria-hidden="true"
-                        >·</span>
-                        <span
-                            class="serv-horizonte-muni-modal__regiao-imediata"
-                            x-show="modalHeaderRegiaoImediataLabel(active)"
-                            x-text="modalHeaderRegiaoImediataLabel(active)"
-                        ></span>
-                    </p>
                     <div class="serv-horizonte-muni-modal__facts" x-show="active" x-cloak>
                         <span class="serv-horizonte-muni-modal__fact" x-text="modalHeaderMeta(active)"></span>
                         <span
