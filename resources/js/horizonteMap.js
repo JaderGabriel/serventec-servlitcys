@@ -955,6 +955,27 @@ function muniAlertsHtml(m) {
     );
 }
 
+function muniMunicipalContextHtml(m) {
+    if (!m) {
+        return "";
+    }
+
+    const alerts = muniAlertsHtml(m);
+    const pipeline = muniPopulationPipelineHtml(m);
+    if (alerts === "" && pipeline === "") {
+        return "";
+    }
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__municipal-card">` +
+        (alerts !== ""
+            ? `<div class="serv-horizonte-muni-tooltip__municipal-card-alerts">${alerts}</div>`
+            : "") +
+        `<div class="serv-horizonte-muni-tooltip__municipal-card-pipeline">${pipeline}</div>` +
+        `</div>`
+    );
+}
+
 function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
     const sideClass =
         side === "current"
@@ -5225,6 +5246,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             });
         },
 
+        tooltipMunicipalContextHtml(m) {
+            return muniMunicipalContextHtml(m);
+        },
+
         tooltipBodyHtml(m) {
             if (!m) {
                 return "";
@@ -5246,11 +5271,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
 
-            const alertsBlock = muniAlertsHtml(m);
-            if (alertsBlock) {
-                lines.push(alertsBlock);
-            }
-
             const transferAno =
                 m.transfer_ano != null && m.transfer_total != null
                     ? String(m.transfer_ano)
@@ -5259,9 +5279,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                       : null;
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout">');
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--pipeline">');
-            lines.push(muniPopulationPipelineHtml(m));
-            lines.push("</div>");
 
             const metaBlock = muniMetaHtml(m);
             if (metaBlock) {

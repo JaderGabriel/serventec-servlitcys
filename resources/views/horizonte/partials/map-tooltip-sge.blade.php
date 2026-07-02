@@ -96,6 +96,13 @@
                 </template>
             </div>
 
+            <div
+                x-show="active && tooltipMunicipalContextHtml(active)"
+                x-cloak
+                class="serv-horizonte-muni-tooltip__municipal-context"
+                x-html="active ? tooltipMunicipalContextHtml(active) : ''"
+            ></div>
+
             <section
                 x-show="active && shouldShowEnrollmentSeries(active)"
                 x-cloak
