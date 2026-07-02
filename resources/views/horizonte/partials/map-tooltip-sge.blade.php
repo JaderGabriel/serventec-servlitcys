@@ -8,30 +8,47 @@
     @keydown.escape.window="if (active && tooltipPinned) closeTooltip()"
 >
     <div
-        class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--centered serv-brazil-map-tooltip--modal"
+        class="serv-horizonte-muni-modal"
         :style="tooltipStyle"
         role="dialog"
         aria-modal="true"
         :aria-label="active?.name ? active.name + ' — ' + (active.uf || '') : '{{ __('Município') }}'"
         @click.stop
     >
-        <div class="serv-horizonte-muni-tooltip__header">
-            <div class="min-w-0 flex-1">
-                <div class="serv-horizonte-muni-tooltip__heading">
-                    <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
-                    <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
+        <header class="serv-horizonte-muni-modal__chrome">
+            <div class="serv-horizonte-muni-modal__chrome-row">
+                <div class="min-w-0 flex-1">
+                    <div class="serv-horizonte-muni-tooltip__heading">
+                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
+                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
+                    </div>
                 </div>
-                <p class="serv-horizonte-muni-tooltip__meta" x-text="modalHeaderMeta(active)"></p>
+                <button
+                    type="button"
+                    class="serv-horizonte-muni-tooltip__close shrink-0"
+                    x-on:click.stop="closeTooltip()"
+                    aria-label="{{ __('Fechar') }}"
+                >&times;</button>
             </div>
-            <button
-                type="button"
-                class="serv-horizonte-muni-tooltip__close shrink-0"
-                x-on:click.stop="closeTooltip()"
-                aria-label="{{ __('Fechar') }}"
-            >&times;</button>
-        </div>
+            <div class="serv-horizonte-muni-modal__identity">
+                <p class="serv-horizonte-muni-tooltip__meta serv-horizonte-muni-modal__meta" x-text="modalHeaderMeta(active)"></p>
+                <div
+                    class="serv-horizonte-muni-modal__propensity"
+                    x-show="active && (active.success_score != null || tierLabel(active))"
+                    x-cloak
+                >
+                    <span class="serv-horizonte-muni-modal__propensity-label">{{ __('Propensão') }}</span>
+                    <span class="serv-horizonte-muni-modal__propensity-tier" x-text="tierLabel(active)"></span>
+                    <span
+                        class="serv-horizonte-muni-modal__propensity-score"
+                        x-show="active?.success_score != null"
+                        x-text="formatScoreDisplay(active?.success_score) + '/100'"
+                    ></span>
+                </div>
+            </div>
+        </header>
 
-        <div class="serv-horizonte-muni-tooltip__scroll">
+        <div class="serv-horizonte-muni-modal__body">
             <div
                 x-show="active?.muni_alerts"
                 x-cloak

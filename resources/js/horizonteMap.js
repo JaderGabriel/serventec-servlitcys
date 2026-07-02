@@ -5049,9 +5049,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         positionTooltip() {
             const margin = 32;
-            const maxH = Math.max(240, window.innerHeight - margin);
-            // Só limita altura — o scroll fica em .serv-horizonte-muni-tooltip__scroll (cabeçalho fixo).
-            this.tooltipStyle = `max-height:${Math.round(maxH)}px;overflow:hidden;`;
+            const maxH = Math.max(320, window.innerHeight - margin);
+            this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
         },
 
         closeMapOverlays() {
@@ -5371,16 +5370,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!m) {
                 return "";
             }
-            const parts = [`IBGE ${m.ibge ?? "—"}`];
-            const tier = this.tierLabel(m);
-            if (tier) {
-                parts.push(String(tier));
-            }
-            if (m.success_score != null && Number(m.success_score) >= 0) {
-                parts.push(`${this.formatScoreDisplay(m.success_score)}/100`);
-            }
 
-            return parts.join(" · ");
+            return `IBGE ${m.ibge ?? "—"}`;
         },
 
         shouldShowEnrollmentSeries(m) {
