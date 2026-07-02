@@ -65,4 +65,42 @@ final class HorizonteTesouroRepassesSyncServiceTest extends TestCase
         $this->assertSame([2026], $result['years']);
         $this->assertSame(1, $result['imported']);
     }
+
+    #[Test]
+    public function nao_avanca_progresso_quando_importacao_nacional_retorna_zero(): void
+    {
+        Cache::flush();
+        HorizonteTesouroRepassesSyncProgress::reset([2026]);
+
+        $this->mock(MunicipalTransferSnapshotRepository::class, function ($mock): void {
+            $mock->shouldNotReceive('upsertBatch');
+        });
+
+        config([
+            'horizonte.reference_year' => 2025,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_enabled' => true,
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
+                'fundeb' => [
+                    'resource_id' => 'test-fundeb-zero',
+                    'programa_id' => 'fundeb',
+                    'name' => 'FUNDEB zero',
+                    'url' => 'https://example.test/fundeb-zero.csv',
+                ],
+            ],
+        ]);
+
+        Http::fake([
+            'example.test/fundeb-zero.csv' => Http::response("COD_MUN;Município;UF;;Mês;2026\n99999;Inexistente;ZZ;;1;5000\n", 200),
+        ]);
+
+        $this->travelTo('2026-06-15');
+
+        $result = app(HorizonteTesouroRepassesSyncService::class)->run([
+            'ufs_per_step' => 1,
+        ]);
+
+        $this->assertFalse($result['success']);
+        $this->assertSame(0, $result['imported']);
+        $this->assertSame([], HorizonteTesouroRepassesSyncProgress::doneUfs([2026]));
+    }
 }

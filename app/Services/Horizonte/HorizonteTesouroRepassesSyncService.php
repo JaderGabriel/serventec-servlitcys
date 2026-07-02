@@ -52,7 +52,11 @@ final class HorizonteTesouroRepassesSyncService
         $ufsPerStep = max(1, (int) ($options['ufs_per_step'] ?? config('horizonte.tesouro_repasses_sync.ufs_per_step', 1)));
 
         if ((bool) ($options['reset'] ?? false)) {
-            HorizonteTesouroRepassesSyncProgress::reset($years);
+            if ($scopedUf !== null) {
+                HorizonteTesouroRepassesSyncProgress::unmarkDone([$scopedUf], $years);
+            } else {
+                HorizonteTesouroRepassesSyncProgress::reset($years);
+            }
         }
 
         $ufs = $scopedUf !== null
@@ -101,7 +105,7 @@ final class HorizonteTesouroRepassesSyncService
         $result = $this->transferSync->importFundebYearsForUfs($years, $ufs);
         $imported = (int) ($result['imported'] ?? 0);
 
-        if ($scopedUf === null && $imported >= 0) {
+        if ($imported > 0) {
             HorizonteTesouroRepassesSyncProgress::markDone($ufs, $years);
         }
 

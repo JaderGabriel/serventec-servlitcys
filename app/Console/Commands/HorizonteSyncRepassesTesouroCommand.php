@@ -66,7 +66,13 @@ class HorizonteSyncRepassesTesouroCommand extends Command
         }
 
         if ((bool) $this->option('reset')) {
-            $this->warn(__('Progresso por UF reiniciado.'));
+            if ($ufRaw !== '') {
+                $this->warn(__('Progresso da UF :uf reiniciado (demais UFs mantidas).', [
+                    'uf' => (string) HorizonteUfScope::normalize($ufRaw),
+                ]));
+            } else {
+                $this->warn(__('Progresso nacional por UF reiniciado.'));
+            }
         }
 
         $ufsPerStepOption = $this->option('ufs-per-step');
@@ -107,7 +113,11 @@ class HorizonteSyncRepassesTesouroCommand extends Command
                 $this->line(__('Retomar: php artisan horizonte:sync-repasses-tesouro --continue'));
             }
         } else {
-            $this->warn((string) ($result['message'] ?? ''));
+            $this->error((string) ($result['message'] ?? ''));
+            if (! ($result['dry_run'] ?? false) && (int) ($result['imported'] ?? 0) === 0) {
+                $this->line(__('Nenhum município gravado — o progresso por UF não foi avançado.'));
+                $this->line(__('Diagnóstico: php artisan horizonte:sync-repasses-tesouro --dry-run'.($ufRaw !== '' ? ' --uf='.$ufRaw : '')));
+            }
         }
 
         $this->line(__('Mapa: :url', ['url' => route('dashboard.horizonte')]));

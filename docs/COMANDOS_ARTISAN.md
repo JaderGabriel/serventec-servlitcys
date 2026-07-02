@@ -148,8 +148,12 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
 
 ```bash
-php artisan horizonte:sync-repasses-tesouro --with-ref
-php artisan horizonte:sync-repasses-tesouro --uf=BA --year=2026
+# Nacional (recomendado): 1 UF por execução até concluir as 27
+php artisan horizonte:sync-repasses-tesouro --with-ref --reset
+php artisan horizonte:sync-repasses-tesouro --with-ref --continue
+
+# Uma UF isolada (não use --reset em cada estado — só reinicia essa UF)
+php artisan horizonte:sync-repasses-tesouro --uf=BA --year=2026 --with-ref
 php artisan horizonte:sync-educacenso --reset --all
 php artisan horizonte:sync-educacenso --year=2024 --uf=BA
 php artisan horizonte:fortnightly-feed --phase=censo_matriculas

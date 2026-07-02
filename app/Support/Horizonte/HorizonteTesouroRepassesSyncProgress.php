@@ -44,10 +44,37 @@ final class HorizonteTesouroRepassesSyncProgress
      */
     public static function markDone(array $ufs, array $years): void
     {
-        $done = array_values(array_unique(array_merge(
-            self::doneUfs($years),
-            array_map(static fn (string $uf): string => strtoupper(trim($uf)), $ufs),
+        $normalized = array_values(array_filter(array_map(
+            static fn (string $uf): string => strtoupper(trim($uf)),
+            $ufs,
         )));
+        if ($normalized === []) {
+            return;
+        }
+
+        $done = array_values(array_unique(array_merge(self::doneUfs($years), $normalized)));
+        $ttl = max(3600, (int) config('horizonte.tesouro_repasses_sync.progress_ttl', 604800));
+        Cache::put(self::cacheKey($years), $done, now()->addSeconds($ttl));
+    }
+
+    /**
+     * @param  list<string>  $ufs
+     * @param  list<int>  $years
+     */
+    public static function unmarkDone(array $ufs, array $years): void
+    {
+        $remove = array_fill_keys(array_map(
+            static fn (string $uf): string => strtoupper(trim($uf)),
+            $ufs,
+        ), true);
+        if ($remove === []) {
+            return;
+        }
+
+        $done = array_values(array_filter(
+            self::doneUfs($years),
+            static fn (string $uf): bool => ! isset($remove[strtoupper(trim($uf))]),
+        ));
         $ttl = max(3600, (int) config('horizonte.tesouro_repasses_sync.progress_ttl', 604800));
         Cache::put(self::cacheKey($years), $done, now()->addSeconds($ttl));
     }
