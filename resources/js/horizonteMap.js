@@ -54,18 +54,6 @@ function formatEnrollmentAxisValue(value) {
     return n.toLocaleString("pt-BR");
 }
 
-function formatEnrollmentDataLabel(value) {
-    const n = Number(value);
-    if (!Number.isFinite(n) || n <= 0) {
-        return "";
-    }
-    if (n >= 10000) {
-        return `${Math.round(n / 1000)}k`;
-    }
-
-    return n.toLocaleString("pt-BR");
-}
-
 function styleEnrollmentDataset(dataset, index) {
     const style =
         ENROLLMENT_SERIES_STYLES[index % ENROLLMENT_SERIES_STYLES.length];
@@ -164,14 +152,7 @@ function enrollmentSeriesChartOptions() {
                 },
             },
             datalabels: {
-                display: (ctx) => ctx.datasetIndex === 0,
-                color: text,
-                anchor: "end",
-                align: "top",
-                offset: 4,
-                clip: false,
-                font: enrollmentChartFont(10, "700"),
-                formatter: (value) => formatEnrollmentDataLabel(value),
+                display: false,
             },
         },
         scales: {
@@ -704,8 +685,8 @@ function fundebRealtimeExpectedDesc(m) {
     const hasCompl = compl != null && Number(compl) > 0;
     if (source === "portaria_receita") {
         return hasCompl
-            ? "Tecto anual da portaria FNDE (vinculada + complementação federal)"
-            : "Tecto anual da portaria FNDE (receita vinculada)";
+            ? "Teto anual da portaria FNDE (vinculada + complementação federal)"
+            : "Teto anual da portaria FNDE (receita vinculada)";
     }
     return "Estimativa por matrículas × VAAF (sem portaria de receita)";
 }
@@ -741,9 +722,39 @@ function fundebComplementacaoFederalDesc(key) {
 function fundebPortariaBreakdownNote(m) {
     const ano = m.fundeb_realtime_portaria_ano ?? m.fundeb_ano ?? m.fundeb_realtime_ano;
     const ibge = m.ibge != null ? String(m.ibge) : "";
-    const anoPart = ano != null ? ` · exercício ${ano}` : "";
-    const ibgePart = ibge !== "" ? ` (IBGE ${ibge})` : "";
-    return `Valores da portaria FNDE por ente federado${ibgePart}${anoPart}. Matrículas e complementações referem-se só a este município — não somar dados estaduais.`;
+    const anoPart = ano != null ? `, exercício ${ano}` : "";
+    const entePart =
+        ibge !== ""
+            ? `ente municipal (IBGE ${ibge})`
+            : "ente municipal";
+    return `Composição da portaria FNDE do ${entePart}${anoPart}. Matrículas e complementações federais abaixo são só deste município — não some valores do estado.`;
+}
+
+function fundebPortariaTetoLabel(m) {
+    const complTotal = m.fundeb_realtime_portaria_complementacao_total;
+    const totalPrevisto = m.fundeb_realtime_portaria_total_previsto ?? m.fundeb_realtime_expected;
+    const receita = m.fundeb_realtime_portaria_receita;
+    const hasFullTeto =
+        totalPrevisto != null &&
+        Number(totalPrevisto) > 0 &&
+        receita != null &&
+        complTotal != null &&
+        Number(complTotal) > 0;
+
+    return hasFullTeto ? "Teto total FUNDEB (portaria)" : "Total previsto (portaria)";
+}
+
+function fundebRealtimeBalanceDescHtml(m) {
+    const aLabel = fundebPortariaTetoLabel(m);
+
+    return (
+        `<span class="serv-horizonte-muni-tooltip__fundeb-formula">Saldo = A − B</span>` +
+        `. ` +
+        `<span class="serv-horizonte-muni-tooltip__fundeb-formula-legend">` +
+        `<strong>A</strong>: «${escapeHtml(aLabel)}» em «Previsto na portaria» · ` +
+        `<strong>B</strong>: «Já pago pelo Tesouro» em «Pago pelo Tesouro»` +
+        `</span>`
+    );
 }
 
 function fundebRealtimePortariaBreakdownHtml(m) {
@@ -874,7 +885,7 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         totalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Tecto total FUNDEB (portaria)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Teto total FUNDEB (portaria)")}</span>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Receita vinculada + complementação federal — referência da barra «Recebido do previsto»")}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(totalPrevisto)}</span>` +
@@ -909,6 +920,153 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         blocks.join("") +
         `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml(fundebPortariaBreakdownNote(m))}</p>` +
         `</div>`
+    );
+}
+
+function fundebRealtimePortariaColumnHtml(m, currentYear) {
+    const ano = m.fundeb_realtime_ano ?? currentYear;
+    const expected = m.fundeb_realtime_expected;
+    const hasExpected = expected != null && Number(expected) > 0;
+    const portariaBreakdown = fundebRealtimePortariaBreakdownHtml(m);
+    const showPortariaDetail = portariaBreakdown !== "";
+
+    if (!hasExpected && !showPortariaDetail) {
+        return "";
+    }
+
+    const rows = [];
+    if (hasExpected && !showPortariaDetail) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total previsto (portaria)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebRealtimeExpectedDesc(m))}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(expected)}</span>` +
+                `</div>`,
+        );
+    }
+
+    const body =
+        (showPortariaDetail
+            ? portariaBreakdown
+            : rows.length > 0
+              ? `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>`
+              : "") +
+        financeNoteHtml(
+            "Composição e totais publicados pelo FNDE para o exercício em curso.",
+            "reference",
+        );
+
+    return financeSectionShell(
+        "reference",
+        "Previsto na portaria",
+        formatFundebRealtimeHeadDate(m, ano),
+        "current",
+        HORIZONTE_FINANCE_ICONS.reference,
+        body,
+        "stacked",
+    );
+}
+
+function fundebRealtimeTesouroColumnHtml(m, currentYear) {
+    const ano = m.fundeb_realtime_ano ?? currentYear;
+    const observed = m.fundeb_realtime_observed;
+    const expected = m.fundeb_realtime_expected;
+    const projected = m.fundeb_realtime_projected;
+    const balance = m.fundeb_realtime_balance;
+    const pctDone = m.fundeb_realtime_pct_done;
+    const outlook = String(m.fundeb_realtime_outlook ?? "unknown");
+    const outlookLabel = String(m.fundeb_realtime_outlook_label ?? "");
+    const hasObserved = observed != null && Number(observed) > 0;
+    const hasExpected = expected != null && Number(expected) > 0;
+
+    if (!hasObserved && !hasExpected) {
+        return "";
+    }
+
+    const outlookDetail = String(m.fundeb_realtime_outlook_detail ?? "").trim();
+    const outlookTone =
+        outlook === "risk"
+            ? "risk"
+            : outlook === "surplus"
+              ? "surplus"
+              : outlook === "close"
+                ? "close"
+                : "unknown";
+    const pctWidth = pctDone != null ? Math.max(0, Math.min(100, Number(pctDone))) : 0;
+    const pctLabel = pctDone != null ? formatPercentValue(pctDone) : "—";
+
+    const rows = [];
+    if (hasObserved) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Já pago pelo Tesouro")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebRealtimeObservedDesc(m))}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(observed)}</span>` +
+                `</div>`,
+        );
+    }
+    if (projected != null && Number(projected) > 0 && hasExpected) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Projeção até dezembro")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebRealtimeProjectionDesc(m))}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(projected)}</span>` +
+                `</div>`,
+        );
+    }
+    if (balance != null && Number(balance) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Ainda a receber (indicativo)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${fundebRealtimeBalanceDescHtml(m)}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--balance">${formatCurrencyBrl(balance)}</span>` +
+                `</div>`,
+        );
+    }
+
+    const progress =
+        hasExpected && pctDone != null
+            ? `<div class="serv-horizonte-muni-tooltip__finance-progress" role="img" aria-label="${escapeHtml("Recebido do previsto")} ${escapeHtml(pctLabel ?? "")}">` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-track">` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-fill serv-horizonte-muni-tooltip__finance-progress-fill--${outlookTone}" style="width:${pctWidth}%"></div>` +
+              `</div>` +
+              `<div class="serv-horizonte-muni-tooltip__finance-progress-meta">` +
+              `<span>${escapeHtml("Recebido do previsto")} <strong>${escapeHtml(pctLabel ?? "—")}</strong></span>` +
+              (outlookLabel ? `<span class="serv-horizonte-muni-tooltip__finance-outlook serv-horizonte-muni-tooltip__finance-outlook--${outlookTone}">${escapeHtml(outlookLabel)}</span>` : "") +
+              `</div>` +
+              (outlookDetail
+                  ? `<p class="serv-horizonte-muni-tooltip__finance-outlook-detail">${formatOutlookDetailHtml(outlookDetail)}</p>`
+                  : "") +
+              `</div>`
+            : "";
+
+    const ckanBlock =
+        rows.length > 0
+            ? `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>`
+            : `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml("Ainda sem repasses importados para o exercício corrente.")}</p>`;
+
+    return financeSectionShell(
+        "repasses",
+        "Pago pelo Tesouro",
+        formatFundebRealtimeHeadDate(m, ano),
+        "current",
+        HORIZONTE_FINANCE_ICONS.repasses,
+        `<p class="serv-horizonte-muni-tooltip__finance-step-lead">${escapeHtml("Repasses parciais do Tesouro Transparente (CKAN) no ano em curso.")}</p>` +
+            ckanBlock +
+            progress +
+            financeNoteHtml(
+                "Portaria = planejamento · CKAN = pagamentos observados.",
+                "repasses",
+            ),
+        "stacked",
     );
 }
 
@@ -984,7 +1142,7 @@ function fundebRealtimeHtml(m, currentYear) {
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Ainda a receber (indicativo)")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Previsto portaria − já pago no ano")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${fundebRealtimeBalanceDescHtml(m)}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--balance">${formatCurrencyBrl(balance)}</span>` +
                 `</div>`,
@@ -1028,7 +1186,7 @@ function fundebRealtimeHtml(m, currentYear) {
             ckanBlock +
             progress +
             financeNoteHtml(
-                "Portaria = planeamento · CKAN = pagamentos observados. Não some estes blocos com o exercício de referência acima. Na consultoria activa, use Finanças → Tempo Real para o extrato mensal.",
+                "Portaria = planejamento · CKAN = pagamentos observados.",
                 "realtime",
             ),
         "stacked",
@@ -1049,14 +1207,11 @@ function financeTimelineConsultoriaNote(m, refYear) {
     }
 
     if (hasReceita && hasTransfer && !moneyEqual(receita, transferFundeb)) {
-        return financeNoteHtml(
-            "Portaria e Tesouro costumam divergir: a portaria inclui complementação federal e vale para todo o ano; o CKAN regista só o que já foi pago, mês a mês.",
-            "consultoria",
-        );
+        return "";
     }
 
     return financeNoteHtml(
-        "Resumo: portaria FNDE = tecto previsto · Tesouro = pagamentos efectivos · ano em curso = acompanhamento YTD face ao previsto.",
+        "Resumo: portaria FNDE = teto previsto · Tesouro = pagamentos efetivos · ano em curso = acompanhamento YTD face ao previsto.",
         "consultoria",
     );
 }
@@ -1156,15 +1311,6 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
 function muniMetaHtml(m) {
     const segments = [];
 
-    if (m.benefit_score != null) {
-        segments.push(
-            `<span class="serv-horizonte-muni-tooltip__meta-item">` +
-                `<span class="serv-horizonte-muni-tooltip__meta-label">${escapeHtml("Benefício estimado")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__meta-value">${formatScoreValue(m.benefit_score)}/100</span>` +
-                `</span>`,
-        );
-    }
-
     const sources = [
         m.has_fundeb ? "FUNDEB" : null,
         m.has_censo ? "Censo" : null,
@@ -1194,10 +1340,9 @@ function muniMetaHtml(m) {
         return "";
     }
 
-    const sep = '<span class="serv-horizonte-muni-tooltip__meta-sep" aria-hidden="true">·</span>';
-    const line = segments.join(sep);
+    const line = segments.join("");
     const link = m.analytics_url
-        ? `${line ? sep : ""}<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__meta-link">${escapeHtml("Abrir consultoria")}</a>`
+        ? `<a href="${escapeHtml(m.analytics_url)}" class="serv-horizonte-muni-tooltip__meta-link">${escapeHtml("Abrir consultoria")}</a>`
         : "";
 
     return `<div class="serv-horizonte-muni-tooltip__meta-row">${line}${link}</div>`;
@@ -1320,6 +1465,67 @@ function muniMunicipalContextHtml(m, overlay = null) {
         `<div class="serv-horizonte-muni-tooltip__municipal-card-pipeline">${pipeline}</div>` +
         `</div>`
     );
+}
+
+function financeYearRowHtml(variant, yearLabel, portariaHtml, tesouroHtml) {
+    const variantClass =
+        variant === "current"
+            ? "serv-horizonte-muni-tooltip__finance-row--current"
+            : "serv-horizonte-muni-tooltip__finance-row--previous";
+    const title = variant === "current" ? escapeHtml("Ano vigente") : escapeHtml("Ano anterior");
+
+    const col = (html, type, emptyMsg) => {
+        if (html !== "") {
+            return (
+                `<div class="serv-horizonte-muni-tooltip__finance-row-col serv-horizonte-muni-tooltip__finance-row-col--${type}">` +
+                html +
+                `</div>`
+            );
+        }
+        return (
+            `<div class="serv-horizonte-muni-tooltip__finance-row-col serv-horizonte-muni-tooltip__finance-row-col--${type} serv-horizonte-muni-tooltip__finance-row-col--empty">` +
+            `<p class="serv-horizonte-muni-tooltip__empty-msg">${escapeHtml(emptyMsg)}</p>` +
+            `</div>`
+        );
+    };
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__finance-row ${variantClass}">` +
+        `<div class="serv-horizonte-muni-tooltip__finance-row-head">` +
+        `<span class="serv-horizonte-muni-tooltip__finance-row-title">${title}</span>` +
+        `<span class="serv-horizonte-muni-tooltip__finance-row-badge">${escapeHtml(String(yearLabel))}</span>` +
+        `</div>` +
+        `<div class="serv-horizonte-muni-tooltip__finance-row-cols">` +
+        col(portariaHtml, "reference", "Sem previsto na portaria FNDE.") +
+        col(tesouroHtml, "repasses", "Sem repasses do Tesouro para este exercício.") +
+        `</div>` +
+        `</section>`
+    );
+}
+
+function financePreviousYearRowHtml(m, refYear) {
+    const reference = fundebReferenceHtml(m);
+    const repasses = transferTooltipHtml(m, refYear);
+    if (!reference && !repasses) {
+        return "";
+    }
+    const yearLabel = m.transfer_ano ?? m.fundeb_ano ?? refYear;
+
+    return financeYearRowHtml("previous", yearLabel, reference, repasses);
+}
+
+function financeCurrentYearRowHtml(m, refYear, currentYear) {
+    if (currentYear <= refYear) {
+        return "";
+    }
+    const portaria = fundebRealtimePortariaColumnHtml(m, currentYear);
+    const tesouro = fundebRealtimeTesouroColumnHtml(m, currentYear);
+    if (!portaria && !tesouro) {
+        return "";
+    }
+    const yearLabel = m.fundeb_realtime_ano ?? currentYear;
+
+    return financeYearRowHtml("current", yearLabel, portaria, tesouro);
 }
 
 function financeYearColumnShell(side, yearLabel, bodyHtml, emptyMsg) {
@@ -5058,11 +5264,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         positionTooltip() {
-            const verticalMargin = 64;
-            const capPx = 640;
-            const viewportCap = Math.round(window.innerHeight * 0.82);
+            const verticalMargin = 48;
+            const capPx = 720;
+            const viewportCap = Math.round(window.innerHeight * 0.88);
             const maxH = Math.min(
-                Math.max(320, window.innerHeight - verticalMargin),
+                Math.max(360, window.innerHeight - verticalMargin),
                 capPx,
                 viewportCap,
             );
@@ -5383,6 +5589,44 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return m?.tier_label || m?.tier || "";
         },
 
+        propensityScore(m) {
+            return Math.max(0, Math.min(100, Number(m?.success_score ?? 0)));
+        },
+
+        propensityPercentLabel(m) {
+            const score = this.propensityScore(m);
+            return score > 0 ? `${Math.round(score)}%` : "—";
+        },
+
+        propensityLevelShort(m) {
+            const score = this.propensityScore(m);
+            const { high, medium } = this.scoreThresholds;
+            if (score >= high) {
+                return "Alta";
+            }
+            if (score >= medium) {
+                return "Média";
+            }
+            if (score > 0) {
+                return "Baixa";
+            }
+            return "";
+        },
+
+        propensityRingStyle(m) {
+            const score = this.propensityScore(m);
+            const { high, medium } = this.scoreThresholds;
+            let tone = "rgb(100 116 139)";
+            if (score >= high) {
+                tone = "rgb(225 29 72)";
+            } else if (score >= medium) {
+                tone = "rgb(217 119 6)";
+            } else if (score > 0) {
+                tone = "rgb(59 130 246)";
+            }
+            return `--ring-score:${score};--ring-tone:${tone}`;
+        },
+
         modalHeaderMeta(m) {
             if (!m) {
                 return "";
@@ -5681,12 +5925,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 lines.push("</div>");
             }
 
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--previous">');
-            lines.push(financePreviousYearColumnHtml(m, this.refYear));
-            lines.push("</div>");
-
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-col serv-horizonte-muni-tooltip__layout-col--current">');
-            lines.push(financeCurrentYearColumnHtml(m, this.refYear, this.currentYear));
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--finance">');
+            lines.push(financePreviousYearRowHtml(m, this.refYear));
+            lines.push(financeCurrentYearRowHtml(m, this.refYear, this.currentYear));
             lines.push("</div>");
 
             const consultoriaNote = financeTimelineConsultoriaNote(m, this.refYear);

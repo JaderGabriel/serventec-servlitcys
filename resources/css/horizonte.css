@@ -6,13 +6,13 @@ html.serv-horizonte-muni-modal-open body {
 }
 
 .serv-horizonte-muni-modal {
-    --horizonte-muni-modal-h: min(82dvh, 40rem);
+    --horizonte-muni-modal-h: min(88dvh, 45rem);
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    width: min(42rem, calc(100vw - 2rem));
-    max-width: min(42rem, calc(100vw - 2rem));
+    width: min(48rem, calc(100vw - 2rem));
+    max-width: min(48rem, calc(100vw - 2rem));
     height: var(--horizonte-muni-modal-h);
-    max-height: min(82dvh, 40rem);
+    max-height: min(88dvh, 45rem);
     overflow: hidden;
     isolation: isolate;
     border-radius: 0.875rem;
@@ -78,39 +78,79 @@ html.serv-horizonte-muni-modal-open body {
 
 .serv-horizonte-muni-modal__propensity {
     display: inline-flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 0.35rem 0.5rem;
-    padding: 0.2rem 0.55rem;
+    gap: 0.45rem;
+    padding: 0.15rem 0.55rem 0.15rem 0.15rem;
     border-radius: 9999px;
-    border: 1px solid rgb(251 191 36 / 0.45);
-    background: rgb(255 251 235 / 0.95);
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: rgb(248 250 252 / 0.98);
     font-size: 10px;
     line-height: 1.3;
-    color: rgb(146 64 14);
     white-space: nowrap;
 }
 
 .dark .serv-horizonte-muni-modal__propensity {
-    border-color: rgb(180 83 9 / 0.55);
-    background: rgb(69 26 3 / 0.55);
-    color: rgb(253 230 138);
+    border-color: rgb(71 85 105 / 0.95);
+    background: rgb(30 41 59 / 0.75);
 }
 
-.serv-horizonte-muni-modal__propensity-label {
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    opacity: 0.85;
+.serv-horizonte-muni-modal__propensity-ring {
+    --ring-score: 0;
+    --ring-tone: rgb(100 116 139);
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(
+        var(--ring-tone) calc(var(--ring-score) * 1%),
+        rgb(226 232 240) 0
+    );
+}
+
+.dark .serv-horizonte-muni-modal__propensity-ring {
+    background: conic-gradient(
+        var(--ring-tone) calc(var(--ring-score) * 1%),
+        rgb(51 65 85) 0
+    );
+}
+
+.serv-horizonte-muni-modal__propensity-ring-inner {
+    width: 1.72rem;
+    height: 1.72rem;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgb(255 255 255);
+    box-shadow: inset 0 0 0 1px rgb(226 232 240 / 0.9);
+}
+
+.dark .serv-horizonte-muni-modal__propensity-ring-inner {
+    background: rgb(15 23 42);
+    box-shadow: inset 0 0 0 1px rgb(71 85 105 / 0.9);
+}
+
+.serv-horizonte-muni-modal__propensity-ring-value {
+    font-size: 9px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-modal__propensity-ring-value {
+    color: rgb(226 232 240);
 }
 
 .serv-horizonte-muni-modal__propensity-tier {
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: rgb(71 85 105);
 }
 
-.serv-horizonte-muni-modal__propensity-score {
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
+.dark .serv-horizonte-muni-modal__propensity-tier {
+    color: rgb(226 232 240);
 }
 
 .serv-horizonte-muni-modal__body {
@@ -193,6 +233,15 @@ html.serv-horizonte-muni-modal-open body {
 
 .serv-horizonte-muni-tooltip__layout-full--meta {
     min-width: 0;
+    padding: 0.45rem 0.625rem;
+    border-radius: 0.625rem;
+    border: 1px solid rgb(226 232 240 / 0.9);
+    background: rgb(248 250 252 / 0.85);
+}
+
+.dark .serv-horizonte-muni-tooltip__layout-full--meta {
+    border-color: rgb(51 65 85 / 0.9);
+    background: rgb(15 23 42 / 0.55);
 }
 
 .serv-horizonte-muni-tooltip__layout-full--meta .serv-horizonte-muni-tooltip__meta-row {
@@ -253,6 +302,130 @@ html.serv-horizonte-muni-modal-open body {
 .serv-horizonte-muni-tooltip__layout-col {
     min-width: 0;
     display: flex;
+}
+
+.serv-horizonte-muni-tooltip__layout-full--finance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.serv-horizonte-muni-tooltip__finance-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.serv-horizonte-muni-tooltip__finance-row--previous {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(254 205 211 / 0.75);
+    background: rgb(255 241 242 / 0.35);
+    padding: 0.55rem 0.625rem 0.625rem;
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row--previous {
+    border-color: rgb(136 19 55 / 0.4);
+    background: rgb(76 5 25 / 0.18);
+}
+
+.serv-horizonte-muni-tooltip__finance-row--current {
+    border-radius: 0.75rem;
+    border: 1px solid rgb(167 243 208 / 0.75);
+    background: rgb(236 253 245 / 0.35);
+    padding: 0.55rem 0.625rem 0.625rem;
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row--current {
+    border-color: rgb(6 95 70 / 0.4);
+    background: rgb(6 78 59 / 0.18);
+}
+
+.serv-horizonte-muni-tooltip__finance-row-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid rgb(226 232 240 / 0.85);
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row-head {
+    border-bottom-color: rgb(71 85 105 / 0.85);
+}
+
+.serv-horizonte-muni-tooltip__finance-row-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgb(100 116 139);
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row-title {
+    color: rgb(148 163 184);
+}
+
+.serv-horizonte-muni-tooltip__finance-row-badge {
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row-badge {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-muni-tooltip__finance-row-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.625rem;
+    align-items: stretch;
+}
+
+@media (max-width: 640px) {
+    .serv-horizonte-muni-tooltip__finance-row-cols {
+        grid-template-columns: 1fr;
+    }
+}
+
+.serv-horizonte-muni-tooltip__finance-row-col {
+    min-width: 0;
+    display: flex;
+}
+
+.serv-horizonte-muni-tooltip__finance-row-col > .serv-horizonte-muni-tooltip__finance-step {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 100%;
+    margin-top: 0;
+}
+
+.serv-horizonte-muni-tooltip__finance-row-col--empty {
+    align-items: stretch;
+    justify-content: flex-start;
+    border-radius: 0.625rem;
+    border: 1px dashed rgb(203 213 225 / 0.95);
+    background: rgb(255 255 255 / 0.65);
+    padding: 0.625rem 0.75rem;
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-row-col--empty {
+    border-color: rgb(71 85 105 / 0.85);
+    background: rgb(15 23 42 / 0.55);
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-row-col > .serv-horizonte-muni-tooltip__finance-step {
+    background: rgb(255 255 255);
+    border: 1px solid rgb(226 232 240 / 0.95);
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.55rem;
+}
+
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-row-col > .serv-horizonte-muni-tooltip__finance-step {
+    background: rgb(15 23 42);
+    border-color: rgb(51 65 85 / 0.9);
 }
 
 .serv-horizonte-muni-tooltip__layout-col > .serv-horizonte-muni-tooltip__year-col {
@@ -357,41 +530,54 @@ html.serv-horizonte-muni-modal-open body {
 
 .serv-horizonte-muni-tooltip__meta-row {
     display: flex;
-    flex-wrap: nowrap;
-    align-items: baseline;
-    gap: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem 0.65rem;
     width: 100%;
     min-width: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
     padding: 0.125rem 0;
-    font-size: 11px;
-    line-height: 1.35;
+    text-align: center;
+    font-size: 10px;
+    line-height: 1.4;
     color: rgb(100 116 139);
-    scrollbar-width: thin;
 }
 
 .serv-horizonte-muni-tooltip__meta-item {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
+    justify-content: center;
     gap: 0.35rem;
     flex-shrink: 0;
     white-space: nowrap;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: rgb(255 255 255 / 0.95);
+}
+
+.dark .serv-horizonte-muni-tooltip__meta-item {
+    border-color: rgb(71 85 105 / 0.9);
+    background: rgb(30 41 59 / 0.75);
 }
 
 .serv-horizonte-muni-tooltip__meta-label {
-    color: rgb(148 163 184);
-    font-weight: 500;
-}
-
-.dark .serv-horizonte-muni-tooltip__meta-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
     color: rgb(100 116 139);
 }
 
+.dark .serv-horizonte-muni-tooltip__meta-label {
+    color: rgb(148 163 184);
+}
+
 .serv-horizonte-muni-tooltip__meta-value {
-    color: rgb(71 85 105);
+    font-size: 11px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+    color: rgb(51 65 85);
 }
 
 .dark .serv-horizonte-muni-tooltip__meta-value {
@@ -399,31 +585,34 @@ html.serv-horizonte-muni-modal-open body {
 }
 
 .serv-horizonte-muni-tooltip__meta-sep {
-    flex-shrink: 0;
-    padding: 0 0.5rem;
-    color: rgb(203 213 225);
-    font-weight: 400;
-    user-select: none;
-}
-
-.dark .serv-horizonte-muni-tooltip__meta-sep {
-    color: rgb(71 85 105);
+    display: none;
 }
 
 .serv-horizonte-muni-tooltip__meta-link {
     flex-shrink: 0;
     white-space: nowrap;
-    font-size: 11px;
-    font-weight: 500;
-    color: rgb(79 70 229);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(199 210 254 / 0.95);
+    background: rgb(238 242 255 / 0.95);
+    color: rgb(67 56 202);
 }
 
 .serv-horizonte-muni-tooltip__meta-link:hover {
-    text-decoration: underline;
+    text-decoration: none;
+    background: rgb(224 231 255);
 }
 
 .dark .serv-horizonte-muni-tooltip__meta-link {
-    color: rgb(129 140 248);
+    border-color: rgb(67 56 202 / 0.45);
+    background: rgb(49 46 129 / 0.45);
+    color: rgb(165 180 252);
+}
+
+.dark .serv-horizonte-muni-tooltip__meta-link:hover {
+    background: rgb(67 56 202 / 0.35);
 }
 
 .serv-horizonte-muni-tooltip__year-col-body .serv-horizonte-muni-tooltip__finance-step + .serv-horizonte-muni-tooltip__finance-step {
@@ -938,6 +1127,26 @@ html.serv-horizonte-muni-modal-open body {
 
 .dark .serv-horizonte-muni-tooltip__fundeb-desc {
     color: rgb(148 163 184);
+}
+
+.serv-horizonte-muni-tooltip__fundeb-formula {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-tooltip__fundeb-formula {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-muni-tooltip__fundeb-formula-legend strong {
+    font-weight: 700;
+    color: rgb(71 85 105);
+}
+
+.dark .serv-horizonte-muni-tooltip__fundeb-formula-legend strong {
+    color: rgb(203 213 225);
 }
 
 .serv-horizonte-muni-tooltip__fundeb-value {

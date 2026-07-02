@@ -35,16 +35,20 @@
                 <p class="serv-horizonte-muni-tooltip__meta serv-horizonte-muni-modal__meta" x-text="modalHeaderMeta(active)"></p>
                 <div
                     class="serv-horizonte-muni-modal__propensity"
-                    x-show="active && (active.success_score != null || tierLabel(active))"
+                    x-show="active && (active.success_score != null || propensityLevelShort(active))"
                     x-cloak
                 >
-                    <span class="serv-horizonte-muni-modal__propensity-label">{{ __('Propensão') }}</span>
-                    <span class="serv-horizonte-muni-modal__propensity-tier" x-text="tierLabel(active)"></span>
-                    <span
-                        class="serv-horizonte-muni-modal__propensity-score"
-                        x-show="active?.success_score != null"
-                        x-text="formatScoreDisplay(active?.success_score) + '/100'"
-                    ></span>
+                    <div
+                        class="serv-horizonte-muni-modal__propensity-ring"
+                        :style="propensityRingStyle(active)"
+                        role="img"
+                        :aria-label="propensityLevelShort(active) + ' — ' + propensityPercentLabel(active)"
+                    >
+                        <span class="serv-horizonte-muni-modal__propensity-ring-inner">
+                            <span class="serv-horizonte-muni-modal__propensity-ring-value" x-text="propensityPercentLabel(active)"></span>
+                        </span>
+                    </div>
+                    <span class="serv-horizonte-muni-modal__propensity-tier" x-text="propensityLevelShort(active)"></span>
                 </div>
             </div>
         </header>
