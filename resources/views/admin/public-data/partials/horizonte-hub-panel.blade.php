@@ -106,10 +106,15 @@
         ])
     @endif
 
+    @include('admin.public-data.partials.horizonte-educacenso-sync', [
+        'horizonteHub' => $hub,
+        'enabled' => $enabled && $feedEnabled,
+    ])
+
     <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <x-admin.import-hub.stat label="FUNDEB" :value="number_format((int) ($coverage['fundeb_municipios'] ?? 0))" :hint="__('IBGE nacionais')" tone="amber" />
         <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
-        <x-admin.import-hub.stat :label="__('Educacenso')" :value="((int) ($coverage['educacenso_years_indexed'] ?? 0)).'/'.((int) ($coverage['educacenso_years_total'] ?? 5))" :hint="__('anos da série (gráfico)')" tone="sky" />
+        <x-admin.import-hub.stat :label="__('Educacenso')" :value="((int) ($coverage['educacenso_steps_done'] ?? 0)).'/'.((int) ($coverage['educacenso_steps_total'] ?? 135))" :hint="__('passos ano×UF (gráfico)')" tone="sky" />
         <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('municípios com indicadores')" tone="violet" />
         <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB + Censo + SAEB')" tone="sky" />
         <x-admin.import-hub.stat label="CadÚnico" :value="number_format((int) ($coverage['cadunico_municipios'] ?? 0))" :hint="__('agregados municipais')" tone="rose" />

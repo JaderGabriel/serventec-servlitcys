@@ -99,29 +99,32 @@
                 x-cloak
                 class="serv-horizonte-muni-tooltip__enrollment-series"
             >
-                <div class="serv-horizonte-muni-tooltip__enrollment-series-head">
-                    <h4 class="serv-horizonte-muni-tooltip__enrollment-series-title">{{ __('Matrículas — últimos 5 anos (Censo INEP)') }}</h4>
+                <div class="serv-horizonte-muni-tooltip__enrollment-series-toolbar">
+                    <div class="serv-horizonte-muni-tooltip__enrollment-series-head">
+                        <h4 class="serv-horizonte-muni-tooltip__enrollment-series-title">{{ __('Matrículas — Censo INEP') }}</h4>
+                        <p class="serv-horizonte-muni-tooltip__enrollment-series-subtitle">{{ __('Últimos 5 anos · Educacenso') }}</p>
+                    </div>
+                    <div
+                        x-show="!enrollmentSeriesLoading && !enrollmentSeriesError"
+                        class="serv-horizonte-muni-tooltip__enrollment-series-filters"
+                        role="group"
+                        :aria-label="@js(__('Recorte por dependência administrativa'))"
+                    >
+                        <template x-for="option in enrollmentSeriesDependenciaOptions" :key="option.value">
+                            <button
+                                type="button"
+                                class="serv-horizonte-muni-tooltip__enrollment-series-filter"
+                                :class="{ 'is-active': enrollmentSeriesDependencia === option.value }"
+                                :aria-pressed="enrollmentSeriesDependencia === option.value"
+                                @click.stop="setEnrollmentSeriesDependencia(option.value)"
+                                x-text="option.label"
+                            ></button>
+                        </template>
+                    </div>
                     <span
                         x-show="enrollmentSeriesLoading"
                         class="serv-horizonte-muni-tooltip__enrollment-series-status"
                     >{{ __('A carregar…') }}</span>
-                </div>
-                <div
-                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError"
-                    class="serv-horizonte-muni-tooltip__enrollment-series-filters"
-                    role="group"
-                    :aria-label="@js(__('Recorte por dependência administrativa'))"
-                >
-                    <template x-for="option in enrollmentSeriesDependenciaOptions" :key="option.value">
-                        <button
-                            type="button"
-                            class="serv-horizonte-muni-tooltip__enrollment-series-filter"
-                            :class="{ 'is-active': enrollmentSeriesDependencia === option.value }"
-                            :aria-pressed="enrollmentSeriesDependencia === option.value"
-                            @click.stop="setEnrollmentSeriesDependencia(option.value)"
-                            x-text="option.label"
-                        ></button>
-                    </template>
                 </div>
                 <p
                     x-show="enrollmentSeriesError"
@@ -130,26 +133,48 @@
                 ></p>
                 <div
                     x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady"
-                    class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-body"
                 >
-                    <canvas x-ref="enrollmentSeriesCanvas" height="168" aria-hidden="true"></canvas>
-                </div>
-                <div
-                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesStageCounters.length"
-                    class="serv-horizonte-muni-tooltip__enrollment-series-stages"
-                >
-                    <p class="serv-horizonte-muni-tooltip__enrollment-series-stages-title">
-                        {{ __('Totais por etapa') }}
-                        <span x-show="enrollmentSeriesStageYear" x-text="enrollmentSeriesStageYear ? `(${enrollmentSeriesStageYear})` : ''"></span>
-                    </p>
-                    <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
-                        <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
-                            <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
-                                <dt x-text="item.label"></dt>
-                                <dd x-text="formatEnrollmentStageCounter(item.value)"></dd>
-                            </div>
-                        </template>
-                    </dl>
+                    <div
+                        x-show="enrollmentSeriesLatestTotal != null"
+                        class="serv-horizonte-muni-tooltip__enrollment-series-kpi"
+                    >
+                        <div class="serv-horizonte-muni-tooltip__enrollment-series-kpi-main">
+                            <span
+                                class="serv-horizonte-muni-tooltip__enrollment-series-kpi-value"
+                                x-text="formatEnrollmentStageCounter(enrollmentSeriesLatestTotal)"
+                            ></span>
+                            <span class="serv-horizonte-muni-tooltip__enrollment-series-kpi-label">
+                                {{ __('matrículas') }}
+                                <span
+                                    x-show="enrollmentSeriesDependenciaLabel"
+                                    x-text="enrollmentSeriesDependenciaLabel"
+                                ></span>
+                            </span>
+                        </div>
+                        <span
+                            x-show="enrollmentSeriesStageYear"
+                            class="serv-horizonte-muni-tooltip__enrollment-series-kpi-year"
+                            x-text="enrollmentSeriesStageYear"
+                        ></span>
+                    </div>
+                    <div class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap">
+                        <canvas x-ref="enrollmentSeriesCanvas" height="152" aria-hidden="true"></canvas>
+                    </div>
+                    <div
+                        x-show="enrollmentSeriesStageCounters.length"
+                        class="serv-horizonte-muni-tooltip__enrollment-series-stages"
+                    >
+                        <p class="serv-horizonte-muni-tooltip__enrollment-series-stages-title">{{ __('Por etapa') }}</p>
+                        <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
+                            <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
+                                <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
+                                    <dt x-text="enrollmentStageShortLabel(item)"></dt>
+                                    <dd x-text="formatEnrollmentStageCounter(item.value)"></dd>
+                                </div>
+                            </template>
+                        </dl>
+                    </div>
                 </div>
                 <p
                     x-show="enrollmentSeriesFootnote"

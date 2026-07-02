@@ -4456,7 +4456,7 @@
     }
 
     .serv-brazil-map-tooltip--muni {
-        @apply sm:w-[26rem];
+        @apply sm:w-[27rem];
     }
     /* Horizonte @layer components → resources/css/horizonte-components.css */
 

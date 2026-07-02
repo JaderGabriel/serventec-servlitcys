@@ -21,30 +21,52 @@ final class HorizonteEducacensoImportProgressTest extends TestCase
         HorizonteEducacensoImportProgress::markDone(2020);
         HorizonteEducacensoImportProgress::markDone(2022);
 
-        $this->assertSame([2020, 2022], HorizonteEducacensoImportProgress::doneYears());
+        $this->assertSame([2020, 2022], HorizonteEducacensoImportProgress::doneYears($all));
         $this->assertSame([2024], HorizonteEducacensoImportProgress::remainingYears($all));
         $this->assertFalse(HorizonteEducacensoImportProgress::isComplete($all));
     }
 
     #[Test]
-    public function ordered_remaining_rotates_last_failed_year_to_end(): void
+    public function ordered_remaining_puts_failed_step_at_end(): void
     {
         Cache::flush();
         HorizonteEducacensoImportProgress::reset();
 
         $all = [2020, 2022];
-        HorizonteEducacensoImportProgress::markFailed(2020);
+        HorizonteEducacensoImportProgress::markStepFailed(2020, 'SP');
 
-        $this->assertSame([2022, 2020], HorizonteEducacensoImportProgress::orderedRemainingYears($all));
+        $remaining = HorizonteEducacensoImportProgress::orderedRemainingSteps($all);
+        $last = $remaining[array_key_last($remaining)];
+
+        $this->assertSame(2020, $last['year']);
+        $this->assertSame('SP', $last['uf']);
     }
 
     #[Test]
     public function mark_done_clears_last_failed(): void
     {
         Cache::flush();
-        HorizonteEducacensoImportProgress::markFailed(2020);
+        HorizonteEducacensoImportProgress::reset();
+
+        HorizonteEducacensoImportProgress::markStepFailed(2020, 'BA');
         HorizonteEducacensoImportProgress::markDone(2020);
 
-        $this->assertNull(HorizonteEducacensoImportProgress::lastFailedYear());
+        $this->assertNull(HorizonteEducacensoImportProgress::lastFailedStep());
+    }
+
+    #[Test]
+    public function step_key_round_trip(): void
+    {
+        $this->assertSame('2024:BA', HorizonteEducacensoImportProgress::stepKey(2024, 'ba'));
+        $parsed = HorizonteEducacensoImportProgress::parseStepKey('2024:BA');
+        $this->assertSame(['year' => 2024, 'uf' => 'BA'], $parsed);
+    }
+
+    #[Test]
+    public function total_steps_is_years_times_ufs(): void
+    {
+        $years = [2020, 2024];
+        $expected = count($years) * count(HorizonteEducacensoImportProgress::allUfs());
+        $this->assertSame($expected, HorizonteEducacensoImportProgress::totalSteps($years));
     }
 }

@@ -14,7 +14,7 @@
     $stepInterval = (int) ($stepInterval ?? config('horizonte.fortnightly_feed.schedule.step_interval_minutes', 20));
     $ibgeUfsPerStep = max(1, (int) config('horizonte.fortnightly_feed.ibge_ufs_per_step', 1));
     $saebYearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1));
-    $educacensoYearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.educacenso_years_per_step', 1));
+    $educacensoStepsPerStep = max(1, (int) config('horizonte.fortnightly_feed.educacenso_steps_per_step', 1));
     $pipelineOptions = is_array($pipeline['options'] ?? null) ? $pipeline['options'] : [];
     $scopedUf = strtoupper(trim((string) ($pipelineOptions['uf'] ?? '')));
 @endphp
@@ -36,9 +36,9 @@
             </p>
             @if ($status === 'running')
                 <p class="mt-1 text-[11px] text-sky-800/70 dark:text-sky-300/70">
-                    {{ __('Próximo passo a cada :n min (--staged --continue). Educacenso: :e ano(s)/passo · SAEB: :y ano(s)/passo · IBGE: :u UF(s)/passo.', [
+                    {{ __('Próximo passo a cada :n min (--staged --continue). Educacenso: :e passo(s) ano×UF/execução · SAEB: :y ano(s)/passo · IBGE: :u UF(s)/passo.', [
                         'n' => (string) $stepInterval,
-                        'e' => (string) $educacensoYearsPerStep,
+                        'e' => (string) $educacensoStepsPerStep,
                         'u' => (string) $ibgeUfsPerStep,
                         'y' => (string) $saebYearsPerStep,
                     ]) }}
@@ -107,7 +107,7 @@
                             @if ($phaseKey === 'educacenso' && $educacensoTotal > 0 && ($educacensoDone > 0 || $isEducacensoRunning))
                                 <div class="mt-2">
                                     <div class="flex justify-between text-[10px] text-slate-500 mb-1">
-                                        <span>{{ __('Anos Educacenso importados') }}</span>
+                                        <span>{{ __('Passos Educacenso (ano × UF)') }}</span>
                                         <span class="tabular-nums">{{ $educacensoDone }}/{{ $educacensoTotal }}</span>
                                     </div>
                                     <div class="h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">

@@ -119,7 +119,7 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 Layout **horizontal** (~42rem): coluna esquerda (pipeline, propensão, dimensões com glossário **Detecta / Indica**) + coluna direita (timeline financeira em grelha 3 colunas). Meta numa linha (benefício · fontes · SGE · consultoria). Altura máxima ~58dvh.
 
-**Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (correr `horizonte:sync-municipal-alerts`). Fonte principal: CSV oficial FNDE VAAT inabilitados.
+**Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (sync nunca executado). Após `cache:clear` no deploy, o mapa **reidrata** o snapshot `storage/app/horizonte/municipal_alerts_snapshot.json` automaticamente. Comando para primeira importação ou actualização FNDE: `horizonte:sync-municipal-alerts`.
 
 Três blocos **complementares** (não somar entre si):
 
@@ -160,11 +160,11 @@ Secção no modal municipal **apenas para municípios sem Consultoria activa** (
 
 ```bash
 php artisan migrate --force
-php artisan horizonte:fortnightly-feed --phase=educacenso
-php artisan horizonte:fortnightly-feed --phase=educacenso --reset   # recomeça a janela
-# Repetir até concluir os N anos (default 5) ou usar --all
-# Fase censo_matriculas indexa o CSV mais recente para escala do mapa
-php artisan horizonte:fortnightly-feed --phase=censo_matriculas
+php artisan horizonte:sync-educacenso --reset --all   # 135 passos (5 anos × 27 UFs)
+# Ou pelo hub: Dados públicos → Horizonte → «Educacenso — reimportação ano × UF»
+php artisan horizonte:sync-educacenso --year=2024 --uf=BA
+# Alternativa via feed bimestral (mesmo serviço, 1 passo ano×UF por invocação):
+php artisan horizonte:fortnightly-feed --phase=educacenso --reset
 ```
 
 Serviço: `HorizonteMunicipioEnrollmentSeriesService` · importação multi-ano: `HorizonteEducacensoMatriculasSyncService` · UI: `horizonteMap.js` (Chart.js) + `map-tooltip-sge.blade.php`.
@@ -322,7 +322,8 @@ HorizonteController
 | `HORIZONTE_EDUCACENSO_ENABLED` | `true` | Fase Educacenso no feed bimestral |
 | `HORIZONTE_EDUCACENSO_FETCH_IF_MISSING` | `true` | Download ZIP INEP por ano se CSV local ausente |
 | `HORIZONTE_EDUCACENSO_SKIP_IF_MISSING` | `true` | Não bloqueia o pipeline se um ano falhar |
-| `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Anos Educacenso por invocação da fase |
+| `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Legado — preferir `HORIZONTE_EDUCACENSO_STEPS_PER_STEP` |
+| `HORIZONTE_EDUCACENSO_STEPS_PER_STEP` | `1` | Passos **ano × UF** Educacenso por invocação (hub ou CLI) |
 | `HORIZONTE_EDUCACENSO_MEMORY_LIMIT` | `1024M` | RAM da fase Educacenso |
 | `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL` | CSV FNDE oficial | Fonte VAAT inabilitados (ver §9.1c) |
 
@@ -342,7 +343,7 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 |------|-----------|
 | **FUNDEB** | CSV nacional «Receita total do Fundeb por ente federado» (FNDE) → `fundeb_municipio_references` por IBGE |
 | **Censo** | Indexa matrículas municipais a partir do microdados INEP mais recente (`inep_censo_municipio_matriculas`), incluindo segmentos |
-| **Educacenso** | Importa **cada ano** da janela do gráfico de matrículas (§6.9) — **1 ano por passo** por defeito; download INEP se CSV local ausente |
+| **Educacenso** | Importa a janela do gráfico (§6.9) **ano × UF** — **1 passo por invocação** por defeito (`HORIZONTE_EDUCACENSO_STEPS_PER_STEP=1`); comando dedicado `horizonte:sync-educacenso` |
 | **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
 | **SIDRA** | População **total** e 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
@@ -452,7 +453,7 @@ O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas
 
 ### 9.1c Alertas MEC/FNDE (VAAT inabilitados)
 
-Comando: **`horizonte:sync-municipal-alerts`** — importa lista oficial FNDE de municípios **inabilitados ao VAAT** (CSV primário; PDF fallback) + registo JSON manual opcional. Resultado em cache para o chip do modal municipal.
+Comando: **`horizonte:sync-municipal-alerts`** — importa lista oficial FNDE de municípios **inabilitados ao VAAT** (CSV primário; PDF fallback) + registo JSON manual opcional. Grava cache Laravel e snapshot em `storage/app/horizonte/municipal_alerts_snapshot.json`; após `php artisan cache:clear`, o mapa repõe o cache a partir desse ficheiro.
 
 ```bash
 php artisan horizonte:sync-municipal-alerts

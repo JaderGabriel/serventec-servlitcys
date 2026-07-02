@@ -20,8 +20,11 @@ use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Support\Admin\PublicDataAvailabilityPresenter;
 use App\Support\SyncQueue\SyncQueueUserScope;
+use App\Services\Horizonte\HorizonteEducacensoMatriculasSyncService;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Services\Horizonte\HorizonteDataBundleService;
+use App\Support\Horizonte\HorizonteEducacensoImportProgress;
+use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\AdminSync\WeeklyMassSyncCheckpoint;
 use App\Http\Requests\Admin\PublicDataImportIndexRequest;
@@ -131,6 +134,62 @@ class PublicDataImportController extends Controller
                 'phases' => is_array($result['phases'] ?? null) ? $result['phases'] : [],
                 'pipeline' => is_array($result['pipeline'] ?? null) ? $result['pipeline'] : null,
                 'staged' => $staged,
+            ]);
+    }
+
+    public function horizonteEducacensoSync(Request $request, HorizonteEducacensoMatriculasSyncService $sync): RedirectResponse
+    {
+        $this->authorize('sync', PublicDataHub::class);
+
+        if (! (bool) config('horizonte.enabled', true)) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('Horizonte desactivado (HORIZONTE_ENABLED).'));
+        }
+
+        @set_time_limit(900);
+        $memory = trim((string) config('horizonte.fortnightly_feed.educacenso_memory_limit', '1024M'));
+        if ($memory !== '') {
+            @ini_set('memory_limit', $memory);
+        }
+
+        $ufRaw = trim((string) $request->input('uf', ''));
+        if ($ufRaw !== '' && HorizonteUfScope::normalize($ufRaw) === null) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('UF inválida: :uf', ['uf' => $ufRaw]));
+        }
+
+        $yearRaw = trim((string) $request->input('year', ''));
+        $year = $yearRaw !== '' && ctype_digit($yearRaw) ? (int) $yearRaw : null;
+        $years = HorizonteEducacensoYearWindow::years();
+        if ($year !== null && ! in_array($year, $years, true)) {
+            return redirect()
+                ->route('admin.public-data.index', ['hub' => 'horizonte'])
+                ->with('public_data_error', __('Ano :ano fora da janela Educacenso.', ['ano' => (string) $year]));
+        }
+
+        $steps = max(1, min(27, (int) $request->input('steps', config('horizonte.fortnightly_feed.educacenso_steps_per_step', 1))));
+
+        if ($request->boolean('reset')) {
+            HorizonteEducacensoImportProgress::reset();
+        }
+
+        $result = $sync->syncBatch(array_filter([
+            'reset' => false,
+            'year' => $year,
+            'uf' => $ufRaw !== '' ? $ufRaw : null,
+            'steps' => $steps,
+        ], static fn ($v): bool => $v !== null));
+
+        return redirect()
+            ->to(route('admin.public-data.index', ['hub' => 'horizonte']).'#horizonte-educacenso-sync')
+            ->with('horizonte_educacenso_sync', [
+                'success' => (bool) ($result['success'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'completed_steps' => is_array($result['completed_steps'] ?? null) ? $result['completed_steps'] : [],
+                'educacenso_done' => (int) ($result['educacenso_done'] ?? 0),
+                'educacenso_total' => (int) ($result['educacenso_total'] ?? 0),
             ]);
     }
 

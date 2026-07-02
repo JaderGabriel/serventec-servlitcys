@@ -2,7 +2,6 @@
 
 namespace App\Services\Horizonte;
 
-use App\Models\InepCensoMunicipioMatricula;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\InepMicrodadosCadastroEscolasDownloader;
 use App\Support\Horizonte\HorizonteEducacensoImportProgress;
@@ -14,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Importa microdados Educacenso (INEP) por ano para a janela do gráfico de matrículas Horizonte.
+ * Importa microdados Educacenso (INEP) por ano × UF para a janela do gráfico de matrículas Horizonte.
  */
 final class HorizonteEducacensoMatriculasSyncService
 {
@@ -34,6 +33,7 @@ final class HorizonteEducacensoMatriculasSyncService
      *     indexed?: int,
      *     educacenso_done?: int,
      *     educacenso_total?: int,
+     *     completed_steps?: list<array{year: int, uf: string, indexed: int}>,
      *     debug_lines?: list<string>
      * }
      */
@@ -54,98 +54,129 @@ final class HorizonteEducacensoMatriculasSyncService
             ];
         }
 
-        $allYears = HorizonteEducacensoYearWindow::years();
-        $total = count($allYears);
-        $remaining = HorizonteEducacensoImportProgress::orderedRemainingYears($allYears);
+        if (filter_var($options['reset'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+            HorizonteEducacensoImportProgress::reset();
+        }
 
-        if ($remaining === [] && $this->windowHasIndexedRows($allYears)) {
+        $memory = trim((string) config('horizonte.fortnightly_feed.educacenso_memory_limit', '1024M'));
+        if ($memory !== '') {
+            @ini_set('memory_limit', $memory);
+        }
+
+        $allYears = HorizonteEducacensoYearWindow::years();
+        $totalSteps = HorizonteEducacensoImportProgress::totalSteps($allYears);
+
+        if (HorizonteEducacensoImportProgress::isComplete($allYears)) {
+            return [
+                'success' => true,
+                'message' => __('Educacenso: todos os :n passos (ano × UF) já indexados.', ['n' => (string) $totalSteps]),
+                'partial' => false,
+                'educacenso_done' => $totalSteps,
+                'educacenso_total' => $totalSteps,
+                'completed_steps' => [],
+            ];
+        }
+
+        $remaining = $this->filterRemainingSteps($allYears, $options);
+        if ($remaining === []) {
             HorizonteEducacensoImportProgress::reset();
 
             return [
                 'success' => true,
-                'message' => __('Educacenso: todos os :n ano(s) da janela já indexados (:anos).', [
-                    'n' => (string) $total,
-                    'anos' => implode(', ', array_map('strval', $allYears)),
-                ]),
+                'message' => __('Educacenso: nenhum passo pendente para o filtro indicado.'),
                 'partial' => false,
-                'educacenso_done' => $total,
-                'educacenso_total' => $total,
+                'educacenso_done' => HorizonteEducacensoImportProgress::doneStepCount(),
+                'educacenso_total' => $totalSteps,
             ];
         }
 
-        if ($remaining === []) {
-            HorizonteEducacensoImportProgress::reset();
-            $remaining = HorizonteEducacensoImportProgress::orderedRemainingYears($allYears);
-        }
+        $stepsPerInvocation = max(1, (int) ($options['steps'] ?? config('horizonte.fortnightly_feed.educacenso_steps_per_step', 1)));
+        $batch = array_slice($remaining, 0, $stepsPerInvocation);
 
-        $yearsPerStep = max(1, (int) config('horizonte.fortnightly_feed.educacenso_years_per_step', 1));
-        $batch = array_slice($remaining, 0, $yearsPerStep);
-        $ibgeFilter = HorizonteUfScope::ibgeCodesForUf($options['uf'] ?? null, $this->ibgeCatalog);
         $debugLines = [];
         $indexedTotal = 0;
+        /** @var list<array{year: int, uf: string, indexed: int}> $completedSteps */
+        $completedSteps = [];
         $batchOk = true;
         $lastFailure = null;
+        $onStep = $options['on_step'] ?? null;
 
-        foreach ($batch as $year) {
+        foreach ($batch as $step) {
+            $year = (int) $step['year'];
+            $uf = (string) $step['uf'];
             $pathResult = $this->resolveCsvPathForYear($year);
             if ($pathResult['path'] === null) {
-                $lastFailure = $year;
+                $lastFailure = HorizonteEducacensoImportProgress::stepKey($year, $uf);
                 $batchOk = false;
-                $debugLines[] = (string) ($pathResult['message'] ?? '');
-                HorizonteEducacensoImportProgress::markFailed($year);
+                $msg = (string) ($pathResult['message'] ?? '');
+                $debugLines[] = $msg;
+                HorizonteEducacensoImportProgress::markStepFailed($year, $uf);
+                if (is_callable($onStep)) {
+                    $onStep(__('✗ Educacenso :ano / :uf — CSV ausente', ['ano' => (string) $year, 'uf' => $uf]), 'error');
+                }
                 continue;
             }
 
-            $debugLines[] = __('Educacenso :ano — :path', [
+            $ibgeFilter = HorizonteUfScope::ibgeCodesForUf($uf, $this->ibgeCatalog);
+            $debugLines[] = __('Educacenso :ano / :uf — :file', [
                 'ano' => (string) $year,
-                'path' => basename((string) $pathResult['path']),
+                'uf' => $uf,
+                'file' => basename((string) $pathResult['path']),
             ]);
 
             $indexed = $this->indexer->indexFromMicrodadosCsv((string) $pathResult['path'], $ibgeFilter);
-            $debugLines[] = __('Educacenso :ano — :n combinações município/ano.', [
+            $line = __('Educacenso :ano / :uf — :n municípios indexados.', [
                 'ano' => (string) $year,
+                'uf' => $uf,
                 'n' => (string) $indexed,
             ]);
+            $debugLines[] = $line;
 
             if ($indexed > 0) {
-                HorizonteEducacensoImportProgress::markDone($year);
+                HorizonteEducacensoImportProgress::markStepDone($year, $uf);
                 $indexedTotal += $indexed;
+                $completedSteps[] = ['year' => $year, 'uf' => $uf, 'indexed' => $indexed];
+                if (is_callable($onStep)) {
+                    $onStep('✓ '.$line, 'info');
+                }
             } else {
                 $allowEmpty = filter_var(
                     config('horizonte.fortnightly_feed.educacenso_allow_empty', false),
                     FILTER_VALIDATE_BOOLEAN,
                 );
                 if ($allowEmpty) {
-                    HorizonteEducacensoImportProgress::markDone($year);
+                    HorizonteEducacensoImportProgress::markStepDone($year, $uf);
+                    $completedSteps[] = ['year' => $year, 'uf' => $uf, 'indexed' => 0];
+                    if (is_callable($onStep)) {
+                        $onStep(__('✓ Educacenso :ano / :uf — sem matrículas (vazio permitido)', ['ano' => (string) $year, 'uf' => $uf]), 'warn');
+                    }
                 } else {
-                    $lastFailure = $year;
+                    $lastFailure = HorizonteEducacensoImportProgress::stepKey($year, $uf);
                     $batchOk = false;
-                    HorizonteEducacensoImportProgress::markFailed($year);
-                    $debugLines[] = __('Educacenso :ano — nenhuma matrícula agregada.', ['ano' => (string) $year]);
+                    HorizonteEducacensoImportProgress::markStepFailed($year, $uf);
+                    $debugLines[] = __('Educacenso :ano / :uf — nenhuma matrícula agregada.', ['ano' => (string) $year, 'uf' => $uf]);
+                    if (is_callable($onStep)) {
+                        $onStep(__('✗ Educacenso :ano / :uf — nenhuma matrícula agregada', ['ano' => (string) $year, 'uf' => $uf]), 'error');
+                    }
                 }
             }
         }
 
-        $doneCount = count(HorizonteEducacensoImportProgress::doneYears());
-        $stillRemaining = count(HorizonteEducacensoImportProgress::remainingYears($allYears));
+        $doneCount = HorizonteEducacensoImportProgress::doneStepCount();
+        $stillRemaining = count(HorizonteEducacensoImportProgress::remainingSteps($allYears));
         $partial = $stillRemaining > 0;
 
-        if (! $partial) {
-            HorizonteEducacensoImportProgress::reset();
-        }
-
         $message = $partial
-            ? __('Educacenso: :done/:total anos — repita: php artisan horizonte:fortnightly-feed --phase=educacenso', [
+            ? __('Educacenso: :done/:total passos (ano × UF) — repita o comando.', [
                 'done' => (string) $doneCount,
-                'total' => (string) $total,
+                'total' => (string) $totalSteps,
             ])
-            : __('Educacenso: janela :anos indexada (:n combinações nesta execução).', [
-                'anos' => implode(', ', array_map('strval', $allYears)),
+            : __('Educacenso: janela completa (:n combinações município/ano nesta execução).', [
                 'n' => (string) $indexedTotal,
             ]);
 
         if ($lastFailure !== null && $partial) {
-            $message .= ' '.__('Última falha: :ano.', ['ano' => (string) $lastFailure]);
+            $message .= ' '.__('Última falha: :step.', ['step' => $lastFailure]);
         }
 
         Log::info('horizonte.educacenso_matriculas', [
@@ -154,6 +185,8 @@ final class HorizonteEducacensoMatriculasSyncService
             'indexed' => $indexedTotal,
             'partial' => $partial,
             'ok' => $batchOk,
+            'done_steps' => $doneCount,
+            'total_steps' => $totalSteps,
         ]);
 
         return [
@@ -162,24 +195,39 @@ final class HorizonteEducacensoMatriculasSyncService
             'message' => $message,
             'indexed' => $indexedTotal,
             'educacenso_done' => $doneCount,
-            'educacenso_total' => $total,
+            'educacenso_total' => $totalSteps,
+            'completed_steps' => $completedSteps,
             'debug_lines' => $debugLines,
         ];
     }
 
     /**
-     * @param  list<int>  $years
+     * @param  list<int>  $allYears
+     * @param  array<string, mixed>  $options
+     * @return list<array{year: int, uf: string}>
      */
-    private function windowHasIndexedRows(array $years): bool
+    private function filterRemainingSteps(array $allYears, array $options): array
     {
-        if ($years === []) {
-            return false;
+        $remaining = HorizonteEducacensoImportProgress::orderedRemainingSteps($allYears);
+
+        $yearFilter = isset($options['year']) && is_numeric($options['year']) ? (int) $options['year'] : null;
+        $ufFilter = HorizonteUfScope::normalize(isset($options['uf']) ? (string) $options['uf'] : null);
+
+        if ($yearFilter !== null) {
+            $remaining = array_values(array_filter(
+                $remaining,
+                static fn (array $step): bool => (int) $step['year'] === $yearFilter,
+            ));
         }
 
-        return InepCensoMunicipioMatricula::query()
-            ->whereIn('ano', $years)
-            ->where('matriculas_total', '>', 0)
-            ->exists();
+        if ($ufFilter !== null) {
+            $remaining = array_values(array_filter(
+                $remaining,
+                static fn (array $step): bool => strtoupper((string) $step['uf']) === $ufFilter,
+            ));
+        }
+
+        return $remaining;
     }
 
     /**

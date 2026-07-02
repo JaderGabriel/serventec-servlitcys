@@ -110,21 +110,21 @@ function enrollmentSeriesChartOptions() {
         responsive: true,
         maintainAspectRatio: false,
         layout: {
-            padding: { top: 8, right: 6, bottom: 2, left: 2 },
+            padding: { top: 4, right: 4, bottom: 0, left: 0 },
         },
         plugins: {
             legend: {
                 display: true,
                 position: "bottom",
-                align: "start",
+                align: "center",
                 labels: {
                     color: text,
                     usePointStyle: true,
                     pointStyle: "circle",
-                    boxWidth: 8,
-                    boxHeight: 8,
-                    padding: 14,
-                    font: enrollmentChartFont(11, "600"),
+                    boxWidth: 7,
+                    boxHeight: 7,
+                    padding: 10,
+                    font: enrollmentChartFont(10, "600"),
                 },
             },
             tooltip: {
@@ -190,11 +190,7 @@ function enrollmentSeriesChartOptions() {
                     padding: 8,
                 },
                 title: {
-                    display: true,
-                    text: "Ano",
-                    color: muted,
-                    font: enrollmentChartFont(10, "600"),
-                    padding: { top: 4 },
+                    display: false,
                 },
             },
             y: {
@@ -208,16 +204,12 @@ function enrollmentSeriesChartOptions() {
                     color: muted,
                     font: enrollmentChartFont(10, "500"),
                     precision: 0,
-                    maxTicksLimit: 6,
-                    padding: 6,
+                    maxTicksLimit: 5,
+                    padding: 4,
                     callback: (value) => formatEnrollmentAxisValue(value),
                 },
                 title: {
-                    display: true,
-                    text: "Matrículas",
-                    color: muted,
-                    font: enrollmentChartFont(10, "600"),
-                    padding: { bottom: 4 },
+                    display: false,
                 },
             },
         },
@@ -1840,6 +1832,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         _enrollmentSeriesLoadedDependencia: "",
         enrollmentSeriesStageCounters: [],
         enrollmentSeriesStageYear: null,
+        enrollmentSeriesDependenciaLabel: "",
+        enrollmentSeriesLatestTotal: null,
         _enrollmentSeriesChart: null,
         _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
@@ -5053,7 +5047,62 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesFootnote = "";
             this.enrollmentSeriesStageCounters = [];
             this.enrollmentSeriesStageYear = null;
+            this.enrollmentSeriesDependenciaLabel = "";
+            this.enrollmentSeriesLatestTotal = null;
             this.enrollmentSeriesLoading = false;
+        },
+
+        enrollmentStageShortLabel(item) {
+            const map = {
+                infantil: "Infantil",
+                fundamental_1: "Fund. I",
+                fundamental_2: "Fund. II",
+                medio: "Médio",
+                profissional: "Profissional",
+            };
+
+            return map[item?.key] ?? item?.label ?? "—";
+        },
+
+        updateEnrollmentSeriesSummary(data, chartPayload) {
+            const scope = String(data?.dependencia ?? "total");
+            const shortLabels = {
+                municipal: "Municipal",
+                nao_municipal: "Não municipal",
+                total: "",
+            };
+            this.enrollmentSeriesDependenciaLabel = shortLabels[scope] ?? "";
+
+            const counters = data?.stage_counters;
+            if (counters && Array.isArray(counters.items) && counters.items.length) {
+                const sum = counters.items.reduce(
+                    (acc, row) => acc + (row?.value != null ? Number(row.value) : 0),
+                    0,
+                );
+                this.enrollmentSeriesLatestTotal = sum > 0 ? sum : null;
+
+                return;
+            }
+
+            const datasets = Array.isArray(chartPayload?.datasets)
+                ? chartPayload.datasets
+                : [];
+            const totalDataset =
+                datasets.find((dataset) =>
+                    /total/i.test(String(dataset?.label ?? "")),
+                ) ?? datasets[0];
+            const values = Array.isArray(totalDataset?.data)
+                ? totalDataset.data
+                : [];
+
+            this.enrollmentSeriesLatestTotal = null;
+            for (let i = values.length - 1; i >= 0; i -= 1) {
+                const value = values[i];
+                if (value != null && !Number.isNaN(Number(value))) {
+                    this.enrollmentSeriesLatestTotal = Number(value);
+                    break;
+                }
+            }
         },
 
         destroyEnrollmentSeriesChart() {
@@ -5119,6 +5168,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.enrollmentSeriesStageYear = null;
                     this.enrollmentSeriesStageCounters = [];
                 }
+                this.updateEnrollmentSeriesSummary(data, data.chart);
                 await this.$nextTick();
                 this.renderEnrollmentSeriesChart(data.chart);
                 this.enrollmentSeriesReady = true;

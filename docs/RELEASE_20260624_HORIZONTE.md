@@ -28,9 +28,11 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 **Pós-deploy recomendado:**
 
 ```bash
-php artisan horizonte:sync-municipal-alerts
 php artisan cache:clear
+php artisan horizonte:sync-municipal-alerts   # só se ainda não existir snapshot em storage/app/horizonte/
 ```
+
+Após `cache:clear`, o mapa **reidrata** alertas a partir de `storage/app/horizonte/municipal_alerts_snapshot.json` quando o ficheiro existe (gerado num sync anterior). Corra `horizonte:sync-municipal-alerts` na primeira instalação ou para actualizar listas FNDE.
 
 ---
 

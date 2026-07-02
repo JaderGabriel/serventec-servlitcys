@@ -179,6 +179,8 @@ final class HorizonteMunicipalAlertsSyncService
      */
     public function indexedFromCache(): array
     {
+        $this->hydrateCacheFromSnapshotIfNeeded();
+
         return HorizonteMunicipalAlertsCache::getIndex();
     }
 
@@ -187,8 +189,78 @@ final class HorizonteMunicipalAlertsSyncService
      */
     public function metaFromCache(): ?array
     {
+        $this->hydrateCacheFromSnapshotIfNeeded();
+
         return HorizonteMunicipalAlertsCache::getMeta();
     }
+
+    /**
+     * Repõe cache Laravel a partir do snapshot em disco (sobrevive a cache:clear no deploy).
+     */
+    private function hydrateCacheFromSnapshotIfNeeded(): void
+    {
+        if ($this->snapshotHydrationAttempted) {
+            return;
+        }
+        $this->snapshotHydrationAttempted = true;
+
+        if (HorizonteMunicipalAlertsCache::getMeta() !== null) {
+            return;
+        }
+
+        if (! filter_var(config('horizonte.municipal_alerts.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return;
+        }
+
+        $rel = trim((string) config('horizonte.municipal_alerts.snapshot_path', 'horizonte/municipal_alerts_snapshot.json'));
+        if ($rel === '' || ! Storage::disk('local')->exists($rel)) {
+            return;
+        }
+
+        try {
+            $raw = Storage::disk('local')->get($rel);
+            $payload = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\Throwable $e) {
+            Log::debug('horizonte.municipal_alerts_snapshot_hydrate_failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return;
+        }
+
+        if (! is_array($payload)) {
+            return;
+        }
+
+        $meta = is_array($payload['meta'] ?? null) ? $payload['meta'] : null;
+        $syncedAt = trim((string) ($meta['synced_at'] ?? ''));
+        if ($meta === null || $syncedAt === '') {
+            return;
+        }
+
+        $index = [];
+        $municipios = is_array($payload['municipios'] ?? null) ? $payload['municipios'] : [];
+        foreach ($municipios as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge((string) ($row['ibge_municipio'] ?? ''));
+            if ($ibge === null) {
+                continue;
+            }
+            unset($row['ibge_municipio']);
+            $index[$ibge] = $row;
+        }
+
+        HorizonteMunicipalAlertsCache::put($index, $meta);
+
+        Log::info('horizonte.municipal_alerts_snapshot_hydrated', [
+            'matched' => count($index),
+            'synced_at' => $syncedAt,
+        ]);
+    }
+
+    private bool $snapshotHydrationAttempted = false;
 
     /**
      * @param  array<string, mixed>  $options

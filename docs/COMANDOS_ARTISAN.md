@@ -139,7 +139,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 
 | Comando | Descrição |
 |---------|-----------|
-| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, Educacenso (série matrículas), CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=educacenso` (janela do gráfico §6.9), `--phase=censo_matriculas`, `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
+| `horizonte:sync-educacenso` | Reimporta Educacenso **ano × UF** para o gráfico Horizonte (segmentos, etapas, dependência). `--reset --all` conclui os 135 passos (5 anos × 27 UFs); `--year=2024 --uf=BA` restringe. |
+| `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, Educacenso (série matrículas), CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, SGE, verificação oficial. Fases incrementais: `--phase=educacenso` (passos ano×UF), `--phase=censo_matriculas`, `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
 | `horizonte:verify-educacenso-coverage` | Audita cobertura da janela Educacenso em municípios aleatórios (`--sample=50`, `--seed=`, `--json`). |
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
@@ -149,6 +150,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 ```bash
 php artisan horizonte:sync-repasses-tesouro --with-ref
 php artisan horizonte:sync-repasses-tesouro --uf=BA --year=2026
+php artisan horizonte:sync-educacenso --reset --all
+php artisan horizonte:sync-educacenso --year=2024 --uf=BA
 php artisan horizonte:fortnightly-feed --phase=censo_matriculas
 php artisan horizonte:fortnightly-feed --phase=educacenso
 php artisan horizonte:fortnightly-feed --phase=educacenso --reset
