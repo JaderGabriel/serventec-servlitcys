@@ -51,8 +51,8 @@
                         </div>
                         <span
                             class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--approx"
-                            x-show="active?.coord_approximate && modalHeaderApproxPositionLabel(active)"
-                            x-text="modalHeaderApproxPositionLabel(active)"
+                            x-show="hasModalHeaderGeoInfo(active)"
+                            x-text="modalHeaderGeoLabel(active)"
                         ></span>
                     </div>
                 </div>

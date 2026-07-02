@@ -1727,6 +1727,18 @@ function ibgeCodareaToUf(codarea) {
     return IBGE_PREFIX_TO_UF[digits.slice(0, 2)] ?? "";
 }
 
+function normalizeIbgeCodarea(value) {
+    const digits = String(value ?? "").replace(/\D/g, "");
+    if (digits.length === 0) {
+        return "";
+    }
+    if (digits.length >= 7) {
+        return digits.slice(0, 7);
+    }
+
+    return digits.padStart(7, "0");
+}
+
 function mesoPaletteColor(mesoId, index = 0) {
     const raw = String(mesoId ?? "");
     const hash = raw.split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
@@ -1912,6 +1924,16 @@ function municipalBoundaryStyle() {
         color: "#94a3b8",
         weight: 0.85,
         opacity: 0.42,
+    };
+}
+
+function municipalBoundaryViewStyle({ highlighted = false } = {}) {
+    return {
+        fillColor: highlighted ? "#3b82f6" : "#64748b",
+        fillOpacity: highlighted ? 0.24 : 0.14,
+        color: "#0f172a",
+        weight: highlighted ? 2 : 1.15,
+        opacity: highlighted ? 0.98 : 0.82,
     };
 }
 
@@ -4517,7 +4539,132 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return [...ids];
         },
 
+        ibgeIdsForVisibleMunicipalities() {
+            const ids = new Set();
+            for (const m of this.mapMarkersForRender) {
+                const ibge = normalizeIbgeCodarea(m?.ibge);
+                if (ibge !== "") {
+                    ids.add(ibge);
+                }
+            }
+
+            return [...ids];
+        },
+
+        async renderBoundariesLayer() {
+            this.layer.clearLayers();
+            this.heatLayer.clearLayers();
+            this.ufLayer.clearLayers();
+            this.clusterGroup.clearLayers();
+            this.markerLayers = [];
+            this.clearMunicipalBoundaryLayer();
+            this.clearMicroOverlayLayer();
+
+            if (!this.map || !this.isRegionalMode || !this.scopeUf) {
+                return;
+            }
+
+            const ibgeIds = this.ibgeIdsForVisibleMunicipalities();
+            if (ibgeIds.length === 0) {
+                return;
+            }
+
+            const ibgeSet = new Set(ibgeIds);
+            const markerByIbge = new Map(
+                this.mapMarkersForRender.map((m) => [
+                    normalizeIbgeCodarea(m.ibge),
+                    m,
+                ]),
+            );
+
+            let geo;
+            try {
+                geo = await this.fetchGeoMalha("municipal", this.scopeUf);
+            } catch (error) {
+                console.warn("horizonte geo malha (municipal)", this.scopeUf, error);
+
+                return;
+            }
+
+            const features = (geo?.features ?? []).filter((feature) =>
+                ibgeSet.has(normalizeIbgeCodarea(feature?.properties?.codarea)),
+            );
+            if (features.length === 0) {
+                return;
+            }
+
+            this.ensureMunicipalBoundaryPane();
+            const activeIbge = normalizeIbgeCodarea(this.active?.ibge);
+            const filtered = { type: "FeatureCollection", features };
+            const geoLayer = L.geoJSON(filtered, {
+                pane: "horizonteMunicipalBoundary",
+                smoothFactor: 1.25,
+                style: (feature) => {
+                    const ibge = normalizeIbgeCodarea(feature?.properties?.codarea);
+
+                    return municipalBoundaryViewStyle({
+                        highlighted: ibge !== "" && ibge === activeIbge,
+                    });
+                },
+                onEachFeature: (feature, layer) => {
+                    const ibge = normalizeIbgeCodarea(feature?.properties?.codarea);
+                    const m = markerByIbge.get(ibge);
+                    if (!m) {
+                        return;
+                    }
+                    const name = escapeHtml(String(m.name ?? ""));
+                    layer.bindTooltip(name, {
+                        direction: "top",
+                        sticky: true,
+                        className: "serv-horizonte-geo-tooltip",
+                    });
+                    layer.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        this.selectMarker(m, e);
+                    });
+                    layer.on("mouseover", () => {
+                        layer.setStyle(municipalBoundaryViewStyle({ highlighted: true }));
+                        layer.bringToFront();
+                    });
+                    layer.on("mouseout", () => {
+                        layer.setStyle(
+                            municipalBoundaryViewStyle({
+                                highlighted: ibge === activeIbge,
+                            }),
+                        );
+                    });
+                },
+            });
+
+            this.municipalBoundaryLayer = geoLayer;
+            geoLayer.addTo(this.map);
+            this.applyChoroplethPointerPolicy(true);
+
+            if (this._preserveViewOnNextRender) {
+                this._preserveViewOnNextRender = false;
+            } else {
+                const bounds = [];
+                geoLayer.eachLayer((layer) => {
+                    const b = layer.getBounds?.();
+                    if (b?.isValid?.()) {
+                        bounds.push(b.getSouthWest(), b.getNorthEast());
+                    }
+                });
+                if (bounds.length > 0) {
+                    this.map.fitBounds(bounds, {
+                        padding: [40, 40],
+                        maxZoom: this.scopeMeso ? 9 : 8,
+                    });
+                }
+            }
+
+            await this.renderMicroRegionsOverlay();
+        },
+
         async renderMunicipalBoundariesOverlay() {
+            if (this.mapView === "boundaries") {
+                return;
+            }
             this.clearMunicipalBoundaryLayer();
             if (!this.map || !this.isRegionalMode || !this.scopeUf) {
                 return;
@@ -4543,7 +4690,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             const features = (geo?.features ?? []).filter((feature) =>
-                ibgeSet.has(String(feature?.properties?.codarea ?? "")),
+                ibgeSet.has(normalizeIbgeCodarea(feature?.properties?.codarea)),
             );
             if (features.length === 0) {
                 return;
@@ -4875,6 +5022,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                             this.map.removeLayer(this.clusterGroup);
                         }
                         await this.renderHeatLayer();
+                    } else if (this.mapView === "boundaries") {
+                        if (this.map.hasLayer(this.clusterGroup)) {
+                            this.map.removeLayer(this.clusterGroup);
+                        }
+                        await this.renderBoundariesLayer();
                     } else {
                         if (!this.map.hasLayer(this.clusterGroup)) {
                             this.map.addLayer(this.clusterGroup);
@@ -5230,6 +5382,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.ufLayer.clearLayers();
             this.clusterGroup.clearLayers();
             this.markerLayers = [];
+            this.clearMunicipalBoundaryLayer();
 
             const list = this.mapMarkersForRender;
             const total = list.length;
@@ -5274,8 +5427,24 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
 
-            await this.renderMunicipalBoundariesOverlay();
             await this.renderMicroRegionsOverlay();
+        },
+
+        refreshBoundaryHighlight() {
+            if (this.mapView !== "boundaries" || !this.municipalBoundaryLayer) {
+                return;
+            }
+            const activeIbge = normalizeIbgeCodarea(this.active?.ibge);
+            this.municipalBoundaryLayer.eachLayer((layer) => {
+                const ibge = normalizeIbgeCodarea(
+                    layer.feature?.properties?.codarea,
+                );
+                layer.setStyle(
+                    municipalBoundaryViewStyle({
+                        highlighted: ibge !== "" && ibge === activeIbge,
+                    }),
+                );
+            });
         },
 
         async renderHeatLayer() {
@@ -5284,6 +5453,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.ufLayer.clearLayers();
             this.clusterGroup.clearLayers();
             this.markerLayers = [];
+            this.clearMunicipalBoundaryLayer();
 
             const list = this.mapMarkersForRender.filter((m) => !m.consultoria_active);
             const intensityMap = buildHeatIntensityMap(list);
@@ -5333,7 +5503,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
 
-            await this.renderMunicipalBoundariesOverlay();
             await this.renderMicroRegionsOverlay();
         },
 
@@ -5571,6 +5740,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.positionTooltip();
             this.syncMuniModalScrollLock();
             void this.loadEnrollmentSeries(m);
+            this.refreshBoundaryHighlight();
         },
 
         syncMuniModalScrollLock() {
@@ -5605,6 +5775,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.tooltipPinned = false;
             this.tooltipStyle = "";
             this.syncMuniModalScrollLock();
+            this.refreshBoundaryHighlight();
         },
 
         closeUfSummary() {
@@ -5975,15 +6146,35 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return mesoId !== "" ? `Mesorregião ${mesoId}` : "";
         },
 
-        modalHeaderApproxPositionLabel(m) {
-            if (!m?.coord_approximate) {
+        hasModalHeaderGeoInfo(m) {
+            if (!m) {
+                return false;
+            }
+
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            const km = Number(m.distancia_capital_km);
+            const area = Number(m.area_km2);
+
+            return (
+                isValidCoord(lat, lng) ||
+                (Number.isFinite(km) && km >= 0) ||
+                (Number.isFinite(area) && area > 0)
+            );
+        },
+
+        modalHeaderGeoLabel(m) {
+            if (!m) {
                 return "";
             }
 
-            const parts = ["Posição indicativa"];
+            const parts = [];
             const lat = Number(m.lat);
             const lng = Number(m.lng);
             if (isValidCoord(lat, lng)) {
+                if (m.coord_approximate) {
+                    parts.push("Posição indicativa");
+                }
                 const latLabel = `${Math.abs(lat).toFixed(3).replace(".", ",")}°${lat < 0 ? "S" : "N"}`;
                 const lngLabel = `${Math.abs(lng).toFixed(3).replace(".", ",")}°${lng < 0 ? "W" : "E"}`;
                 parts.push(`${latLabel} · ${lngLabel}`);
@@ -6010,6 +6201,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             return parts.join(" · ");
+        },
+
+        modalHeaderApproxPositionLabel(m) {
+            return this.modalHeaderGeoLabel(m);
         },
 
         modalHeaderSaebByYear(m) {

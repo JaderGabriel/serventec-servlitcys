@@ -112,6 +112,7 @@
                         <div class="flex gap-1 rounded-lg ring-1 ring-slate-200/80 dark:ring-slate-600 p-0.5" x-show="isRegionalMode" x-cloak>
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'markers' ? 'bg-sky-100 text-sky-900 dark:bg-sky-950/50' : 'text-slate-600'" @click="setMapView('markers')">{{ __('Pontos') }}</button>
                             <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'heat' ? 'bg-rose-100 text-rose-900 dark:bg-rose-950/50' : 'text-slate-600'" @click="setMapView('heat')" :disabled="regionalDisplayPolicy?.heavy_regional">{{ __('Calor') }}</button>
+                            <button type="button" class="rounded-md px-2 py-1 text-xs font-medium transition" :class="mapView === 'boundaries' ? 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50' : 'text-slate-600'" @click="setMapView('boundaries')">{{ __('Contornos') }}</button>
                         </div>
                         <div class="flex flex-wrap items-center gap-1" x-show="isUfScopedMode" x-cloak>
                             <button
@@ -256,6 +257,15 @@
                                     </span>
                                 </template>
                             </template>
+                            <template x-if="mapView === 'boundaries'">
+                                <span class="serv-map-legend__item">
+                                    <span class="serv-map-legend-swatch serv-map-legend-swatch--connection border border-slate-900/70 bg-slate-400/25" aria-hidden="true"></span>
+                                    <span class="text-slate-600 dark:text-slate-300">{{ __('Contorno municipal IBGE') }}</span>
+                                </span>
+                            </template>
+                            <p x-show="mapView === 'boundaries'" class="w-full text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+                                {{ __('Clique no polígono para abrir a ficha do município. Exibe contornos apenas dos municípios visíveis no recorte.') }}
+                            </p>
                         </div>
                         <div class="serv-map-legend flex flex-wrap gap-x-3 gap-y-1.5 text-[11px]" x-show="isOverviewMode" x-cloak>
                             <span class="serv-map-legend__item">

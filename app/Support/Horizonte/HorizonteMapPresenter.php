@@ -240,7 +240,7 @@ final class HorizonteMapPresenter
                 [
                     'step' => 3,
                     'title' => __('Detalhe municipal'),
-                    'text' => __('Pontos por pressão FUNDEB (Marcadores ou Calor). «Resumo UF» centra o estado ou a mesorregião activa e abre KPIs estaduais.'),
+                    'text' => __('Pontos por pressão FUNDEB (Pontos ou Calor) ou contornos municipais IBGE (Contornos). «Resumo UF» centra o estado ou a mesorregião activa e abre KPIs estaduais.'),
                 ],
                 [
                     'step' => 4,

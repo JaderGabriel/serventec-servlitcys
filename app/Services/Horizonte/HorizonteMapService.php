@@ -6,6 +6,7 @@ use App\Models\CadunicoMunicipioSnapshot;
 use App\Models\City;
 use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
+use App\Models\MunicipalAreaSnapshot;
 use App\Models\MunicipalDemographySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
@@ -1513,6 +1514,7 @@ final class HorizonteMapService
             [SaebIndicatorPoint::class, 'updated_at'],
             [CadunicoMunicipioSnapshot::class, 'imported_at'],
             [MunicipalDemographySnapshot::class, 'imported_at'],
+            [MunicipalAreaSnapshot::class, 'imported_at'],
         ] as [$model, $col]) {
             if (! \Illuminate\Support\Facades\Schema::hasTable((new $model)->getTable())) {
                 continue;
