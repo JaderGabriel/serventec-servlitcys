@@ -4389,6 +4389,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.active = latest;
                     this.tooltipPinned = true;
                     this.positionTooltip();
+                    this.syncMuniModalScrollLock();
                 }
 
                 if (this.isOverviewMode || this.isMesoOverviewMode) {
@@ -5044,12 +5045,27 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.active = m;
             this.tooltipPinned = true;
             this.positionTooltip();
+            this.syncMuniModalScrollLock();
             void this.loadEnrollmentSeries(m);
         },
 
+        syncMuniModalScrollLock() {
+            const open = Boolean(this.tooltipPinned && this.active);
+            document.documentElement.classList.toggle(
+                "serv-horizonte-muni-modal-open",
+                open,
+            );
+        },
+
         positionTooltip() {
-            const margin = 32;
-            const maxH = Math.max(320, window.innerHeight - margin);
+            const verticalMargin = 64;
+            const capPx = 640;
+            const viewportCap = Math.round(window.innerHeight * 0.82);
+            const maxH = Math.min(
+                Math.max(320, window.innerHeight - verticalMargin),
+                capPx,
+                viewportCap,
+            );
             this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
         },
 
@@ -5064,6 +5080,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.active = null;
             this.tooltipPinned = false;
             this.tooltipStyle = "";
+            this.syncMuniModalScrollLock();
         },
 
         closeUfSummary() {

@@ -1,41 +1,51 @@
-/* Horizonte — modal municipal (shell dedicado; cabeçalho fixo + corpo rolável) */
+/* Horizonte — modal municipal (teleport body; chrome fixo + corpo rolável) */
+html.serv-horizonte-muni-modal-open,
+html.serv-horizonte-muni-modal-open body {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 .serv-horizonte-muni-modal {
-    --horizonte-muni-modal-h: min(85dvh, 40rem);
-    display: flex;
-    flex-direction: column;
+    --horizonte-muni-modal-h: min(82dvh, 40rem);
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
     width: min(42rem, calc(100vw - 2rem));
     max-width: min(42rem, calc(100vw - 2rem));
     height: var(--horizonte-muni-modal-h);
-    max-height: var(--horizonte-muni-modal-h);
+    max-height: min(82dvh, 40rem);
     overflow: hidden;
-    border-radius: 0.75rem;
-    border: 1px solid rgb(226 232 240 / 0.95);
+    isolation: isolate;
+    border-radius: 0.875rem;
+    border: 1px solid rgb(203 213 225 / 0.95);
     background: rgb(255 255 255);
     box-shadow:
-        0 25px 50px -12px rgb(15 23 42 / 0.28),
-        0 0 0 1px rgb(15 23 42 / 0.04);
+        0 25px 50px -12px rgb(15 23 42 / 0.35),
+        0 0 0 1px rgb(15 23 42 / 0.05);
     position: relative;
     pointer-events: auto;
 }
 
 .dark .serv-horizonte-muni-modal {
-    border-color: rgb(51 65 85 / 0.9);
+    border-color: rgb(71 85 105 / 0.95);
     background: rgb(15 23 42);
     box-shadow:
-        0 25px 50px -12px rgb(0 0 0 / 0.55),
-        0 0 0 1px rgb(255 255 255 / 0.06);
+        0 25px 50px -12px rgb(0 0 0 / 0.65),
+        0 0 0 1px rgb(255 255 255 / 0.08);
 }
 
 .serv-horizonte-muni-modal__chrome {
-    flex: 0 0 auto;
-    padding: 1rem 1rem 0.75rem;
-    border-bottom: 1px solid rgb(226 232 240 / 0.95);
+    grid-row: 1;
+    padding: 1rem 1rem 0.8rem;
+    border-bottom: 1px solid rgb(226 232 240 / 0.98);
     background: rgb(255 255 255);
+    box-shadow: 0 6px 16px -12px rgb(15 23 42 / 0.35);
+    z-index: 2;
 }
 
 .dark .serv-horizonte-muni-modal__chrome {
-    border-bottom-color: rgb(51 65 85 / 0.85);
+    border-bottom-color: rgb(51 65 85 / 0.95);
     background: rgb(15 23 42);
+    box-shadow: 0 6px 16px -12px rgb(0 0 0 / 0.55);
 }
 
 .serv-horizonte-muni-modal__chrome-row {
@@ -58,6 +68,12 @@
     margin: 0;
     flex: 1 1 auto;
     min-width: 0;
+    color: rgb(71 85 105);
+    font-weight: 500;
+}
+
+.dark .serv-horizonte-muni-modal__meta {
+    color: rgb(203 213 225);
 }
 
 .serv-horizonte-muni-modal__propensity {
@@ -98,16 +114,52 @@
 }
 
 .serv-horizonte-muni-modal__body {
-    flex: 1 1 auto;
+    grid-row: 2;
     min-height: 0;
     overflow-x: hidden;
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 0.75rem 1rem 1rem;
+    padding: 0.85rem 1rem 1.1rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    background: rgb(248 250 252);
+}
+
+.dark .serv-horizonte-muni-modal__body {
+    background: rgb(2 6 23);
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-step,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__year-col,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__municipal-card,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrollment-series {
+    background: rgb(255 255 255);
+    border: 1px solid rgb(226 232 240 / 0.95);
+    border-radius: 0.625rem;
+}
+
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-step,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__year-col,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__municipal-card,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrollment-series {
+    background: rgb(15 23 42);
+    border-color: rgb(51 65 85 / 0.9);
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-intro,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-legend,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-step-lead,
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__empty-msg {
+    color: rgb(71 85 105);
+}
+
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-intro,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-legend,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__finance-step-lead,
+.dark .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__empty-msg {
+    color: rgb(203 213 225);
 }
 
 /* Horizonte — ficha municipal (tooltip): CSS explícito fora do @layer */

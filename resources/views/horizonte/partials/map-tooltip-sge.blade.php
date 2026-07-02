@@ -1,3 +1,4 @@
+<template x-teleport="body">
 <div
     x-show="active && tooltipPinned"
     x-cloak
@@ -225,6 +226,7 @@
         </div>
     </div>
 </div>
+</template>
 
 <div
     x-show="sgeFormOpen"

@@ -20,7 +20,8 @@
 
     .serv-horizonte-muni-overlay {
         @apply fixed inset-0 z-[500] flex items-center justify-center p-4
-            bg-slate-900/45 backdrop-blur-[1px];
+            overflow-hidden overscroll-none
+            bg-slate-900/60 backdrop-blur-[3px];
     }
 
     .serv-horizonte-sge-panel {
