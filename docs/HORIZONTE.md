@@ -112,22 +112,25 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
 - Overlay de carregamento durante fetch JSON e desenho do mapa.
-- Tooltip municipal: scores, pipeline população → CadÚnico → matrículas, **gráfico de matrículas Censo** (prospectos — ver §6.9), **timeline financeira** (ver §6.5), propensão, SAEB, **SGE**, **alertas MEC/FNDE VAAT**, fontes, atalho Consultoria.
+- Tooltip municipal (modal **~48rem**, overlay no `body`): **cabeçalho fixo** (nome, UF, meso/micro/região imediata, IBGE, SAEB LP/MAT, propensão em roda, posição indicativa) + corpo rolável (alertas, pipeline, gráfico Censo §6.9, finanças §6.5, fontes/SGE, dimensões).
 - Malha IBGE servida por `GET /dashboard/horizonte/map-geo` (`HorizonteIbgeMalhaService`, cache em `storage/app/horizonte/geo/`).
 
 ### 6.5 Modal municipal — leitura financeira (consultoria)
 
-Layout **horizontal** (~42rem): coluna esquerda (pipeline, propensão, dimensões com glossário **Detecta / Indica**) + coluna direita (timeline financeira em grelha 3 colunas). Meta numa linha (benefício · fontes · SGE · consultoria). Altura máxima ~58dvh.
+Modal **centrado** (`x-teleport`), altura limitada (~**88dvh** / **45rem**), **cabeçalho fixo** + **corpo rolável**.
+
+**Cabeçalho:** município · UF · mesorregião · microrregião · região imediata · IBGE · SAEB LP/MAT (quando importado) · chip «Posição indicativa» · roda de propensão (% + Alta/Média/Baixa).
+
+**Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
 
 **Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (sync nunca executado). Após `cache:clear` no deploy, o mapa **reidrata** o snapshot `storage/app/horizonte/municipal_alerts_snapshot.json` automaticamente. Comando para primeira importação ou actualização FNDE: `horizonte:sync-municipal-alerts`.
 
-Três blocos **complementares** (não somar entre si):
+Três leituras **complementares** por exercício (não somar entre blocos nem entre anos):
 
-| Bloco | Cor | Fonte | Conteúdo |
-|-------|-----|-------|------------|
-| **Referência FUNDEB** | Rosa | Portaria FNDE | VAAF, receita total, complementação do exercício de referência |
-| **Repasses federais** | Azul | Tesouro CKAN | Pagamentos observados no ano anterior (total, FUNDEB, verbas educação quando distintas) |
-| **Repasse FUNDEB (ano corrente)** | Verde | CKAN + previsão | Já repassado, previsão anual, projeção até dezembro, barra % realizado |
+| Coluna | Fonte | Conteúdo |
+|--------|-------|----------|
+| **Previsto na portaria** | Portaria FNDE | VAAF, receita vinculada, complementação federal **deste município**, teto total |
+| **Pago pelo Tesouro** | Tesouro CKAN | Repasses observados; no ano vigente: YTD, projeção, barra «Recebido do previsto», saldo **A − B** |
 
 **Notas de interpretação (UI):**
 
@@ -535,4 +538,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-07-01 · Módulo Horizonte v6.1 — coroplético IBGE, mesorregiões, alertas VAAT, modal, gráfico matrículas prospectos e resumo UF*
+*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — modal municipal refinado (chrome fixo, finanças em colunas, regiões IBGE)*

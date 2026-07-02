@@ -24,9 +24,9 @@ return [
     */
 
     'product' => [
-        'version' => '6.2.0',
-        'release_tag' => '20260702-Educacenso',
-        'commit_short' => 'b7d9ad4',
+        'version' => '6.3.0',
+        'release_tag' => '20260702b-Horizonte',
+        'commit_short' => 'c8e2315',
         'commit_number' => null,
         'revision_date' => '2026-07-02',
         'in_production' => true,

@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **6.2.0** · tag **`20260702-Educacenso`** · [release](docs/RELEASE_20260702_EDUCACENSO.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **6.3.0** · tag **`20260702b-Horizonte`** · [release](docs/RELEASE_20260702b_HORIZONTE.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
