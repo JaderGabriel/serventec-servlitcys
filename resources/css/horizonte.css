@@ -1485,6 +1485,7 @@
 
 .serv-brazil-map-tooltip--modal > .serv-horizonte-muni-tooltip__header {
     margin-bottom: 0;
+    position: relative;
 }
 
 .serv-horizonte-muni-tooltip__alert-status {

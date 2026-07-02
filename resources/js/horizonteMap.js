@@ -5050,7 +5050,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         positionTooltip() {
             const margin = 32;
             const maxH = Math.max(240, window.innerHeight - margin);
-            this.tooltipStyle = `max-height:${Math.round(maxH)}px;overflow-y:auto;`;
+            // Só limita altura — o scroll fica em .serv-horizonte-muni-tooltip__scroll (cabeçalho fixo).
+            this.tooltipStyle = `max-height:${Math.round(maxH)}px;overflow:hidden;`;
         },
 
         closeMapOverlays() {
