@@ -59,6 +59,7 @@ final class HorizonteFundebRepasseOutlook
      *     portaria_vaaf: ?float,
      *     portaria_matriculas: ?int,
      *     portaria_matriculas_fonte: ?string,
+     *     portaria_ref_ano: ?int,
      *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
      *     portaria_adjustments_note: ?string,
      *     expected_source: string
@@ -142,6 +143,7 @@ final class HorizonteFundebRepasseOutlook
      *     portaria_vaaf: ?float,
      *     portaria_matriculas: ?int,
      *     portaria_matriculas_fonte: ?string,
+     *     portaria_ref_ano: ?int,
      *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
      *     portaria_adjustments_note: ?string,
      *     expected_source: string
@@ -182,7 +184,7 @@ final class HorizonteFundebRepasseOutlook
         }
 
         $reference = $fundebCurrent ?? $fundebRef;
-        $expectation = FundebPortariaExpectation::buildAnnual($matriculas, $vaaf, $reference);
+        $expectation = FundebPortariaExpectation::buildAnnual($matriculasPortaria > 0 ? $matriculasPortaria : $matriculas, $vaaf, $reference);
         $expected = (float) ($expectation['annual'] ?? 0);
         $observed = $observedPack !== null ? max(0.0, (float) ($observedPack['observed'] ?? 0)) : 0.0;
         $rows = $observedPack['rows'] ?? [];
@@ -239,6 +241,9 @@ final class HorizonteFundebRepasseOutlook
             'portaria_matriculas' => $matriculasPortaria > 0 ? $matriculasPortaria : null,
             'portaria_matriculas_fonte' => is_string($matriculasFonte) && trim($matriculasFonte) !== ''
                 ? trim($matriculasFonte)
+                : null,
+            'portaria_ref_ano' => $reference !== null && (int) ($reference['ano'] ?? 0) >= 2000
+                ? (int) $reference['ano']
                 : null,
             'portaria_adjustments' => $expectation['adjustments'] ?? [],
             'portaria_adjustments_note' => $expectation['adjustments_note'] ?? null,

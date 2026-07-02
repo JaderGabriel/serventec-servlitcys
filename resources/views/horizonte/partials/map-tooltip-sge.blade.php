@@ -8,30 +8,30 @@
     @keydown.escape.window="if (active && tooltipPinned) closeTooltip()"
 >
     <div
-        class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--centered"
+        class="serv-brazil-map-tooltip serv-brazil-map-tooltip--wide serv-brazil-map-tooltip--muni serv-brazil-map-tooltip--centered serv-brazil-map-tooltip--modal"
         :style="tooltipStyle"
         role="dialog"
         aria-modal="true"
         :aria-label="active?.name ? active.name + ' — ' + (active.uf || '') : '{{ __('Município') }}'"
         @click.stop
     >
-        <div class="space-y-3">
-            <div class="serv-horizonte-muni-tooltip__header">
-                <div class="min-w-0 flex-1">
-                    <div class="serv-horizonte-muni-tooltip__heading">
-                        <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
-                        <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
-                    </div>
-                    <p class="serv-horizonte-muni-tooltip__meta" x-text="active ? ('IBGE ' + active.ibge + ' · ' + tierLabel(active)) : ''"></p>
+        <div class="serv-horizonte-muni-tooltip__header">
+            <div class="min-w-0 flex-1">
+                <div class="serv-horizonte-muni-tooltip__heading">
+                    <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
+                    <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
                 </div>
-                <button
-                    type="button"
-                    class="serv-horizonte-muni-tooltip__close shrink-0"
-                    x-on:click.stop="closeTooltip()"
-                    aria-label="{{ __('Fechar') }}"
-                >&times;</button>
+                <p class="serv-horizonte-muni-tooltip__meta" x-text="modalHeaderMeta(active)"></p>
             </div>
+            <button
+                type="button"
+                class="serv-horizonte-muni-tooltip__close shrink-0"
+                x-on:click.stop="closeTooltip()"
+                aria-label="{{ __('Fechar') }}"
+            >&times;</button>
+        </div>
 
+        <div class="serv-horizonte-muni-tooltip__scroll">
             <div
                 x-show="active?.muni_alerts"
                 x-cloak

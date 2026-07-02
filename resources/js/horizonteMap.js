@@ -724,6 +724,28 @@ function fundebMatriculasFonteLabel(fonte) {
     return "Base de matrículas usada na portaria FNDE para o VAAF municipal";
 }
 
+function fundebComplementacaoFederalDesc(key) {
+    const k = String(key ?? "").trim().toLowerCase();
+    if (k === "complementacao_vaaf") {
+        return "Complementação VAAF federal deste município na portaria (por ente, não estadual)";
+    }
+    if (k === "complementacao_vaat") {
+        return "Complementação VAAT federal deste município na portaria (por ente, não estadual)";
+    }
+    if (k === "complementacao_vaar") {
+        return "Complementação VAAR federal deste município na portaria (por ente, não estadual)";
+    }
+    return "Complementação federal deste município na portaria FNDE (por ente federado)";
+}
+
+function fundebPortariaBreakdownNote(m) {
+    const ano = m.fundeb_realtime_portaria_ano ?? m.fundeb_ano ?? m.fundeb_realtime_ano;
+    const ibge = m.ibge != null ? String(m.ibge) : "";
+    const anoPart = ano != null ? ` · exercício ${ano}` : "";
+    const ibgePart = ibge !== "" ? ` (IBGE ${ibge})` : "";
+    return `Valores da portaria FNDE por ente federado${ibgePart}${anoPart}. Matrículas e complementações referem-se só a este município — não somar dados estaduais.`;
+}
+
 function fundebRealtimePortariaBreakdownHtml(m) {
     const receita = m.fundeb_realtime_portaria_receita;
     const baseMat = m.fundeb_realtime_base_mat_vaaf;
@@ -731,6 +753,11 @@ function fundebRealtimePortariaBreakdownHtml(m) {
     const matriculas = m.fundeb_realtime_matriculas;
     const matriculasFonte = m.fundeb_realtime_matriculas_fonte;
     const expectedSource = String(m.fundeb_realtime_expected_source ?? "");
+    const adjustments = Array.isArray(m.fundeb_realtime_portaria_adjustments)
+        ? m.fundeb_realtime_portaria_adjustments
+        : [];
+    const complTotal = m.fundeb_realtime_portaria_complementacao_total;
+    const totalPrevisto = m.fundeb_realtime_portaria_total_previsto ?? m.fundeb_realtime_expected;
     const receitaVinculada =
         receita != null && Number(receita) > 0
             ? Number(receita)
@@ -738,9 +765,9 @@ function fundebRealtimePortariaBreakdownHtml(m) {
               ? Number(baseMat)
               : null;
 
-    const rows = [];
+    const municipalRows = [];
     if (matriculas != null && Number(matriculas) > 0) {
-        rows.push(
+        municipalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Matrículas base")}</span>` +
@@ -751,7 +778,7 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         );
     }
     if (vaaf != null && Number(vaaf) > 0) {
-        rows.push(
+        municipalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF municipal")}</span>` +
@@ -762,7 +789,7 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         );
     }
     if (receita != null && Number(receita) > 0) {
-        rows.push(
+        municipalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita vinculada")}</span>` +
@@ -771,8 +798,8 @@ function fundebRealtimePortariaBreakdownHtml(m) {
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(receita)}</span>` +
                 `</div>`,
         );
-    } else if (baseMat != null && Number(baseMat) > 0) {
-        rows.push(
+    } else if (baseMat != null && Number(baseMat) > 0 && matriculas != null && Number(matriculas) > 0) {
+        municipalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Estimativa vinculada")}</span>` +
@@ -783,48 +810,104 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         );
     }
     if (receitaVinculada != null && receitaVinculada > 0) {
-        rows.push(
+        municipalRows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita vinculada prevista")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(expectedSource === "portaria_receita" ? "Parcela do ente municipal na portaria FNDE" : "Estimativa da parcela municipal (sem complementação federal)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(expectedSource === "portaria_receita" ? "Parcela municipal na portaria FNDE" : "Estimativa da parcela municipal")}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(receitaVinculada)}</span>` +
                 `</div>`,
         );
     }
 
-    if (rows.length === 0) {
+    const federalRows = [];
+    for (const adj of adjustments) {
+        const label = String(adj?.label ?? "").trim();
+        const valueFmt = String(adj?.value_fmt ?? "").trim();
+        const value = adj?.value;
+        const key = adj?.key;
+        if (!label) {
+            continue;
+        }
+        federalRows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(label)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebComplementacaoFederalDesc(key))}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(valueFmt || (value != null ? formatCurrencyBrl(value) : "—"))}</span>` +
+                `</div>`,
+        );
+    }
+    if (complTotal != null && Number(complTotal) > 0 && federalRows.length === 0) {
+        federalRows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação federal")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR deste município na portaria")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(complTotal)}</span>` +
+                `</div>`,
+        );
+    }
+    if (complTotal != null && Number(complTotal) > 0 && federalRows.length > 1) {
+        federalRows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação federal total")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Soma VAAF + VAAT + VAAR deste município na portaria")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(complTotal)}</span>` +
+                `</div>`,
+        );
+    }
+
+    const totalRows = [];
+    if (
+        totalPrevisto != null &&
+        Number(totalPrevisto) > 0 &&
+        receitaVinculada != null &&
+        complTotal != null &&
+        Number(complTotal) > 0
+    ) {
+        totalRows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Tecto total FUNDEB (portaria)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Receita vinculada + complementação federal — referência da barra «Recebido do previsto»")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(totalPrevisto)}</span>` +
+                `</div>`,
+        );
+    }
+
+    if (municipalRows.length === 0 && federalRows.length === 0 && totalRows.length === 0) {
         return "";
+    }
+
+    const blocks = [];
+    if (municipalRows.length > 0) {
+        blocks.push(
+            `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-kicker">${escapeHtml("Ente municipal")}</p>` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${municipalRows.join("")}</div>`,
+        );
+    }
+    if (federalRows.length > 0) {
+        blocks.push(
+            `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-kicker">${escapeHtml("Complementação federal (deste município)")}</p>` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${federalRows.join("")}</div>`,
+        );
+    }
+    if (totalRows.length > 0) {
+        blocks.push(`<div class="serv-horizonte-muni-tooltip__fundeb-rows">${totalRows.join("")}</div>`);
     }
 
     return (
         `<div class="serv-horizonte-muni-tooltip__fundeb-subsection">` +
-        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-title">${escapeHtml("Composição da receita vinculada (ente municipal)")}</p>` +
-        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
-        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml("Só a parcela municipal (receita vinculada). A complementação federal (VAAF, VAAT, VAAR) não entra aqui — aparece no exercício de referência e no tecto total usado na barra de acompanhamento.")}</p>` +
-        `</div>`
-    );
-}
-
-function fundebRealtimePortariaTectoTotalHtml(m) {
-    const expected = m.fundeb_realtime_expected;
-    const receita = m.fundeb_realtime_portaria_receita;
-    const complTotal = m.fundeb_realtime_portaria_complementacao_total;
-    const hasExpected = expected != null && Number(expected) > 0;
-    const hasCompl = complTotal != null && Number(complTotal) > 0;
-    const hasReceita = receita != null && Number(receita) > 0;
-    if (!hasExpected || !hasCompl || !hasReceita) {
-        return "";
-    }
-
-    return (
-        `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
-            `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Tecto total FUNDEB (portaria)")}</span>` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Receita vinculada + complementação federal — referência da barra «Recebido do previsto»")}</span>` +
-            `</div>` +
-            `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(expected)}</span>` +
+        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-title">${escapeHtml("Composição do previsto (portaria FNDE — município)")}</p>` +
+        blocks.join("") +
+        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml(fundebPortariaBreakdownNote(m))}</p>` +
         `</div>`
     );
 }
@@ -860,7 +943,6 @@ function fundebRealtimeHtml(m, currentYear) {
     const pctLabel = pctDone != null ? formatPercentValue(pctDone) : "—";
 
     const portariaBreakdown = fundebRealtimePortariaBreakdownHtml(m);
-    const portariaTectoTotal = fundebRealtimePortariaTectoTotalHtml(m);
     const showPortariaDetail = portariaBreakdown !== "";
 
     const rows = [];
@@ -934,12 +1016,6 @@ function fundebRealtimeHtml(m, currentYear) {
               `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
               `</div>`
             : "";
-    const portariaTectoBlock =
-        portariaTectoTotal !== ""
-            ? `<div class="serv-horizonte-muni-tooltip__fundeb-subsection serv-horizonte-muni-tooltip__fundeb-subsection--tecto">` +
-              `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${portariaTectoTotal}</div>` +
-              `</div>`
-            : "";
 
     return financeSectionShell(
         "realtime",
@@ -949,7 +1025,6 @@ function fundebRealtimeHtml(m, currentYear) {
         HORIZONTE_FINANCE_ICONS.realtime,
         `<p class="serv-horizonte-muni-tooltip__finance-step-lead">${escapeHtml("Compara o que a portaria FNDE prevê para o exercício em curso com o que o Tesouro já transferiu — valores parciais do ano (YTD).")}</p>` +
             portariaBreakdown +
-            portariaTectoBlock +
             ckanBlock +
             progress +
             financeNoteHtml(
@@ -5291,6 +5366,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return m?.tier_label || m?.tier || "";
         },
 
+        modalHeaderMeta(m) {
+            if (!m) {
+                return "";
+            }
+            const parts = [`IBGE ${m.ibge ?? "—"}`];
+            const tier = this.tierLabel(m);
+            if (tier) {
+                parts.push(String(tier));
+            }
+            if (m.success_score != null && Number(m.success_score) >= 0) {
+                parts.push(`${this.formatScoreDisplay(m.success_score)}/100`);
+            }
+
+            return parts.join(" · ");
+        },
+
         shouldShowEnrollmentSeries(m) {
             return Boolean(m && !m.consultoria_active);
         },
@@ -5553,7 +5644,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (cacheKey !== "" && this._tooltipHtmlCache[cacheKey]) {
                 return this._tooltipHtmlCache[cacheKey];
             }
-            const th = this.scoreThresholds;
             const lines = ['<div class="serv-horizonte-muni-tooltip__body">'];
             if (isApproxCoord(m)) {
                 lines.push(
@@ -5601,9 +5691,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             lines.push(muniDimensionsHtml(m, transferAno, this.methodology));
             lines.push("</div>");
 
-            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--propensity">');
-            lines.push(muniPropensityThermometerHtml(m, th));
-            lines.push("</div></div>");
+            lines.push("</div>");
             lines.push(`</div>`);
             const html = lines.join("");
             if (cacheKey !== "") {

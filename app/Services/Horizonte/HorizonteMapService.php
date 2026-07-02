@@ -974,6 +974,7 @@ final class HorizonteMapService
                 'fundeb_realtime_vaaf' => $fundebRealtime['portaria_vaaf'] ?? null,
                 'fundeb_realtime_matriculas' => $fundebRealtime['portaria_matriculas'] ?? null,
                 'fundeb_realtime_matriculas_fonte' => $fundebRealtime['portaria_matriculas_fonte'] ?? null,
+                'fundeb_realtime_portaria_ano' => $fundebRealtime['portaria_ref_ano'] ?? null,
                 'fundeb_realtime_portaria_adjustments' => $fundebRealtime['portaria_adjustments'] ?? [],
                 'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
