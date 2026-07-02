@@ -22,69 +22,6 @@
                         <h3 class="serv-horizonte-muni-tooltip__name" x-text="active?.name"></h3>
                         <span class="serv-horizonte-muni-tooltip__uf-badge" x-text="active?.uf"></span>
                     </div>
-                    <div
-                        x-show="active?.muni_alerts"
-                        x-cloak
-                        class="serv-horizonte-muni-tooltip__alert-status"
-                        :class="{
-                            'is-found': active?.muni_alerts?.status === 'found',
-                            'is-clear': active?.muni_alerts?.status === 'clear',
-                            'is-unavailable': active?.muni_alerts?.status === 'unavailable',
-                        }"
-                    >
-                        <template x-if="active?.muni_alerts?.status === 'found'">
-                            <a
-                                class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--found"
-                                :class="active?.muni_alerts?.count > 1 ? 'is-multi' : ''"
-                                :href="active.muni_alerts.detail_url"
-                                :target="active.muni_alerts.detail_url ? '_blank' : null"
-                                rel="noopener noreferrer"
-                                @click.stop
-                            >
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
-                                        <line x1="12" y1="9" x2="12" y2="13" />
-                                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                                    </svg>
-                                </span>
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-body">
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
-                                </span>
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-link" x-show="active.muni_alerts.detail_url">{{ __('Ver detalhes') }} ↗</span>
-                            </a>
-                        </template>
-                        <template x-if="active?.muni_alerts?.status === 'clear'">
-                            <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--clear">
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                                        <polyline points="22 4 12 14.01 9 11.01" />
-                                    </svg>
-                                </span>
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-body">
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
-                                </span>
-                            </div>
-                        </template>
-                        <template x-if="active?.muni_alerts?.status === 'unavailable'">
-                            <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--unavailable">
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-                                        <circle cx="12" cy="12" r="10" />
-                                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                                        <line x1="12" y1="17" x2="12.01" y2="17" />
-                                    </svg>
-                                </span>
-                                <span class="serv-horizonte-muni-tooltip__alert-chip-body">
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
-                                    <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
-                                </span>
-                            </div>
-                        </template>
-                    </div>
                     <p class="serv-horizonte-muni-tooltip__meta" x-text="active ? ('IBGE ' + active.ibge + ' · ' + tierLabel(active)) : ''"></p>
                 </div>
                 <button
@@ -94,6 +31,71 @@
                     aria-label="{{ __('Fechar') }}"
                 >&times;</button>
             </div>
+
+            <div
+                x-show="active?.muni_alerts"
+                x-cloak
+                class="serv-horizonte-muni-tooltip__alert-status serv-horizonte-muni-tooltip__alert-status--block"
+                :class="{
+                    'is-found': active?.muni_alerts?.status === 'found',
+                    'is-clear': active?.muni_alerts?.status === 'clear',
+                    'is-unavailable': active?.muni_alerts?.status === 'unavailable',
+                }"
+            >
+                <template x-if="active?.muni_alerts?.status === 'found'">
+                    <a
+                        class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--found"
+                        :class="active?.muni_alerts?.count > 1 ? 'is-multi' : ''"
+                        :href="active.muni_alerts.detail_url"
+                        :target="active.muni_alerts.detail_url ? '_blank' : null"
+                        rel="noopener noreferrer"
+                        @click.stop
+                    >
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+                                <line x1="12" y1="9" x2="12" y2="13" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                        </span>
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-body">
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                        </span>
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-link" x-show="active.muni_alerts.detail_url">{{ __('Ver detalhes') }} ↗</span>
+                    </a>
+                </template>
+                <template x-if="active?.muni_alerts?.status === 'clear'">
+                    <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--clear">
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                        </span>
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-body">
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                        </span>
+                    </div>
+                </template>
+                <template x-if="active?.muni_alerts?.status === 'unavailable'">
+                    <div class="serv-horizonte-muni-tooltip__alert-chip serv-horizonte-muni-tooltip__alert-chip--unavailable">
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                <line x1="12" y1="17" x2="12.01" y2="17" />
+                            </svg>
+                        </span>
+                        <span class="serv-horizonte-muni-tooltip__alert-chip-body">
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-label" x-text="active.muni_alerts.status_label"></span>
+                            <span class="serv-horizonte-muni-tooltip__alert-chip-text" x-text="active.muni_alerts.headline"></span>
+                        </span>
+                    </div>
+                </template>
+            </div>
+
             <section
                 x-show="active && shouldShowEnrollmentSeries(active)"
                 x-cloak
@@ -102,7 +104,16 @@
                 <div class="serv-horizonte-muni-tooltip__enrollment-series-toolbar">
                     <div class="serv-horizonte-muni-tooltip__enrollment-series-head">
                         <h4 class="serv-horizonte-muni-tooltip__enrollment-series-title">{{ __('Matrículas — Censo INEP') }}</h4>
-                        <p class="serv-horizonte-muni-tooltip__enrollment-series-subtitle">{{ __('Últimos 5 anos · Educacenso') }}</p>
+                        <p class="serv-horizonte-muni-tooltip__enrollment-series-subtitle">
+                            <span x-show="enrollmentSeriesStageYear && !enrollmentSeriesLoading">
+                                <span x-text="enrollmentSeriesStageYear"></span>
+                                <span x-show="enrollmentSeriesLatestTotal != null">
+                                    · <span x-text="formatEnrollmentStageCounter(enrollmentSeriesLatestTotal)"></span> {{ __('matrículas') }}
+                                </span>
+                                <span x-show="enrollmentSeriesDependenciaLabel"> · <span x-text="enrollmentSeriesDependenciaLabel"></span></span>
+                            </span>
+                            <span x-show="!enrollmentSeriesStageYear || enrollmentSeriesLoading">{{ __('Últimos 5 anos · Educacenso') }}</span>
+                        </p>
                     </div>
                     <div
                         x-show="!enrollmentSeriesLoading && !enrollmentSeriesError"
@@ -135,42 +146,28 @@
                     x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady"
                     class="serv-horizonte-muni-tooltip__enrollment-series-body"
                 >
-                    <div
-                        x-show="enrollmentSeriesLatestTotal != null"
-                        class="serv-horizonte-muni-tooltip__enrollment-series-kpi"
-                    >
-                        <div class="serv-horizonte-muni-tooltip__enrollment-series-kpi-main">
-                            <span
-                                class="serv-horizonte-muni-tooltip__enrollment-series-kpi-value"
-                                x-text="formatEnrollmentStageCounter(enrollmentSeriesLatestTotal)"
-                            ></span>
-                            <span class="serv-horizonte-muni-tooltip__enrollment-series-kpi-label">
-                                {{ __('matrículas') }}
-                                <span
-                                    x-show="enrollmentSeriesDependenciaLabel"
-                                    x-text="enrollmentSeriesDependenciaLabel"
-                                ></span>
-                            </span>
-                        </div>
-                        <span
-                            x-show="enrollmentSeriesStageYear"
-                            class="serv-horizonte-muni-tooltip__enrollment-series-kpi-year"
-                            x-text="enrollmentSeriesStageYear"
-                        ></span>
-                    </div>
                     <div class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap">
-                        <canvas x-ref="enrollmentSeriesCanvas" height="152" aria-hidden="true"></canvas>
+                        <canvas x-ref="enrollmentSeriesCanvas" height="148" aria-hidden="true"></canvas>
                     </div>
                     <div
                         x-show="enrollmentSeriesStageCounters.length"
                         class="serv-horizonte-muni-tooltip__enrollment-series-stages"
                     >
-                        <p class="serv-horizonte-muni-tooltip__enrollment-series-stages-title">{{ __('Por etapa') }}</p>
                         <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
                             <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
                                 <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
-                                    <dt x-text="enrollmentStageShortLabel(item)"></dt>
-                                    <dd x-text="formatEnrollmentStageCounter(item.value)"></dd>
+                                    <dd
+                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-value"
+                                        x-text="formatEnrollmentStageCounter(item.value)"
+                                    ></dd>
+                                    <dt
+                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-label"
+                                        x-text="item.label"
+                                    ></dt>
+                                    <span
+                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-hint"
+                                        x-text="enrollmentStageHint(item)"
+                                    ></span>
                                 </div>
                             </template>
                         </dl>

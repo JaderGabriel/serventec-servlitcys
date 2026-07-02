@@ -5052,6 +5052,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesLoading = false;
         },
 
+        enrollmentStageHint(item) {
+            const map = {
+                infantil: "Creche e pré-escola",
+                fundamental_1: "Anos iniciais (1º ao 5º)",
+                fundamental_2: "Anos finais (6º ao 9º)",
+                medio: "Ensino médio regular",
+                profissional: "Educação profissional técnica",
+            };
+
+            return map[item?.key] ?? "";
+        },
+
         enrollmentStageShortLabel(item) {
             const map = {
                 infantil: "Infantil",
