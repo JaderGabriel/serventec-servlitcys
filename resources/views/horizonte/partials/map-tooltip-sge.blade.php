@@ -35,11 +35,20 @@
                     </p>
                     <div class="serv-horizonte-muni-modal__facts" x-show="active" x-cloak>
                         <span class="serv-horizonte-muni-modal__fact" x-text="modalHeaderMeta(active)"></span>
-                        <span
-                            class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb"
-                            x-show="modalHeaderSaebLabel(active)"
-                            x-text="modalHeaderSaebLabel(active)"
-                        ></span>
+                        <div
+                            class="serv-horizonte-muni-modal__saeb"
+                            x-show="modalHeaderHasSaeb(active)"
+                            x-cloak
+                        >
+                            <span class="serv-horizonte-muni-modal__saeb-tag">SAEB</span>
+                            <template x-for="(row, idx) in modalHeaderSaebByYear(active)" :key="'saeb-' + row.year + '-' + idx">
+                                <span
+                                    class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb-year"
+                                    :class="modalHeaderSaebYearToneClass(idx)"
+                                    x-text="modalHeaderSaebYearLabel(row)"
+                                ></span>
+                            </template>
+                        </div>
                         <span
                             class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--approx"
                             x-show="active?.coord_approximate"

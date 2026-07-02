@@ -5837,66 +5837,82 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return mesoId !== "" ? `Mesorregião ${mesoId}` : "";
         },
 
-        modalHeaderSaebSeriesLabel(series, legacyValue) {
-            const normalized = Array.isArray(series)
-                ? series.filter(
-                      (point) =>
-                          point &&
-                          Number.isFinite(Number(point.value)) &&
-                          Number(point.value) > 0,
-                  )
-                : [];
-            const points =
-                normalized.length > 0
-                    ? normalized.slice(0, 2)
-                    : Number.isFinite(Number(legacyValue)) && Number(legacyValue) > 0
-                      ? [{ value: Number(legacyValue) }]
-                      : [];
-            if (points.length === 0) {
-                return "";
+        modalHeaderSaebByYear(m) {
+            if (!m) {
+                return [];
             }
 
-            return points
-                .map((point) => {
-                    const val = Math.round(Number(point.value)).toLocaleString(
-                        "pt-BR",
-                    );
-                    const year = Number(point.year);
-                    if (Number.isFinite(year) && year > 0) {
-                        return `${val} (${year})`;
-                    }
+            /** @type {Map<number, {year: number, lp: number|null, mat: number|null}>} */
+            const byYear = new Map();
 
-                    return val;
-                })
-                .join(" · ");
+            const ingest = (series, key, legacyValue) => {
+                const items = Array.isArray(series) ? series : [];
+                if (
+                    items.length === 0 &&
+                    Number.isFinite(Number(legacyValue)) &&
+                    Number(legacyValue) > 0
+                ) {
+                    items.push({ value: Number(legacyValue) });
+                }
+                for (const point of items) {
+                    const value = Number(point?.value);
+                    if (!Number.isFinite(value) || value <= 0) {
+                        continue;
+                    }
+                    const year = Number(point?.year);
+                    const yearKey =
+                        Number.isFinite(year) && year > 0 ? year : 0;
+                    if (!byYear.has(yearKey)) {
+                        byYear.set(yearKey, {
+                            year: yearKey,
+                            lp: null,
+                            mat: null,
+                        });
+                    }
+                    byYear.get(yearKey)[key] = value;
+                }
+            };
+
+            ingest(m.saeb_lp_series, "lp", m.saeb_lp);
+            ingest(m.saeb_mat_series, "mat", m.saeb_mat);
+
+            return [...byYear.values()]
+                .filter((row) => row.lp !== null || row.mat !== null)
+                .sort((a, b) => b.year - a.year)
+                .slice(0, 2);
         },
 
-        modalHeaderSaebLabel(m) {
-            if (!m) {
-                return "";
-            }
+        modalHeaderHasSaeb(m) {
+            return this.modalHeaderSaebByYear(m).length > 0;
+        },
 
-            const lp = this.modalHeaderSaebSeriesLabel(
-                m.saeb_lp_series,
-                m.saeb_lp,
-            );
-            const mat = this.modalHeaderSaebSeriesLabel(
-                m.saeb_mat_series,
-                m.saeb_mat,
-            );
-            if (lp === "" && mat === "") {
+        modalHeaderSaebYearLabel(row) {
+            if (!row) {
                 return "";
             }
 
             const parts = [];
-            if (lp !== "") {
-                parts.push(`LP ${lp}`);
+            if (row.year > 0) {
+                parts.push(String(row.year));
             }
-            if (mat !== "") {
-                parts.push(`MAT ${mat}`);
+            if (row.lp !== null && Number.isFinite(Number(row.lp))) {
+                parts.push(
+                    `LP ${Math.round(Number(row.lp)).toLocaleString("pt-BR")}`,
+                );
+            }
+            if (row.mat !== null && Number.isFinite(Number(row.mat))) {
+                parts.push(
+                    `MAT ${Math.round(Number(row.mat)).toLocaleString("pt-BR")}`,
+                );
             }
 
-            return `SAEB ${parts.join(" · ")}`;
+            return parts.join(" · ");
+        },
+
+        modalHeaderSaebYearToneClass(index) {
+            return index === 0
+                ? "serv-horizonte-muni-modal__fact--saeb-year-latest"
+                : "serv-horizonte-muni-modal__fact--saeb-year-previous";
         },
 
         shouldShowEnrollmentSeries(m) {
