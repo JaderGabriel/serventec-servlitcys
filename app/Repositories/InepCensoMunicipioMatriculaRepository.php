@@ -9,13 +9,16 @@ use Illuminate\Support\Carbon;
 
 final class InepCensoMunicipioMatriculaRepository
 {
+    /**
+     * @param  array<string, int|null>  $dependenciaBreakdown  Colunas *_municipal / *_nao_municipal por segmento e etapa
+     */
     public function upsert(
         string $ibge,
         int $ano,
         int $matriculasTotal,
         int $escolasContagem = 0,
         string $fonte = 'inep_microdados',
-        ?\Illuminate\Support\Carbon $importedAt = null,
+        ?Carbon $importedAt = null,
         ?int $matriculasMunicipal = null,
         ?int $matriculasNaoMunicipal = null,
         ?int $matriculasRegular = null,
@@ -27,6 +30,7 @@ final class InepCensoMunicipioMatriculaRepository
         ?int $matriculasFundamental2 = null,
         ?int $matriculasMedio = null,
         ?int $matriculasProfissional = null,
+        array $dependenciaBreakdown = [],
     ): void {
         $ibgeNorm = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
         if ($ibgeNorm === null || $ano < 2000) {
@@ -35,25 +39,35 @@ final class InepCensoMunicipioMatriculaRepository
 
         $now = $importedAt ?? now();
 
+        $attributes = [
+            'matriculas_total' => max(0, $matriculasTotal),
+            'matriculas_municipal' => $this->nullablePositive($matriculasMunicipal),
+            'matriculas_nao_municipal' => $this->nullablePositive($matriculasNaoMunicipal),
+            'matriculas_regular' => $this->nullablePositive($matriculasRegular),
+            'matriculas_eja' => $this->nullablePositive($matriculasEja),
+            'matriculas_especial' => $this->nullablePositive($matriculasEspecial),
+            'matriculas_complementar' => $this->nullablePositive($matriculasComplementar),
+            'matriculas_infantil' => $this->nullablePositive($matriculasInfantil),
+            'matriculas_fundamental_1' => $this->nullablePositive($matriculasFundamental1),
+            'matriculas_fundamental_2' => $this->nullablePositive($matriculasFundamental2),
+            'matriculas_medio' => $this->nullablePositive($matriculasMedio),
+            'matriculas_profissional' => $this->nullablePositive($matriculasProfissional),
+            'escolas_contagem' => max(0, $escolasContagem),
+            'fonte' => $fonte,
+            'imported_at' => $now,
+        ];
+
+        foreach ($dependenciaBreakdown as $column => $value) {
+            if (! is_string($column)
+                || (! str_ends_with($column, '_municipal') && ! str_ends_with($column, '_nao_municipal'))) {
+                continue;
+            }
+            $attributes[$column] = $this->nullablePositive(is_numeric($value) ? (int) $value : null);
+        }
+
         InepCensoMunicipioMatricula::query()->updateOrCreate(
             ['ibge_municipio' => $ibgeNorm, 'ano' => $ano],
-            [
-                'matriculas_total' => max(0, $matriculasTotal),
-                'matriculas_municipal' => $matriculasMunicipal !== null ? max(0, $matriculasMunicipal) : null,
-                'matriculas_nao_municipal' => $matriculasNaoMunicipal !== null ? max(0, $matriculasNaoMunicipal) : null,
-                'matriculas_regular' => $matriculasRegular !== null ? max(0, $matriculasRegular) : null,
-                'matriculas_eja' => $matriculasEja !== null ? max(0, $matriculasEja) : null,
-                'matriculas_especial' => $matriculasEspecial !== null ? max(0, $matriculasEspecial) : null,
-                'matriculas_complementar' => $matriculasComplementar !== null ? max(0, $matriculasComplementar) : null,
-                'matriculas_infantil' => $matriculasInfantil !== null ? max(0, $matriculasInfantil) : null,
-                'matriculas_fundamental_1' => $matriculasFundamental1 !== null ? max(0, $matriculasFundamental1) : null,
-                'matriculas_fundamental_2' => $matriculasFundamental2 !== null ? max(0, $matriculasFundamental2) : null,
-                'matriculas_medio' => $matriculasMedio !== null ? max(0, $matriculasMedio) : null,
-                'matriculas_profissional' => $matriculasProfissional !== null ? max(0, $matriculasProfissional) : null,
-                'escolas_contagem' => max(0, $escolasContagem),
-                'fonte' => $fonte,
-                'imported_at' => $now,
-            ],
+            $attributes,
         );
     }
 
@@ -71,5 +85,14 @@ final class InepCensoMunicipioMatriculaRepository
             ->where('ibge_municipio', $ibge)
             ->where('ano', $year)
             ->first();
+    }
+
+    private function nullablePositive(?int $value): ?int
+    {
+        if ($value === null || $value <= 0) {
+            return null;
+        }
+
+        return max(0, $value);
     }
 }

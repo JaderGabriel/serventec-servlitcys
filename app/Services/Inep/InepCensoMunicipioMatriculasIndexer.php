@@ -76,7 +76,7 @@ final class InepCensoMunicipioMatriculasIndexer
             }
         }
 
-        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int, regular: int, eja: int, especial: int, complementar: int, infantil: int, fundamental_1: int, fundamental_2: int, medio: int, profissional: int}> $agg */
+        /** @var array<string, array<string, int>> $agg */
         $agg = [];
 
         while (($row = fgetcsv($fh, 0, $delimiter, '"', '\\')) !== false) {
@@ -101,22 +101,7 @@ final class InepCensoMunicipioMatriculasIndexer
             $complementar = $segments['complementar'];
             $key = $ibge.'|'.$ano;
             if (! isset($agg[$key])) {
-                $agg[$key] = [
-                    'ano' => $ano,
-                    'mat' => 0,
-                    'escolas' => 0,
-                    'municipal' => 0,
-                    'nao_municipal' => 0,
-                    'regular' => 0,
-                    'eja' => 0,
-                    'especial' => 0,
-                    'complementar' => 0,
-                    'infantil' => 0,
-                    'fundamental_1' => 0,
-                    'fundamental_2' => 0,
-                    'medio' => 0,
-                    'profissional' => 0,
-                ];
+                $agg[$key] = $this->emptyAggregateRow($ano);
             }
             $agg[$key]['mat'] += $mat;
             $agg[$key]['regular'] += $regular;
@@ -132,8 +117,10 @@ final class InepCensoMunicipioMatriculasIndexer
             $dep = self::classifyMunicipalDependency($row, $depIdx);
             if ($dep === true) {
                 $agg[$key]['municipal'] += $mat;
+                $this->accumulateDependenciaSlice($agg[$key], $regular, $eja, $especial, $complementar, $etapas, true);
             } elseif ($dep === false) {
                 $agg[$key]['nao_municipal'] += $mat;
+                $this->accumulateDependenciaSlice($agg[$key], $regular, $eja, $especial, $complementar, $etapas, false);
             }
         }
         fclose($fh);
@@ -160,6 +147,7 @@ final class InepCensoMunicipioMatriculasIndexer
                 $data['fundamental_2'] > 0 ? $data['fundamental_2'] : null,
                 $data['medio'] > 0 ? $data['medio'] : null,
                 $data['profissional'] > 0 ? $data['profissional'] : null,
+                $this->dependenciaBreakdownFromAggregate($data),
             );
             $count++;
         }
@@ -228,5 +216,85 @@ final class InepCensoMunicipioMatriculasIndexer
         }
 
         return null;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function emptyAggregateRow(int $ano): array
+    {
+        return [
+            'ano' => $ano,
+            'mat' => 0,
+            'escolas' => 0,
+            'municipal' => 0,
+            'nao_municipal' => 0,
+            'regular' => 0,
+            'eja' => 0,
+            'especial' => 0,
+            'complementar' => 0,
+            'infantil' => 0,
+            'fundamental_1' => 0,
+            'fundamental_2' => 0,
+            'medio' => 0,
+            'profissional' => 0,
+        ];
+    }
+
+    /**
+     * @param  array<string, int>  $bucket
+     * @param  array{infantil: int, fundamental_1: int, fundamental_2: int, medio: int, profissional: int}  $etapas
+     */
+    private function accumulateDependenciaSlice(
+        array &$bucket,
+        int $regular,
+        int $eja,
+        int $especial,
+        int $complementar,
+        array $etapas,
+        bool $municipal,
+    ): void {
+        $suffix = $municipal ? '_municipal' : '_nao_municipal';
+        $bucket['regular'.$suffix] = ($bucket['regular'.$suffix] ?? 0) + $regular;
+        $bucket['eja'.$suffix] = ($bucket['eja'.$suffix] ?? 0) + $eja;
+        $bucket['especial'.$suffix] = ($bucket['especial'.$suffix] ?? 0) + $especial;
+        $bucket['complementar'.$suffix] = ($bucket['complementar'.$suffix] ?? 0) + $complementar;
+        $bucket['infantil'.$suffix] = ($bucket['infantil'.$suffix] ?? 0) + $etapas['infantil'];
+        $bucket['fundamental_1'.$suffix] = ($bucket['fundamental_1'.$suffix] ?? 0) + $etapas['fundamental_1'];
+        $bucket['fundamental_2'.$suffix] = ($bucket['fundamental_2'.$suffix] ?? 0) + $etapas['fundamental_2'];
+        $bucket['medio'.$suffix] = ($bucket['medio'.$suffix] ?? 0) + $etapas['medio'];
+        $bucket['profissional'.$suffix] = ($bucket['profissional'.$suffix] ?? 0) + $etapas['profissional'];
+    }
+
+    /**
+     * @param  array<string, int>  $data
+     * @return array<string, int>
+     */
+    private function dependenciaBreakdownFromAggregate(array $data): array
+    {
+        $map = [
+            'regular' => 'matriculas_regular',
+            'eja' => 'matriculas_eja',
+            'especial' => 'matriculas_especial',
+            'complementar' => 'matriculas_complementar',
+            'infantil' => 'matriculas_infantil',
+            'fundamental_1' => 'matriculas_fundamental_1',
+            'fundamental_2' => 'matriculas_fundamental_2',
+            'medio' => 'matriculas_medio',
+            'profissional' => 'matriculas_profissional',
+        ];
+
+        $breakdown = [];
+        foreach ($map as $short => $base) {
+            foreach (['municipal', 'nao_municipal'] as $slice) {
+                $key = $short.'_'.$slice;
+                $value = (int) ($data[$key] ?? 0);
+                if ($value > 0) {
+                    $breakdown[$base.'_'.$slice] = $value;
+                }
+            }
+        }
+
+        return $breakdown;
     }
 }

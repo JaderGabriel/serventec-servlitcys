@@ -1831,6 +1831,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         enrollmentSeriesFootnote: "",
         enrollmentSeriesReady: false,
         enrollmentSeriesIbge: "",
+        enrollmentSeriesDependencia: "total",
+        enrollmentSeriesDependenciaOptions: [
+            { value: "total", label: "Total" },
+            { value: "municipal", label: "Municipal" },
+            { value: "nao_municipal", label: "Não municipal" },
+        ],
+        _enrollmentSeriesLoadedDependencia: "",
         enrollmentSeriesStageCounters: [],
         enrollmentSeriesStageYear: null,
         _enrollmentSeriesChart: null,
@@ -5003,13 +5010,36 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         enrollmentSeriesUrlFor(ibge) {
-            return this.enrollmentSeriesUrl.replace(
+            const url = this.enrollmentSeriesUrl.replace(
                 "__IBGE__",
                 encodeURIComponent(String(ibge)),
             );
+            const params = new URLSearchParams();
+            if (this.enrollmentSeriesDependencia && this.enrollmentSeriesDependencia !== "total") {
+                params.set("dependencia", this.enrollmentSeriesDependencia);
+            }
+            const query = params.toString();
+
+            return query ? `${url}?${query}` : url;
         },
 
-        destroyEnrollmentSeriesChart() {
+        setEnrollmentSeriesDependencia(value) {
+            const next = String(value ?? "total");
+            if (
+                next === this.enrollmentSeriesDependencia &&
+                this.enrollmentSeriesReady
+            ) {
+                return;
+            }
+            this.enrollmentSeriesDependencia = next;
+            if (this.active && this.shouldShowEnrollmentSeries(this.active)) {
+                this._enrollmentSeriesLoadedDependencia = "";
+                this.clearEnrollmentSeriesVisual();
+                void this.loadEnrollmentSeries(this.active);
+            }
+        },
+
+        clearEnrollmentSeriesVisual() {
             if (this._enrollmentSeriesAbort) {
                 this._enrollmentSeriesAbort.abort();
                 this._enrollmentSeriesAbort = null;
@@ -5024,7 +5054,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesStageCounters = [];
             this.enrollmentSeriesStageYear = null;
             this.enrollmentSeriesLoading = false;
+        },
+
+        destroyEnrollmentSeriesChart() {
+            this.clearEnrollmentSeriesVisual();
             this.enrollmentSeriesIbge = "";
+            this._enrollmentSeriesLoadedDependencia = "";
+            this.enrollmentSeriesDependencia = "total";
         },
 
         async loadEnrollmentSeries(m) {
@@ -5037,20 +5073,30 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!ibge) {
                 return;
             }
+            const dependencia = this.enrollmentSeriesDependencia || "total";
             if (
                 ibge === this.enrollmentSeriesIbge &&
+                dependencia === this._enrollmentSeriesLoadedDependencia &&
                 (this.enrollmentSeriesReady || this.enrollmentSeriesLoading)
             ) {
                 return;
             }
 
-            this.destroyEnrollmentSeriesChart();
+            if (
+                this.enrollmentSeriesIbge !== "" &&
+                ibge !== this.enrollmentSeriesIbge
+            ) {
+                this.enrollmentSeriesDependencia = "total";
+            }
+
+            this.clearEnrollmentSeriesVisual();
             this.enrollmentSeriesIbge = ibge;
             this.enrollmentSeriesLoading = true;
             this.enrollmentSeriesError = null;
 
             const controller = new AbortController();
             this._enrollmentSeriesAbort = controller;
+            const requestedDependencia = this.enrollmentSeriesDependencia || "total";
 
             try {
                 const res = await fetch(this.enrollmentSeriesUrlFor(ibge), {
@@ -5076,6 +5122,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 await this.$nextTick();
                 this.renderEnrollmentSeriesChart(data.chart);
                 this.enrollmentSeriesReady = true;
+                this._enrollmentSeriesLoadedDependencia = requestedDependencia;
             } catch (error) {
                 if (error?.name !== "AbortError") {
                     this.enrollmentSeriesError =

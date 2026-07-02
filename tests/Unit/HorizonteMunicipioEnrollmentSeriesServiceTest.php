@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\City;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
+use App\Support\Horizonte\HorizonteEnrollmentDependenciaScope;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -85,6 +86,31 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
         $this->assertSame(2022, $result['stage_counters']['ano']);
         $this->assertCount(5, $result['stage_counters']['items']);
         $this->assertSame(1500, $result['stage_counters']['items'][0]['value']);
+    }
+
+    #[Test]
+    public function filtra_serie_pela_rede_municipal(): void
+    {
+        InepCensoMunicipioMatricula::query()->create([
+            'ibge_municipio' => '2927408',
+            'ano' => 2024,
+            'matriculas_total' => 10000,
+            'matriculas_municipal' => 4200,
+            'matriculas_nao_municipal' => 5800,
+            'matriculas_regular' => 8000,
+            'matriculas_regular_municipal' => 3000,
+            'matriculas_regular_nao_municipal' => 5000,
+            'matriculas_infantil' => 1500,
+            'matriculas_infantil_municipal' => 600,
+            'matriculas_infantil_nao_municipal' => 900,
+        ]);
+
+        $result = $this->service->forIbge('2927408', 1, HorizonteEnrollmentDependenciaScope::MUNICIPAL);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame('municipal', $result['dependencia']);
+        $this->assertSame(4200.0, $result['chart']['datasets'][0]['data'][0]);
+        $this->assertSame(600, $result['stage_counters']['items'][0]['value']);
     }
 
     #[Test]

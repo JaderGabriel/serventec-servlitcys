@@ -9,6 +9,8 @@
 1. **Contadores por etapa no gráfico Horizonte** — abaixo da legenda, totais do ano Educacenso mais recente: educação infantil, Fundamental I/II, ensino médio e educação profissional.
 2. **Indexação INEP** — novas colunas em `inep_censo_municipio_matriculas` (`qt_mat_inf`, `qt_mat_fund_ai`, `qt_mat_fund_af`, `qt_mat_med`, `qt_mat_prof`).
 3. **Correção de agregação** — evita dupla contagem entre `qt_mat_bas` e infantil/fundamental/médio na indexação municipal.
+4. **Filtro por dependência (v1)** — gráfico e contadores por etapa com recorte **Total / Municipal / Não municipal** (`?dependencia=`).
+5. **Roadmap v2** — breakdown federal, estadual, municipal e privada com comparação ao total no mesmo gráfico.
 
 ---
 
@@ -26,7 +28,7 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 
 ```bash
 php artisan horizonte:fortnightly-feed --phase=educacenso --reset
-# Repetir até concluir a janela de 5 anos
+# Repetir até concluir a janela de 5 anos (necessário também após migration 2026_07_02_140000 — filtro por dependência)
 ```
 
 ---

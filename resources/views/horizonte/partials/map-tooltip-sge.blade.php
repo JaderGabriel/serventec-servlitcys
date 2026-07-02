@@ -106,6 +106,23 @@
                         class="serv-horizonte-muni-tooltip__enrollment-series-status"
                     >{{ __('A carregar…') }}</span>
                 </div>
+                <div
+                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-filters"
+                    role="group"
+                    :aria-label="@js(__('Recorte por dependência administrativa'))"
+                >
+                    <template x-for="option in enrollmentSeriesDependenciaOptions" :key="option.value">
+                        <button
+                            type="button"
+                            class="serv-horizonte-muni-tooltip__enrollment-series-filter"
+                            :class="{ 'is-active': enrollmentSeriesDependencia === option.value }"
+                            :aria-pressed="enrollmentSeriesDependencia === option.value"
+                            @click.stop="setEnrollmentSeriesDependencia(option.value)"
+                            x-text="option.label"
+                        ></button>
+                    </template>
+                </div>
                 <p
                     x-show="enrollmentSeriesError"
                     x-text="enrollmentSeriesError"

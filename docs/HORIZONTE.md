@@ -149,9 +149,12 @@ Secção no modal municipal **apenas para municípios sem Consultoria activa** (
 | **Carregamento** | Lazy — `GET /dashboard/horizonte/municipality/{ibge}/enrollment-series` ao abrir o modal |
 | **Anos** | Últimos **N** anos consecutivos do Educacenso (default **5**), terminando no ano mais recente indexado nacionalmente; lacunas municipais aparecem sem ponto |
 | **Linhas** | Total · Regular · EJA · Educação especial · Complementar / integral |
+| **Filtro v1 (dependência)** | Três modos no modal: **Total** (todas as redes no território) · **Municipal** (`tp_dependencia = 3`) · **Não municipal** (federal + estadual + privada). Query `?dependencia=total|municipal|nao_municipal` em `enrollment-series`. Gráfico e contadores por etapa seguem o recorte activo. |
 | **Contadores por etapa** | Abaixo da legenda do gráfico: totais do ano mais recente indexado — infantil (`qt_mat_inf`), Fundamental I (`qt_mat_fund_ai`), Fundamental II (`qt_mat_fund_af`), ensino médio (`qt_mat_med`), educação profissional (`qt_mat_prof`) |
 | **Segmentos** | Colunas `matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar` — preenchidas na reindexação Censo; sem elas aparece só **Total** + nota para reimportar |
 | **Etapas no BD** | `matriculas_infantil`, `matriculas_fundamental_1`, `matriculas_fundamental_2`, `matriculas_medio`, `matriculas_profissional` — migration `2026_07_02_120000`; requer reimportação Educacenso |
+| **Breakdown por dependência** | Para cada segmento/etapa: colunas `*_municipal` e `*_nao_municipal` (migration `2026_07_02_140000`) — alimentam o filtro v1 |
+| **Roadmap v2** | Séries comparáveis por dependência INEP individual (federal, estadual, municipal, privada) e modo «comparar com total» no mesmo gráfico |
 
 **Reindexar após deploy** (migration + microdados INEP):
 

@@ -90,7 +90,11 @@ class HorizonteController extends Controller
         abort_unless($user !== null && $user->canViewHorizonte(), 403);
         abort_unless((bool) config('horizonte.enabled', true), 404);
 
-        $result = $this->enrollmentSeries->forIbge($ibge);
+        $result = $this->enrollmentSeries->forIbge(
+            $ibge,
+            null,
+            $request->query('dependencia'),
+        );
         if (! ($result['ok'] ?? false)) {
             $status = (int) ($result['status'] ?? 404);
 

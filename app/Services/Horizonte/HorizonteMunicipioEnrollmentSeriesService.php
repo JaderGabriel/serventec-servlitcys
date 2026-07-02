@@ -7,6 +7,7 @@ use App\Models\InepCensoMunicipioMatricula;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Support\Dashboard\ChartPayload;
 use App\Support\Horizonte\HorizonteEducacensoYearWindow;
+use App\Support\Horizonte\HorizonteEnrollmentDependenciaScope;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -22,13 +23,15 @@ final class HorizonteMunicipioEnrollmentSeriesService
      *     message?: string,
      *     ibge?: string,
      *     fonte?: string,
+     *     dependencia?: string,
+     *     dependencia_label?: string,
      *     has_segments?: bool,
      *     footnote?: string,
      *     stage_counters?: array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null,
      *     chart?: array<string, mixed>
      * }
      */
-    public function forIbge(string $ibgeRaw, ?int $years = null): array
+    public function forIbge(string $ibgeRaw, ?int $years = null, ?string $dependencia = null): array
     {
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($ibgeRaw);
         if ($ibge === null) {
@@ -55,6 +58,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             ];
         }
 
+        $dependenciaScope = HorizonteEnrollmentDependenciaScope::normalize($dependencia);
         $limit = max(2, min(10, $years ?? (int) config('horizonte.enrollment_series.years', 5)));
         $targetYears = HorizonteEducacensoYearWindow::years($limit);
 
@@ -64,7 +68,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             ->get()
             ->keyBy(static fn (InepCensoMunicipioMatricula $row): int => (int) $row->ano);
 
-        if (! $this->municipalityHasAnyEnrollmentInWindow($rowsByYear, $targetYears)) {
+        if (! $this->municipalityHasAnyEnrollmentInWindow($rowsByYear, $targetYears, $dependenciaScope)) {
             return [
                 'ok' => false,
                 'status' => 404,
@@ -73,20 +77,15 @@ final class HorizonteMunicipioEnrollmentSeriesService
         }
 
         $labels = array_map(static fn (int $year): string => (string) $year, $targetYears);
-
-        $seriesDefs = [
-            ['key' => 'total', 'label' => __('Total'), 'column' => 'matriculas_total'],
-            ['key' => 'regular', 'label' => __('Regular'), 'column' => 'matriculas_regular'],
-            ['key' => 'eja', 'label' => __('EJA'), 'column' => 'matriculas_eja'],
-            ['key' => 'especial', 'label' => __('Educação especial'), 'column' => 'matriculas_especial'],
-            ['key' => 'complementar', 'label' => __('Complementar / integral'), 'column' => 'matriculas_complementar'],
-        ];
+        $seriesDefs = HorizonteEnrollmentDependenciaScope::seriesDefinitions();
 
         $series = [];
         $hasSegments = false;
         $missingYears = [];
+        $totalColumn = HorizonteEnrollmentDependenciaScope::column('matriculas_total', $dependenciaScope);
 
         foreach ($seriesDefs as $def) {
+            $column = HorizonteEnrollmentDependenciaScope::column($def['base_column'], $dependenciaScope);
             $values = [];
             $hasAny = false;
             foreach ($targetYears as $year) {
@@ -95,7 +94,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
                 if ($row === null && $def['key'] === 'total') {
                     $missingYears[$year] = true;
                 }
-                $val = $row !== null ? (int) ($row->{$def['column']} ?? 0) : 0;
+                $val = $row !== null ? (int) ($row->{$column} ?? 0) : 0;
                 if ($def['key'] !== 'total' && $val > 0) {
                     $hasSegments = true;
                 }
@@ -112,8 +111,12 @@ final class HorizonteMunicipioEnrollmentSeriesService
             }
         }
 
+        $chartTitle = $dependenciaScope === HorizonteEnrollmentDependenciaScope::TOTAL
+            ? __('Matrículas — Censo INEP')
+            : __('Matrículas — Censo INEP (:rede)', ['rede' => HorizonteEnrollmentDependenciaScope::shortLabel($dependenciaScope)]);
+
         $chart = ChartPayload::lineMulti(
-            __('Matrículas — Censo INEP'),
+            $chartTitle,
             $labels,
             $series,
             [
@@ -126,13 +129,15 @@ final class HorizonteMunicipioEnrollmentSeriesService
             preserveNull: true,
         );
 
-        $footnote = $this->buildFootnote($hasSegments, $missingYears, $targetYears);
-        $stageCounters = $this->buildStageCounters($rowsByYear, $targetYears);
+        $footnote = $this->buildFootnote($hasSegments, $missingYears, $targetYears, $dependenciaScope, $totalColumn);
+        $stageCounters = $this->buildStageCounters($rowsByYear, $targetYears, $dependenciaScope);
 
         return [
             'ok' => true,
             'ibge' => $ibge,
             'fonte' => 'censo_inep',
+            'dependencia' => $dependenciaScope,
+            'dependencia_label' => HorizonteEnrollmentDependenciaScope::label($dependenciaScope),
             'has_segments' => $hasSegments,
             'footnote' => $footnote,
             'stage_counters' => $stageCounters,
@@ -144,11 +149,12 @@ final class HorizonteMunicipioEnrollmentSeriesService
      * @param  Collection<int, InepCensoMunicipioMatricula>  $rowsByYear
      * @param  list<int>  $targetYears
      */
-    private function municipalityHasAnyEnrollmentInWindow(Collection $rowsByYear, array $targetYears): bool
+    private function municipalityHasAnyEnrollmentInWindow(Collection $rowsByYear, array $targetYears, string $dependenciaScope): bool
     {
+        $totalColumn = HorizonteEnrollmentDependenciaScope::column('matriculas_total', $dependenciaScope);
         foreach ($targetYears as $year) {
             $row = $rowsByYear->get($year);
-            if ($row !== null && (int) $row->matriculas_total > 0) {
+            if ($row !== null && (int) ($row->{$totalColumn} ?? 0) > 0) {
                 return true;
             }
         }
@@ -160,14 +166,25 @@ final class HorizonteMunicipioEnrollmentSeriesService
      * @param  array<int, true>  $missingYears
      * @param  list<int>  $targetYears
      */
-    private function buildFootnote(bool $hasSegments, array $missingYears, array $targetYears): string
-    {
+    private function buildFootnote(
+        bool $hasSegments,
+        array $missingYears,
+        array $targetYears,
+        string $dependenciaScope,
+        string $totalColumn,
+    ): string {
         $parts = [];
 
+        $parts[] = HorizonteEnrollmentDependenciaScope::label($dependenciaScope).'.';
+
         if ($hasSegments) {
-            $parts[] = __('Fonte: microdados Censo INEP (Educacenso), agregado por município.');
+            $parts[] = __('Fonte: microdados Censo INEP (Educacenso), agregado por município e tp_dependencia.');
         } else {
-            $parts[] = __('Fonte: Censo INEP (total municipal). Reimporte o Censo para ver EJA, educação especial, regular e complementar.');
+            $parts[] = __('Segmentos indisponíveis para este recorte — reimporte com horizonte:fortnightly-feed --phase=educacenso.');
+        }
+
+        if ($dependenciaScope !== HorizonteEnrollmentDependenciaScope::TOTAL && ! $this->columnExists($totalColumn)) {
+            $parts[] = __('Recorte por dependência requer reindexação Educacenso após a migration de breakdown.');
         }
 
         if ($missingYears !== []) {
@@ -186,13 +203,13 @@ final class HorizonteMunicipioEnrollmentSeriesService
      * @param  list<int>  $targetYears
      * @return array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null
      */
-    private function buildStageCounters(Collection $rowsByYear, array $targetYears): ?array
+    private function buildStageCounters(Collection $rowsByYear, array $targetYears, string $dependenciaScope): ?array
     {
         $latestRow = null;
         foreach (array_reverse($targetYears) as $year) {
             /** @var InepCensoMunicipioMatricula|null $row */
             $row = $rowsByYear->get($year);
-            if ($row !== null && $this->rowHasStageCounters($row)) {
+            if ($row !== null && $this->rowHasStageCounters($row, $dependenciaScope)) {
                 $latestRow = $row;
                 break;
             }
@@ -202,17 +219,10 @@ final class HorizonteMunicipioEnrollmentSeriesService
             return null;
         }
 
-        $defs = [
-            ['key' => 'infantil', 'label' => __('Educação infantil'), 'column' => 'matriculas_infantil'],
-            ['key' => 'fundamental_1', 'label' => __('Fundamental I'), 'column' => 'matriculas_fundamental_1'],
-            ['key' => 'fundamental_2', 'label' => __('Fundamental II'), 'column' => 'matriculas_fundamental_2'],
-            ['key' => 'medio', 'label' => __('Ensino médio'), 'column' => 'matriculas_medio'],
-            ['key' => 'profissional', 'label' => __('Educação profissional'), 'column' => 'matriculas_profissional'],
-        ];
-
         $items = [];
-        foreach ($defs as $def) {
-            $value = (int) ($latestRow->{$def['column']} ?? 0);
+        foreach (HorizonteEnrollmentDependenciaScope::stageDefinitions() as $def) {
+            $column = HorizonteEnrollmentDependenciaScope::column($def['base_column'], $dependenciaScope);
+            $value = (int) ($latestRow->{$column} ?? 0);
             $items[] = [
                 'key' => $def['key'],
                 'label' => $def['label'],
@@ -226,21 +236,21 @@ final class HorizonteMunicipioEnrollmentSeriesService
         ];
     }
 
-    private function rowHasStageCounters(InepCensoMunicipioMatricula $row): bool
+    private function rowHasStageCounters(InepCensoMunicipioMatricula $row, string $dependenciaScope): bool
     {
-        foreach ([
-            'matriculas_infantil',
-            'matriculas_fundamental_1',
-            'matriculas_fundamental_2',
-            'matriculas_medio',
-            'matriculas_profissional',
-        ] as $column) {
+        foreach (HorizonteEnrollmentDependenciaScope::stageDefinitions() as $def) {
+            $column = HorizonteEnrollmentDependenciaScope::column($def['base_column'], $dependenciaScope);
             if ((int) ($row->{$column} ?? 0) > 0) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private function columnExists(string $column): bool
+    {
+        return Schema::hasColumn('inep_censo_municipio_matriculas', $column);
     }
 
     private function isConsultoriaActive(string $ibge): bool
