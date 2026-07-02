@@ -950,6 +950,7 @@ final class HorizonteMapService
                 'fundeb_receita_total' => $fundeb['receita_total'] ?? null,
                 'fundeb_ano' => $fundeb['ano'] ?? null,
                 'fundeb_matriculas_base' => $fundeb['matriculas_base'] ?? null,
+                'fundeb_matriculas_fonte' => $fundeb['matriculas_fonte'] ?? null,
                 'fundeb_realtime_ano' => $fundebRealtime['ano'] ?? null,
                 'fundeb_realtime_observed' => $fundebRealtime['observed'] ?? null,
                 'fundeb_realtime_expected' => $fundebRealtime['expected'] ?? null,
@@ -972,6 +973,7 @@ final class HorizonteMapService
                 'fundeb_realtime_base_mat_vaaf' => $fundebRealtime['portaria_base_mat_vaaf'] ?? null,
                 'fundeb_realtime_vaaf' => $fundebRealtime['portaria_vaaf'] ?? null,
                 'fundeb_realtime_matriculas' => $fundebRealtime['portaria_matriculas'] ?? null,
+                'fundeb_realtime_matriculas_fonte' => $fundebRealtime['portaria_matriculas_fonte'] ?? null,
                 'fundeb_realtime_portaria_adjustments' => $fundebRealtime['portaria_adjustments'] ?? [],
                 'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
@@ -1136,6 +1138,7 @@ final class HorizonteMapService
      *     complementacao_vaar: ?float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
+     *     matriculas_fonte: ?string,
      *     vaaf: ?float,
      *     ano: int
      * }>
@@ -1161,6 +1164,9 @@ final class HorizonteMapService
                 'complementacao_vaar' => $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
                 'receita_total' => $row->receita_total !== null ? (float) $row->receita_total : null,
                 'matriculas_base' => $row->matriculas_base !== null ? (int) $row->matriculas_base : null,
+                'matriculas_fonte' => is_string($row->matriculas_fonte) && trim($row->matriculas_fonte) !== ''
+                    ? trim($row->matriculas_fonte)
+                    : null,
                 'vaaf' => $row->vaaf !== null ? (float) $row->vaaf : null,
                 'ano' => (int) $row->ano,
             ];

@@ -61,6 +61,35 @@ final class HorizonteFundebRepasseOutlookTest extends TestCase
         $this->assertSame(3, $pack['last_transfer_month']);
         $this->assertSame('mar/'.$currentYear, $pack['last_transfer_label']);
         $this->assertSame(100000.0, $pack['portaria_receita']);
+        $this->assertSame(20, $pack['portaria_matriculas']);
         $this->assertNotEmpty($pack['outlook_detail']);
+    }
+
+    #[Test]
+    public function matriculas_portaria_nao_usa_censo_como_fallback(): void
+    {
+        $currentYear = HorizonteFundebRepasseOutlook::currentYear();
+        $method = new ReflectionMethod(HorizonteFundebRepasseOutlook::class, 'buildForIbge');
+
+        $pack = $method->invoke(
+            new HorizonteFundebRepasseOutlook,
+            '2921500',
+            $currentYear,
+            [
+                'complementacao_total' => 0.0,
+                'receita_total' => 100000.0,
+                'matriculas_base' => null,
+                'matriculas_fonte' => null,
+                'vaaf' => 5000.0,
+                'ano' => $currentYear,
+            ],
+            null,
+            ['matriculas_total' => 999, 'ano' => $currentYear - 1],
+            ['observed' => 1000.0, 'rows' => []],
+        );
+
+        $this->assertNotNull($pack);
+        $this->assertNull($pack['portaria_matriculas']);
+        $this->assertSame(100000.0, $pack['expected']);
     }
 }

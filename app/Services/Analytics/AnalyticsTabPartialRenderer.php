@@ -17,6 +17,7 @@ use App\Repositories\Ieducar\PerformanceRepository;
 use App\Repositories\Ieducar\SchoolUnitsRepository;
 use App\Repositories\Ieducar\WorkDoneRepository;
 use App\Services\Analytics\AnalyticsReportExportService;
+use App\Services\Educacenso\EducacensoAnalysisCache;
 use App\Services\Ieducar\FilterOptionsService;
 use App\Support\Dashboard\AnalyticsEmptyPayloads;
 use App\Support\Dashboard\AnalyticsFinanceTabPreload;
@@ -28,6 +29,7 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\MunicipalityHealthSections;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\IeducarAnalyticsMetricsScope;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -474,5 +476,17 @@ final class AnalyticsTabPartialRenderer
             $fundingSnapshot,
             is_array($overviewData) ? $overviewData : [],
         );
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveEducacensoAnalysis(?Authenticatable $user, ?City $city): ?array
+    {
+        if ($user === null || ! $city instanceof City || ! $user instanceof \App\Models\User) {
+            return null;
+        }
+
+        return EducacensoAnalysisCache::get($user, $city);
     }
 }

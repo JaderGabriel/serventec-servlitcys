@@ -25,6 +25,7 @@ final class HorizonteFundebRepasseOutlook
      *     complementacao_total: float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
+     *     matriculas_fonte: ?string,
      *     vaaf: ?float,
      *     ano: int
      * }>  $fundebRefYearByIbge
@@ -32,6 +33,7 @@ final class HorizonteFundebRepasseOutlook
      *     complementacao_total: float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
+     *     matriculas_fonte: ?string,
      *     vaaf: ?float,
      *     ano: int
      * }>  $fundebCurrentYearByIbge
@@ -56,6 +58,7 @@ final class HorizonteFundebRepasseOutlook
      *     portaria_base_mat_vaaf: ?float,
      *     portaria_vaaf: ?float,
      *     portaria_matriculas: ?int,
+     *     portaria_matriculas_fonte: ?string,
      *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
      *     portaria_adjustments_note: ?string,
      *     expected_source: string
@@ -104,6 +107,7 @@ final class HorizonteFundebRepasseOutlook
      *     complementacao_total: float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
+     *     matriculas_fonte: ?string,
      *     vaaf: ?float,
      *     ano: int
      * }|null  $fundebCurrent
@@ -111,6 +115,7 @@ final class HorizonteFundebRepasseOutlook
      *     complementacao_total: float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
+     *     matriculas_fonte: ?string,
      *     vaaf: ?float,
      *     ano: int
      * }|null  $fundebRef
@@ -136,6 +141,7 @@ final class HorizonteFundebRepasseOutlook
      *     portaria_base_mat_vaaf: ?float,
      *     portaria_vaaf: ?float,
      *     portaria_matriculas: ?int,
+     *     portaria_matriculas_fonte: ?string,
      *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
      *     portaria_adjustments_note: ?string,
      *     expected_source: string
@@ -149,7 +155,20 @@ final class HorizonteFundebRepasseOutlook
         ?array $censo,
         ?array $observedPack,
     ): ?array {
-        $matriculas = (int) ($fundebCurrent['matriculas_base'] ?? 0);
+        $matriculasPortaria = (int) ($fundebCurrent['matriculas_base'] ?? 0);
+        $matriculasFonte = isset($fundebCurrent['matriculas_fonte'])
+            ? (string) $fundebCurrent['matriculas_fonte']
+            : null;
+        if ($matriculasPortaria <= 0 && $fundebRef !== null) {
+            $matriculasPortaria = (int) ($fundebRef['matriculas_base'] ?? 0);
+            if ($matriculasFonte === null || trim($matriculasFonte) === '') {
+                $matriculasFonte = isset($fundebRef['matriculas_fonte'])
+                    ? (string) $fundebRef['matriculas_fonte']
+                    : null;
+            }
+        }
+
+        $matriculas = $matriculasPortaria;
         if ($matriculas <= 0) {
             $matriculas = (int) ($censo['matriculas_total'] ?? 0);
         }
@@ -217,7 +236,10 @@ final class HorizonteFundebRepasseOutlook
             'portaria_total_previsto' => $portariaTotal > 0 ? $portariaTotal : null,
             'portaria_base_mat_vaaf' => $baseMatVaaf > 0 ? $baseMatVaaf : null,
             'portaria_vaaf' => $vaaf > 0 ? $vaaf : null,
-            'portaria_matriculas' => $matriculas > 0 ? $matriculas : null,
+            'portaria_matriculas' => $matriculasPortaria > 0 ? $matriculasPortaria : null,
+            'portaria_matriculas_fonte' => is_string($matriculasFonte) && trim($matriculasFonte) !== ''
+                ? trim($matriculasFonte)
+                : null,
             'portaria_adjustments' => $expectation['adjustments'] ?? [],
             'portaria_adjustments_note' => $expectation['adjustments_note'] ?? null,
             'expected_source' => (string) ($expectation['source'] ?? 'matricula_vaaf'),

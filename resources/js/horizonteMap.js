@@ -710,26 +710,63 @@ function fundebRealtimeExpectedDesc(m) {
     return "Estimativa por matrículas × VAAF (sem portaria de receita)";
 }
 
+function fundebMatriculasFonteLabel(fonte) {
+    const key = String(fonte ?? "").trim().toLowerCase();
+    if (key === "ieducar") {
+        return "Base FNDE no i-Educar (matrículas ativas)";
+    }
+    if (key === "censo_inep" || key.includes("censo")) {
+        return "Base FNDE no Censo INEP (quando não há i-Educar)";
+    }
+    if (key !== "") {
+        return `Base FNDE (${key})`;
+    }
+    return "Base de matrículas usada na portaria FNDE para o VAAF municipal";
+}
+
 function fundebRealtimePortariaBreakdownHtml(m) {
     const receita = m.fundeb_realtime_portaria_receita;
-    const complTotal = m.fundeb_realtime_portaria_complementacao_total;
-    const totalPrevisto = m.fundeb_realtime_portaria_total_previsto ?? m.fundeb_realtime_expected;
     const baseMat = m.fundeb_realtime_base_mat_vaaf;
     const vaaf = m.fundeb_realtime_vaaf;
     const matriculas = m.fundeb_realtime_matriculas;
+    const matriculasFonte = m.fundeb_realtime_matriculas_fonte;
     const expectedSource = String(m.fundeb_realtime_expected_source ?? "");
-    const adjustments = Array.isArray(m.fundeb_realtime_portaria_adjustments)
-        ? m.fundeb_realtime_portaria_adjustments
-        : [];
-    const note = String(m.fundeb_realtime_portaria_note ?? "").trim();
+    const receitaVinculada =
+        receita != null && Number(receita) > 0
+            ? Number(receita)
+            : baseMat != null && Number(baseMat) > 0
+              ? Number(baseMat)
+              : null;
 
     const rows = [];
+    if (matriculas != null && Number(matriculas) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Matrículas base")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebMatriculasFonteLabel(matriculasFonte))}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(nf(matriculas))}</span>` +
+                `</div>`,
+        );
+    }
+    if (vaaf != null && Number(vaaf) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF municipal")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor por aluno/ano do ente municipal na portaria")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatVaafPerStudent(vaaf)}</span>` +
+                `</div>`,
+        );
+    }
     if (receita != null && Number(receita) > 0) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita vinculada")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("FUNDEB municipal na portaria (sem complementação federal)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("ICMS, ISS e demais receitas vinculadas à educação do município")}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(receita)}</span>` +
                 `</div>`,
@@ -738,71 +775,21 @@ function fundebRealtimePortariaBreakdownHtml(m) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Base FUNDEB")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Matrículas × VAAF (sem portaria de receita)")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Estimativa vinculada")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Matrículas base × VAAF (sem receita total na portaria)")}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(baseMat)}</span>` +
                 `</div>`,
         );
     }
-    if (vaaf != null && Number(vaaf) > 0) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor aluno/ano (referência FNDE)")}</span>` +
-                `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatVaafPerStudent(vaaf)}</span>` +
-                `</div>`,
-        );
-    }
-    if (matriculas != null && Number(matriculas) > 0) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Matrículas base")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(expectedSource === "portaria_receita" ? "Base FNDE usada na portaria" : "Base para cálculo matrículas × VAAF")}</span>` +
-                `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(nf(matriculas))}</span>` +
-                `</div>`,
-        );
-    }
-    for (const adj of adjustments) {
-        const label = String(adj?.label ?? "").trim();
-        const valueFmt = String(adj?.value_fmt ?? "").trim();
-        const value = adj?.value;
-        if (!label) {
-            continue;
-        }
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(label)}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Complementação federal (portaria FNDE)")}</span>` +
-                `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(valueFmt || (value != null ? formatCurrencyBrl(value) : "—"))}</span>` +
-                `</div>`,
-        );
-    }
-    if (complTotal != null && Number(complTotal) > 0 && adjustments.length === 0) {
-        rows.push(
-            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
-                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Complementação federal")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("VAAF + VAAT + VAAR (portaria FNDE)")}</span>` +
-                `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(complTotal)}</span>` +
-                `</div>`,
-        );
-    }
-    if (totalPrevisto != null && Number(totalPrevisto) > 0 && receita != null && Number(receita) > 0) {
+    if (receitaVinculada != null && receitaVinculada > 0) {
         rows.push(
             `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Total previsto portaria")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Referência para comparar com o Tesouro")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita vinculada prevista")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(expectedSource === "portaria_receita" ? "Parcela do ente municipal na portaria FNDE" : "Estimativa da parcela municipal (sem complementação federal)")}</span>` +
                 `</div>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(totalPrevisto)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(receitaVinculada)}</span>` +
                 `</div>`,
         );
     }
@@ -813,11 +800,31 @@ function fundebRealtimePortariaBreakdownHtml(m) {
 
     return (
         `<div class="serv-horizonte-muni-tooltip__fundeb-subsection">` +
-        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-title">${escapeHtml("Composição do previsto (portaria FNDE)")}</p>` +
+        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-title">${escapeHtml("Composição da receita vinculada (ente municipal)")}</p>` +
         `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
-        (note
-            ? `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml(note)}</p>`
-            : `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml("A receita vinculada é só a parcela municipal. As complementações federais entram à parte e formam, com ela, o total usado na barra de acompanhamento.")}</p>`) +
+        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml("Só a parcela municipal (receita vinculada). A complementação federal (VAAF, VAAT, VAAR) não entra aqui — aparece no exercício de referência e no tecto total usado na barra de acompanhamento.")}</p>` +
+        `</div>`
+    );
+}
+
+function fundebRealtimePortariaTectoTotalHtml(m) {
+    const expected = m.fundeb_realtime_expected;
+    const receita = m.fundeb_realtime_portaria_receita;
+    const complTotal = m.fundeb_realtime_portaria_complementacao_total;
+    const hasExpected = expected != null && Number(expected) > 0;
+    const hasCompl = complTotal != null && Number(complTotal) > 0;
+    const hasReceita = receita != null && Number(receita) > 0;
+    if (!hasExpected || !hasCompl || !hasReceita) {
+        return "";
+    }
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__fundeb-row serv-horizonte-muni-tooltip__fundeb-row--highlight">` +
+            `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Tecto total FUNDEB (portaria)")}</span>` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Receita vinculada + complementação federal — referência da barra «Recebido do previsto»")}</span>` +
+            `</div>` +
+            `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--emph">${formatCurrencyBrl(expected)}</span>` +
         `</div>`
     );
 }
@@ -853,6 +860,7 @@ function fundebRealtimeHtml(m, currentYear) {
     const pctLabel = pctDone != null ? formatPercentValue(pctDone) : "—";
 
     const portariaBreakdown = fundebRealtimePortariaBreakdownHtml(m);
+    const portariaTectoTotal = fundebRealtimePortariaTectoTotalHtml(m);
     const showPortariaDetail = portariaBreakdown !== "";
 
     const rows = [];
@@ -926,6 +934,12 @@ function fundebRealtimeHtml(m, currentYear) {
               `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
               `</div>`
             : "";
+    const portariaTectoBlock =
+        portariaTectoTotal !== ""
+            ? `<div class="serv-horizonte-muni-tooltip__fundeb-subsection serv-horizonte-muni-tooltip__fundeb-subsection--tecto">` +
+              `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${portariaTectoTotal}</div>` +
+              `</div>`
+            : "";
 
     return financeSectionShell(
         "realtime",
@@ -935,6 +949,7 @@ function fundebRealtimeHtml(m, currentYear) {
         HORIZONTE_FINANCE_ICONS.realtime,
         `<p class="serv-horizonte-muni-tooltip__finance-step-lead">${escapeHtml("Compara o que a portaria FNDE prevê para o exercício em curso com o que o Tesouro já transferiu — valores parciais do ano (YTD).")}</p>` +
             portariaBreakdown +
+            portariaTectoBlock +
             ckanBlock +
             progress +
             financeNoteHtml(
