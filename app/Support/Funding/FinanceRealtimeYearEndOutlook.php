@@ -136,14 +136,14 @@ final class FinanceRealtimeYearEndOutlook
 
             return [
                 'outlook' => 'risk',
-                'label' => __('Risco de déficit'),
-                'detail' => __('Ao ritmo actual dos repasses CKAN, a projeção até dezembro (:proj) fica :falta abaixo da previsão anual da portaria (:need). O saldo a repassar (:saldo) indica quanto ainda falta, à luz da portaria.', [
-                    'proj' => $fmt($projectedRepass),
+                'label' => __('Repasse abaixo do previsto'),
+                'detail' => __('Se o ritmo actual do Tesouro se mantiver, o município deve receber cerca de :falta a menos do que a portaria FNDE prevê para o ano (:need). Já entrou :obs; ainda faltam :saldo para fechar o previsto.', [
                     'falta' => $fmt($shortfall),
                     'need' => $fmt($needUntilDecember),
+                    'obs' => $fmt($observedYtd),
                     'saldo' => $fmt($balanceToRepass),
                 ]),
-                'formula' => __('Previsão portaria − projeção até dez = :gap (falta a receber)', [
+                'formula' => __('Previsto portaria − projeção CKAN = :gap', [
                     'gap' => $fmt($shortfall),
                 ]),
             ];
@@ -153,15 +153,14 @@ final class FinanceRealtimeYearEndOutlook
             $excess = MoneyMath::roundMoney($projectedRepass - $needUntilDecember);
 
             return [
-                'outlook' => 'surplus',
-                'label' => __('Sobras projetadas'),
-                'detail' => __('Repasse projetado até dezembro (:proj) supera a previsão anual da portaria (:need) em :excesso (acima de :pct%).', [
+                'outlook' => 'risk',
+                'label' => __('Projeção acima do previsto'),
+                'detail' => __('A extrapolação dos repasses CKAN (:proj) ultrapassa o total previsto na portaria (:need) em :excesso. É uma estimativa — para orçamento, use o valor da portaria, não o ritmo observado.', [
                     'proj' => $fmt($projectedRepass),
                     'need' => $fmt($needUntilDecember),
                     'excesso' => $fmt($excess),
-                    'pct' => number_format(self::MARGIN_PCT, 0, ',', '.'),
                 ]),
-                'formula' => __('Previsão portaria − projeção até dez = −:gap (sobra estimada)', [
+                'formula' => __('Previsto portaria − projeção CKAN = −:gap', [
                     'gap' => $fmt($excess),
                 ]),
             ];
@@ -169,13 +168,13 @@ final class FinanceRealtimeYearEndOutlook
 
         return [
             'outlook' => 'close',
-            'label' => __('Próximo do valor'),
-            'detail' => __('Repasse projetado e previsão anual da portaria dentro da margem de :pct% (observado :obs + saldo a repassar :saldo).', [
+            'label' => __('Dentro do previsto'),
+            'detail' => __('O repasse projetado para dezembro está alinhado com o total previsto na portaria FNDE (margem de :pct%). Já recebido :obs; saldo indicativo :saldo.', [
                 'pct' => number_format(self::MARGIN_PCT, 0, ',', '.'),
                 'obs' => $fmt($observedYtd),
                 'saldo' => $fmt($balanceToRepass),
             ]),
-            'formula' => __('Dentro de ±:pct% da projeção indicativa anual', [
+            'formula' => __('Dentro de ±:pct% do previsto portaria', [
                 'pct' => number_format(self::MARGIN_PCT, 0, ',', '.'),
             ]),
         ];

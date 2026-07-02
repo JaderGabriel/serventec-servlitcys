@@ -967,6 +967,8 @@ final class HorizonteMapService
                 'fundeb_realtime_gap_sign' => $fundebRealtime['gap_sign'] ?? null,
                 'fundeb_realtime_expected_source' => $fundebRealtime['expected_source'] ?? null,
                 'fundeb_realtime_portaria_receita' => $fundebRealtime['portaria_receita'] ?? null,
+                'fundeb_realtime_portaria_complementacao_total' => $fundebRealtime['portaria_complementacao_total'] ?? null,
+                'fundeb_realtime_portaria_total_previsto' => $fundebRealtime['portaria_total_previsto'] ?? null,
                 'fundeb_realtime_base_mat_vaaf' => $fundebRealtime['portaria_base_mat_vaaf'] ?? null,
                 'fundeb_realtime_vaaf' => $fundebRealtime['portaria_vaaf'] ?? null,
                 'fundeb_realtime_matriculas' => $fundebRealtime['portaria_matriculas'] ?? null,

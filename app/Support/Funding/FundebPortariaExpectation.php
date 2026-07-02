@@ -18,6 +18,8 @@ final class FundebPortariaExpectation
      *   annual: float,
      *   base_mat_vaaf: float,
      *   receita_portaria: ?float,
+     *   complementacao_total: ?float,
+     *   portaria_total_previsto: float,
      *   source: string,
      *   portaria_publication_year: ?int,
      *   url_portaria: ?string,
@@ -36,38 +38,69 @@ final class FundebPortariaExpectation
 
         $receita = self::receitaTotal($reference);
         $adjustments = self::adjustmentLines($reference);
+        $complSum = self::complementacaoSum($reference);
         $pubYear = self::publicationYear($reference);
         $url = self::urlPortaria($reference);
 
         if ($receita !== null && $receita > 0) {
+            $annual = MoneyMath::roundMoney($receita + $complSum);
+
             return [
-                'annual' => MoneyMath::roundMoney($receita),
+                'annual' => $annual,
                 'base_mat_vaaf' => $base,
                 'receita_portaria' => $receita,
+                'complementacao_total' => $complSum > 0 ? $complSum : null,
+                'portaria_total_previsto' => $annual,
                 'source' => 'portaria_receita',
                 'portaria_publication_year' => $pubYear,
                 'url_portaria' => $url,
                 'adjustments' => $adjustments,
                 'adjustments_note' => $adjustments !== []
-                    ? __('Complementações da portaria FNDE (:pub) — componentes da receita, não somadas em duplicado.', [
-                        'pub' => $pubYear !== null ? (string) $pubYear : __('recente'),
-                    ])
-                    : null,
+                    ? __('As complementações federais (VAAF, VAAT, VAAR) somam-se à receita vinculada. O total previsto anual é essa soma — use-o para comparar com os repasses do Tesouro.')
+                    : ($complSum > 0
+                        ? __('Total previsto = receita vinculada do município + complementação federal da União (portaria FNDE).')
+                        : null),
             ];
         }
 
+        $annualFallback = MoneyMath::roundMoney($base + $complSum);
+
         return [
-            'annual' => MoneyMath::roundMoney($base),
+            'annual' => $annualFallback,
             'base_mat_vaaf' => $base,
             'receita_portaria' => null,
+            'complementacao_total' => $complSum > 0 ? $complSum : null,
+            'portaria_total_previsto' => $annualFallback,
             'source' => 'matricula_vaaf',
             'portaria_publication_year' => $pubYear,
             'url_portaria' => $url,
             'adjustments' => $adjustments,
             'adjustments_note' => $adjustments !== []
-                ? __('Complementações importadas da portaria — aguardando receita total FNDE para expectativa anual oficial.')
+                ? __('Complementações importadas da portaria somadas à base matrículas × VAAF — aguardando receita total FNDE para expectativa oficial.')
                 : null,
         ];
+    }
+
+    /**
+     * Soma VAAF + VAAT + VAAR da portaria FNDE (complementação federal).
+     *
+     * @param  FundebMunicipioReference|array<string, mixed>|null  $reference
+     */
+    public static function complementacaoSum(FundebMunicipioReference|array|null $reference): float
+    {
+        if ($reference === null) {
+            return 0.0;
+        }
+
+        $sum = 0.0;
+        foreach (['complementacao_vaaf', 'complementacao_vaat', 'complementacao_vaar'] as $field) {
+            $value = self::moneyField($reference, $field);
+            if ($value !== null && $value > 0) {
+                $sum += $value;
+            }
+        }
+
+        return MoneyMath::roundMoney($sum);
     }
 
     /**

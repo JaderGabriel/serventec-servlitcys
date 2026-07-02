@@ -182,6 +182,8 @@ final class HorizonteFundebRepasseOutlook
 
         $baseMatVaaf = (float) ($expectation['base_mat_vaaf'] ?? 0);
         $receitaPortaria = $expectation['receita_portaria'] ?? null;
+        $complTotal = $expectation['complementacao_total'] ?? null;
+        $portariaTotal = (float) ($expectation['portaria_total_previsto'] ?? $expected);
         $gap = (float) ($outlook['gap_until_december'] ?? 0);
 
         return [
@@ -209,6 +211,10 @@ final class HorizonteFundebRepasseOutlook
             'portaria_receita' => is_numeric($receitaPortaria) && (float) $receitaPortaria > 0
                 ? (float) $receitaPortaria
                 : null,
+            'portaria_complementacao_total' => is_numeric($complTotal) && (float) $complTotal > 0
+                ? (float) $complTotal
+                : null,
+            'portaria_total_previsto' => $portariaTotal > 0 ? $portariaTotal : null,
             'portaria_base_mat_vaaf' => $baseMatVaaf > 0 ? $baseMatVaaf : null,
             'portaria_vaaf' => $vaaf > 0 ? $vaaf : null,
             'portaria_matriculas' => $matriculas > 0 ? $matriculas : null,

@@ -25,7 +25,10 @@ final class FundebPortariaExpectationTest extends TestCase
         $result = FundebPortariaExpectation::buildAnnual(4000, 3500.0, $ref);
 
         $this->assertSame('portaria_receita', $result['source']);
-        $this->assertSame(15_000_000.0, $result['annual']);
+        $this->assertSame(17_000_000.0, $result['annual']);
+        $this->assertSame(15_000_000.0, $result['receita_portaria']);
+        $this->assertSame(2_000_000.0, $result['complementacao_total']);
+        $this->assertSame(17_000_000.0, $result['portaria_total_previsto']);
         $this->assertSame(14_000_000.0, $result['base_mat_vaaf']);
         $this->assertCount(2, $result['adjustments']);
         $this->assertSame(2025, $result['portaria_publication_year']);
