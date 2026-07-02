@@ -245,7 +245,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'censo_inep_matriculas',
             'title' => __('Censo INEP — matrículas por município'),
-            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Escala municipal no Horizonte e cruzamento PDF — não substitui matrículas i-Educar.'),
+            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Escala municipal no Horizonte e cruzamento PDF — não substitui matrículas i-Educar. Para a série histórica do gráfico de prospectos, use horizonte:fortnightly-feed --phase=educacenso.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'inep_censo_municipio_matriculas',
@@ -267,8 +267,18 @@ final class PublicDataImportCatalog
                     'needs_years_range' => false,
                     'hint' => __('Requer ficheiro em storage (pipeline geo passo 3 ou download manual).'),
                 ],
+                [
+                    'key' => 'educacenso_horizonte_series',
+                    'label' => __('Educacenso — série multi-ano (gráfico Horizonte)'),
+                    'task_domain' => null,
+                    'task_key' => null,
+                    'needs_city' => false,
+                    'needs_year' => false,
+                    'needs_years_range' => false,
+                    'hint' => __('CLI: php artisan horizonte:fortnightly-feed --phase=educacenso (repetir até concluir a janela). Auditar: horizonte:verify-educacenso-coverage.'),
+                ],
             ],
-            'cli' => ['inep:index-censo-geo-agg', 'inep:import-microdados-cadastro-escolas-geo'],
+            'cli' => ['inep:index-censo-geo-agg', 'inep:import-microdados-cadastro-escolas-geo', 'horizonte:fortnightly-feed --phase=educacenso', 'horizonte:verify-educacenso-coverage'],
         ];
     }
 

@@ -22,6 +22,11 @@ final class InepCensoMunicipioMatriculaRepository
         ?int $matriculasEja = null,
         ?int $matriculasEspecial = null,
         ?int $matriculasComplementar = null,
+        ?int $matriculasInfantil = null,
+        ?int $matriculasFundamental1 = null,
+        ?int $matriculasFundamental2 = null,
+        ?int $matriculasMedio = null,
+        ?int $matriculasProfissional = null,
     ): void {
         $ibgeNorm = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
         if ($ibgeNorm === null || $ano < 2000) {
@@ -40,6 +45,11 @@ final class InepCensoMunicipioMatriculaRepository
                 'matriculas_eja' => $matriculasEja !== null ? max(0, $matriculasEja) : null,
                 'matriculas_especial' => $matriculasEspecial !== null ? max(0, $matriculasEspecial) : null,
                 'matriculas_complementar' => $matriculasComplementar !== null ? max(0, $matriculasComplementar) : null,
+                'matriculas_infantil' => $matriculasInfantil !== null ? max(0, $matriculasInfantil) : null,
+                'matriculas_fundamental_1' => $matriculasFundamental1 !== null ? max(0, $matriculasFundamental1) : null,
+                'matriculas_fundamental_2' => $matriculasFundamental2 !== null ? max(0, $matriculasFundamental2) : null,
+                'matriculas_medio' => $matriculasMedio !== null ? max(0, $matriculasMedio) : null,
+                'matriculas_profissional' => $matriculasProfissional !== null ? max(0, $matriculasProfissional) : null,
                 'escolas_contagem' => max(0, $escolasContagem),
                 'fonte' => $fonte,
                 'imported_at' => $now,

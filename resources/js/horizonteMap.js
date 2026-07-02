@@ -1831,6 +1831,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         enrollmentSeriesFootnote: "",
         enrollmentSeriesReady: false,
         enrollmentSeriesIbge: "",
+        enrollmentSeriesStageCounters: [],
+        enrollmentSeriesStageYear: null,
         _enrollmentSeriesChart: null,
         _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
@@ -5019,6 +5021,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesReady = false;
             this.enrollmentSeriesError = null;
             this.enrollmentSeriesFootnote = "";
+            this.enrollmentSeriesStageCounters = [];
+            this.enrollmentSeriesStageYear = null;
             this.enrollmentSeriesLoading = false;
             this.enrollmentSeriesIbge = "";
         },
@@ -5061,6 +5065,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return;
                 }
                 this.enrollmentSeriesFootnote = String(data.footnote ?? "");
+                const stageCounters = data?.stage_counters;
+                if (stageCounters && Array.isArray(stageCounters.items)) {
+                    this.enrollmentSeriesStageYear = stageCounters.ano ?? null;
+                    this.enrollmentSeriesStageCounters = stageCounters.items;
+                } else {
+                    this.enrollmentSeriesStageYear = null;
+                    this.enrollmentSeriesStageCounters = [];
+                }
                 await this.$nextTick();
                 this.renderEnrollmentSeriesChart(data.chart);
                 this.enrollmentSeriesReady = true;
@@ -5073,6 +5085,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.enrollmentSeriesLoading = false;
                 this._enrollmentSeriesAbort = null;
             }
+        },
+
+        formatEnrollmentStageCounter(value) {
+            return nf(value);
         },
 
         renderEnrollmentSeriesChart(payload) {

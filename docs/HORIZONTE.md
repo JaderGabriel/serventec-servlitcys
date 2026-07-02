@@ -149,7 +149,9 @@ Secção no modal municipal **apenas para municípios sem Consultoria activa** (
 | **Carregamento** | Lazy — `GET /dashboard/horizonte/municipality/{ibge}/enrollment-series` ao abrir o modal |
 | **Anos** | Últimos **N** anos consecutivos do Educacenso (default **5**), terminando no ano mais recente indexado nacionalmente; lacunas municipais aparecem sem ponto |
 | **Linhas** | Total · Regular · EJA · Educação especial · Complementar / integral |
+| **Contadores por etapa** | Abaixo da legenda do gráfico: totais do ano mais recente indexado — infantil (`qt_mat_inf`), Fundamental I (`qt_mat_fund_ai`), Fundamental II (`qt_mat_fund_af`), ensino médio (`qt_mat_med`), educação profissional (`qt_mat_prof`) |
 | **Segmentos** | Colunas `matriculas_regular`, `matriculas_eja`, `matriculas_especial`, `matriculas_complementar` — preenchidas na reindexação Censo; sem elas aparece só **Total** + nota para reimportar |
+| **Etapas no BD** | `matriculas_infantil`, `matriculas_fundamental_1`, `matriculas_fundamental_2`, `matriculas_medio`, `matriculas_profissional` — migration `2026_07_02_120000`; requer reimportação Educacenso |
 
 **Reindexar após deploy** (migration + microdados INEP):
 
@@ -389,6 +391,12 @@ php artisan schedule:list | grep horizonte
 
 Variáveis: `HORIZONTE_FORTNIGHTLY_FEED_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
+**Auditoria pós-importação** (amostra de municípios com todos os anos da janela):
+
+```bash
+php artisan horizonte:verify-educacenso-coverage --sample=50
+```
+
 ### 9.1b Loop nacional até concluir (screen)
 
 Para completar **todas** as fases/UFs/anos pendentes em loop (até 200 rondas), use **GNU screen** — a sessão continua após fechar SSH:
@@ -423,6 +431,8 @@ sudo loginctl enable-linger serventec   # ou $(whoami)
 # Log agregado
 tail -f storage/logs/horizonte-sync-br-nohup.log
 ```
+
+O script `horizonte-sync-br-continue.sh` executa `horizonte:fortnightly-feed --all --continue` em loop e reconhece pendências de **Educacenso**, SAEB e IBGE. A fase Educacenso indexa **um ano por passo** por defeito (`HORIZONTE_EDUCACENSO_YEARS_PER_STEP=1`) e pode demorar várias horas na primeira carga.
 
 **Importante:**
 

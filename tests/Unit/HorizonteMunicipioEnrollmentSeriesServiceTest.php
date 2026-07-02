@@ -63,6 +63,11 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
                 'matriculas_eja' => 1200,
                 'matriculas_especial' => 500,
                 'matriculas_complementar' => 300,
+                'matriculas_infantil' => 1500,
+                'matriculas_fundamental_1' => 3000,
+                'matriculas_fundamental_2' => 2500,
+                'matriculas_medio' => 900,
+                'matriculas_profissional' => 100,
             ]);
         }
 
@@ -76,6 +81,10 @@ final class HorizonteMunicipioEnrollmentSeriesServiceTest extends TestCase
         $this->assertCount(5, $result['chart']['datasets']);
         $this->assertSame(10000.0, $result['chart']['datasets'][0]['data'][0]);
         $this->assertSame(11000.0, $result['chart']['datasets'][0]['data'][2]);
+        $this->assertIsArray($result['stage_counters']);
+        $this->assertSame(2022, $result['stage_counters']['ano']);
+        $this->assertCount(5, $result['stage_counters']['items']);
+        $this->assertSame(1500, $result['stage_counters']['items'][0]['value']);
     }
 
     #[Test]

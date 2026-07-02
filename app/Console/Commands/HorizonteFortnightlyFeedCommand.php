@@ -21,7 +21,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--staged : Executar uma fase por invocação (recomendado em produção)}
                             {--continue : Continuar pipeline ou execução --all pendente}
                             {--reset : Reiniciar pipeline ou execução --all do zero}
-                            {--phase= : Executar apenas a fase indicada (fundeb_receita, censo_matriculas, …)}
+                            {--phase= : Executar apenas a fase indicada (fundeb_receita, censo_matriculas, educacenso, …)}
                             {--skip-fundeb : Ignorar sincronização FUNDEB (CSV receita FNDE)}
                             {--skip-censo : Ignorar indexação Censo matrículas (CSV local mais recente)}
                             {--skip-educacenso : Ignorar importação Educacenso multi-ano (gráfico matrículas)}
@@ -35,7 +35,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-verify : Ignorar verificação public-data:check-official}
                             {--uf= : Restringir todo o abastecimento a uma UF (ex.: SP — FUNDEB, Censo, SAEB, IBGE, SGE)}';
 
-    protected $description = 'Abastecimento bimestral de dados públicos para o mapa Horizonte (FUNDEB nacional, Censo, SAEB, IBGE)';
+    protected $description = 'Abastecimento bimestral de dados públicos para o mapa Horizonte (FUNDEB, Censo, Educacenso, SAEB, CadÚnico, SIDRA, IBGE)';
 
     public function handle(HorizonteFortnightlyFeedService $feed): int
     {

@@ -77,6 +77,7 @@
         <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <x-admin.import-hub.stat label="FUNDEB" :value="number_format((int) ($coverage['fundeb_municipios'] ?? 0))" :hint="__('IBGE nacionais')" tone="amber" />
             <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
+            <x-admin.import-hub.stat :label="__('Educacenso')" :value="((int) ($coverage['educacenso_years_indexed'] ?? 0)).'/'.((int) ($coverage['educacenso_years_total'] ?? 5))" :hint="__('anos da série (gráfico)')" tone="emerald" />
             <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('com indicadores')" tone="violet" />
             <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB+Censo+SAEB')" tone="sky" />
             <x-admin.import-hub.stat :label="__('Universo mapa')" :value="number_format((int) ($coverage['universe_municipios'] ?? 0))" :hint="__('IBGE em qualquer fonte')" tone="slate" />
@@ -170,7 +171,11 @@
                                 </td>
                                 <td class="px-4 py-3 align-top tabular-nums text-slate-700 dark:text-slate-300">
                                     @if (($phase['metric'] ?? null) !== null)
-                                        {{ number_format((int) $phase['metric']) }}
+                                        @if (filled($phase['metric_total'] ?? null))
+                                            {{ number_format((int) $phase['metric']) }}/{{ number_format((int) $phase['metric_total']) }}
+                                        @else
+                                            {{ number_format((int) $phase['metric']) }}
+                                        @endif
                                         <span class="text-slate-500">{{ $phase['metric_label'] ?? '' }}</span>
                                     @else
                                         —
@@ -179,9 +184,12 @@
                                 <td class="px-4 py-3 align-top">
                                     @if (filled($phase['cli'] ?? null))
                                         <code class="block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ $phase['cli'] }}</code>
-                                        @if (filled($phase['cli_reset'] ?? null))
-                                            <code class="mt-1 block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">{{ $phase['cli_reset'] }}</code>
-                                        @endif
+                                    @if (filled($phase['cli_reset'] ?? null))
+                                        <code class="mt-1 block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">{{ $phase['cli_reset'] }}</code>
+                                    @endif
+                                    @if (filled($phase['cli_verify'] ?? null))
+                                        <code class="mt-1 block rounded bg-slate-100 px-2 py-1 text-[10px] text-slate-500 dark:bg-slate-800 dark:text-slate-400">{{ $phase['cli_verify'] }}</code>
+                                    @endif
                                     @else
                                         <span class="text-slate-400">—</span>
                                     @endif
@@ -196,10 +204,12 @@
         <div class="rounded-xl border border-slate-200/80 dark:border-slate-700 bg-slate-900 dark:bg-slate-950 px-4 py-3 space-y-2">
             <p class="text-[10px] font-medium uppercase tracking-wide text-slate-400">{{ __('Comandos manual (servidor)') }}</p>
             <code class="block text-xs text-emerald-300 font-mono break-all">php artisan horizonte:fortnightly-feed --all</code>
+            <code class="block text-xs text-emerald-300/80 font-mono break-all mt-1">php artisan horizonte:fortnightly-feed --phase=educacenso</code>
             <p class="text-[10px] text-slate-500">
                 {{ __('Retomar:') }} <code class="text-slate-400">--all --continue</code>
                 · {{ __('Reiniciar:') }} <code class="text-slate-400">--all --reset</code>
                 · {{ __('Etapas:') }} <code class="text-slate-400">--staged --continue</code>
+                · {{ __('Auditar série:') }} <code class="text-slate-400">horizonte:verify-educacenso-coverage</code>
             </p>
             <p class="text-[10px] text-slate-500 pt-1 border-t border-slate-800">
                 {{ __('Offline:') }}

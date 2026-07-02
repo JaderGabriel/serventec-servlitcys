@@ -304,7 +304,7 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Anos Educacenso processados por invocação (máx. 5) |
 | `HORIZONTE_EDUCACENSO_MEMORY_LIMIT` | `1024M` | RAM da fase Educacenso no `horizonte:fortnightly-feed` |
 
-Comando: `php artisan horizonte:sync-municipal-alerts` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9, §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
+Comando: `php artisan horizonte:sync-municipal-alerts` · Auditoria série: `php artisan horizonte:verify-educacenso-coverage` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9, §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

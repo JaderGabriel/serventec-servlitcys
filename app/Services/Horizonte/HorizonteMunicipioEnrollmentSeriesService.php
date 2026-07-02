@@ -24,6 +24,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
      *     fonte?: string,
      *     has_segments?: bool,
      *     footnote?: string,
+     *     stage_counters?: array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null,
      *     chart?: array<string, mixed>
      * }
      */
@@ -126,6 +127,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
         );
 
         $footnote = $this->buildFootnote($hasSegments, $missingYears, $targetYears);
+        $stageCounters = $this->buildStageCounters($rowsByYear, $targetYears);
 
         return [
             'ok' => true,
@@ -133,6 +135,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             'fonte' => 'censo_inep',
             'has_segments' => $hasSegments,
             'footnote' => $footnote,
+            'stage_counters' => $stageCounters,
             'chart' => $chart,
         ];
     }
@@ -176,6 +179,68 @@ final class HorizonteMunicipioEnrollmentSeriesService
         }
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * @param  Collection<int, InepCensoMunicipioMatricula>  $rowsByYear
+     * @param  list<int>  $targetYears
+     * @return array{ano: int, items: list<array{key: string, label: string, value: int|null}>}|null
+     */
+    private function buildStageCounters(Collection $rowsByYear, array $targetYears): ?array
+    {
+        $latestRow = null;
+        foreach (array_reverse($targetYears) as $year) {
+            /** @var InepCensoMunicipioMatricula|null $row */
+            $row = $rowsByYear->get($year);
+            if ($row !== null && $this->rowHasStageCounters($row)) {
+                $latestRow = $row;
+                break;
+            }
+        }
+
+        if ($latestRow === null) {
+            return null;
+        }
+
+        $defs = [
+            ['key' => 'infantil', 'label' => __('Educação infantil'), 'column' => 'matriculas_infantil'],
+            ['key' => 'fundamental_1', 'label' => __('Fundamental I'), 'column' => 'matriculas_fundamental_1'],
+            ['key' => 'fundamental_2', 'label' => __('Fundamental II'), 'column' => 'matriculas_fundamental_2'],
+            ['key' => 'medio', 'label' => __('Ensino médio'), 'column' => 'matriculas_medio'],
+            ['key' => 'profissional', 'label' => __('Educação profissional'), 'column' => 'matriculas_profissional'],
+        ];
+
+        $items = [];
+        foreach ($defs as $def) {
+            $value = (int) ($latestRow->{$def['column']} ?? 0);
+            $items[] = [
+                'key' => $def['key'],
+                'label' => $def['label'],
+                'value' => $value > 0 ? $value : null,
+            ];
+        }
+
+        return [
+            'ano' => (int) $latestRow->ano,
+            'items' => $items,
+        ];
+    }
+
+    private function rowHasStageCounters(InepCensoMunicipioMatricula $row): bool
+    {
+        foreach ([
+            'matriculas_infantil',
+            'matriculas_fundamental_1',
+            'matriculas_fundamental_2',
+            'matriculas_medio',
+            'matriculas_profissional',
+        ] as $column) {
+            if ((int) ($row->{$column} ?? 0) > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function isConsultoriaActive(string $ibge): bool

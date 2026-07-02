@@ -32,7 +32,7 @@ log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }
 has_pending() {
   local pending
   pending=$(php artisan horizonte:fortnightly-feed --dry-run -v 2>&1 || true)
-  echo "$pending" | grep -qE 'Pendente \(--all\)|IBGE pendente|SAEB pendente|Abastecimento parcial'
+  echo "$pending" | grep -qE 'Pendente \(--all\)|IBGE pendente|SAEB pendente|Educacenso pendente|Abastecimento parcial'
 }
 
 cleanup() {
@@ -73,11 +73,13 @@ fi
 
 log "Horizonte sync BR — início (máx. ${MAX_ROUNDS} rondas, log: ${LOG})"
 export HORIZONTE_SAEB_MEMORY_LIMIT="${HORIZONTE_SAEB_MEMORY_LIMIT:-2048M}"
+export HORIZONTE_EDUCACENSO_MEMORY_LIMIT="${HORIZONTE_EDUCACENSO_MEMORY_LIMIT:-1024M}"
 export HORIZONTE_CADUNICO_FILL_GAPS="${HORIZONTE_CADUNICO_FILL_GAPS:-true}"
 export HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP="${HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP:-1}"
 export HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP="${HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP:-1}"
+export HORIZONTE_EDUCACENSO_YEARS_PER_STEP="${HORIZONTE_EDUCACENSO_YEARS_PER_STEP:-1}"
 
-log "Env: SAEB_MEM=${HORIZONTE_SAEB_MEMORY_LIMIT} CADUNICO_FILL_GAPS=${HORIZONTE_CADUNICO_FILL_GAPS} IBGE_UFS/step=${HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP}"
+log "Env: SAEB_MEM=${HORIZONTE_SAEB_MEMORY_LIMIT} EDUCACENSO_MEM=${HORIZONTE_EDUCACENSO_MEMORY_LIMIT} CADUNICO_FILL_GAPS=${HORIZONTE_CADUNICO_FILL_GAPS} IBGE_UFS/step=${HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP} EDUCACENSO_YEARS/step=${HORIZONTE_EDUCACENSO_YEARS_PER_STEP}"
 
 while (( ROUND < MAX_ROUNDS )); do
   ROUND=$((ROUND + 1))

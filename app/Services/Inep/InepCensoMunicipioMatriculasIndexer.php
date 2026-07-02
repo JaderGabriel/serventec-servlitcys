@@ -4,6 +4,7 @@ namespace App\Services\Inep;
 
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
+use App\Support\Inep\InepEducacensoMatriculaColumns;
 use App\Support\InepMicrodadosEscolasCsv;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -13,32 +14,6 @@ use Illuminate\Support\Facades\Schema;
  */
 final class InepCensoMunicipioMatriculasIndexer
 {
-    /** @var list<string> */
-    private const MATRICULA_TOTAL_ALIASES = [
-        'qt_mat_bas',
-        'qt_mat_inf',
-        'qt_mat_fund',
-        'qt_mat_med',
-        'qt_mat_prof',
-        'qt_mat_eja',
-        'qt_mat_esp',
-        'qt_mat',
-        'quantidade_matricula',
-        'quant_matriculas',
-    ];
-
-    /** @var list<string> */
-    private const MATRICULA_REGULAR_ALIASES = ['qt_mat_inf', 'qt_mat_fund', 'qt_mat_med', 'qt_mat_bas'];
-
-    /** @var list<string> */
-    private const MATRICULA_EJA_ALIASES = ['qt_mat_eja'];
-
-    /** @var list<string> */
-    private const MATRICULA_ESPECIAL_ALIASES = ['qt_mat_esp'];
-
-    /** @var list<string> */
-    private const MATRICULA_COMPLEMENTAR_ALIASES = ['qt_mat_ativ_comp', 'qt_mat_ativ_comp_esp', 'qt_mat_prof'];
-
     public function __construct(
         private InepCensoMunicipioMatriculaRepository $repository,
     ) {}
@@ -65,7 +40,7 @@ final class InepCensoMunicipioMatriculasIndexer
         }
         $delimiter = InepMicrodadosEscolasCsv::delimiterFromFirstLine($firstLine);
         rewind($fh);
-        $header = fgetcsv($fh, 0, $delimiter);
+        $header = fgetcsv($fh, 0, $delimiter, '"', '\\');
         if ($header === false) {
             fclose($fh);
 
@@ -75,15 +50,10 @@ final class InepCensoMunicipioMatriculasIndexer
         $map = InepMicrodadosEscolasCsv::mapHeader($header);
         $ibgeIdx = $this->ibgeColumnIndex($map);
         $anoIdx = $this->columnIndex($map, ['nu_ano_censo', 'ano']);
-        $matTotalIndices = $this->matriculaColumnIndices($map, self::MATRICULA_TOTAL_ALIASES);
-        $matRegularIndices = $this->matriculaColumnIndices($map, self::MATRICULA_REGULAR_ALIASES);
-        $matEjaIndices = $this->matriculaColumnIndices($map, self::MATRICULA_EJA_ALIASES);
-        $matEspecialIndices = $this->matriculaColumnIndices($map, self::MATRICULA_ESPECIAL_ALIASES);
-        $matComplementarIndices = $this->matriculaColumnIndices($map, self::MATRICULA_COMPLEMENTAR_ALIASES);
 
         $depIdx = $this->columnIndex($map, ['tp_dependencia', 'dependencia_administrativa', 'tp_dependencia_adm']);
 
-        if ($ibgeIdx === null || $anoIdx === null || $matTotalIndices === []) {
+        if ($ibgeIdx === null || $anoIdx === null || ! InepEducacensoMatriculaColumns::hasMatriculaColumns($map)) {
             fclose($fh);
             Log::warning('INEP censo matrículas: colunas IBGE/ano/matricula não encontradas no CSV.');
 
@@ -106,10 +76,10 @@ final class InepCensoMunicipioMatriculasIndexer
             }
         }
 
-        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int, regular: int, eja: int, especial: int, complementar: int}> $agg */
+        /** @var array<string, array{ano: int, mat: int, escolas: int, municipal: int, nao_municipal: int, regular: int, eja: int, especial: int, complementar: int, infantil: int, fundamental_1: int, fundamental_2: int, medio: int, profissional: int}> $agg */
         $agg = [];
 
-        while (($row = fgetcsv($fh, 0, $delimiter)) !== false) {
+        while (($row = fgetcsv($fh, 0, $delimiter, '"', '\\')) !== false) {
             $ibge = FundebMunicipioReferenceRepository::normalizeIbge((string) ($row[$ibgeIdx] ?? ''));
             if ($ibge === null || ($ibgeAllow !== null && ! isset($ibgeAllow[$ibge]))) {
                 continue;
@@ -119,14 +89,16 @@ final class InepCensoMunicipioMatriculasIndexer
             if ($ano < 2000) {
                 continue;
             }
-            $mat = $this->sumRowColumns($row, $matTotalIndices);
+            $segments = InepEducacensoMatriculaColumns::fromRow($row, $map);
+            $etapas = InepEducacensoMatriculaColumns::etapasFromRow($row, $map);
+            $mat = $segments['total'];
             if ($mat <= 0) {
                 continue;
             }
-            $regular = $this->sumRowColumns($row, $matRegularIndices);
-            $eja = $this->sumRowColumns($row, $matEjaIndices);
-            $especial = $this->sumRowColumns($row, $matEspecialIndices);
-            $complementar = $this->sumRowColumns($row, $matComplementarIndices);
+            $regular = $segments['regular'];
+            $eja = $segments['eja'];
+            $especial = $segments['especial'];
+            $complementar = $segments['complementar'];
             $key = $ibge.'|'.$ano;
             if (! isset($agg[$key])) {
                 $agg[$key] = [
@@ -139,6 +111,11 @@ final class InepCensoMunicipioMatriculasIndexer
                     'eja' => 0,
                     'especial' => 0,
                     'complementar' => 0,
+                    'infantil' => 0,
+                    'fundamental_1' => 0,
+                    'fundamental_2' => 0,
+                    'medio' => 0,
+                    'profissional' => 0,
                 ];
             }
             $agg[$key]['mat'] += $mat;
@@ -146,6 +123,11 @@ final class InepCensoMunicipioMatriculasIndexer
             $agg[$key]['eja'] += $eja;
             $agg[$key]['especial'] += $especial;
             $agg[$key]['complementar'] += $complementar;
+            $agg[$key]['infantil'] += $etapas['infantil'];
+            $agg[$key]['fundamental_1'] += $etapas['fundamental_1'];
+            $agg[$key]['fundamental_2'] += $etapas['fundamental_2'];
+            $agg[$key]['medio'] += $etapas['medio'];
+            $agg[$key]['profissional'] += $etapas['profissional'];
             $agg[$key]['escolas']++;
             $dep = self::classifyMunicipalDependency($row, $depIdx);
             if ($dep === true) {
@@ -173,6 +155,11 @@ final class InepCensoMunicipioMatriculasIndexer
                 $data['eja'] > 0 ? $data['eja'] : null,
                 $data['especial'] > 0 ? $data['especial'] : null,
                 $data['complementar'] > 0 ? $data['complementar'] : null,
+                $data['infantil'] > 0 ? $data['infantil'] : null,
+                $data['fundamental_1'] > 0 ? $data['fundamental_1'] : null,
+                $data['fundamental_2'] > 0 ? $data['fundamental_2'] : null,
+                $data['medio'] > 0 ? $data['medio'] : null,
+                $data['profissional'] > 0 ? $data['profissional'] : null,
             );
             $count++;
         }
@@ -210,40 +197,6 @@ final class InepCensoMunicipioMatriculasIndexer
         }
 
         return null;
-    }
-
-    /**
-     * @param  array<string, int>  $map
-     * @param  list<string>  $aliases
-     * @return list<int>
-     */
-    private function matriculaColumnIndices(array $map, array $aliases): array
-    {
-        $indices = [];
-        foreach ($aliases as $alias) {
-            $k = mb_strtolower($alias);
-            if (isset($map[$k])) {
-                $indices[] = $map[$k];
-            }
-        }
-
-        return array_values(array_unique($indices));
-    }
-
-    /**
-     * @param  list<string|null>  $row
-     * @param  list<int>  $indices
-     */
-    private function sumRowColumns(array $row, array $indices): int
-    {
-        $sum = 0;
-        foreach ($indices as $idx) {
-            if (isset($row[$idx]) && is_numeric($row[$idx])) {
-                $sum += max(0, (int) $row[$idx]);
-            }
-        }
-
-        return $sum;
     }
 
     /**

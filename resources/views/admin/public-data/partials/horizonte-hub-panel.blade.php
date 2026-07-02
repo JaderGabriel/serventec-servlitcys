@@ -23,7 +23,7 @@
                 {{ __('Horizonte — abastecimento nacional') }}
             </h3>
             <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">
-                {{ __('O mapa de oportunidade usa FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses Tesouro e catálogo IBGE. Em produção a rotina corre em etapas (1 fase por vez; IBGE/SIDRA aquecem UFs incrementalmente).') }}
+                {{ __('O mapa de oportunidade usa FUNDEB, Censo, Educacenso (série histórica do gráfico), SAEB, CadÚnico, SIDRA, repasses Tesouro e catálogo IBGE. Em produção a rotina corre em etapas (1 fase por vez; Educacenso, SAEB, IBGE e SIDRA são incrementais).') }}
             </p>
             @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-500">
@@ -109,6 +109,7 @@
     <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <x-admin.import-hub.stat label="FUNDEB" :value="number_format((int) ($coverage['fundeb_municipios'] ?? 0))" :hint="__('IBGE nacionais')" tone="amber" />
         <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
+        <x-admin.import-hub.stat :label="__('Educacenso')" :value="((int) ($coverage['educacenso_years_indexed'] ?? 0)).'/'.((int) ($coverage['educacenso_years_total'] ?? 5))" :hint="__('anos da série (gráfico)')" tone="sky" />
         <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('municípios com indicadores')" tone="violet" />
         <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB + Censo + SAEB')" tone="sky" />
         <x-admin.import-hub.stat label="CadÚnico" :value="number_format((int) ($coverage['cadunico_municipios'] ?? 0))" :hint="__('agregados municipais')" tone="rose" />
@@ -206,7 +207,11 @@
                                 </span>
                                 @if (($phase['metric'] ?? null) !== null)
                                     <p class="mt-1 tabular-nums text-gray-700 dark:text-gray-300">
-                                        {{ number_format((int) $phase['metric']) }}
+                                        @if (filled($phase['metric_total'] ?? null))
+                                            {{ number_format((int) $phase['metric']) }}/{{ number_format((int) $phase['metric_total']) }}
+                                        @else
+                                            {{ number_format((int) $phase['metric']) }}
+                                        @endif
                                         <span class="text-gray-500">{{ $phase['metric_label'] ?? '' }}</span>
                                     </p>
                                 @endif
@@ -224,6 +229,9 @@
                                     <code class="block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-800 dark:bg-gray-800 dark:text-gray-200">{{ $phase['cli'] }}</code>
                                     @if (filled($phase['cli_reset'] ?? null))
                                         <code class="mt-1 block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ $phase['cli_reset'] }}</code>
+                                    @endif
+                                    @if (filled($phase['cli_verify'] ?? null))
+                                        <code class="mt-1 block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-500 dark:bg-gray-800 dark:text-gray-400">{{ $phase['cli_verify'] }}</code>
                                     @endif
                                 @else
                                     <span class="text-gray-400">—</span>

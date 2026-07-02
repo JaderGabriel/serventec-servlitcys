@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`6.1.0`** · tag de deploy **`20260624-Horizonte`** · ver [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`6.2.0`** · tag de deploy **`20260702-Educacenso`** · ver [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **6.1.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **6.2.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260624-Horizonte` |
-| **Data de referência** | **24/06/2026** |
-| **Último marco documentado** | **Horizonte** — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) |
+| **Tag de deploy (servidor)** | `20260702-Educacenso` |
+| **Data de referência** | **02/07/2026** |
+| **Último marco documentado** | **Educacenso** — contadores por etapa no gráfico Horizonte + correção agregação INEP — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 | **Commit de release (#441)** | `c5d6fc2` |
 
@@ -54,7 +54,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 6.1.0** | `c5d6fc2` / `20260624-Horizonte` → `main` | **441** | 24/06/2026 | **Produção:** coroplético IBGE UF/mesorregiões, alertas VAAT, modal municipal, resumo UF, tour/demo — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md). |
+| **▶ 6.2.0** | — / `20260702-Educacenso` → `main` | — | 02/07/2026 | **Produção:** contadores por etapa no gráfico Horizonte (Educacenso INEP), correção agregação matrículas — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md). |
+| 6.1.0 | `c5d6fc2` / `20260624-Horizonte` → `main` | **441** | 24/06/2026 | **Produção:** coroplético IBGE UF/mesorregiões, alertas VAAT, modal municipal, resumo UF, tour/demo — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md). |
 | 6.0.0 | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | Marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |
 | 5.8.0 | `0bf9b2f` / `20260603g-Thor` → `main` | **431** | 03/06/2026 | Painel FUNDEB estadual, pan mapa + resumo UF, tela inteira, `horizonte:sync-repasses-tesouro`, YTD último repasse — [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md). |
 | 5.7.7 | `16e49e0` / `20260624a-Skuld` → `main` | **427** | 24/06/2026 | Timeline financeira no modal (FNDE/CKAN/ano corrente), SIDRA `populacao_total`, repasses chunk, analytics refactor — [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md). |

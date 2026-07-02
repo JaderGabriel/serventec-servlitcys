@@ -117,6 +117,23 @@
                 >
                     <canvas x-ref="enrollmentSeriesCanvas" height="168" aria-hidden="true"></canvas>
                 </div>
+                <div
+                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesStageCounters.length"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-stages"
+                >
+                    <p class="serv-horizonte-muni-tooltip__enrollment-series-stages-title">
+                        {{ __('Totais por etapa') }}
+                        <span x-show="enrollmentSeriesStageYear" x-text="enrollmentSeriesStageYear ? `(${enrollmentSeriesStageYear})` : ''"></span>
+                    </p>
+                    <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
+                        <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
+                            <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
+                                <dt x-text="item.label"></dt>
+                                <dd x-text="formatEnrollmentStageCounter(item.value)"></dd>
+                            </div>
+                        </template>
+                    </dl>
+                </div>
                 <p
                     x-show="enrollmentSeriesFootnote"
                     x-text="enrollmentSeriesFootnote"

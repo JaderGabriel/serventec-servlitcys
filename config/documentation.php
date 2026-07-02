@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '6.1.0',
-        'release_tag' => '20260624-Horizonte',
-        'commit_short' => 'c5d6fc2',
-        'commit_number' => 441,
-        'revision_date' => '2026-06-24',
+        'version' => '6.2.0',
+        'release_tag' => '20260702-Educacenso',
+        'commit_short' => 'fd50905',
+        'commit_number' => null,
+        'revision_date' => '2026-07-02',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

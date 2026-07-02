@@ -127,7 +127,7 @@ class InepMicrodadosCadastroEscolasDownloader
             $innerCsvPath = null;
             for ($i = 0; $i < $zip->numFiles; $i++) {
                 $name = (string) $zip->getNameIndex($i);
-                if (preg_match('#/dados/microdados_ed_basica_\d{4}\.csv$#', $name)) {
+                if (preg_match('#/dados/microdados_ed_basica_\d{4}\.csv$#i', $name)) {
                     $innerCsvPath = $name;
                     break;
                 }

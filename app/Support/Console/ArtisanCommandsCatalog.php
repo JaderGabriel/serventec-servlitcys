@@ -492,6 +492,21 @@ final class ArtisanCommandsCatalog
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [
+                        'name' => 'horizonte:verify-educacenso-coverage',
+                        'summary' => __('Audita cobertura da janela Educacenso em municípios aleatórios (gráfico Horizonte §6.9).'),
+                        'signature' => 'horizonte:verify-educacenso-coverage {--sample=50} {--seed=} {--json}',
+                        'examples' => [
+                            'php artisan horizonte:verify-educacenso-coverage --sample=50',
+                            'php artisan horizonte:verify-educacenso-coverage --sample=50 --seed=20260701',
+                            'php artisan horizonte:verify-educacenso-coverage --json',
+                        ],
+                        'env' => [
+                            'HORIZONTE_ENROLLMENT_SERIES_YEARS',
+                            'HORIZONTE_REFERENCE_YEAR',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                    ],
+                    [
                         'name' => 'horizonte:sync-repasses-tesouro',
                         'summary' => __('Repasses Tesouro CKAN — ano vigente (YTD) e opcionalmente referência Horizonte, por UF retomável.'),
                         'signature' => 'horizonte:sync-repasses-tesouro {--year=} {--with-ref} {--ref-only} {--uf=} {--continue} {--reset} {--ufs-per-step=} {--dry-run}',
