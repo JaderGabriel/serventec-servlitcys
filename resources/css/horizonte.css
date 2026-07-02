@@ -650,6 +650,51 @@
     gap: 0.375rem;
 }
 
+.serv-horizonte-muni-tooltip__fundeb-subsection {
+    margin-top: 0.625rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgb(16 185 129 / 0.35);
+}
+
+.serv-horizonte-muni-tooltip__fundeb-subsection-title {
+    margin: 0 0 0.375rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgb(6 95 70);
+}
+
+.serv-horizonte-muni-tooltip__fundeb-subsection-note {
+    margin: 0.375rem 0 0;
+    font-size: 10px;
+    line-height: 1.35;
+    color: rgb(71 85 105);
+}
+
+.dark .serv-horizonte-muni-tooltip__fundeb-subsection {
+    border-top-color: rgb(52 211 153 / 0.25);
+}
+
+.dark .serv-horizonte-muni-tooltip__fundeb-subsection-title {
+    color: rgb(167 243 208);
+}
+
+.dark .serv-horizonte-muni-tooltip__fundeb-subsection-note {
+    color: rgb(148 163 184);
+}
+
+.serv-horizonte-muni-tooltip__finance-outlook-detail {
+    margin: 0.375rem 0 0;
+    font-size: 10px;
+    line-height: 1.4;
+    color: rgb(71 85 105);
+}
+
+.dark .serv-horizonte-muni-tooltip__finance-outlook-detail {
+    color: rgb(148 163 184);
+}
+
 .serv-horizonte-muni-tooltip__fundeb-row {
     display: flex;
     align-items: flex-start;

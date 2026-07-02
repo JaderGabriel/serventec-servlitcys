@@ -155,17 +155,21 @@
                 <p class="text-[11px] mt-1 text-slate-600">{{ __(':n linha(s) FUNDEB em bases públicas importadas', ['n' => (string) ($d['transfer_count'] ?? 0)]) }}</p>
             </div>
             <div class="rounded-xl border px-4 py-4 {{ $outlookBox }}">
-                <p class="text-[10px] font-semibold uppercase {{ $outlookText }}">{{ __('Diferença · projeção até dezembro') }}</p>
+                <p class="text-[10px] font-semibold uppercase {{ $outlookText }}">{{ __('Falta ou sobra vs. portaria') }}</p>
                 @if ($yearEnd !== [] && filled($yearEnd['outlook_label'] ?? null))
                     <p class="mt-1 text-sm font-bold {{ $outlookText }}">{{ $yearEnd['outlook_label'] }}</p>
                 @endif
                 @if ($yearEnd !== [] && filled($yearEnd['gap_until_december_fmt'] ?? null) && ($yearEnd['need_until_december'] ?? 0) > 0)
                     <p class="mt-1 text-xl font-bold tabular-nums {{ $outlookText }}">
-                        {{ ($yearEnd['gap_sign'] ?? '') === 'negative' ? '−' : '+' }}{{ $yearEnd['gap_until_december_fmt'] }}
+                        @if (($yearEnd['gap_sign'] ?? '') === 'surplus')
+                            −{{ $yearEnd['gap_until_december_fmt'] }}
+                        @else
+                            {{ $yearEnd['gap_until_december_fmt'] }}
+                        @endif
                     </p>
                     @if (($yearEnd['gap_pct'] ?? null) !== null)
                         <p class="text-[11px] mt-0.5 opacity-90">
-                            {{ number_format((float) $yearEnd['gap_pct'], 1, ',', '.') }}% {{ __('vs. necessidade até dez.') }}
+                            {{ number_format((float) $yearEnd['gap_pct'], 1, ',', '.') }}% {{ __('vs. previsão anual da portaria') }}
                         </p>
                     @endif
                 @else

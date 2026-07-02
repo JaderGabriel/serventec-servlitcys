@@ -962,7 +962,16 @@ final class HorizonteMapService
                 'fundeb_realtime_last_recorded_at' => $fundebRealtime['last_recorded_at'] ?? null,
                 'fundeb_realtime_outlook' => $fundebRealtime['outlook'] ?? null,
                 'fundeb_realtime_outlook_label' => $fundebRealtime['outlook_label'] ?? null,
+                'fundeb_realtime_outlook_detail' => $fundebRealtime['outlook_detail'] ?? null,
+                'fundeb_realtime_gap' => $fundebRealtime['gap'] ?? null,
+                'fundeb_realtime_gap_sign' => $fundebRealtime['gap_sign'] ?? null,
                 'fundeb_realtime_expected_source' => $fundebRealtime['expected_source'] ?? null,
+                'fundeb_realtime_portaria_receita' => $fundebRealtime['portaria_receita'] ?? null,
+                'fundeb_realtime_base_mat_vaaf' => $fundebRealtime['portaria_base_mat_vaaf'] ?? null,
+                'fundeb_realtime_vaaf' => $fundebRealtime['portaria_vaaf'] ?? null,
+                'fundeb_realtime_matriculas' => $fundebRealtime['portaria_matriculas'] ?? null,
+                'fundeb_realtime_portaria_adjustments' => $fundebRealtime['portaria_adjustments'] ?? [],
+                'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
                 'analytics_url' => $city !== null && $consultoriaActive
@@ -1120,6 +1129,9 @@ final class HorizonteMapService
     /**
      * @return array<string, array{
      *     complementacao_total: float,
+     *     complementacao_vaaf: ?float,
+     *     complementacao_vaat: ?float,
+     *     complementacao_vaar: ?float,
      *     receita_total: ?float,
      *     matriculas_base: ?int,
      *     vaaf: ?float,
@@ -1142,6 +1154,9 @@ final class HorizonteMapService
                 + (float) ($row->complementacao_vaar ?? 0);
             $out[$ibge] = [
                 'complementacao_total' => $compl,
+                'complementacao_vaaf' => $row->complementacao_vaaf !== null ? (float) $row->complementacao_vaaf : null,
+                'complementacao_vaat' => $row->complementacao_vaat !== null ? (float) $row->complementacao_vaat : null,
+                'complementacao_vaar' => $row->complementacao_vaar !== null ? (float) $row->complementacao_vaar : null,
                 'receita_total' => $row->receita_total !== null ? (float) $row->receita_total : null,
                 'matriculas_base' => $row->matriculas_base !== null ? (int) $row->matriculas_base : null,
                 'vaaf' => $row->vaaf !== null ? (float) $row->vaaf : null,

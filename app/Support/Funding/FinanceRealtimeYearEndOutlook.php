@@ -43,7 +43,8 @@ final class FinanceRealtimeYearEndOutlook
             $currentYear,
         );
 
-        $gap = MoneyMath::roundMoney($projectedRepass - $needUntilDecember);
+        // Falta (+) ou sobra (−) em relação à previsão portaria: previsão − projeção.
+        $gap = MoneyMath::roundMoney($needUntilDecember - $projectedRepass);
         $gapPct = $needUntilDecember > 0
             ? MoneyMath::percentOf(abs($gap), $needUntilDecember)
             : null;
@@ -63,7 +64,7 @@ final class FinanceRealtimeYearEndOutlook
             'projected_repass_until_december_fmt' => $fmt($projectedRepass),
             'gap_until_december' => $gap,
             'gap_until_december_fmt' => $fmt(abs($gap)),
-            'gap_sign' => $gap >= 0 ? 'positive' : 'negative',
+            'gap_sign' => $gap > 0 ? 'shortfall' : ($gap < 0 ? 'surplus' : 'neutral'),
             'gap_pct' => $gapPct,
             'margin_pct' => self::MARGIN_PCT,
             'months_elapsed' => $monthsElapsed,
@@ -128,7 +129,7 @@ final class FinanceRealtimeYearEndOutlook
         $margin = self::MARGIN_PCT / 100;
         $lower = $needUntilDecember * (1 - $margin);
         $upper = $needUntilDecember * (1 + $margin);
-        $gap = MoneyMath::roundMoney($projectedRepass - $needUntilDecember);
+        $gap = MoneyMath::roundMoney($needUntilDecember - $projectedRepass);
 
         if ($projectedRepass < $lower) {
             $shortfall = MoneyMath::roundMoney($needUntilDecember - $projectedRepass);
@@ -136,29 +137,32 @@ final class FinanceRealtimeYearEndOutlook
             return [
                 'outlook' => 'risk',
                 'label' => __('Risco de déficit'),
-                'detail' => __('A projeção de repasses até dezembro (:proj) fica :falta abaixo da necessidade indicativa (:need). O saldo a repassar (:saldo) pode não cobrir o exercício ao ritmo actual.', [
+                'detail' => __('Ao ritmo actual dos repasses CKAN, a projeção até dezembro (:proj) fica :falta abaixo da previsão anual da portaria (:need). O saldo a repassar (:saldo) indica quanto ainda falta, à luz da portaria.', [
                     'proj' => $fmt($projectedRepass),
                     'falta' => $fmt($shortfall),
                     'need' => $fmt($needUntilDecember),
                     'saldo' => $fmt($balanceToRepass),
                 ]),
-                'formula' => __('Projeção (ritmo observado × 12) − necessidade até dez = :gap', [
-                    'gap' => '−'.$fmt(abs($gap)),
+                'formula' => __('Previsão portaria − projeção até dez = :gap (falta a receber)', [
+                    'gap' => $fmt($shortfall),
                 ]),
             ];
         }
 
         if ($projectedRepass > $upper) {
+            $excess = MoneyMath::roundMoney($projectedRepass - $needUntilDecember);
+
             return [
                 'outlook' => 'surplus',
                 'label' => __('Sobras projetadas'),
-                'detail' => __('Repasse projetado até dezembro (:proj) supera a necessidade indicativa (:need) em mais de :pct%.', [
+                'detail' => __('Repasse projetado até dezembro (:proj) supera a previsão anual da portaria (:need) em :excesso (acima de :pct%).', [
                     'proj' => $fmt($projectedRepass),
                     'need' => $fmt($needUntilDecember),
+                    'excesso' => $fmt($excess),
                     'pct' => number_format(self::MARGIN_PCT, 0, ',', '.'),
                 ]),
-                'formula' => __('Projeção − necessidade até dez = +:gap', [
-                    'gap' => $fmt($gap),
+                'formula' => __('Previsão portaria − projeção até dez = −:gap (sobra estimada)', [
+                    'gap' => $fmt($excess),
                 ]),
             ];
         }
@@ -166,7 +170,7 @@ final class FinanceRealtimeYearEndOutlook
         return [
             'outlook' => 'close',
             'label' => __('Próximo do valor'),
-            'detail' => __('Repasse projetado e necessidade até dezembro dentro da margem de :pct% (observado :obs + saldo a repassar :saldo).', [
+            'detail' => __('Repasse projetado e previsão anual da portaria dentro da margem de :pct% (observado :obs + saldo a repassar :saldo).', [
                 'pct' => number_format(self::MARGIN_PCT, 0, ',', '.'),
                 'obs' => $fmt($observedYtd),
                 'saldo' => $fmt($balanceToRepass),

@@ -60,5 +60,7 @@ final class HorizonteFundebRepasseOutlookTest extends TestCase
         $this->assertSame(25.0, $pack['pct_done']);
         $this->assertSame(3, $pack['last_transfer_month']);
         $this->assertSame('mar/'.$currentYear, $pack['last_transfer_label']);
+        $this->assertSame(100000.0, $pack['portaria_receita']);
+        $this->assertNotEmpty($pack['outlook_detail']);
     }
 }

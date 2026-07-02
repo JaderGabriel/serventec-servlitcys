@@ -9,6 +9,36 @@ use Tests\TestCase;
 final class FinanceRealtimeYearEndOutlookTest extends TestCase
 {
     #[Test]
+    public function gap_positivo_indica_falta_quando_projecao_abaixo_da_portaria(): void
+    {
+        $outlook = FinanceRealtimeYearEndOutlook::build(
+            1_200_000.0,
+            180_000.0,
+            (int) date('Y'),
+            ['months_with_transfers' => 3, 'monthly' => 100_000.0],
+        );
+
+        $this->assertSame('risk', $outlook['outlook']);
+        $this->assertSame('shortfall', $outlook['gap_sign']);
+        $this->assertGreaterThan(0, $outlook['gap_until_december']);
+    }
+
+    #[Test]
+    public function gap_negativo_indica_sobra_quando_projecao_acima_da_portaria(): void
+    {
+        $outlook = FinanceRealtimeYearEndOutlook::build(
+            1_000_000.0,
+            550_000.0,
+            (int) date('Y'),
+            ['months_with_transfers' => 6, 'monthly' => 83_333.33],
+        );
+
+        $this->assertSame('surplus', $outlook['outlook']);
+        $this->assertSame('surplus', $outlook['gap_sign']);
+        $this->assertLessThan(0, $outlook['gap_until_december']);
+    }
+
+    #[Test]
     public function classifica_risco_quando_projecao_fica_abaixo_da_margem(): void
     {
         $outlook = FinanceRealtimeYearEndOutlook::build(

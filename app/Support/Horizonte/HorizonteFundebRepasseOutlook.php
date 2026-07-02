@@ -49,6 +49,15 @@ final class HorizonteFundebRepasseOutlook
      *     last_recorded_at: ?string,
      *     outlook: string,
      *     outlook_label: string,
+     *     outlook_detail: string,
+     *     gap: ?float,
+     *     gap_sign: string,
+     *     portaria_receita: ?float,
+     *     portaria_base_mat_vaaf: ?float,
+     *     portaria_vaaf: ?float,
+     *     portaria_matriculas: ?int,
+     *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
+     *     portaria_adjustments_note: ?string,
      *     expected_source: string
      * }>
      */
@@ -120,6 +129,15 @@ final class HorizonteFundebRepasseOutlook
      *     last_recorded_at: ?string,
      *     outlook: string,
      *     outlook_label: string,
+     *     outlook_detail: string,
+     *     gap: ?float,
+     *     gap_sign: string,
+     *     portaria_receita: ?float,
+     *     portaria_base_mat_vaaf: ?float,
+     *     portaria_vaaf: ?float,
+     *     portaria_matriculas: ?int,
+     *     portaria_adjustments: list<array{key: string, label: string, value: float, value_fmt: string}>,
+     *     portaria_adjustments_note: ?string,
      *     expected_source: string
      * }|null
      */
@@ -162,6 +180,10 @@ final class HorizonteFundebRepasseOutlook
             ? round(min(100.0, ($observed / $expected) * 100.0), 1)
             : null;
 
+        $baseMatVaaf = (float) ($expectation['base_mat_vaaf'] ?? 0);
+        $receitaPortaria = $expectation['receita_portaria'] ?? null;
+        $gap = (float) ($outlook['gap_until_december'] ?? 0);
+
         return [
             'ano' => $currentYear,
             'observed' => $observed > 0 ? $observed : null,
@@ -181,6 +203,17 @@ final class HorizonteFundebRepasseOutlook
             'last_recorded_at' => $temporal['recorded_at'] ?? null,
             'outlook' => (string) ($outlook['outlook'] ?? 'unknown'),
             'outlook_label' => (string) ($outlook['outlook_label'] ?? ''),
+            'outlook_detail' => (string) ($outlook['outlook_detail'] ?? ''),
+            'gap' => $gap !== 0.0 ? $gap : null,
+            'gap_sign' => (string) ($outlook['gap_sign'] ?? 'neutral'),
+            'portaria_receita' => is_numeric($receitaPortaria) && (float) $receitaPortaria > 0
+                ? (float) $receitaPortaria
+                : null,
+            'portaria_base_mat_vaaf' => $baseMatVaaf > 0 ? $baseMatVaaf : null,
+            'portaria_vaaf' => $vaaf > 0 ? $vaaf : null,
+            'portaria_matriculas' => $matriculas > 0 ? $matriculas : null,
+            'portaria_adjustments' => $expectation['adjustments'] ?? [],
+            'portaria_adjustments_note' => $expectation['adjustments_note'] ?? null,
             'expected_source' => (string) ($expectation['source'] ?? 'matricula_vaaf'),
         ];
     }

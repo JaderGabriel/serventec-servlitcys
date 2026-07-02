@@ -607,6 +607,103 @@ function fundebRealtimeObservedDesc(m) {
     return "Consolidado Tesouro/CKAN";
 }
 
+function fundebRealtimeProjectionDesc(m) {
+    const months = m.fundeb_realtime_months;
+    const observed = m.fundeb_realtime_observed;
+    if (observed != null && Number(observed) > 0 && months != null && Number(months) > 0) {
+        return `Estimativa linear do CKAN: (já repassado ÷ ${Number(months)} mês(es)) × 12. Não é valor oficial — compare com a previsão da portaria.`;
+    }
+    return "Estimativa pelo ritmo mensal da previsão anual quando ainda não há histórico suficiente no CKAN.";
+}
+
+function fundebRealtimePortariaBreakdownHtml(m) {
+    const receita = m.fundeb_realtime_portaria_receita;
+    const baseMat = m.fundeb_realtime_base_mat_vaaf;
+    const vaaf = m.fundeb_realtime_vaaf;
+    const matriculas = m.fundeb_realtime_matriculas;
+    const expectedSource = String(m.fundeb_realtime_expected_source ?? "");
+    const adjustments = Array.isArray(m.fundeb_realtime_portaria_adjustments)
+        ? m.fundeb_realtime_portaria_adjustments
+        : [];
+    const note = String(m.fundeb_realtime_portaria_note ?? "").trim();
+
+    const rows = [];
+    if (receita != null && Number(receita) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Receita FUNDEB")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Total previsto na portaria FNDE")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(receita)}</span>` +
+                `</div>`,
+        );
+    } else if (baseMat != null && Number(baseMat) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Base FUNDEB")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Matrículas × VAAF (sem portaria de receita)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(baseMat)}</span>` +
+                `</div>`,
+        );
+    }
+    if (vaaf != null && Number(vaaf) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("VAAF")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Valor aluno/ano (referência FNDE)")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatVaafPerStudent(vaaf)}</span>` +
+                `</div>`,
+        );
+    }
+    if (matriculas != null && Number(matriculas) > 0) {
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Matrículas base")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(expectedSource === "portaria_receita" ? "Base FNDE usada na portaria" : "Base para cálculo matrículas × VAAF")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(nf(matriculas))}</span>` +
+                `</div>`,
+        );
+    }
+    for (const adj of adjustments) {
+        const label = String(adj?.label ?? "").trim();
+        const valueFmt = String(adj?.value_fmt ?? "").trim();
+        const value = adj?.value;
+        if (!label) {
+            continue;
+        }
+        rows.push(
+            `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
+                `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml(label)}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Componente da portaria FNDE")}</span>` +
+                `</div>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-value">${escapeHtml(valueFmt || (value != null ? formatCurrencyBrl(value) : "—"))}</span>` +
+                `</div>`,
+        );
+    }
+
+    if (rows.length === 0) {
+        return "";
+    }
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__fundeb-subsection">` +
+        `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-title">${escapeHtml("Previsto na portaria (ano vigente)")}</p>` +
+        `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
+        (note
+            ? `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml(note)}</p>`
+            : `<p class="serv-horizonte-muni-tooltip__fundeb-subsection-note">${escapeHtml("Referência de planejamento FNDE — distinta dos repasses observados no Tesouro/CKAN.")}</p>`) +
+        `</div>`
+    );
+}
+
 function fundebRealtimeHtml(m, currentYear) {
     const ano = m.fundeb_realtime_ano ?? currentYear;
     const observed = m.fundeb_realtime_observed;
@@ -625,6 +722,7 @@ function fundebRealtimeHtml(m, currentYear) {
         return "";
     }
 
+    const outlookDetail = String(m.fundeb_realtime_outlook_detail ?? "").trim();
     const outlookTone =
         outlook === "risk"
             ? "risk"
@@ -664,7 +762,7 @@ function fundebRealtimeHtml(m, currentYear) {
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Projeção até dez.")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Ritmo observado ou mensal")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml(fundebRealtimeProjectionDesc(m))}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value">${formatCurrencyBrl(projected)}</span>` +
                 `</div>`,
@@ -675,12 +773,14 @@ function fundebRealtimeHtml(m, currentYear) {
             `<div class="serv-horizonte-muni-tooltip__fundeb-row">` +
                 `<div class="serv-horizonte-muni-tooltip__fundeb-cell">` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-label">${escapeHtml("Saldo a repassar")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Indicativo até dezembro")}</span>` +
+                `<span class="serv-horizonte-muni-tooltip__fundeb-desc">${escapeHtml("Previsão portaria − já repassado")}</span>` +
                 `</div>` +
                 `<span class="serv-horizonte-muni-tooltip__fundeb-value serv-horizonte-muni-tooltip__fundeb-value--balance">${formatCurrencyBrl(balance)}</span>` +
                 `</div>`,
         );
     }
+
+    const portariaBreakdown = fundebRealtimePortariaBreakdownHtml(m);
 
     const progress =
         hasExpected && pctDone != null
@@ -691,7 +791,11 @@ function fundebRealtimeHtml(m, currentYear) {
               `<div class="serv-horizonte-muni-tooltip__finance-progress-meta">` +
               `<span>${escapeHtml("Realizado")} <strong>${escapeHtml(pctLabel ?? "—")}</strong></span>` +
               (outlookLabel ? `<span class="serv-horizonte-muni-tooltip__finance-outlook serv-horizonte-muni-tooltip__finance-outlook--${outlookTone}">${escapeHtml(outlookLabel)}</span>` : "") +
-              `</div></div>`
+              `</div>` +
+              (outlookDetail
+                  ? `<p class="serv-horizonte-muni-tooltip__finance-outlook-detail">${escapeHtml(outlookDetail)}</p>`
+                  : "") +
+              `</div>`
             : "";
 
     const yearSubtitle = lastTemporal
@@ -706,6 +810,7 @@ function fundebRealtimeHtml(m, currentYear) {
         HORIZONTE_FINANCE_ICONS.realtime,
         progress +
             `<div class="serv-horizonte-muni-tooltip__fundeb-rows">${rows.join("")}</div>` +
+            portariaBreakdown +
             financeNoteHtml(
                 "Exercício em curso: valores parciais (YTD). A data indica a competência do último repasse observado no CKAN Tesouro, não a previsão anual. Use Finanças → Tempo Real na consultoria para extrato mensal.",
                 "realtime",
