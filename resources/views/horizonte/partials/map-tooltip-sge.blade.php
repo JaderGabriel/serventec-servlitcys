@@ -34,26 +34,47 @@
                         ></span>
                     </p>
                     <div class="serv-horizonte-muni-modal__facts" x-show="active" x-cloak>
-                        <span class="serv-horizonte-muni-modal__fact" x-text="modalHeaderMeta(active)"></span>
-                        <div
-                            class="serv-horizonte-muni-modal__saeb"
-                            x-show="modalHeaderHasSaeb(active)"
-                            x-cloak
-                        >
-                            <span class="serv-horizonte-muni-modal__saeb-tag">SAEB</span>
-                            <template x-for="(row, idx) in modalHeaderSaebByYear(active)" :key="'saeb-' + row.year + '-' + idx">
-                                <span
-                                    class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb-year"
-                                    :class="modalHeaderSaebYearToneClass(idx)"
-                                    x-text="modalHeaderSaebYearLabel(row)"
-                                ></span>
-                            </template>
+                        <div class="serv-horizonte-muni-modal__facts-primary">
+                            <span class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--ibge" x-text="modalHeaderMeta(active)"></span>
+                            <div
+                                class="serv-horizonte-muni-modal__saeb"
+                                x-show="modalHeaderHasSaeb(active)"
+                                x-cloak
+                            >
+                                <span class="serv-horizonte-muni-modal__saeb-tag">SAEB</span>
+                                <template x-for="(row, idx) in modalHeaderSaebByYear(active)" :key="'saeb-' + row.year + '-' + idx">
+                                    <span
+                                        class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb-year"
+                                        :class="modalHeaderSaebYearToneClass(idx)"
+                                        x-text="modalHeaderSaebYearLabel(row)"
+                                    ></span>
+                                </template>
+                            </div>
                         </div>
-                        <span
-                            class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--approx"
-                            x-show="hasModalHeaderGeoInfo(active)"
-                            x-text="modalHeaderGeoLabel(active)"
-                        ></span>
+                        <div class="serv-horizonte-muni-modal__geo" x-show="hasModalHeaderGeoInfo(active)" x-cloak>
+                            <span
+                                class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-pos"
+                                :class="active?.coord_approximate ? 'serv-horizonte-muni-modal__fact--geo-pos-approx' : ''"
+                                x-show="hasModalHeaderGeoPosition(active)"
+                            >
+                                <svg class="serv-horizonte-muni-modal__fact__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+                                <span x-text="modalHeaderGeoPositionLabel(active)"></span>
+                            </span>
+                            <span
+                                class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-dist"
+                                x-show="hasModalHeaderGeoDistance(active)"
+                            >
+                                <svg class="serv-horizonte-muni-modal__fact__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18h10.5V3.75M6.75 9h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                                <span x-text="modalHeaderGeoDistanceLabel(active)"></span>
+                            </span>
+                            <span
+                                class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-area"
+                                x-show="hasModalHeaderGeoArea(active)"
+                            >
+                                <svg class="serv-horizonte-muni-modal__fact__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" /></svg>
+                                <span x-text="modalHeaderGeoAreaLabel(active)"></span>
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div class="serv-horizonte-muni-modal__chrome-side">

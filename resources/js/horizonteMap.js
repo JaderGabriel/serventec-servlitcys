@@ -6151,16 +6151,95 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return false;
             }
 
+            return (
+                this.hasModalHeaderGeoPosition(m) ||
+                this.hasModalHeaderGeoDistance(m) ||
+                this.hasModalHeaderGeoArea(m)
+            );
+        },
+
+        hasModalHeaderGeoPosition(m) {
+            if (!m) {
+                return false;
+            }
+
             const lat = Number(m.lat);
             const lng = Number(m.lng);
+
+            return isValidCoord(lat, lng);
+        },
+
+        hasModalHeaderGeoDistance(m) {
+            if (!m) {
+                return false;
+            }
+
             const km = Number(m.distancia_capital_km);
+
+            return Number.isFinite(km) && km >= 0;
+        },
+
+        hasModalHeaderGeoArea(m) {
+            if (!m) {
+                return false;
+            }
+
             const area = Number(m.area_km2);
 
-            return (
-                isValidCoord(lat, lng) ||
-                (Number.isFinite(km) && km >= 0) ||
-                (Number.isFinite(area) && area > 0)
-            );
+            return Number.isFinite(area) && area > 0;
+        },
+
+        modalHeaderGeoPositionLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            if (!isValidCoord(lat, lng)) {
+                return "";
+            }
+
+            const latLabel = `${Math.abs(lat).toFixed(3).replace(".", ",")}°${lat < 0 ? "S" : "N"}`;
+            const lngLabel = `${Math.abs(lng).toFixed(3).replace(".", ",")}°${lng < 0 ? "W" : "E"}`;
+            if (m.coord_approximate) {
+                return `Indicativa · ${latLabel} · ${lngLabel}`;
+            }
+
+            return `${latLabel} · ${lngLabel}`;
+        },
+
+        modalHeaderGeoDistanceLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const km = Number(m.distancia_capital_km);
+            const capital = String(m.capital_nome ?? "").trim();
+            if (!Number.isFinite(km) || km < 0) {
+                return "";
+            }
+
+            const dist = `${km.toLocaleString("pt-BR", {
+                maximumFractionDigits: 1,
+            })} km`;
+
+            return capital !== "" ? `${dist} · ${capital}` : `${dist} da capital`;
+        },
+
+        modalHeaderGeoAreaLabel(m) {
+            if (!m) {
+                return "";
+            }
+
+            const area = Number(m.area_km2);
+            if (!Number.isFinite(area) || area <= 0) {
+                return "";
+            }
+
+            return `${area.toLocaleString("pt-BR", {
+                maximumFractionDigits: 1,
+            })} km²`;
         },
 
         modalHeaderGeoLabel(m) {
@@ -6169,35 +6248,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             const parts = [];
-            const lat = Number(m.lat);
-            const lng = Number(m.lng);
-            if (isValidCoord(lat, lng)) {
-                if (m.coord_approximate) {
-                    parts.push("Posição indicativa");
-                }
-                const latLabel = `${Math.abs(lat).toFixed(3).replace(".", ",")}°${lat < 0 ? "S" : "N"}`;
-                const lngLabel = `${Math.abs(lng).toFixed(3).replace(".", ",")}°${lng < 0 ? "W" : "E"}`;
-                parts.push(`${latLabel} · ${lngLabel}`);
+            const position = this.modalHeaderGeoPositionLabel(m);
+            const distance = this.modalHeaderGeoDistanceLabel(m);
+            const area = this.modalHeaderGeoAreaLabel(m);
+            if (position !== "") {
+                parts.push(position);
             }
-
-            const km = Number(m.distancia_capital_km);
-            const capital = String(m.capital_nome ?? "").trim();
-            if (Number.isFinite(km) && km >= 0) {
-                const dist = `${km.toLocaleString("pt-BR", {
-                    maximumFractionDigits: 1,
-                })} km`;
-                parts.push(
-                    capital !== "" ? `${dist} de ${capital}` : `${dist} da capital`,
-                );
+            if (distance !== "") {
+                parts.push(distance);
             }
-
-            const area = Number(m.area_km2);
-            if (Number.isFinite(area) && area > 0) {
-                parts.push(
-                    `${area.toLocaleString("pt-BR", {
-                        maximumFractionDigits: 1,
-                    })} km²`,
-                );
+            if (area !== "") {
+                parts.push(area);
             }
 
             return parts.join(" · ");
