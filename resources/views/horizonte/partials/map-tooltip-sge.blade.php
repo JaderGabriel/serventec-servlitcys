@@ -1,4 +1,4 @@
-<template x-teleport="body">
+<template x-teleport="muniModalTeleportTarget()">
 <div
     x-show="active && tooltipPinned"
     x-cloak

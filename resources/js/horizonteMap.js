@@ -2473,6 +2473,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         enrollmentSeriesLatestTotal: null,
         _enrollmentSeriesChart: null,
         _enrollmentSeriesChartPayload: null,
+        _enrollmentSeriesRenderQueue: null,
         _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
         sgeFormReadOnly: false,
@@ -3426,6 +3427,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     });
                     if (this.tooltipPinned && this.active) {
                         this.positionTooltip();
+                        if (this.enrollmentSeriesReady) {
+                            void this.ensureEnrollmentSeriesChartRendered(3);
+                        }
                     }
                 }, delay);
             });
@@ -3578,6 +3582,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         mapControlLabelFullscreen() {
             return this.mapFullscreen ? "Sair da tela inteira" : "Tela inteira";
+        },
+
+        /** Modal no mapShell: em tela cheia nativa só esse subtree é visível; fora, fixed cobre o viewport. */
+        muniModalTeleportTarget() {
+            const shell = this.$refs.mapShell;
+            if (shell instanceof HTMLElement) {
+                return shell;
+            }
+
+            return document.body;
         },
 
         mapLoadingStatusLabel() {
@@ -5864,14 +5878,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.tooltipPinned = true;
             this.positionTooltip();
             this.syncMuniModalScrollLock();
-            void this.loadEnrollmentSeries(m).then(() => {
-                if (
-                    this.tooltipPinned &&
-                    String(this.active?.ibge ?? "") === String(m.ibge ?? "")
-                ) {
-                    void this.ensureEnrollmentSeriesChartRendered();
-                }
-            });
+            void this.loadEnrollmentSeries(m);
             this.refreshBoundaryHighlight();
         },
 
@@ -6809,42 +6816,44 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesDependencia = "total";
         },
 
-        async waitForEnrollmentSeriesCanvas(maxMs = 2400) {
+        async waitForEnrollmentSeriesCanvas(maxMs = 3200) {
             const started = performance.now();
             while (performance.now() - started < maxMs) {
                 const canvas = this.$refs.enrollmentSeriesCanvas;
-                if (canvas && canvas.isConnected && canvas.offsetParent !== null) {
-                    const wrap = canvas.closest(
-                        ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
-                    );
-                    if (wrap instanceof HTMLElement && wrap.clientWidth > 0) {
-                        const width = Math.max(
-                            canvas.clientWidth,
-                            wrap.clientWidth,
-                        );
-                        const height = Math.max(
-                            canvas.clientHeight,
-                            wrap.clientHeight,
-                            148,
-                        );
-                        if (width > 8 && height > 8) {
-                            canvas.style.width = `${width}px`;
-                            canvas.style.height = `${height}px`;
-
-                            return canvas;
-                        }
-                    }
+                if (!canvas?.isConnected) {
+                    await this.$nextTick();
+                    await new Promise((resolve) => requestAnimationFrame(resolve));
+                    continue;
                 }
+
+                const wrap = canvas.closest(
+                    ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
+                );
+                const measureEl =
+                    wrap instanceof HTMLElement ? wrap : canvas;
+                const rect = measureEl.getBoundingClientRect();
+                const width = Math.max(
+                    rect.width,
+                    measureEl.clientWidth,
+                    canvas.clientWidth,
+                );
+                const height = Math.max(
+                    rect.height,
+                    measureEl.clientHeight,
+                    canvas.clientHeight,
+                    148,
+                );
+                if (width > 8 && height > 8) {
+                    return canvas;
+                }
+
                 await this.$nextTick();
                 await new Promise((resolve) => requestAnimationFrame(resolve));
             }
 
             const canvas = this.$refs.enrollmentSeriesCanvas;
-            if (canvas?.isConnected && canvas.offsetParent !== null) {
-                return canvas;
-            }
 
-            return null;
+            return canvas?.isConnected ? canvas : null;
         },
 
         async ensureEnrollmentSeriesChartRendered(attempts = 4) {
@@ -6852,24 +6861,37 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return false;
             }
 
-            for (let attempt = 0; attempt < attempts; attempt += 1) {
-                const rendered = await this.renderEnrollmentSeriesChart(
-                    this._enrollmentSeriesChartPayload,
-                );
-                if (rendered) {
-                    return true;
+            const renderTask = async () => {
+                for (let attempt = 0; attempt < attempts; attempt += 1) {
+                    const rendered = await this.renderEnrollmentSeriesChart(
+                        this._enrollmentSeriesChartPayload,
+                    );
+                    if (rendered) {
+                        return true;
+                    }
+                    await new Promise((resolve) =>
+                        window.setTimeout(resolve, 120 * (attempt + 1)),
+                    );
                 }
-                await new Promise((resolve) =>
-                    window.setTimeout(resolve, 140 * (attempt + 1)),
-                );
-            }
 
-            if (!this.enrollmentSeriesError) {
+                return false;
+            };
+
+            const previous = this._enrollmentSeriesRenderQueue ?? Promise.resolve();
+            const queued = previous.then(renderTask, renderTask);
+            this._enrollmentSeriesRenderQueue = queued.finally(() => {
+                if (this._enrollmentSeriesRenderQueue === queued) {
+                    this._enrollmentSeriesRenderQueue = null;
+                }
+            });
+            const ok = await queued;
+
+            if (!ok && !this.enrollmentSeriesError) {
                 this.enrollmentSeriesError =
                     "Não foi possível desenhar o gráfico de matrículas.";
             }
 
-            return false;
+            return ok;
         },
 
         async loadEnrollmentSeries(m) {
@@ -6938,15 +6960,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.enrollmentSeriesReady = true;
                 this.enrollmentSeriesLoading = false;
                 this._enrollmentSeriesLoadedDependencia = requestedDependencia;
-
-                await this.$nextTick();
-                if (
-                    controller.signal.aborted ||
-                    String(this.enrollmentSeriesIbge) !== requestedIbge
-                ) {
-                    return;
-                }
-                await this.ensureEnrollmentSeriesChartRendered();
             } catch (error) {
                 if (
                     error?.name !== "AbortError" &&
@@ -6963,6 +6976,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.enrollmentSeriesLoading = false;
                 }
             }
+
+            if (
+                controller.signal.aborted ||
+                String(this.enrollmentSeriesIbge) !== requestedIbge ||
+                !this._enrollmentSeriesChartPayload
+            ) {
+                return;
+            }
+
+            await this.$nextTick();
+            await this.ensureEnrollmentSeriesChartRendered();
         },
 
         formatEnrollmentStageCounter(value) {
@@ -6972,10 +6996,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         async renderEnrollmentSeriesChart(payload) {
             if (!payload) {
                 return false;
-            }
-            if (this._enrollmentSeriesChart) {
-                this._enrollmentSeriesChart.destroy();
-                this._enrollmentSeriesChart = null;
             }
 
             const canvas = await this.waitForEnrollmentSeriesCanvas();
@@ -6987,23 +7007,40 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return false;
             }
 
+            const existing = Chart.getChart(canvas);
+            if (existing) {
+                existing.destroy();
+            }
+            if (this._enrollmentSeriesChart) {
+                this._enrollmentSeriesChart.destroy();
+                this._enrollmentSeriesChart = null;
+            }
+
             const datasets = (Array.isArray(payload.datasets)
                 ? payload.datasets
                 : []
             ).map((dataset, index) => styleEnrollmentDataset(dataset, index));
 
-            this._enrollmentSeriesChart = new Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: Array.isArray(payload.labels) ? payload.labels : [],
-                    datasets,
-                },
-                options: enrollmentSeriesChartOptions(),
-            });
-            this._enrollmentSeriesChart.resize();
-            this._enrollmentSeriesChart.update("none");
+            try {
+                this._enrollmentSeriesChart = new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: Array.isArray(payload.labels)
+                            ? payload.labels
+                            : [],
+                        datasets,
+                    },
+                    options: enrollmentSeriesChartOptions(),
+                });
+                this._enrollmentSeriesChart.resize();
+                this._enrollmentSeriesChart.update("none");
 
-            return true;
+                return true;
+            } catch (error) {
+                console.warn("[Horizonte] falha ao desenhar série de matrículas", error);
+
+                return false;
+            }
         },
 
         tooltipMunicipalContextHtml(m) {
