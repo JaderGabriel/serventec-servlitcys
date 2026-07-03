@@ -7,6 +7,7 @@ use App\Services\Horizonte\HorizonteMapService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteMapBusyException;
 use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,7 +67,15 @@ class HorizonteController extends Controller
         }
         set_time_limit($timeLimit);
 
-        return response()->json($this->map->buildForRequest($scope, $uf));
+        try {
+            return response()->json($this->map->buildForRequest($scope, $uf));
+        } catch (HorizonteMapBusyException) {
+            return response()->json([
+                'ok' => false,
+                'message' => __('Mapa em construção para este recorte. Aguarde alguns segundos e tente novamente.'),
+                'retry_after' => 5,
+            ], 503)->header('Retry-After', '5');
+        }
     }
 
     public function mapGeo(Request $request): JsonResponse

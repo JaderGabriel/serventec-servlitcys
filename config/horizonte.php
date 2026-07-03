@@ -272,6 +272,8 @@ return [
         'regional_time_limit' => max(60, (int) env('HORIZONTE_MAP_REGIONAL_TIME_LIMIT', 120)),
         /** Tempo máximo PHP ao montar o painel nacional (primeira carga sem cache). */
         'overview_time_limit' => max(60, (int) env('HORIZONTE_MAP_OVERVIEW_TIME_LIMIT', 180)),
+        /** Espera máxima (s) por lock de cache quando outro pedido monta o mesmo recorte. */
+        'cache_lock_wait_seconds' => max(15, (int) env('HORIZONTE_MAP_CACHE_LOCK_WAIT', 90)),
         /** Todas as UFs com malha mesorregional IBGE abrem vista intermédia antes do detalhe municipal. */
         'meso_overview_threshold' => 0,
         /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */

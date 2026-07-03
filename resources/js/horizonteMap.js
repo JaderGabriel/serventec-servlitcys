@@ -2476,6 +2476,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         _enrollmentSeriesChart: null,
         _enrollmentSeriesChartPayload: null,
         _enrollmentSeriesRenderQueue: null,
+        _enrollmentSeriesRenderGen: 0,
+        _enrollmentSeriesRefreshTimer: null,
+        _enrollmentSeriesChartObserver: null,
         _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
         sgeFormReadOnly: false,
@@ -3371,6 +3374,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.filtersVisible = true;
                 }
             }
+            this.$nextTick(() => {
+                window.setTimeout(
+                    () =>
+                        this.syncMapViewport({
+                            preserveView: true,
+                            force: true,
+                        }),
+                    340,
+                );
+            });
         },
 
         async toggleMapFullscreen() {
@@ -3393,10 +3406,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.syncMuniModalPortal();
                 window.setTimeout(() => {
                     this._mapLayoutSize = { w: 0, h: 0 };
-                    if (this.map) {
-                        this.map.invalidateSize({ animate: false });
-                    }
-                    this.refreshMapLayout({
+                    this.syncMapViewport({
                         immediate: true,
                         force: true,
                         preserveView: true,
@@ -3420,25 +3430,45 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.syncMuniModalPortal();
 
             const delay = wasFullscreen && !this.mapFullscreen ? 160 : 60;
+            if (this.tooltipPinned && this._enrollmentSeriesChartPayload) {
+                this.detachEnrollmentSeriesChart();
+            }
             this.$nextTick(() => {
                 window.setTimeout(() => {
                     this._mapLayoutSize = { w: 0, h: 0 };
-                    if (this.map) {
-                        this.map.invalidateSize({ animate: false });
-                    }
-                    this.refreshMapLayout({
+                    this.syncMapViewport({
                         immediate: true,
                         force: true,
                         preserveView: true,
                     });
+                    window.setTimeout(
+                        () =>
+                            this.syncMapViewport({
+                                immediate: true,
+                                force: true,
+                                preserveView: true,
+                            }),
+                        220,
+                    );
                     if (this.tooltipPinned && this.active) {
                         this.positionTooltip();
-                        if (this.enrollmentSeriesReady) {
-                            void this.ensureEnrollmentSeriesChartRendered(3);
+                        if (this._enrollmentSeriesChartPayload) {
+                            this.scheduleEnrollmentSeriesChartRefresh({
+                                attempts: 6,
+                                delayMs: 40,
+                            });
                         }
                     }
                 }, delay);
             });
+        },
+
+        syncMapViewport({
+            immediate = false,
+            force = false,
+            preserveView = false,
+        } = {}) {
+            this.refreshMapLayout({ immediate, force, preserveView });
         },
 
         refreshMapLayout({
@@ -3469,6 +3499,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 liveMap.invalidateSize({ animate: false });
                 const size = liveMap.getSize();
                 if (!size || size.x <= 0 || size.y <= 0) {
+                    if (force) {
+                        window.setTimeout(
+                            () =>
+                                this.syncMapViewport({
+                                    immediate: true,
+                                    force: true,
+                                    preserveView,
+                                }),
+                            80,
+                        );
+                    }
+
                     return;
                 }
 
@@ -3479,6 +3521,28 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     prev.w !== size.x ||
                     prev.h !== size.y;
                 this._mapLayoutSize = { w: size.x, h: size.y };
+
+                if (this.isRegionalMode) {
+                    this.setChoroplethOverviewUi(false);
+                }
+
+                if (liveMap.scrollWheelZoom?.enabled?.() === false) {
+                    liveMap.scrollWheelZoom.enable();
+                }
+                if (liveMap.dragging?.enabled?.() === false) {
+                    liveMap.dragging.enable();
+                }
+
+                if (force && !changed) {
+                    liveMap.setView(center, zoom, { animate: false });
+                    this.applyChoroplethPointerPolicy(
+                        this.isOverviewMode || this.isMesoOverviewMode,
+                    );
+                    this.refreshCanvasMarkersAfterZoom();
+                    this.repositionFloatingPanels();
+
+                    return;
+                }
 
                 if (!changed) {
                     return;
@@ -3603,9 +3667,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const mountOnShell =
                 this.mapFullscreen && portal instanceof HTMLElement;
             const target = mountOnShell ? portal : document.body;
+            const reparented = modal.parentElement !== target;
 
-            if (modal.parentElement !== target) {
+            if (reparented) {
                 target.appendChild(modal);
+                if (this.tooltipPinned && this._enrollmentSeriesChartPayload) {
+                    this.detachEnrollmentSeriesChart();
+                }
             }
 
             modal.classList.toggle("is-map-shell-mounted", mountOnShell);
@@ -3616,6 +3684,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         ? "false"
                         : "true",
                 );
+            }
+
+            if (
+                reparented &&
+                this.tooltipPinned &&
+                this._enrollmentSeriesChartPayload
+            ) {
+                this.scheduleEnrollmentSeriesChartRefresh({
+                    attempts: 6,
+                    delayMs: 200,
+                });
             }
         },
 
@@ -4093,9 +4172,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
                     if (!response.ok) {
                         if (retryStatuses.has(response.status) && attempt < retries) {
-                            this.loadingMessage = `Servidor ocupado — nova tentativa (${attempt + 1}/${retries})…`;
+                            const retryAfterHeader = Number(
+                                response.headers.get("Retry-After") ?? "",
+                            );
+                            const waitMs =
+                                Number.isFinite(retryAfterHeader) &&
+                                retryAfterHeader > 0
+                                    ? retryAfterHeader * 1000
+                                    : retryDelayMs * (attempt + 1);
+                            this.loadingMessage = `A preparar mapa (${attempt + 1}/${retries})…`;
                             await new Promise((resolve) =>
-                                window.setTimeout(resolve, retryDelayMs * (attempt + 1)),
+                                window.setTimeout(resolve, waitMs),
                             );
                             continue;
                         }
@@ -4178,12 +4265,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.pendingRegionalUf = scoped;
             this.regionalLoading = true;
             this.pageError = null;
-            this.loadingMessage = `Carregando UF ${scoped}`;
+            this.loadingMessage = `A preparar mapa — UF ${scoped}`;
             this.scopeUf = scoped;
 
             try {
                 const data = await this.fetchHorizonteJson(
                     this.dataUrl("regional", scoped),
+                    { retries: 6, retryDelayMs: 2500 },
                 );
                 if (!Array.isArray(data.markers) || data.markers.length === 0) {
                     throw new Error(
@@ -4526,11 +4614,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         return;
                     }
                     await this.refreshMapLayers();
-                    if (this.mapFullscreen) {
-                        this.$nextTick(() =>
-                            this.refreshMapLayout({ immediate: true, force: true }),
-                        );
-                    }
                     resolve();
                 }, this.mapRefreshDebounceMs);
             });
@@ -5209,11 +5292,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.syncMuniModalScrollLock();
                 }
 
-                if (this.isOverviewMode || this.isMesoOverviewMode) {
-                    this.$nextTick(() =>
-                        this.refreshMapLayout({ immediate: true, force: true }),
-                    );
-                }
+                this.$nextTick(() =>
+                    this.syncMapViewport({
+                        immediate: true,
+                        force: true,
+                        preserveView:
+                            this.isRegionalMode &&
+                            (this._mapUserAdjustedView ||
+                                this._preserveViewOnNextRender),
+                    }),
+                );
             }
         },
 
@@ -5578,7 +5666,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             if (this._preserveViewOnNextRender) {
                 this._preserveViewOnNextRender = false;
-                this.refreshCanvasMarkersAfterZoom();
+                this.syncMapViewport({
+                    immediate: true,
+                    force: true,
+                    preserveView: true,
+                });
             } else {
                 const bounds = list
                     .map((m) => [Number(m.lat), Number(m.lng)])
@@ -5657,7 +5749,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             if (this._preserveViewOnNextRender) {
                 this._preserveViewOnNextRender = false;
-                this.refreshCanvasMarkersAfterZoom();
+                this.syncMapViewport({
+                    immediate: true,
+                    force: true,
+                    preserveView: true,
+                });
             } else {
                 this.fitMapBounds(bounds, this.scopeUf ? 5 : 4);
             }
@@ -5944,10 +6040,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
             if (
                 this.tooltipPinned &&
-                this.enrollmentSeriesReady &&
+                this._enrollmentSeriesChartPayload &&
                 !this._enrollmentSeriesChart
             ) {
-                this.$nextTick(() => void this.ensureEnrollmentSeriesChartRendered(2));
+                this.scheduleEnrollmentSeriesChartRefresh({
+                    attempts: 4,
+                    delayMs: 60,
+                });
             }
         },
 
@@ -6753,14 +6852,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         clearEnrollmentSeriesVisual() {
+            this._enrollmentSeriesRenderGen += 1;
+            if (this._enrollmentSeriesRefreshTimer) {
+                window.clearTimeout(this._enrollmentSeriesRefreshTimer);
+                this._enrollmentSeriesRefreshTimer = null;
+            }
+            this.disconnectEnrollmentSeriesChartObserver();
             if (this._enrollmentSeriesAbort) {
                 this._enrollmentSeriesAbort.abort();
                 this._enrollmentSeriesAbort = null;
             }
-            if (this._enrollmentSeriesChart) {
-                this._enrollmentSeriesChart.destroy();
-                this._enrollmentSeriesChart = null;
-            }
+            this.detachEnrollmentSeriesChart();
             this.enrollmentSeriesReady = false;
             this.enrollmentSeriesError = null;
             this.enrollmentSeriesFootnote = "";
@@ -6770,6 +6872,110 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesLatestTotal = null;
             this.enrollmentSeriesLoading = false;
             this._enrollmentSeriesChartPayload = null;
+        },
+
+        detachEnrollmentSeriesChart() {
+            if (this._enrollmentSeriesChart) {
+                this._enrollmentSeriesChart.destroy();
+                this._enrollmentSeriesChart = null;
+            }
+            const canvas = this.$refs.enrollmentSeriesCanvas;
+            if (canvas instanceof HTMLCanvasElement) {
+                const existing = Chart.getChart(canvas);
+                if (existing) {
+                    existing.destroy();
+                }
+            }
+        },
+
+        disconnectEnrollmentSeriesChartObserver() {
+            if (this._enrollmentSeriesChartObserver) {
+                this._enrollmentSeriesChartObserver.disconnect();
+                this._enrollmentSeriesChartObserver = null;
+            }
+        },
+
+        enrollmentSeriesChartShouldRender() {
+            return (
+                Boolean(this.tooltipPinned && this.active) &&
+                Boolean(this._enrollmentSeriesChartPayload) &&
+                this.shouldShowEnrollmentSeries(this.active)
+            );
+        },
+
+        scheduleEnrollmentSeriesChartRefresh({ attempts = 5, delayMs = 80 } = {}) {
+            if (this._enrollmentSeriesRefreshTimer) {
+                window.clearTimeout(this._enrollmentSeriesRefreshTimer);
+            }
+            this._enrollmentSeriesRefreshTimer = window.setTimeout(() => {
+                this._enrollmentSeriesRefreshTimer = null;
+                if (!this.enrollmentSeriesChartShouldRender()) {
+                    return;
+                }
+                void this.ensureEnrollmentSeriesChartRendered(attempts);
+            }, delayMs);
+        },
+
+        bindEnrollmentSeriesChartObserver(canvas) {
+            this.disconnectEnrollmentSeriesChartObserver();
+            if (!(canvas instanceof HTMLCanvasElement)) {
+                return;
+            }
+            const wrap = canvas.closest(
+                ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
+            );
+            if (!(wrap instanceof HTMLElement)) {
+                return;
+            }
+            if (typeof ResizeObserver === "undefined") {
+                return;
+            }
+
+            let resizeTimer = null;
+            this._enrollmentSeriesChartObserver = new ResizeObserver(() => {
+                if (resizeTimer) {
+                    window.clearTimeout(resizeTimer);
+                }
+                resizeTimer = window.setTimeout(() => {
+                    resizeTimer = null;
+                    if (!this.enrollmentSeriesChartShouldRender()) {
+                        return;
+                    }
+                    if (this._enrollmentSeriesChart) {
+                        this._enrollmentSeriesChart.resize();
+                        this._enrollmentSeriesChart.update("none");
+                        return;
+                    }
+                    void this.ensureEnrollmentSeriesChartRendered(2);
+                }, 80);
+            });
+            this._enrollmentSeriesChartObserver.observe(wrap);
+        },
+
+        enrollmentSeriesCanvasDimensions(canvas) {
+            if (!(canvas instanceof HTMLCanvasElement) || !canvas.isConnected) {
+                return { width: 0, height: 0 };
+            }
+
+            const wrap = canvas.closest(
+                ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
+            );
+            const measureEl =
+                wrap instanceof HTMLElement ? wrap : canvas;
+            const rect = measureEl.getBoundingClientRect();
+            const width = Math.max(
+                rect.width,
+                measureEl.clientWidth,
+                canvas.clientWidth,
+            );
+            const height = Math.max(
+                rect.height,
+                measureEl.clientHeight,
+                canvas.clientHeight,
+                148,
+            );
+
+            return { width, height };
         },
 
         enrollmentStageHint(item) {
@@ -6856,9 +7062,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesDependencia = "total";
         },
 
-        async waitForEnrollmentSeriesCanvas(maxMs = 3200) {
+        async waitForEnrollmentSeriesCanvas(maxMs = 4200) {
             const started = performance.now();
             while (performance.now() - started < maxMs) {
+                if (!this.enrollmentSeriesChartShouldRender()) {
+                    return null;
+                }
+
                 const canvas = this.$refs.enrollmentSeriesCanvas;
                 if (!canvas?.isConnected) {
                     await this.$nextTick();
@@ -6866,23 +7076,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     continue;
                 }
 
-                const wrap = canvas.closest(
-                    ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
-                );
-                const measureEl =
-                    wrap instanceof HTMLElement ? wrap : canvas;
-                const rect = measureEl.getBoundingClientRect();
-                const width = Math.max(
-                    rect.width,
-                    measureEl.clientWidth,
-                    canvas.clientWidth,
-                );
-                const height = Math.max(
-                    rect.height,
-                    measureEl.clientHeight,
-                    canvas.clientHeight,
-                    148,
-                );
+                const { width, height } =
+                    this.enrollmentSeriesCanvasDimensions(canvas);
                 if (width > 8 && height > 8) {
                     return canvas;
                 }
@@ -6891,26 +7086,37 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 await new Promise((resolve) => requestAnimationFrame(resolve));
             }
 
-            const canvas = this.$refs.enrollmentSeriesCanvas;
-
-            return canvas?.isConnected ? canvas : null;
+            return null;
         },
 
         async ensureEnrollmentSeriesChartRendered(attempts = 4) {
             if (!this._enrollmentSeriesChartPayload) {
                 return false;
             }
+            if (!this.enrollmentSeriesChartShouldRender()) {
+                return false;
+            }
+
+            const gen = this._enrollmentSeriesRenderGen;
 
             const renderTask = async () => {
                 for (let attempt = 0; attempt < attempts; attempt += 1) {
+                    if (
+                        gen !== this._enrollmentSeriesRenderGen ||
+                        !this.enrollmentSeriesChartShouldRender()
+                    ) {
+                        return false;
+                    }
+
                     const rendered = await this.renderEnrollmentSeriesChart(
                         this._enrollmentSeriesChartPayload,
+                        gen,
                     );
                     if (rendered) {
                         return true;
                     }
                     await new Promise((resolve) =>
-                        window.setTimeout(resolve, 120 * (attempt + 1)),
+                        window.setTimeout(resolve, 140 * (attempt + 1)),
                     );
                 }
 
@@ -6926,6 +7132,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             });
             const ok = await queued;
 
+            if (gen !== this._enrollmentSeriesRenderGen) {
+                return false;
+            }
+
             if (ok || this._enrollmentSeriesChart) {
                 if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
                     this.enrollmentSeriesError = null;
@@ -6934,7 +7144,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return true;
             }
 
-            if (!this.enrollmentSeriesError) {
+            if (
+                this.enrollmentSeriesChartShouldRender() &&
+                !this.enrollmentSeriesError
+            ) {
                 this.enrollmentSeriesError = ENROLLMENT_SERIES_DRAW_ERROR;
             }
 
@@ -6957,6 +7170,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 dependencia === this._enrollmentSeriesLoadedDependencia &&
                 (this.enrollmentSeriesReady || this.enrollmentSeriesLoading)
             ) {
+                if (
+                    this.enrollmentSeriesReady &&
+                    this._enrollmentSeriesChartPayload &&
+                    !this._enrollmentSeriesChart
+                ) {
+                    this.scheduleEnrollmentSeriesChartRefresh({
+                        attempts: 4,
+                        delayMs: 80,
+                    });
+                }
+
                 return;
             }
 
@@ -7040,13 +7264,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return nf(value);
         },
 
-        async renderEnrollmentSeriesChart(payload) {
-            if (!payload) {
+        async renderEnrollmentSeriesChart(payload, renderGen = this._enrollmentSeriesRenderGen) {
+            if (!payload || !this.enrollmentSeriesChartShouldRender()) {
                 return false;
             }
 
             const canvas = await this.waitForEnrollmentSeriesCanvas();
-            if (!canvas) {
+            if (
+                !canvas ||
+                renderGen !== this._enrollmentSeriesRenderGen ||
+                !this.enrollmentSeriesChartShouldRender()
+            ) {
                 return false;
             }
             const ctx = canvas.getContext("2d");
@@ -7058,10 +7286,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (existing) {
                 existing.destroy();
             }
-            if (this._enrollmentSeriesChart) {
-                this._enrollmentSeriesChart.destroy();
-                this._enrollmentSeriesChart = null;
-            }
+            this.detachEnrollmentSeriesChart();
 
             const datasets = (Array.isArray(payload.datasets)
                 ? payload.datasets
@@ -7079,8 +7304,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     },
                     options: enrollmentSeriesChartOptions(),
                 });
+
+                await new Promise((resolve) =>
+                    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+                );
+
+                if (
+                    renderGen !== this._enrollmentSeriesRenderGen ||
+                    !this.enrollmentSeriesChartShouldRender()
+                ) {
+                    this.detachEnrollmentSeriesChart();
+                    return false;
+                }
+
                 this._enrollmentSeriesChart.resize();
                 this._enrollmentSeriesChart.update("none");
+                this.bindEnrollmentSeriesChartObserver(canvas);
 
                 if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
                     this.enrollmentSeriesError = null;

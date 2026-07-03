@@ -25,6 +25,7 @@ use App\Support\Horizonte\HorizonteManagerInsights;
 use App\Support\Horizonte\HorizonteUfFundebInsights;
 use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
+use App\Support\Horizonte\HorizonteMapBusyException;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteSaebLookupYears;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
@@ -101,7 +102,7 @@ final class HorizonteMapService
         $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
         $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
 
-            if ($scope === 'regional' && $uf !== null) {
+        if ($scope === 'regional' && $uf !== null) {
             $responseKey = 'horizonte:map:regional-response:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $cachedResponse = AdminHomeMapCache::get($responseKey);
             if (is_array($cachedResponse)) {
@@ -109,6 +110,22 @@ final class HorizonteMapService
             }
 
             $regKey = 'horizonte:map:regional:v3:'.$refYear.':'.$uf.':'.$fingerprint;
+            $repo = AdminHomeMapCache::repository();
+            $assembledRegional = $repo->get($regKey);
+            if (is_array($assembledRegional)) {
+                $built = $this->asRegionalPayload($assembledRegional, $uf);
+                $payload = $this->attachNationalUfRankings($built, $refYear, $fingerprint);
+                $staleTtl = max($ttl, 86400);
+                $repo->put($responseKey, $payload, $ttl);
+                $repo->put(
+                    'horizonte:map:regional-response:stale:v3:'.$refYear.':'.$uf.':'.$fingerprint,
+                    $payload,
+                    $staleTtl,
+                );
+
+                return $payload;
+            }
+
             $staleKey = 'horizonte:map:regional-response:stale:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $lockKey = 'horizonte:map:lock:regional:'.$refYear.':'.$uf.':'.$fingerprint;
 
@@ -169,6 +186,7 @@ final class HorizonteMapService
         }
 
         $lock = $repo->lock($lockKey, 180);
+        $lockWait = max(15, (int) config('horizonte.map_display.cache_lock_wait_seconds', 90));
         try {
             if ($lock->get(8)) {
                 $cached = $repo->get($cacheKey);
@@ -185,7 +203,7 @@ final class HorizonteMapService
             }
 
             try {
-                $lock->block(45);
+                $lock->block($lockWait);
             } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
                 // Outro pedido pode ainda estar a montar — tentar cache ou stale abaixo.
             }
@@ -203,12 +221,7 @@ final class HorizonteMapService
             return $this->markPayloadStale($stale);
         }
 
-        $payload = $builder();
-        $staleTtl = max($ttl, 86400);
-        $repo->put($cacheKey, $payload, $ttl);
-        $repo->put($staleKey, $payload, $staleTtl);
-
-        return $payload;
+        throw new HorizonteMapBusyException('Horizonte map cache miss while building.');
     }
 
     /**
