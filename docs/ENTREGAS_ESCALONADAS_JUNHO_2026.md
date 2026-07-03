@@ -1,6 +1,6 @@
 # Entregas escalonadas — junho/2026
 
-> **Versão actual em produção:** **6.5.0** · tag **`20260702c-Jord`** · commit **`27d1e3b`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)  
+> **Versão actual em produção:** **6.5.0** · tag **`20260702c-Jord`** · commit **`d07f58a`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês anterior:** [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) (3.4.0)
 
 Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.5.0** (Horizonte territorial — malha IBGE, Contornos, Educacenso). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).

@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '6.5.0',
         'release_tag' => '20260702c-Jord',
-        'commit_short' => '27d1e3b',
+        'commit_short' => 'd07f58a',
         'commit_number' => 482,
         'revision_date' => '2026-07-02',
         'in_production' => true,

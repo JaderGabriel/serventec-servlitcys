@@ -6,7 +6,7 @@
 
 Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
 
-**Versão de referência:** **6.5.0** · tag **`20260702c-Jord`** · commit **`27d1e3b`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)
+**Versão de referência:** **6.5.0** · tag **`20260702c-Jord`** · commit **`d07f58a`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)
 
 ```mermaid
 sequenceDiagram

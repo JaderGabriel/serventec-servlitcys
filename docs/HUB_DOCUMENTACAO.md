@@ -16,7 +16,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |-----------|-------|
 | **Versão semântica** | **6.5.0** |
 | **Tag de deploy** | `20260702c-Jord` |
-| **Commit de referência** | `27d1e3b` (#482) |
+| **Commit de referência** | `d07f58a` (#482) |
 | **Data de referência** | 2026-07-02 |
 | **Release** | [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
 | **Marco** | **Jord** — Horizonte territorial: malha IBGE, Contornos, pílulas geo, Educacenso nacional |
@@ -72,7 +72,7 @@ flowchart TD
 
 | Versão | Codename | Data (ref.) | Commit # |
 |--------|----------|-------------|----------|
-| **6.5.0** | **Jord** | 02/07 c | `27d1e3b` |
+| **6.5.0** | **Jord** | 02/07 c | `d07f58a` |
 | **6.3.0** | **Horizonte** | 02/07 b | `c8e2315` |
 | **6.2.0** | Educacenso | 02/07 | — |
 | **6.1.0** | **Horizonte** | 24/06 | **441** (`c5d6fc2`) |
