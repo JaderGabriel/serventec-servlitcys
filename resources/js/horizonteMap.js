@@ -6,7 +6,6 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import Chart from "chart.js/auto";
 import { cartesianInteractionDefaults } from "./chartVisualDefaults.js";
 
-/** Paleta multi-linha (estilo gráfico de linhas clássico — pontos visíveis por ano). */
 const ENROLLMENT_SERIES_STYLES = [
     { color: "#2563eb", borderWidth: 3, pointRadius: 6, pointHoverRadius: 8 },
     { color: "#0d9488", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
@@ -14,6 +13,9 @@ const ENROLLMENT_SERIES_STYLES = [
     { color: "#ea580c", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
     { color: "#059669", borderWidth: 2.5, pointRadius: 5.5, pointHoverRadius: 7.5 },
 ];
+
+const ENROLLMENT_SERIES_DRAW_ERROR =
+    "Não foi possível desenhar o gráfico de matrículas.";
 
 function enrollmentChartIsDark() {
     return document.documentElement.classList.contains("dark");
@@ -5940,7 +5942,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 viewportCap,
             );
             this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
-            if (this.tooltipPinned && this.enrollmentSeriesReady) {
+            if (
+                this.tooltipPinned &&
+                this.enrollmentSeriesReady &&
+                !this._enrollmentSeriesChart
+            ) {
                 this.$nextTick(() => void this.ensureEnrollmentSeriesChartRendered(2));
             }
         },
@@ -6920,12 +6926,19 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             });
             const ok = await queued;
 
-            if (!ok && !this.enrollmentSeriesError) {
-                this.enrollmentSeriesError =
-                    "Não foi possível desenhar o gráfico de matrículas.";
+            if (ok || this._enrollmentSeriesChart) {
+                if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
+                    this.enrollmentSeriesError = null;
+                }
+
+                return true;
             }
 
-            return ok;
+            if (!this.enrollmentSeriesError) {
+                this.enrollmentSeriesError = ENROLLMENT_SERIES_DRAW_ERROR;
+            }
+
+            return false;
         },
 
         async loadEnrollmentSeries(m) {
@@ -7068,6 +7081,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 });
                 this._enrollmentSeriesChart.resize();
                 this._enrollmentSeriesChart.update("none");
+
+                if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
+                    this.enrollmentSeriesError = null;
+                }
 
                 return true;
             } catch (error) {

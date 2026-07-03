@@ -239,7 +239,7 @@
                     >{{ __('A carregar…') }}</span>
                 </div>
                 <p
-                    x-show="enrollmentSeriesError"
+                    x-show="enrollmentSeriesError && !_enrollmentSeriesChart"
                     x-text="enrollmentSeriesError"
                     class="serv-horizonte-muni-tooltip__enrollment-series-error"
                 ></p>
