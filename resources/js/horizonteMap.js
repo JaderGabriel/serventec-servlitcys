@@ -2630,13 +2630,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     list.length > safetyMax ? list.slice(0, safetyMax) : list;
             }
 
+            const pinnedIbge = String(this.highlightIbge ?? "").trim();
             const allValid = this.filteredMarkersList.filter((m) =>
                 isValidCoord(Number(m.lat), Number(m.lng)),
             );
-            const pinnedIbge = String(this.highlightIbge ?? "").trim();
             if (pinnedIbge !== "") {
-                const pinned = allValid.find((m) => String(m.ibge) === pinnedIbge);
-                if (pinned && !rendered.some((m) => String(m.ibge) === pinnedIbge)) {
+                const pinnedInFilter = allValid.find(
+                    (m) => String(m.ibge) === pinnedIbge,
+                );
+                const pinned =
+                    pinnedInFilter ||
+                    this.markers.find((m) => String(m.ibge) === pinnedIbge);
+                if (
+                    pinned &&
+                    isValidCoord(Number(pinned.lat), Number(pinned.lng)) &&
+                    !rendered.some((m) => String(m.ibge) === pinnedIbge)
+                ) {
                     rendered = [pinned, ...rendered.slice(0, Math.max(0, limit - 1))];
                 }
             }
@@ -3373,6 +3382,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch {
                 this.mapFullscreen = !this.mapFullscreen;
                 this.refreshMapLayout({ immediate: true, force: true });
+                if (this.tooltipPinned && this.active) {
+                    this.$nextTick(() => this.positionTooltip());
+                }
             }
         },
 
@@ -3380,6 +3392,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const el = this.$refs.mapShell;
             this.mapFullscreen = el != null && document.fullscreenElement === el;
             this.refreshMapLayout({ immediate: true, force: true });
+            if (this.tooltipPinned && this.active) {
+                this.$nextTick(() => this.positionTooltip());
+            }
+        },
+
+        muniModalTeleportTarget() {
+            if (this.mapFullscreen && this.$refs.mapShell) {
+                return this.$refs.mapShell;
+            }
+
+            return document.body;
         },
 
         refreshMapLayout({ immediate = false, force = false } = {}) {
@@ -4548,6 +4571,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (ibge !== "") {
                     ids.add(ibge);
                 }
+            }
+            const pinnedIbge = normalizeIbgeCodarea(this.highlightIbge);
+            if (pinnedIbge !== "") {
+                ids.add(pinnedIbge);
             }
 
             return [...ids];
@@ -5761,9 +5788,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         positionTooltip() {
             const verticalMargin = 48;
             const capPx = 720;
-            const viewportCap = Math.round(window.innerHeight * 0.88);
+            const viewportEl =
+                document.fullscreenElement &&
+                this.$refs.mapShell &&
+                document.fullscreenElement === this.$refs.mapShell
+                    ? this.$refs.mapShell
+                    : null;
+            const viewportH = viewportEl?.clientHeight || window.innerHeight;
+            const viewportCap = Math.round(viewportH * 0.88);
             const maxH = Math.min(
-                Math.max(360, window.innerHeight - verticalMargin),
+                Math.max(360, viewportH - verticalMargin),
                 capPx,
                 viewportCap,
             );
@@ -5952,39 +5986,135 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         pickSearch(m) {
-            this.searchQuery = `${m.name} — ${m.uf}`;
-            void this.flyToMarker(m);
+            this.searchQuery = "";
+            void this.focusMunicipality(m);
         },
 
         async flyToMarker(m) {
+            await this.focusMunicipality(m);
+        },
+
+        async prepareMunicipalityFocus(m) {
             if (!m) {
-                return;
+                return false;
             }
-            const lat = Number(m.lat);
-            const lng = Number(m.lng);
-            if (!this.map || !isValidCoord(lat, lng)) {
-                return;
-            }
+
             const targetUf = String(m.uf ?? "").trim().toUpperCase();
+            const targetIbge = String(m.ibge ?? "").trim();
+            if (targetIbge === "") {
+                return false;
+            }
+
             if (this.isOverviewMode && targetUf) {
                 await this.selectUf(targetUf, false);
-            } else if (
-                this.isRegionalMode &&
-                targetUf &&
-                this.scopeUf !== targetUf
-            ) {
+            } else if (targetUf && this.scopeUf !== targetUf) {
                 await this.selectUf(targetUf, false);
             }
-            this.highlightIbge = String(m.ibge ?? "");
-            await this.scheduleMapRefresh();
-            const zoom = isApproxCoord(m) ? 7 : 8;
-            this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
-            window.setTimeout(() => {
-                if (!this.map) {
-                    return;
+
+            if (this.isMesoOverviewMode) {
+                this.mapMode = "regional";
+                this.scopeMeso = "";
+                this._mapUserAdjustedView = false;
+                this.recomputeFilteredMarkers();
+                this._filterSignature = this.filterSignature();
+            }
+
+            const mesoId = String(m.meso_id ?? "").trim();
+            if (
+                this.isRegionalMode &&
+                this.scopeMeso &&
+                mesoId &&
+                this.scopeMeso !== mesoId
+            ) {
+                this.scopeMeso = "";
+                this.recomputeFilteredMarkers();
+                this._filterSignature = this.filterSignature();
+            }
+
+            if (
+                !this.filteredMarkersList.some(
+                    (row) => String(row.ibge) === targetIbge,
+                )
+            ) {
+                this.applyDecisionLens("all", { keepMapView: true });
+                this.recomputeFilteredMarkers();
+                this._filterSignature = this.filterSignature();
+            }
+
+            this.searchQuery = "";
+            this.hideApproxOnMap = false;
+            this.ensurePointsVisibleOnMap();
+            this.highlightIbge = targetIbge;
+            this._mapUserAdjustedView = true;
+            this._preserveViewOnNextRender = true;
+
+            return true;
+        },
+
+        fitMapToMunicipality(m, { animate = true } = {}) {
+            if (!this.map || !m) {
+                return false;
+            }
+
+            const ibge = normalizeIbgeCodarea(m.ibge);
+            if (ibge !== "" && this.municipalBoundaryLayer) {
+                let matched = null;
+                this.municipalBoundaryLayer.eachLayer((layer) => {
+                    if (
+                        normalizeIbgeCodarea(layer.feature?.properties?.codarea) ===
+                        ibge
+                    ) {
+                        matched = layer;
+                    }
+                });
+                const bounds = matched?.getBounds?.();
+                if (bounds?.isValid?.()) {
+                    this.map.fitBounds(bounds, {
+                        padding: [48, 48],
+                        maxZoom: 10,
+                        animate,
+                    });
+
+                    return true;
                 }
-                this.selectMarker(m);
-            }, 400);
+            }
+
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            if (!isValidCoord(lat, lng)) {
+                return false;
+            }
+
+            const zoom = isApproxCoord(m) ? 7 : 8;
+            if (animate) {
+                this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
+            } else {
+                this.map.setView([lat, lng], zoom, { animate: false });
+            }
+
+            return true;
+        },
+
+        async focusMunicipality(m) {
+            if (!this.map) {
+                return;
+            }
+            if (!(await this.prepareMunicipalityFocus(m))) {
+                return;
+            }
+
+            await this.scheduleMapRefresh();
+
+            const moved = this.fitMapToMunicipality(m);
+            if (moved) {
+                await new Promise((resolve) => window.setTimeout(resolve, 400));
+            }
+
+            const latest =
+                this.markers.find(
+                    (row) => String(row.ibge) === String(m.ibge ?? ""),
+                ) || m;
+            this.selectMarker(latest);
         },
 
         setMapView(view) {
