@@ -1,6 +1,6 @@
 # Padrão editorial — documentação servlitcys
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -15,7 +15,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 ```markdown
 # Título — contexto curto (servlitcys)
 
-**Versão do produto:** 6.1.0 · **Última revisão:** AAAA-MM-DD
+**Versão do produto:** 6.3.0 · **Última revisão:** AAAA-MM-DD
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [outro-doc.md](outro-doc.md)
 ```
@@ -45,7 +45,8 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 
 ## 3. Tom e linguagem
 
-- **Português europeu** (cadastro, utilizador, município, secção).
+- **Documentação técnica:** português europeu (cadastro, utilizador, secção, arquitectura).
+- **UI Horizonte / textos comerciais do mapa:** pt-BR (planejamento, município, coordenadas, tooltips) — ver [HORIZONTE.md](HORIZONTE.md) §6.
 - Frases completas; evitar telegráfico ou listas soltas sem contexto.
 - Distinguir sempre **indicativo** vs **oficial** (FUNDEB, repasses, VAAF).
 - Nomes de produto: **servlitcys** (código), **ServLitcys** (release), **Serventec** (consultoria/PDF quando aplicável).

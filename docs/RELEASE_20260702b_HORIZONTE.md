@@ -59,6 +59,28 @@ php artisan cache:clear
 
 ---
 
+## Patches pós-tag (sem bump — `main` até `4c420f8`)
+
+Entregues **após** a tag `20260702b-Horizonte`, documentados no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md):
+
+| Commit | Entrega |
+|--------|---------|
+| `330cfcd` | Malha municipal IBGE nacional (`horizonte:import-municipal-geo --all`), área km², fase `ibge_municipal_geo`, overlay microrregiões |
+| `ca837de` | Modo mapa **Contornos** (polígonos municipais); chip geográfico no modal |
+| `d5bdbb9` | Pílulas separadas: posição, distância à capital, área (ícones e cores) |
+| `4c420f8` | Botão **copiar coordenadas** em formato decimal para mapas externos |
+
+**Pós-deploy (malha + área):**
+
+```bash
+php artisan migrate --force
+php artisan horizonte:import-municipal-geo --all   # ~27 UFs; ver logs por estado
+# Educacenso multi-ano (gráfico modal):
+php artisan horizonte:sync-educacenso --reset --all
+```
+
+---
+
 ## Referências
 
 - [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)

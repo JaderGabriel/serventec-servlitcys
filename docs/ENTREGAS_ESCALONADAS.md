@@ -1,6 +1,6 @@
 # Entregas escalonadas
 
-> **Versão em produção:** **6.1.0** · tag **`20260624-Horizonte`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md)
+> **Versão em produção:** **6.3.0** · tag **`20260702b-Horizonte`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md)
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas **por mês civil** e ligadas às **releases** (`RELEASE_*.md`). Cada documento mensal lista as tags e versões semânticas do período; o detalhe técnico de cada marco está na nota de release correspondente.
 

@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **6.1.0**, linha **6.x** (Horizonte GIS coroplético + identidade azul + operação admin), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **6.3.0**, linha **6.x** (Horizonte GIS + malha municipal + modal geográfico), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,11 +14,12 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **6.1.0** |
-| **Tag de deploy** | `20260624-Horizonte` |
-| **Data de referência** | 2026-06-24 |
-| **Release** | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) |
-| **Marco** | **Horizonte** — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app |
+| **Versão semântica** | **6.3.0** |
+| **Tag de deploy** | `20260702b-Horizonte` |
+| **Commit de referência** | `4c420f8` (patches pós-tag documentados no histórico) |
+| **Data de referência** | 2026-07-02 |
+| **Release** | [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) |
+| **Marco** | **Horizonte** — modal municipal refinado, Educacenso 6.2, malha IBGE, modo Contornos, pílulas geográficas |
 
 ---
 
@@ -71,6 +72,8 @@ flowchart TD
 
 | Versão | Codename | Data (ref.) | Commit # |
 |--------|----------|-------------|----------|
+| **6.3.0** | **Horizonte** | 02/07 b | `4c420f8` |
+| **6.2.0** | Educacenso | 02/07 | — |
 | **6.1.0** | **Horizonte** | 24/06 | **441** (`c5d6fc2`) |
 | **6.0.0** | Odin | 03/06 h | **433** (`df7d9b3`) |
 | **5.8.0** | Thor | 03/06 g | **431** (`0bf9b2f`) |

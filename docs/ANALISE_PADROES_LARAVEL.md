@@ -1,6 +1,6 @@
 # Análise de padrões Laravel e qualidade de código — servlitcys
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Arquitectura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Decisões técnicas:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · **Segurança:** [SEGURANCA.md](SEGURANCA.md) · **Testes:** [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md)
 

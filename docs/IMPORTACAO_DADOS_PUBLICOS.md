@@ -1,6 +1,6 @@
 # Importação de dados públicos (hub admin)
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 **Rota:** `/admin/dados-publicos` (`admin.public-data.index`)  
 **Menu:** Operação / **Dados públicos** (perfil com `canImportOrConfigure`)  

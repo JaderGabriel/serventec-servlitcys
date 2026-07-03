@@ -1,9 +1,9 @@
 # Entregas escalonadas — junho/2026
 
-> **Versão actual em produção:** **6.1.0** · tag **`20260624-Horizonte`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md)  
+> **Versão actual em produção:** **6.3.0** · tag **`20260702b-Horizonte`** · commit **`4c420f8`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md)  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês anterior:** [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) (3.4.0)
 
-Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.1.0** (Horizonte — coroplético IBGE, mesorregiões e alertas VAAT). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
+Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.3.0** (Horizonte — modal geográfico, malha IBGE, Educacenso 6.2). Cada linha da tabela abaixo aponta para a nota de release; patches sem bump estão no [histórico](HISTORICO_VERSOES.md).
 
 ---
 
@@ -48,9 +48,11 @@ Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.1.0**
 | 33 | **5.7.7** | `20260624a-Skuld` | [RELEASE_20260624a_SKULD.md](RELEASE_20260624a_SKULD.md) | Timeline financeira modal, SIDRA pop. total, analytics refactor |
 | 34 | **5.8.0** | `20260603g-Thor` | [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) | FUNDEB estadual, pan mapa, sync repasses Tesouro |
 | 35 | **6.0.0** | `20260603h-Odin` | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) | Marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos agrupados |
-| 36 | **6.1.0** | `20260624-Horizonte` | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) | **Produção:** coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app |
+| 36 | **6.1.0** | `20260624-Horizonte` | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) | Coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app |
+| 37 | **6.2.0** | `20260702-Educacenso` | [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md) | Educacenso — contadores por etapa, filtro dependência no gráfico modal |
+| 38 | **6.3.0** | `20260702b-Horizonte` | [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) | **Produção:** modal refinado, malha municipal, Contornos, pílulas geo (+ patches até `4c420f8`) |
 
-> **Nota:** versões **4.1.3–4.1.5** (Chronos, Horae, Themis) e patches do mesmo dia estão no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) sem `RELEASE_*.md` dedicado. A numeração **4.4.x** reflecte marcos de documentação e convenção de tag com sufixo no mesmo dia civil.
+> **Nota:** versões **4.1.3–4.1.5** (Chronos, Horae, Themis) e patches pós-**6.3.0** estão no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) sem bump de versão.
 
 ---
 

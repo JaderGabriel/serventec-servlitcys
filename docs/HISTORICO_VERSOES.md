@@ -8,9 +8,9 @@
 | **Ramo** | `main` |
 | **Tag de deploy (servidor)** | `20260702b-Horizonte` |
 | **Data de referência** | **02/07/2026** |
-| **Último marco documentado** | **Horizonte (modal)** — cabeçalho fixo, finanças em colunas, regiões IBGE e SAEB no chrome — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) |
+| **Último marco documentado** | **Horizonte 6.3.0** — modal geográfico, malha municipal, modo Contornos — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) + patches em `main` até `4c420f8` |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release (#473)** | `c8e2315` |
+| **Commit de release (#473)** | `c8e2315` (tag `20260702b-Horizonte`); **HEAD documentado:** `4c420f8` |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -43,7 +43,9 @@ timeline
     2026-06-24 : 5.7.7a Skuld — timeline financeira modal, SIDRA pop. total, analytics refactor
     2026-06-03 : 5.8.0g Thor — FUNDEB estadual, pan mapa, resumo UF, sync repasses Tesouro
     2026-06-03 : 6.0.0h Odin — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos
-    2026-06-24 : 6.1.0 Horizonte — coroplético IBGE, mesorregiões, alertas VAAT, modal e ajuda in-app
+    2026-06-24 : 6.1.0 Horizonte — coroplético IBGE, mesorregiões, alertas VAAT
+    2026-07-02 : 6.2.0 Educacenso — contadores por etapa, filtro dependência
+    2026-07-02 : 6.3.0 Horizonte — modal refinado, malha municipal, Contornos
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -54,7 +56,13 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 6.3.0** | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | **Produção:** modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). |
+| *(patch pós-6.3.0)* | `4c420f8` | — | 02/07/2026 | Horizonte — botão **copiar coordenadas** (formato decimal para Google Maps). |
+| *(patch pós-6.3.0)* | `d5bdbb9` | — | 02/07/2026 | Horizonte — pílulas geográficas separadas (posição, distância à capital, área). |
+| *(patch pós-6.3.0)* | `ca837de` | — | 02/07/2026 | Horizonte — modo **Contornos** no mapa + chip geo no modal. |
+| *(patch pós-6.3.0)* | `330cfcd` | — | 02/07/2026 | Horizonte — malha municipal IBGE + área km² + overlay microrregiões. |
+| *(patch pós-6.3.0)* | `73f2569` | — | 02/07/2026 | Horizonte — SAEB LP/MAT agrupado por ano em pílulas coloridas. |
+| *(patch pós-6.3.0)* | `5f26105` | — | 02/07/2026 | Horizonte — overlay microrregiões, SAEB dois anos, cabeçalho enxuto. |
+| **▶ 6.3.0** | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | **Produção:** modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Patches seguintes sem bump (ver acima). |
 | 6.2.0 | — / `20260702-Educacenso` → `main` | — | 02/07/2026 | Contadores por etapa no gráfico Horizonte (Educacenso INEP), correção agregação matrículas — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md). |
 | 6.1.0 | `c5d6fc2` / `20260624-Horizonte` → `main` | **441** | 24/06/2026 | **Produção:** coroplético IBGE UF/mesorregiões, alertas VAAT, modal municipal, resumo UF, tour/demo — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md). |
 | 6.0.0 | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | Marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |

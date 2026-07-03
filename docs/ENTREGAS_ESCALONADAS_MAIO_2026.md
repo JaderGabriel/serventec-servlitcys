@@ -1,6 +1,6 @@
 # Entregas escalonadas — maio/2026 *(arquivo)*
 
-> **Documento histórico** — cobre entregas até **3.4.0** (mai/2026). **Versão actual em produção:** **6.1.0** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md).  
+> **Documento histórico** — cobre entregas até **3.4.0** (mai/2026). **Versão actual em produção:** **6.3.0** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md).  
 > **Índice geral:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Mês seguinte:** [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md).
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas para **commits e PRs pequenos**. Cada bloco pode ser revisto e implantado de forma independente (com `php artisan migrate` e `npm run build` quando indicado).

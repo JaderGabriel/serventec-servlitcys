@@ -1,6 +1,6 @@
 # Arquitectura e fluxos — servlitcys
 
-**Versão do produto:** 6.1.0 · **Última revisão:** 2026-06-24
+**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Hub visual:** [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md)
 
@@ -273,11 +273,14 @@ flowchart LR
         Feed[horizonte:fortnightly-feed]
         SyncRep[horizonte:sync-repasses-tesouro]
         SAEB[saeb:import-planilhas-inep]
+        Edu[horizonte:sync-educacenso]
+        Geo[horizonte:import-municipal-geo]
     end
 
     subgraph Base
         Scores[(horizonte_municipality_scores)]
-        Ref[(fundeb_municipio_references<br/>saeb · censo)]
+        Ref[(fundeb_municipio_references<br/>saeb · censo · educacenso)]
+        Area[(municipal_area_snapshots<br/>geo/municipal-UF.json)]
     end
 
     subgraph UI
@@ -287,13 +290,18 @@ flowchart LR
 
     FNDE --> Feed
     INEP --> SAEB
+    INEP --> Edu
     MDS --> Feed
     IBGE --> Feed
+    IBGE --> Geo
     Feed --> SyncRep
     SAEB --> Ref
+    Edu --> Ref
+    Geo --> Area
     Feed --> Scores
     SyncRep --> Scores
     Ref --> Mapa
+    Area --> Mapa
     Scores --> Mapa
     Feed --> Hub
 ```

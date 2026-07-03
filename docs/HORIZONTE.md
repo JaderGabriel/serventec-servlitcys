@@ -123,7 +123,15 @@ Calculados **na mesma geração do mapa** (amostra actual):
 
 Modal **centrado** (`x-teleport`), altura limitada (~**88dvh** / **45rem**), **cabeçalho fixo** + **corpo rolável**.
 
-**Cabeçalho:** município · UF · mesorregião · IBGE · SAEB LP/MAT (dois últimos anos, pílulas por ano) · chip geográfico (coordenadas; prefixo «Posição indicativa» só quando aproximadas; distância até a capital; área km² se importada) · roda de propensão (% + Alta/Média/Baixa).
+**Cabeçalho:** município · UF · mesorregião · **IBGE** (pílula) · separador · **SAEB** (rótulo em negrito + pílulas LP/MAT por ano) · linha seguinte com pílulas geográficas:
+
+| Pílula | Cor / ícone | Conteúdo |
+|--------|-------------|----------|
+| **Posição** | Azul (âmbar se `coord_approximate`) · pin | Coordenadas legíveis (`7,505°S · 43,134°W`); botão **copiar** gera decimal (`-7.505000, -43.134000`) para Google Maps |
+| **Distância** | Laranja · edifício | km até a capital estadual |
+| **Área** | Verde · mapa | km² de `municipal_area_snapshots` (malha IBGE importada) |
+
+· roda de propensão (% + Alta/Média/Baixa).
 
 **Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
 
@@ -566,8 +574,8 @@ Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
 php artisan test --filter=Horizonte
 ```
 
-Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, `HorizonteFortnightlyFeedPipelineTest`, `HorizonteDataBundleServiceTest`, `HorizonteMunicipioEnrollmentSeriesServiceTest`.
+Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, `HorizonteFortnightlyFeedPipelineTest`, `HorizonteDataBundleServiceTest`, `HorizonteMunicipioEnrollmentSeriesServiceTest`, `GeoJsonFeatureAreaKm2Test`, `HorizonteIbgeMunicipalGeoImportProgressTest`.
 
 ---
 
-*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — modo Contornos, chip geográfico no modal, malha municipal IBGE*
+*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — Contornos, malha municipal, pílulas geo, copiar coordenadas*

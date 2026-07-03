@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **6.1.0** · release `20260624-Horizonte` · **Ramo:** `main` · **Última revisão:** 01/07/2026
+**Versão em produção:** **6.3.0** · release `20260702b-Horizonte` · **Ramo:** `main` · **Última revisão:** 02/07/2026
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (6.1.0)
+## Mapa de capacidades (6.3.0)
 
 ```mermaid
 flowchart TB
@@ -155,6 +155,13 @@ flowchart TB
 | Horizonte — gráfico matrículas Censo no modal (prospectos sem Consultoria; série 5 anos) | Implementado — [HORIZONTE.md](HORIZONTE.md) §6.9 |
 | Horizonte — fase Educacenso no feed (importação multi-ano para série matrículas) | Implementado — [HORIZONTE.md](HORIZONTE.md) §9.1 |
 | Horizonte — auditoria cobertura Educacenso (`horizonte:verify-educacenso-coverage`) | Implementado |
+| Horizonte — coroplético IBGE UF/mesorregiões, alertas VAAT, tour e demo | Implementado (6.1.0) — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) |
+| Horizonte — Educacenso multi-ano: contadores por etapa, filtro dependência (Total/Municipal/Não municipal) | Implementado (6.2.0) — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md) |
+| Horizonte — modal refinado: cabeçalho fixo, finanças portaria/Tesouro em colunas, SAEB por ano, regiões IBGE | Implementado (6.3.0) — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) |
+| Horizonte — malha municipal IBGE + área km² (`horizonte:import-municipal-geo`, fase `ibge_municipal_geo`) | Implementado (6.3.0, patch) — [HORIZONTE.md](HORIZONTE.md) §6.10 |
+| Horizonte — mapa: modos Pontos / Calor / **Contornos** (polígonos municipais IBGE) | Implementado (6.3.0, patch) — [HORIZONTE.md](HORIZONTE.md) §6.1 |
+| Horizonte — modal: pílulas geográficas (posição, distância à capital, área) + copiar coordenadas decimal | Implementado (6.3.0, patch) — [HORIZONTE.md](HORIZONTE.md) §6.5 |
+| Horizonte — overlay microrregiões; SAEB LP/MAT (dois últimos anos); gráfico matrículas após canvas visível | Implementado (6.3.0, patch) — [HORIZONTE.md](HORIZONTE.md) |
 | Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
