@@ -1,4 +1,4 @@
-<div class="serv-horizonte-muni-modal-host" aria-hidden="true">
+<template x-teleport="body">
 <div
     x-show="active && tooltipPinned"
     x-cloak
@@ -244,35 +244,42 @@
                     class="serv-horizonte-muni-tooltip__enrollment-series-error"
                 ></p>
                 <div
-                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady"
-                    class="serv-horizonte-muni-tooltip__enrollment-series-body"
+                    class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap"
+                    :class="enrollmentSeriesLoading ? 'is-loading' : ''"
                 >
-                    <div class="serv-horizonte-muni-tooltip__enrollment-series-chart-wrap">
-                        <canvas x-ref="enrollmentSeriesCanvas" height="148" aria-hidden="true"></canvas>
-                    </div>
+                    <canvas x-ref="enrollmentSeriesCanvas" height="148" aria-hidden="true"></canvas>
                     <div
-                        x-show="enrollmentSeriesStageCounters.length"
-                        class="serv-horizonte-muni-tooltip__enrollment-series-stages"
+                        x-show="enrollmentSeriesLoading"
+                        x-cloak
+                        class="serv-horizonte-muni-tooltip__enrollment-series-chart-loading"
+                        aria-hidden="true"
                     >
-                        <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
-                            <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
-                                <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
-                                    <dd
-                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-value"
-                                        x-text="formatEnrollmentStageCounter(item.value)"
-                                    ></dd>
-                                    <dt
-                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-label"
-                                        x-text="item.label"
-                                    ></dt>
-                                    <span
-                                        class="serv-horizonte-muni-tooltip__enrollment-series-stage-hint"
-                                        x-text="enrollmentStageHint(item)"
-                                    ></span>
-                                </div>
-                            </template>
-                        </dl>
+                        <span class="serv-horizonte-muni-tooltip__enrollment-series-chart-loading-spinner"></span>
                     </div>
+                </div>
+                <div
+                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady && enrollmentSeriesStageCounters.length"
+                    x-cloak
+                    class="serv-horizonte-muni-tooltip__enrollment-series-stages"
+                >
+                    <dl class="serv-horizonte-muni-tooltip__enrollment-series-stages-grid">
+                        <template x-for="item in enrollmentSeriesStageCounters" :key="item.key">
+                            <div class="serv-horizonte-muni-tooltip__enrollment-series-stage">
+                                <dd
+                                    class="serv-horizonte-muni-tooltip__enrollment-series-stage-value"
+                                    x-text="formatEnrollmentStageCounter(item.value)"
+                                ></dd>
+                                <dt
+                                    class="serv-horizonte-muni-tooltip__enrollment-series-stage-label"
+                                    x-text="item.label"
+                                ></dt>
+                                <span
+                                    class="serv-horizonte-muni-tooltip__enrollment-series-stage-hint"
+                                    x-text="enrollmentStageHint(item)"
+                                ></span>
+                            </div>
+                        </template>
+                    </dl>
                 </div>
                 <p
                     x-show="enrollmentSeriesFootnote"
@@ -302,7 +309,7 @@
         </div>
     </div>
 </div>
-</div>
+</template>
 
 <div
     x-show="sgeFormOpen"

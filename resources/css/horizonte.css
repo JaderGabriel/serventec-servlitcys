@@ -1,4 +1,4 @@
-/* Horizonte — modal municipal (host fixo no mapShell; chrome fixo + corpo rolável) */
+/* Horizonte — modal municipal (teleport body; chrome fixo + corpo rolável) */
 html.serv-horizonte-muni-modal-open,
 html.serv-horizonte-muni-modal-open body {
     overflow: hidden;
@@ -2862,6 +2862,35 @@ html.serv-horizonte-muni-modal-open body {
     height: 11.25rem;
     margin: 0;
     padding: 0;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-chart-wrap canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-chart-wrap.is-loading canvas {
+    opacity: 0.12;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-chart-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.serv-horizonte-muni-tooltip__enrollment-series-chart-loading-spinner {
+    display: block;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    border: 3px solid rgb(37 99 235 / 0.25);
+    border-top-color: rgb(37 99 235);
+    animation: spin 0.8s linear infinite;
 }
 
 .serv-horizonte-muni-tooltip__enrollment-series-stages {

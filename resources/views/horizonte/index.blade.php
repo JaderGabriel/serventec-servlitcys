@@ -77,8 +77,13 @@
         <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8 space-y-5">
 
             <div x-show="pageError" x-cloak class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200" role="alert">
-                <p class="font-medium">{{ __('Não foi possível carregar o mapa Horizonte.') }}</p>
-                <p class="mt-1" x-text="pageError"></p>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="font-medium">{{ __('Não foi possível carregar o mapa Horizonte.') }}</p>
+                        <p class="mt-1" x-text="pageError"></p>
+                    </div>
+                    <button type="button" class="serv-btn-secondary shrink-0 text-xs" @click="retryHorizonteLoad()">{{ __('Tentar novamente') }}</button>
+                </div>
             </div>
 
             @include('horizonte.partials.cmd-dock')
@@ -398,11 +403,14 @@
                         <div
                             x-show="!pageLoading && !regionalLoading && mapRendering"
                             x-cloak
-                            class="absolute top-3 right-7 z-10 flex items-center gap-2 rounded-lg bg-white/90 dark:bg-slate-900/90 px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700"
+                            class="absolute top-3 right-3 z-20 pointer-events-none"
                             role="status"
+                            aria-live="polite"
                         >
-                            <span class="h-3 w-3 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" aria-hidden="true"></span>
-                            <span>{{ __('A actualizar mapa…') }}</span>
+                            <div class="serv-horizonte-map-sync-banner">
+                                <span class="serv-horizonte-map-sync-banner__spinner" aria-hidden="true"></span>
+                                <span>{{ __('Atualizando mapa') }}</span>
+                            </div>
                         </div>
                         <div
                             x-show="!pageLoading && !regionalLoading && totalMarkers === 0 && !isOverviewMode"
@@ -434,7 +442,7 @@
                             <span x-show="!canShowAllOnMap" class="ms-2 text-amber-800/80">{{ __('Use a lista ou zoom nos clusters.') }}</span>
                         </div>
 
-                        <div x-ref="map" data-horizonte-tour="map" class="serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3 min-h-0 flex-1" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
+                        <div x-ref="map" data-horizonte-tour="map" class="serv-horizonte-gis__map serv-horizonte-gis__map--tall w-full mt-3" role="application" aria-label="{{ __('Mapa Horizonte GIS') }}"></div>
 
                         </div>
                     </div>

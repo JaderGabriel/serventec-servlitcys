@@ -270,6 +270,8 @@ return [
         'fetch_remote_centroids' => filter_var(env('HORIZONTE_MAP_FETCH_REMOTE_CENTROIDS', false), FILTER_VALIDATE_BOOL),
         /** Tempo máximo PHP ao montar recorte regional (UF extensa, ex. MG). */
         'regional_time_limit' => max(60, (int) env('HORIZONTE_MAP_REGIONAL_TIME_LIMIT', 120)),
+        /** Tempo máximo PHP ao montar o painel nacional (primeira carga sem cache). */
+        'overview_time_limit' => max(60, (int) env('HORIZONTE_MAP_OVERVIEW_TIME_LIMIT', 180)),
         /** Todas as UFs com malha mesorregional IBGE abrem vista intermédia antes do detalhe municipal. */
         'meso_overview_threshold' => 0,
         /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */

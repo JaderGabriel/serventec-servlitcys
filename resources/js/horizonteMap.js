@@ -2472,6 +2472,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         enrollmentSeriesDependenciaLabel: "",
         enrollmentSeriesLatestTotal: null,
         _enrollmentSeriesChart: null,
+        _enrollmentSeriesChartPayload: null,
         _enrollmentSeriesAbort: null,
         sgeFormOpen: false,
         sgeFormReadOnly: false,
@@ -4037,6 +4038,66 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return url.toString();
         },
 
+        async fetchHorizonteJson(url, { retries = 3, retryDelayMs = 1800 } = {}) {
+            const retryStatuses = new Set([502, 503, 504, 429]);
+            let lastError = null;
+
+            for (let attempt = 0; attempt <= retries; attempt += 1) {
+                try {
+                    const response = await fetch(url, {
+                        headers: {
+                            Accept: "application/json",
+                            "X-Requested-With": "XMLHttpRequest",
+                        },
+                        credentials: "same-origin",
+                    });
+
+                    if (!response.ok) {
+                        if (retryStatuses.has(response.status) && attempt < retries) {
+                            this.loadingMessage = `Servidor ocupado — nova tentativa (${attempt + 1}/${retries})…`;
+                            await new Promise((resolve) =>
+                                window.setTimeout(resolve, retryDelayMs * (attempt + 1)),
+                            );
+                            continue;
+                        }
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    return await response.json();
+                } catch (error) {
+                    lastError = error;
+                    const message =
+                        error instanceof Error ? error.message : String(error ?? "");
+                    const retriable =
+                        attempt < retries &&
+                        (message.includes("HTTP 5") ||
+                            message.toLowerCase().includes("network"));
+                    if (retriable) {
+                        this.loadingMessage = `Ligação instável — nova tentativa (${attempt + 1}/${retries})…`;
+                        await new Promise((resolve) =>
+                            window.setTimeout(resolve, retryDelayMs * (attempt + 1)),
+                        );
+                        continue;
+                    }
+                    throw error;
+                }
+            }
+
+            throw lastError ?? new Error("Erro ao carregar o Horizonte.");
+        },
+
+        retryHorizonteLoad() {
+            this.pageError = null;
+            const uf = String(this.scopeUf ?? this.loadedRegionalUf ?? "")
+                .trim()
+                .toUpperCase();
+            if (uf && (this.isRegionalMode || this.isMesoOverviewMode)) {
+                void this.fetchRegional(uf);
+                return;
+            }
+            void this.fetchOverview();
+        },
+
         async fetchOverview() {
             this.pageLoading = true;
             this.pageError = null;
@@ -4049,22 +4110,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             );
 
             try {
-                const response = await fetch(this.dataUrl("overview"), {
-                    headers: {
-                        Accept: "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                    credentials: "same-origin",
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
+                const data = await this.fetchHorizonteJson(this.dataUrl("overview"));
                 this.applyOverviewPayload(data);
             } catch (error) {
                 console.error("horizonte overview", error);
                 this.pageError =
-                    error instanceof Error ? error.message : "Erro ao carregar o Horizonte.";
+                    error instanceof Error
+                        ? error.message
+                        : "Erro ao carregar o Horizonte.";
             } finally {
                 this.pageLoading = false;
                 window.servDataLoading?.finish?.();
@@ -4090,17 +4143,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.scopeUf = scoped;
 
             try {
-                const response = await fetch(this.dataUrl("regional", scoped), {
-                    headers: {
-                        Accept: "application/json",
-                        "X-Requested-With": "XMLHttpRequest",
-                    },
-                    credentials: "same-origin",
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                const data = await response.json();
+                const data = await this.fetchHorizonteJson(
+                    this.dataUrl("regional", scoped),
+                );
                 if (!Array.isArray(data.markers) || data.markers.length === 0) {
                     throw new Error(
                         `Nenhum município com coordenadas em ${scoped}. Corra o feed ibge_catalog para esta UF.`,
@@ -4258,6 +4303,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ? this.meta.display_policy
                     : null;
             this.mapRenderLimit = Number(this.displayPolicy?.max_render_markers) || 400;
+            const staleNotice = String(this.meta.stale_notice ?? "").trim();
+            if (this.meta.cache_stale && staleNotice !== "") {
+                this.initialViewNotice = {
+                    kind: "stale_cache",
+                    message: staleNotice,
+                };
+            }
         },
 
         /** Se há municípios no recorte mas nenhum desenhável (coords. aproximadas ocultas), mostra no mapa. */
@@ -5812,7 +5864,14 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.tooltipPinned = true;
             this.positionTooltip();
             this.syncMuniModalScrollLock();
-            void this.loadEnrollmentSeries(m);
+            void this.loadEnrollmentSeries(m).then(() => {
+                if (
+                    this.tooltipPinned &&
+                    String(this.active?.ibge ?? "") === String(m.ibge ?? "")
+                ) {
+                    void this.ensureEnrollmentSeriesChartRendered();
+                }
+            });
             this.refreshBoundaryHighlight();
         },
 
@@ -5841,6 +5900,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 viewportCap,
             );
             this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
+            if (this.tooltipPinned && this.enrollmentSeriesReady) {
+                this.$nextTick(() => void this.ensureEnrollmentSeriesChartRendered(2));
+            }
         },
 
         closeMapOverlays() {
@@ -6660,6 +6722,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesDependenciaLabel = "";
             this.enrollmentSeriesLatestTotal = null;
             this.enrollmentSeriesLoading = false;
+            this._enrollmentSeriesChartPayload = null;
         },
 
         enrollmentStageHint(item) {
@@ -6746,23 +6809,67 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.enrollmentSeriesDependencia = "total";
         },
 
-        async waitForEnrollmentSeriesCanvas(maxFrames = 16) {
-            for (let i = 0; i < maxFrames; i += 1) {
+        async waitForEnrollmentSeriesCanvas(maxMs = 2400) {
+            const started = performance.now();
+            while (performance.now() - started < maxMs) {
                 const canvas = this.$refs.enrollmentSeriesCanvas;
-                if (
-                    canvas &&
-                    canvas.clientWidth > 0 &&
-                    canvas.clientHeight > 0
-                ) {
-                    return canvas;
+                if (canvas && canvas.isConnected && canvas.offsetParent !== null) {
+                    const wrap = canvas.closest(
+                        ".serv-horizonte-muni-tooltip__enrollment-series-chart-wrap",
+                    );
+                    if (wrap instanceof HTMLElement && wrap.clientWidth > 0) {
+                        const width = Math.max(
+                            canvas.clientWidth,
+                            wrap.clientWidth,
+                        );
+                        const height = Math.max(
+                            canvas.clientHeight,
+                            wrap.clientHeight,
+                            148,
+                        );
+                        if (width > 8 && height > 8) {
+                            canvas.style.width = `${width}px`;
+                            canvas.style.height = `${height}px`;
+
+                            return canvas;
+                        }
+                    }
                 }
                 await this.$nextTick();
                 await new Promise((resolve) => requestAnimationFrame(resolve));
             }
 
             const canvas = this.$refs.enrollmentSeriesCanvas;
+            if (canvas?.isConnected && canvas.offsetParent !== null) {
+                return canvas;
+            }
 
-            return canvas && canvas.clientWidth > 0 ? canvas : null;
+            return null;
+        },
+
+        async ensureEnrollmentSeriesChartRendered(attempts = 4) {
+            if (!this._enrollmentSeriesChartPayload) {
+                return false;
+            }
+
+            for (let attempt = 0; attempt < attempts; attempt += 1) {
+                const rendered = await this.renderEnrollmentSeriesChart(
+                    this._enrollmentSeriesChartPayload,
+                );
+                if (rendered) {
+                    return true;
+                }
+                await new Promise((resolve) =>
+                    window.setTimeout(resolve, 140 * (attempt + 1)),
+                );
+            }
+
+            if (!this.enrollmentSeriesError) {
+                this.enrollmentSeriesError =
+                    "Não foi possível desenhar o gráfico de matrículas.";
+            }
+
+            return false;
         },
 
         async loadEnrollmentSeries(m) {
@@ -6827,6 +6934,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.enrollmentSeriesStageCounters = [];
                 }
                 this.updateEnrollmentSeriesSummary(data, data.chart);
+                this._enrollmentSeriesChartPayload = data.chart;
                 this.enrollmentSeriesReady = true;
                 this.enrollmentSeriesLoading = false;
                 this._enrollmentSeriesLoadedDependencia = requestedDependencia;
@@ -6838,7 +6946,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 ) {
                     return;
                 }
-                await this.renderEnrollmentSeriesChart(data.chart);
+                await this.ensureEnrollmentSeriesChartRendered();
             } catch (error) {
                 if (
                     error?.name !== "AbortError" &&
@@ -6863,7 +6971,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async renderEnrollmentSeriesChart(payload) {
             if (!payload) {
-                return;
+                return false;
             }
             if (this._enrollmentSeriesChart) {
                 this._enrollmentSeriesChart.destroy();
@@ -6872,11 +6980,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const canvas = await this.waitForEnrollmentSeriesCanvas();
             if (!canvas) {
-                return;
+                return false;
             }
             const ctx = canvas.getContext("2d");
             if (!ctx) {
-                return;
+                return false;
             }
 
             const datasets = (Array.isArray(payload.datasets)
@@ -6893,6 +7001,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 options: enrollmentSeriesChartOptions(),
             });
             this._enrollmentSeriesChart.resize();
+            this._enrollmentSeriesChart.update("none");
+
+            return true;
         },
 
         tooltipMunicipalContextHtml(m) {

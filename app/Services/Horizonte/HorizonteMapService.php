@@ -109,28 +109,121 @@ final class HorizonteMapService
             }
 
             $regKey = 'horizonte:map:regional:v3:'.$refYear.':'.$uf.':'.$fingerprint;
-            $regional = AdminHomeMapCache::get($regKey);
-            if (! is_array($regional)) {
-                $regional = $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf);
-                AdminHomeMapCache::repository()->put($regKey, $regional, $ttl);
-            }
+            $staleKey = 'horizonte:map:regional-response:stale:v3:'.$refYear.':'.$uf.':'.$fingerprint;
+            $lockKey = 'horizonte:map:lock:regional:'.$refYear.':'.$uf.':'.$fingerprint;
 
-            $payload = $this->asRegionalPayload($regional, $uf);
-            $payload = $this->attachNationalUfRankings($payload, $refYear, $fingerprint);
-            AdminHomeMapCache::repository()->put($responseKey, $payload, $ttl);
+            $payload = $this->rememberMapPayload(
+                $responseKey,
+                $staleKey,
+                $lockKey,
+                function () use ($refYear, $uf, $regKey, $fingerprint, $ttl): array {
+                    $repo = AdminHomeMapCache::repository();
+                    $regional = $repo->get($regKey);
+                    if (! is_array($regional)) {
+                        $regional = $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf);
+                        $repo->put($regKey, $regional, $ttl);
+                    }
+
+                    $built = $this->asRegionalPayload($regional, $uf);
+
+                    return $this->attachNationalUfRankings($built, $refYear, $fingerprint);
+                },
+                $ttl,
+            );
 
             return $payload;
         }
 
         $overviewKey = 'horizonte:map:overview:v2:'.$refYear.':'.$fingerprint;
-        $cachedOverview = AdminHomeMapCache::get($overviewKey);
-        if (is_array($cachedOverview)) {
-            return $cachedOverview;
+        $staleKey = 'horizonte:map:overview:stale:v2:'.$refYear.':'.$fingerprint;
+        $lockKey = 'horizonte:map:lock:overview:'.$refYear.':'.$fingerprint;
+
+        return $this->rememberMapPayload(
+            $overviewKey,
+            $staleKey,
+            $lockKey,
+            function () use ($refYear): array {
+                $assembled = $this->assemble($refYear, requireCoordinates: false);
+
+                return $this->asOverviewPayload($assembled);
+            },
+            $ttl,
+        );
+    }
+
+    /**
+     * @param  callable(): array<string, mixed>  $builder
+     * @return array<string, mixed>
+     */
+    private function rememberMapPayload(
+        string $cacheKey,
+        string $staleKey,
+        string $lockKey,
+        callable $builder,
+        int $ttl,
+    ): array {
+        $repo = AdminHomeMapCache::repository();
+        $cached = $repo->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
         }
 
-        $assembled = $this->assemble($refYear, requireCoordinates: false);
-        $payload = $this->asOverviewPayload($assembled);
-        AdminHomeMapCache::repository()->put($overviewKey, $payload, $ttl);
+        $lock = $repo->lock($lockKey, 180);
+        try {
+            if ($lock->get(8)) {
+                $cached = $repo->get($cacheKey);
+                if (is_array($cached)) {
+                    return $cached;
+                }
+
+                $payload = $builder();
+                $staleTtl = max($ttl, 86400);
+                $repo->put($cacheKey, $payload, $ttl);
+                $repo->put($staleKey, $payload, $staleTtl);
+
+                return $payload;
+            }
+
+            try {
+                $lock->block(45);
+            } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+                // Outro pedido pode ainda estar a montar — tentar cache ou stale abaixo.
+            }
+
+            $cached = $repo->get($cacheKey);
+            if (is_array($cached)) {
+                return $cached;
+            }
+        } finally {
+            $lock->release();
+        }
+
+        $stale = $repo->get($staleKey);
+        if (is_array($stale)) {
+            return $this->markPayloadStale($stale);
+        }
+
+        $payload = $builder();
+        $staleTtl = max($ttl, 86400);
+        $repo->put($cacheKey, $payload, $ttl);
+        $repo->put($staleKey, $payload, $staleTtl);
+
+        return $payload;
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function markPayloadStale(array $payload): array
+    {
+        $payload['meta'] = array_merge(
+            is_array($payload['meta'] ?? null) ? $payload['meta'] : [],
+            [
+                'cache_stale' => true,
+                'stale_notice' => __('A mostrar dados em cache enquanto o servidor actualiza o mapa.'),
+            ],
+        );
 
         return $payload;
     }
