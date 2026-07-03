@@ -52,14 +52,34 @@
                             </div>
                         </div>
                         <div class="serv-horizonte-muni-modal__geo" x-show="hasModalHeaderGeoInfo(active)" x-cloak>
-                            <span
-                                class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-pos"
-                                :class="active?.coord_approximate ? 'serv-horizonte-muni-modal__fact--geo-pos-approx' : ''"
+                            <div
+                                class="serv-horizonte-muni-modal__geo-pos-wrap"
                                 x-show="hasModalHeaderGeoPosition(active)"
+                                x-cloak
                             >
-                                <svg class="serv-horizonte-muni-modal__fact__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-                                <span x-text="modalHeaderGeoPositionLabel(active)"></span>
-                            </span>
+                                <span
+                                    class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-pos"
+                                    :class="active?.coord_approximate ? 'serv-horizonte-muni-modal__fact--geo-pos-approx' : ''"
+                                >
+                                    <svg class="serv-horizonte-muni-modal__fact__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+                                    <span x-text="modalHeaderGeoPositionLabel(active)"></span>
+                                </span>
+                                <button
+                                    type="button"
+                                    class="serv-horizonte-muni-modal__geo-copy"
+                                    @click.stop="copyModalGeoPosition(active)"
+                                    :title="'{{ __('Copiar coordenadas (decimal)') }}'"
+                                    aria-label="{{ __('Copiar coordenadas') }}"
+                                >
+                                    <svg class="serv-horizonte-muni-modal__geo-copy__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125H5.625c-.621 0-1.125-.504-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125h3.375m6 0V4.875c0-.621-.504-1.125-1.125-1.125h-3.375c-.621 0-1.125.504-1.125 1.125v3.375m6 0h-3.375" /></svg>
+                                </button>
+                                <span
+                                    class="serv-horizonte-muni-modal__geo-copy-confirm"
+                                    x-show="geoCoordCopied"
+                                    x-cloak
+                                    role="status"
+                                >{{ __('Copiado!') }}</span>
+                            </div>
                             <span
                                 class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--geo serv-horizonte-muni-modal__fact--geo-dist"
                                 x-show="hasModalHeaderGeoDistance(active)"

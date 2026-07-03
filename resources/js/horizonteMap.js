@@ -2388,6 +2388,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         active: null,
         tooltipPinned: false,
         tooltipStyle: "",
+        geoCoordCopied: false,
+        _geoCoordCopiedTimer: null,
         ufSummaryOpen: false,
         cmdBarExpanded: false,
         _cmdDockObserver: null,
@@ -5735,6 +5737,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.closeUfSummary();
             this.closeSgeForm();
             this.highlightIbge = String(m.ibge ?? "");
+            this.geoCoordCopied = false;
+            if (this._geoCoordCopiedTimer) {
+                window.clearTimeout(this._geoCoordCopiedTimer);
+                this._geoCoordCopiedTimer = null;
+            }
             this.active = m;
             this.tooltipPinned = true;
             this.positionTooltip();
@@ -5771,6 +5778,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         closeTooltip() {
             this.destroyEnrollmentSeriesChart();
+            this.geoCoordCopied = false;
+            if (this._geoCoordCopiedTimer) {
+                window.clearTimeout(this._geoCoordCopiedTimer);
+                this._geoCoordCopiedTimer = null;
+            }
             this.active = null;
             this.tooltipPinned = false;
             this.tooltipStyle = "";
@@ -6207,6 +6219,66 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             return `${latLabel} · ${lngLabel}`;
+        },
+
+        modalHeaderGeoPositionClipboard(m) {
+            if (!m) {
+                return "";
+            }
+
+            const lat = Number(m.lat);
+            const lng = Number(m.lng);
+            if (!isValidCoord(lat, lng)) {
+                return "";
+            }
+
+            return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        },
+
+        async copyModalGeoPosition(m) {
+            const text = this.modalHeaderGeoPositionClipboard(m);
+            if (text === "") {
+                return;
+            }
+
+            let copied = false;
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    copied = true;
+                }
+            } catch {
+                copied = false;
+            }
+
+            if (!copied) {
+                try {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = text;
+                    textarea.setAttribute("readonly", "");
+                    textarea.style.position = "fixed";
+                    textarea.style.left = "-9999px";
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    copied = document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                } catch {
+                    copied = false;
+                }
+            }
+
+            if (!copied) {
+                return;
+            }
+
+            this.geoCoordCopied = true;
+            if (this._geoCoordCopiedTimer) {
+                window.clearTimeout(this._geoCoordCopiedTimer);
+            }
+            this._geoCoordCopiedTimer = window.setTimeout(() => {
+                this.geoCoordCopied = false;
+                this._geoCoordCopiedTimer = null;
+            }, 2500);
         },
 
         modalHeaderGeoDistanceLabel(m) {
