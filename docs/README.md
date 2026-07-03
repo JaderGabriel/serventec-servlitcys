@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 6.3.0 · tag `20260702b-Horizonte` · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · tag `20260702c-Jord` · **Última revisão:** 2026-07-02
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -140,7 +140,8 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
-| [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) | **6.3.0** — Horizonte (modal refinado, malha municipal, Contornos, geo no cabeçalho) |
+| [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) | **6.5.0** — Jord (malha IBGE, Contornos, pílulas geo, Educacenso nacional) |
+| [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) | **6.3.0** — Horizonte (modal refinado, cabeçalho fixo) |
 | [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md) | **6.2.0** — Educacenso (contadores por etapa, filtro dependência no gráfico) |
 | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) | **6.1.0** — Horizonte (coroplético IBGE, mesorregiões, alertas VAAT) |
 | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) | **6.0.0** — Odin (marca azul, barra cmd fixa, resumo UF inline, dados públicos agrupados) |
@@ -183,7 +184,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | Documento | Conteúdo |
 |-----------|----------|
 | [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) | Índice mensal + ligação às releases |
-| [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 6.3.0 (38 releases + patches) |
+| [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 6.5.0 |
 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | Mai/2026 *(arquivo)* — 2.3.6 → 3.4.0 |
 
 ### 8. Arquivo

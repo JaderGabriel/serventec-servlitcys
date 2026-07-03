@@ -1,6 +1,6 @@
 # Início (`/dashboard`) — painel admin
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Release:** [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) (5.4.0) · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) · **Índice:** [README.md](README.md)
 

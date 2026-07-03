@@ -1,6 +1,6 @@
 # Escalabilidade e infraestrutura — pool de conexões, balanceamento e alto volume (servlitcys)
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [PERFORMANCE.md](PERFORMANCE.md) · [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
 

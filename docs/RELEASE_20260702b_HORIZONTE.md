@@ -59,9 +59,9 @@ php artisan cache:clear
 
 ---
 
-## Patches pós-tag (sem bump — `main` até `4c420f8`)
+## Patches pós-tag (integrados em 6.5.0)
 
-Entregues **após** a tag `20260702b-Horizonte`, documentados no [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md):
+Entregues **após** a tag `20260702b-Horizonte` e consolidados na release [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) (**6.5.0**):
 
 | Commit | Entrega |
 |--------|---------|

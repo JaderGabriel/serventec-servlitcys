@@ -1,6 +1,6 @@
 # Analytics — navegação e UI de consultoria
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
 
@@ -112,7 +112,7 @@ Calculado em `MunicipalityHealthRepository::computeComplianceScore()`:
 | 4.0.0 Hestia | Início reorganizado; Acesso rápido; rebuild Tempo Real |
 | 4.1.0 Athena | Cenário C — área **Resumo**; Diagnóstico como entrada; fix alertas Tempo Real |
 
-Versão em produção: **6.3.0** / tag **`20260702b-Horizonte`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · diagramas: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+Versão em produção: **6.3.0** / tag **`20260702c-Jord`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · diagramas: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ## Volume: matrículas vs alunos distintos (3.8.0+)
 

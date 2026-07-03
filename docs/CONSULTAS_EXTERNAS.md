@@ -1,6 +1,6 @@
 # Consultas externas — fontes, necessidade e uso no sistema
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Comandos repasses:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1  
 **Âmbito:** servlitcys (painel de análise i-Educar municipal)

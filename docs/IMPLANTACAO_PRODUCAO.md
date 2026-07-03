@@ -1,12 +1,12 @@
 # Implantação em produção — servlitcys
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Variáveis:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) · **Comandos:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
 
 Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
 
-**Versão de referência:** **6.3.0** · tag **`20260702b-Horizonte`** · commit **`4c420f8`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md)
+**Versão de referência:** **6.5.0** · tag **`20260702c-Jord`** · commit **`27d1e3b`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)
 
 ```mermaid
 sequenceDiagram

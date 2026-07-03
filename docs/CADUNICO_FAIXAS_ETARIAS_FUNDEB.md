@@ -1,6 +1,6 @@
 # CadÚnico — faixas etárias e indicadores FUNDEB (servlitcys)
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 > **Índice:** [README.md](README.md) · **Relacionado:** [CADUNICO_CECAD.md](CADUNICO_CECAD.md) · [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) · [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
 

@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`6.3.0`** · tag de deploy **`20260702b-Horizonte`** · ver [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`6.5.0`** · tag de deploy **`20260702c-Jord`** · ver [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **6.3.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **6.5.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260702b-Horizonte` |
+| **Tag de deploy (servidor)** | `20260702c-Jord` |
 | **Data de referência** | **02/07/2026** |
-| **Último marco documentado** | **Horizonte 6.3.0** — modal geográfico, malha municipal, modo Contornos — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) + patches em `main` até `4c420f8` |
+| **Último marco documentado** | **Horizonte territorial (Jord)** — malha IBGE, Contornos, pílulas geo, copiar coordenadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release (#473)** | `c8e2315` (tag `20260702b-Horizonte`); **HEAD documentado:** `4c420f8` |
+| **Commit de release** | `27d1e3b` (#**482**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -45,7 +45,8 @@ timeline
     2026-06-03 : 6.0.0h Odin — marca Horizonte, barra cmd fixa, resumo UF inline, dados públicos
     2026-06-24 : 6.1.0 Horizonte — coroplético IBGE, mesorregiões, alertas VAAT
     2026-07-02 : 6.2.0 Educacenso — contadores por etapa, filtro dependência
-    2026-07-02 : 6.3.0 Horizonte — modal refinado, malha municipal, Contornos
+    2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
+    2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
 ```
 
 Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) §5–6.
@@ -56,13 +57,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| *(patch pós-6.3.0)* | `4c420f8` | — | 02/07/2026 | Horizonte — botão **copiar coordenadas** (formato decimal para Google Maps). |
-| *(patch pós-6.3.0)* | `d5bdbb9` | — | 02/07/2026 | Horizonte — pílulas geográficas separadas (posição, distância à capital, área). |
-| *(patch pós-6.3.0)* | `ca837de` | — | 02/07/2026 | Horizonte — modo **Contornos** no mapa + chip geo no modal. |
-| *(patch pós-6.3.0)* | `330cfcd` | — | 02/07/2026 | Horizonte — malha municipal IBGE + área km² + overlay microrregiões. |
-| *(patch pós-6.3.0)* | `73f2569` | — | 02/07/2026 | Horizonte — SAEB LP/MAT agrupado por ano em pílulas coloridas. |
-| *(patch pós-6.3.0)* | `5f26105` | — | 02/07/2026 | Horizonte — overlay microrregiões, SAEB dois anos, cabeçalho enxuto. |
-| **▶ 6.3.0** | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | **Produção:** modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Patches seguintes sem bump (ver acima). |
+| **▶ 6.5.0** | `27d1e3b` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | **Produção:** Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |
+| 6.3.0 | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | Modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Entregas pós-tag integradas em **6.5.0**. |
 | 6.2.0 | — / `20260702-Educacenso` → `main` | — | 02/07/2026 | Contadores por etapa no gráfico Horizonte (Educacenso INEP), correção agregação matrículas — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md). |
 | 6.1.0 | `c5d6fc2` / `20260624-Horizonte` → `main` | **441** | 24/06/2026 | **Produção:** coroplético IBGE UF/mesorregiões, alertas VAAT, modal municipal, resumo UF, tour/demo — [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md). |
 | 6.0.0 | `df7d9b3` / `20260603h-Odin` → `main` | **433** | 03/06/2026 | Marca consultoria+Horizonte, barra cmd fixa, resumo UF inline, desenhar todos, modal municipal centrado, notificação dados públicos agrupada — [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md). |

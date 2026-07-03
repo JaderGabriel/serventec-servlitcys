@@ -1,6 +1,6 @@
 # Horizonte — mapa de oportunidade municipal
 
-**Versão do produto:** 6.3.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
@@ -578,4 +578,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-07-02 · Módulo Horizonte v6.3 — Contornos, malha municipal, pílulas geo, copiar coordenadas*
+*Última revisão: 2026-07-02 · Módulo Horizonte v6.5 — Jord: malha IBGE, Contornos, pílulas geo, copiar coordenadas*
