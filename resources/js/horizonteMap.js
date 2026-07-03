@@ -3111,6 +3111,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const shell = this.$refs.mapShell;
             this.mapFullscreen =
                 shell != null && document.fullscreenElement === shell;
+            this.$nextTick(() => this.syncMuniModalHost());
             this.bindMapLayoutObservers();
             this.bindCmdDockObservers();
             if (this.loadUrl) {
@@ -3387,6 +3388,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch {
                 const wasFullscreen = this.mapFullscreen;
                 this.mapFullscreen = !this.mapFullscreen;
+                this.syncMuniModalHost();
                 window.setTimeout(() => {
                     this._mapLayoutSize = { w: 0, h: 0 };
                     if (this.map) {
@@ -3412,6 +3414,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (wasFullscreen === this.mapFullscreen) {
                 return;
             }
+
+            this.syncMuniModalHost();
 
             const delay = wasFullscreen && !this.mapFullscreen ? 160 : 60;
             this.$nextTick(() => {
@@ -3584,14 +3588,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.mapFullscreen ? "Sair da tela inteira" : "Tela inteira";
         },
 
-        /** Modal no mapShell: em tela cheia nativa só esse subtree é visível; fora, fixed cobre o viewport. */
-        muniModalTeleportTarget() {
-            const shell = this.$refs.mapShell;
-            if (shell instanceof HTMLElement) {
-                return shell;
+        /** body fora da tela cheia (escapa overflow-hidden); mapShell em tela cheia nativa. */
+        syncMuniModalHost() {
+            const host = this.$refs.muniModalHost;
+            if (!(host instanceof HTMLElement)) {
+                return;
             }
 
-            return document.body;
+            const shell = this.$refs.mapShell;
+            const mountOnShell =
+                this.mapFullscreen && shell instanceof HTMLElement;
+            const target = mountOnShell ? shell : document.body;
+
+            if (host.parentElement !== target) {
+                target.appendChild(host);
+            }
+
+            host.classList.toggle("is-map-shell-mounted", mountOnShell);
         },
 
         mapLoadingStatusLabel() {
@@ -5876,6 +5889,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.active = m;
             this.tooltipPinned = true;
+            this.syncMuniModalHost();
             this.positionTooltip();
             this.syncMuniModalScrollLock();
             void this.loadEnrollmentSeries(m);

@@ -18,6 +18,23 @@
             bg-slate-900/55 backdrop-blur-[2px];
     }
 
+    .serv-horizonte-muni-modal-host {
+        @apply pointer-events-none inset-0 z-[500];
+        position: fixed;
+    }
+
+    .serv-horizonte-muni-modal-host.is-map-shell-mounted {
+        position: absolute;
+    }
+
+    .serv-horizonte-muni-modal-host .serv-horizonte-muni-overlay {
+        @apply pointer-events-auto;
+    }
+
+    .serv-horizonte-muni-modal-host.is-map-shell-mounted .serv-horizonte-muni-overlay {
+        @apply absolute inset-0;
+    }
+
     .serv-horizonte-muni-overlay {
         @apply fixed inset-0 z-[500] flex items-center justify-center p-4
             overflow-hidden overscroll-none
