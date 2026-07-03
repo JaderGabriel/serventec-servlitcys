@@ -1,4 +1,4 @@
-/* Horizonte — modal municipal (teleport body; chrome fixo + corpo rolável) */
+/* Horizonte — modal municipal (host fixo no mapShell; chrome fixo + corpo rolável) */
 html.serv-horizonte-muni-modal-open,
 html.serv-horizonte-muni-modal-open body {
     overflow: hidden;

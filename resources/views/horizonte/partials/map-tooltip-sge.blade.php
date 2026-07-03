@@ -1,4 +1,4 @@
-<template x-teleport="muniModalTeleportTarget()">
+<div class="serv-horizonte-muni-modal-host" aria-hidden="true">
 <div
     x-show="active && tooltipPinned"
     x-cloak
@@ -302,7 +302,7 @@
         </div>
     </div>
 </div>
-</template>
+</div>
 
 <div
     x-show="sgeFormOpen"

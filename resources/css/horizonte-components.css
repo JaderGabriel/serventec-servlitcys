@@ -59,6 +59,19 @@
         height: min(72vh, 560px);
     }
 
+    .serv-horizonte-muni-modal-host {
+        @apply pointer-events-none fixed inset-0 z-[500];
+    }
+
+    .serv-horizonte-gis.is-map-fullscreen .serv-horizonte-muni-modal-host,
+    .serv-horizonte-gis:fullscreen .serv-horizonte-muni-modal-host {
+        @apply absolute inset-0;
+    }
+
+    .serv-horizonte-muni-modal-host .serv-horizonte-muni-overlay {
+        @apply pointer-events-auto;
+    }
+
     @screen lg {
         .serv-horizonte-gis__map--tall {
             min-height: min(70vh, 600px);

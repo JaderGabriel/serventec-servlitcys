@@ -3106,6 +3106,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             window.addEventListener("resize", this.tourResizeHandler, { passive: true });
             this._fullscreenChangeHandler = () => this.onFullscreenChange();
             document.addEventListener("fullscreenchange", this._fullscreenChangeHandler);
+            const shell = this.$refs.mapShell;
+            this.mapFullscreen =
+                shell != null && document.fullscreenElement === shell;
             this.bindMapLayoutObservers();
             this.bindCmdDockObservers();
             if (this.loadUrl) {
@@ -3380,32 +3383,58 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     await el.requestFullscreen();
                 }
             } catch {
+                const wasFullscreen = this.mapFullscreen;
                 this.mapFullscreen = !this.mapFullscreen;
-                this.refreshMapLayout({ immediate: true, force: true });
-                if (this.tooltipPinned && this.active) {
-                    this.$nextTick(() => this.positionTooltip());
-                }
+                window.setTimeout(() => {
+                    this._mapLayoutSize = { w: 0, h: 0 };
+                    if (this.map) {
+                        this.map.invalidateSize({ animate: false });
+                    }
+                    this.refreshMapLayout({
+                        immediate: true,
+                        force: true,
+                        preserveView: true,
+                    });
+                    if (this.tooltipPinned && this.active) {
+                        this.positionTooltip();
+                    }
+                }, wasFullscreen ? 160 : 60);
             }
         },
 
         onFullscreenChange() {
             const el = this.$refs.mapShell;
+            const wasFullscreen = this.mapFullscreen;
             this.mapFullscreen = el != null && document.fullscreenElement === el;
-            this.refreshMapLayout({ immediate: true, force: true });
-            if (this.tooltipPinned && this.active) {
-                this.$nextTick(() => this.positionTooltip());
-            }
-        },
 
-        muniModalTeleportTarget() {
-            if (this.mapFullscreen && this.$refs.mapShell) {
-                return this.$refs.mapShell;
+            if (wasFullscreen === this.mapFullscreen) {
+                return;
             }
 
-            return document.body;
+            const delay = wasFullscreen && !this.mapFullscreen ? 160 : 60;
+            this.$nextTick(() => {
+                window.setTimeout(() => {
+                    this._mapLayoutSize = { w: 0, h: 0 };
+                    if (this.map) {
+                        this.map.invalidateSize({ animate: false });
+                    }
+                    this.refreshMapLayout({
+                        immediate: true,
+                        force: true,
+                        preserveView: true,
+                    });
+                    if (this.tooltipPinned && this.active) {
+                        this.positionTooltip();
+                    }
+                }, delay);
+            });
         },
 
-        refreshMapLayout({ immediate = false, force = false } = {}) {
+        refreshMapLayout({
+            immediate = false,
+            force = false,
+            preserveView = false,
+        } = {}) {
             const map = this.map;
             if (!map) {
                 return;
@@ -3441,6 +3470,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this._mapLayoutSize = { w: size.x, h: size.y };
 
                 if (!changed) {
+                    return;
+                }
+
+                if (
+                    preserveView ||
+                    (force && this._mapUserAdjustedView && this.isRegionalMode)
+                ) {
+                    this.refreshCanvasMarkersAfterZoom();
+                    this.repositionFloatingPanels();
+
                     return;
                 }
 
@@ -5018,7 +5057,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const pinnedStillVisible =
                 pinnedIbge !== "" &&
                 (this.isOverviewMode ||
-                    this.filteredMarkersList.some((m) => String(m.ibge) === pinnedIbge));
+                    this.markers.some((m) => String(m.ibge) === pinnedIbge));
 
             if (!pinnedStillVisible) {
                 this.closeTooltip();
@@ -5986,8 +6025,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         pickSearch(m) {
+            if (!m) {
+                return;
+            }
             this.searchQuery = "";
             void this.focusMunicipality(m);
+        },
+
+        submitSearch() {
+            const suggestions = this.searchSuggestions;
+            if (suggestions.length > 0) {
+                void this.focusMunicipality(suggestions[0]);
+            }
         },
 
         async flyToMarker(m) {
@@ -6001,6 +6050,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const targetUf = String(m.uf ?? "").trim().toUpperCase();
             const targetIbge = String(m.ibge ?? "").trim();
+            const mesoId = String(m.meso_id ?? "").trim();
             if (targetIbge === "") {
                 return false;
             }
@@ -6015,20 +6065,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.mapMode = "regional";
                 this.scopeMeso = "";
                 this._mapUserAdjustedView = false;
-                this.recomputeFilteredMarkers();
-                this._filterSignature = this.filterSignature();
-            }
-
-            const mesoId = String(m.meso_id ?? "").trim();
-            if (
+            } else if (
                 this.isRegionalMode &&
                 this.scopeMeso &&
                 mesoId &&
                 this.scopeMeso !== mesoId
             ) {
                 this.scopeMeso = "";
-                this.recomputeFilteredMarkers();
-                this._filterSignature = this.filterSignature();
+            }
+
+            const inMarkers = this.markers.some(
+                (row) => String(row.ibge) === targetIbge,
+            );
+            if (!inMarkers && targetUf) {
+                await this.selectUf(targetUf, false, true);
             }
 
             if (
@@ -6036,19 +6086,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     (row) => String(row.ibge) === targetIbge,
                 )
             ) {
-                this.applyDecisionLens("all", { keepMapView: true });
-                this.recomputeFilteredMarkers();
-                this._filterSignature = this.filterSignature();
+                this.applyDecisionLens("all", {
+                    keepMapView: true,
+                    enteringRegional: true,
+                });
             }
 
             this.searchQuery = "";
             this.hideApproxOnMap = false;
+            this.recomputeFilteredMarkers();
+            this._filterSignature = this.filterSignature();
             this.ensurePointsVisibleOnMap();
             this.highlightIbge = targetIbge;
             this._mapUserAdjustedView = true;
             this._preserveViewOnNextRender = true;
 
-            return true;
+            return this.markers.some((row) => String(row.ibge) === targetIbge);
         },
 
         fitMapToMunicipality(m, { animate = true } = {}) {
@@ -6096,25 +6149,33 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async focusMunicipality(m) {
-            if (!this.map) {
+            if (!this.map || !m) {
                 return;
             }
             if (!(await this.prepareMunicipalityFocus(m))) {
                 return;
             }
 
-            await this.scheduleMapRefresh();
-
-            const moved = this.fitMapToMunicipality(m);
-            if (moved) {
-                await new Promise((resolve) => window.setTimeout(resolve, 400));
-            }
-
             const latest =
                 this.markers.find(
                     (row) => String(row.ibge) === String(m.ibge ?? ""),
                 ) || m;
+
             this.selectMarker(latest);
+            this._preserveViewOnNextRender = true;
+            await this.scheduleMapRefresh();
+
+            await new Promise((resolve) => {
+                window.setTimeout(resolve, 120);
+            });
+
+            if (!this.map) {
+                return;
+            }
+
+            this.fitMapToMunicipality(latest);
+            this.refreshBoundaryHighlight();
+            this.refreshMapLayout({ immediate: true, preserveView: true });
         },
 
         setMapView(view) {

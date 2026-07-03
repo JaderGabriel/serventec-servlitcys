@@ -63,6 +63,7 @@
                 type="search"
                 x-model="searchQuery"
                 @input="markFiltersCustom()"
+                @keydown.enter.prevent="submitSearch()"
                 :disabled="pageLoading"
                 placeholder="{{ __('Nome ou IBGE…') }}"
                 autocomplete="off"
