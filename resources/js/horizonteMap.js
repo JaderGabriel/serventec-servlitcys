@@ -3111,7 +3111,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const shell = this.$refs.mapShell;
             this.mapFullscreen =
                 shell != null && document.fullscreenElement === shell;
-            this.$nextTick(() => this.syncMuniModalHost());
+            this.$nextTick(() => this.syncMuniModalPortal());
             this.bindMapLayoutObservers();
             this.bindCmdDockObservers();
             if (this.loadUrl) {
@@ -3388,7 +3388,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch {
                 const wasFullscreen = this.mapFullscreen;
                 this.mapFullscreen = !this.mapFullscreen;
-                this.syncMuniModalHost();
+                this.syncMuniModalPortal();
                 window.setTimeout(() => {
                     this._mapLayoutSize = { w: 0, h: 0 };
                     if (this.map) {
@@ -3415,7 +3415,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
 
-            this.syncMuniModalHost();
+            this.syncMuniModalPortal();
 
             const delay = wasFullscreen && !this.mapFullscreen ? 160 : 60;
             this.$nextTick(() => {
@@ -3588,23 +3588,33 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.mapFullscreen ? "Sair da tela inteira" : "Tela inteira";
         },
 
-        /** body fora da tela cheia (escapa overflow-hidden); mapShell em tela cheia nativa. */
-        syncMuniModalHost() {
-            const host = this.$refs.muniModalHost;
-            if (!(host instanceof HTMLElement)) {
+        /** Repositiona o clone x-teleport (Alpine scope intacto): body no normal, portal no mapShell em FS. */
+        syncMuniModalPortal() {
+            const modal = document.querySelector(
+                ".serv-horizonte-muni-overlay[data-teleport-target]",
+            );
+            if (!(modal instanceof HTMLElement)) {
                 return;
             }
 
-            const shell = this.$refs.mapShell;
+            const portal = document.getElementById("horizonte-muni-modal-portal");
             const mountOnShell =
-                this.mapFullscreen && shell instanceof HTMLElement;
-            const target = mountOnShell ? shell : document.body;
+                this.mapFullscreen && portal instanceof HTMLElement;
+            const target = mountOnShell ? portal : document.body;
 
-            if (host.parentElement !== target) {
-                target.appendChild(host);
+            if (modal.parentElement !== target) {
+                target.appendChild(modal);
             }
 
-            host.classList.toggle("is-map-shell-mounted", mountOnShell);
+            modal.classList.toggle("is-map-shell-mounted", mountOnShell);
+            if (portal instanceof HTMLElement) {
+                portal.setAttribute(
+                    "aria-hidden",
+                    mountOnShell && this.tooltipPinned && this.active
+                        ? "false"
+                        : "true",
+                );
+            }
         },
 
         mapLoadingStatusLabel() {
@@ -5889,8 +5899,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.active = m;
             this.tooltipPinned = true;
-            this.syncMuniModalHost();
-            this.positionTooltip();
+            this.$nextTick(() => {
+                this.syncMuniModalPortal();
+                if (
+                    !document.querySelector(
+                        ".serv-horizonte-muni-overlay[data-teleport-target]",
+                    )
+                ) {
+                    requestAnimationFrame(() => this.syncMuniModalPortal());
+                }
+                this.positionTooltip();
+            });
             this.syncMuniModalScrollLock();
             void this.loadEnrollmentSeries(m);
             this.refreshBoundaryHighlight();
@@ -5943,6 +5962,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.tooltipPinned = false;
             this.tooltipStyle = "";
             this.syncMuniModalScrollLock();
+            this.syncMuniModalPortal();
             this.refreshBoundaryHighlight();
         },
 

@@ -447,6 +447,7 @@
                         </div>
                     </div>
 
+                    <div id="horizonte-muni-modal-portal" class="serv-horizonte-muni-modal-portal" aria-hidden="true"></div>
                     @include('horizonte.partials.map-tooltip-sge')
                 </section>
 
