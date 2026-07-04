@@ -99,10 +99,22 @@ function enrollmentSeriesChartOptions() {
         ...cartesianInteractionDefaults(),
         responsive: true,
         maintainAspectRatio: false,
+        animation: false,
+        animations: false,
+        events: ["mousemove", "mouseout", "click", "touchstart", "touchmove"],
         layout: {
             padding: { top: 4, right: 4, bottom: 0, left: 0 },
         },
         plugins: {
+            // Plugin global de zoom/pan não deve capturar roda/pinça no modal.
+            zoom: {
+                pan: { enabled: false },
+                zoom: {
+                    wheel: { enabled: false },
+                    pinch: { enabled: false },
+                    drag: { enabled: false },
+                },
+            },
             legend: {
                 display: true,
                 position: "bottom",
@@ -2401,6 +2413,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         municipalBoundaryLayer: null,
         _choroplethPaneReady: false,
         _mapUserAdjustedView: false,
+        _mapProgrammaticMove: false,
         _preserveViewOnNextRender: false,
         searchQuery: "",
         viewPreset: options.defaultViewFilter?.preset ?? "high_pressure",
@@ -3375,14 +3388,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             }
             this.$nextTick(() => {
-                window.setTimeout(
-                    () =>
-                        this.syncMapViewport({
-                            preserveView: true,
-                            force: true,
-                        }),
-                    340,
-                );
+                window.setTimeout(() => {
+                    this.syncMapViewport({
+                        preserveView: true,
+                        force: true,
+                    });
+                    this.ensureMapInteractions();
+                }, 340);
             });
         },
 
@@ -3430,9 +3442,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.syncMuniModalPortal();
 
             const delay = wasFullscreen && !this.mapFullscreen ? 160 : 60;
-            if (this.tooltipPinned && this._enrollmentSeriesChartPayload) {
-                this.detachEnrollmentSeriesChart();
-            }
             this.$nextTick(() => {
                 window.setTimeout(() => {
                     this._mapLayoutSize = { w: 0, h: 0 };
@@ -3441,23 +3450,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         force: true,
                         preserveView: true,
                     });
-                    window.setTimeout(
-                        () =>
-                            this.syncMapViewport({
-                                immediate: true,
-                                force: true,
-                                preserveView: true,
-                            }),
-                        220,
-                    );
+                    this.ensureMapInteractions();
+                    window.setTimeout(() => {
+                        this.syncMapViewport({
+                            immediate: true,
+                            force: true,
+                            preserveView: true,
+                        });
+                        this.ensureMapInteractions();
+                    }, 220);
                     if (this.tooltipPinned && this.active) {
                         this.positionTooltip();
-                        if (this._enrollmentSeriesChartPayload) {
-                            this.scheduleEnrollmentSeriesChartRefresh({
-                                attempts: 6,
-                                delayMs: 40,
-                            });
-                        }
+                        this.resyncEnrollmentSeriesChart();
                     }
                 }, delay);
             });
@@ -3469,6 +3473,80 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             preserveView = false,
         } = {}) {
             this.refreshMapLayout({ immediate, force, preserveView });
+        },
+
+        /** Restaura handlers Leaflet e política de ponteiros conforme o modo actual. */
+        ensureMapInteractions() {
+            const liveMap = this.map;
+            if (!liveMap) {
+                return;
+            }
+
+            for (const name of [
+                "scrollWheelZoom",
+                "dragging",
+                "touchZoom",
+                "doubleClickZoom",
+                "keyboard",
+            ]) {
+                const handler = liveMap[name];
+                if (handler?.enabled?.() === false) {
+                    handler.enable();
+                }
+            }
+
+            const choroplethMode =
+                this.isOverviewMode || this.isMesoOverviewMode;
+            this.setChoroplethOverviewUi(choroplethMode);
+            if (!choroplethMode) {
+                this.clearMapPointerOverrides();
+            }
+        },
+
+        clearMapPointerOverrides() {
+            if (!this.map) {
+                return;
+            }
+
+            for (const paneName of [
+                "tilePane",
+                "overlayPane",
+                "markerPane",
+                "shadowPane",
+            ]) {
+                const pane = this.map.getPane(paneName);
+                if (!pane) {
+                    continue;
+                }
+                pane.querySelectorAll("canvas").forEach((canvas) => {
+                    canvas.style.pointerEvents = "";
+                    canvas.style.visibility = "";
+                });
+                pane.querySelectorAll("svg").forEach((svg) => {
+                    svg.style.pointerEvents = "";
+                });
+            }
+        },
+
+        shouldPreserveMapView(preserveView = false) {
+            return (
+                Boolean(preserveView) ||
+                Boolean(this._mapUserAdjustedView) ||
+                Boolean(this._preserveViewOnNextRender) ||
+                Boolean(this.tooltipPinned && this.active)
+            );
+        },
+
+        /** Envolve setView/fitBounds para não marcar a vista como gesto do utilizador. */
+        programmaticMapMove(fn) {
+            this._mapProgrammaticMove = true;
+            try {
+                return fn();
+            } finally {
+                window.setTimeout(() => {
+                    this._mapProgrammaticMove = false;
+                }, 120);
+            }
         },
 
         refreshMapLayout({
@@ -3497,6 +3575,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const center = liveMap.getCenter();
                 const zoom = liveMap.getZoom();
                 liveMap.invalidateSize({ animate: false });
+                this.ensureMapInteractions();
                 const size = liveMap.getSize();
                 if (!size || size.x <= 0 || size.y <= 0) {
                     if (force) {
@@ -3522,21 +3601,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     prev.h !== size.y;
                 this._mapLayoutSize = { w: size.x, h: size.y };
 
-                if (this.isRegionalMode) {
-                    this.setChoroplethOverviewUi(false);
-                }
-
-                if (liveMap.scrollWheelZoom?.enabled?.() === false) {
-                    liveMap.scrollWheelZoom.enable();
-                }
-                if (liveMap.dragging?.enabled?.() === false) {
-                    liveMap.dragging.enable();
-                }
+                const keepView = this.shouldPreserveMapView(preserveView);
 
                 if (force && !changed) {
-                    liveMap.setView(center, zoom, { animate: false });
-                    this.applyChoroplethPointerPolicy(
-                        this.isOverviewMode || this.isMesoOverviewMode,
+                    this.programmaticMapMove(() =>
+                        liveMap.setView(center, zoom, { animate: false }),
                     );
                     this.refreshCanvasMarkersAfterZoom();
                     this.repositionFloatingPanels();
@@ -3548,10 +3617,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return;
                 }
 
-                if (
-                    preserveView ||
-                    (force && this._mapUserAdjustedView && this.isRegionalMode)
-                ) {
+                if (keepView) {
+                    this.programmaticMapMove(() =>
+                        liveMap.setView(center, zoom, { animate: false }),
+                    );
                     this.refreshCanvasMarkersAfterZoom();
                     this.repositionFloatingPanels();
 
@@ -3561,15 +3630,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (
                     force &&
                     (this.isOverviewMode || this.isMesoOverviewMode) &&
-                    this._lastChoroplethLayer?.getBounds?.()?.isValid?.() &&
-                    !this._mapUserAdjustedView
+                    this._lastChoroplethLayer?.getBounds?.()?.isValid?.()
                 ) {
-                    liveMap.fitBounds(this._lastChoroplethLayer.getBounds(), {
-                        padding: [48, 48],
-                        maxZoom: this.isMesoOverviewMode ? 8 : 5,
-                        animate: false,
-                    });
-                    this.applyChoroplethPointerPolicy(true);
+                    this.programmaticMapMove(() =>
+                        liveMap.fitBounds(this._lastChoroplethLayer.getBounds(), {
+                            padding: [48, 48],
+                            maxZoom: this.isMesoOverviewMode ? 8 : 5,
+                            animate: false,
+                        }),
+                    );
                     this.redrawChoroplethLayer();
                     this.refreshCanvasMarkersAfterZoom();
                     this.repositionFloatingPanels();
@@ -3577,7 +3646,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return;
                 }
 
-                liveMap.setView(center, zoom, { animate: false });
+                this.programmaticMapMove(() =>
+                    liveMap.setView(center, zoom, { animate: false }),
+                );
                 this.refreshCanvasMarkersAfterZoom();
                 this.repositionFloatingPanels();
             };
@@ -3671,9 +3742,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             if (reparented) {
                 target.appendChild(modal);
-                if (this.tooltipPinned && this._enrollmentSeriesChartPayload) {
-                    this.detachEnrollmentSeriesChart();
-                }
             }
 
             modal.classList.toggle("is-map-shell-mounted", mountOnShell);
@@ -3686,15 +3754,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 );
             }
 
-            if (
-                reparented &&
-                this.tooltipPinned &&
-                this._enrollmentSeriesChartPayload
-            ) {
-                this.scheduleEnrollmentSeriesChartRefresh({
-                    attempts: 6,
-                    delayMs: 200,
-                });
+            if (reparented && this.tooltipPinned && this.active) {
+                this.resyncEnrollmentSeriesChart();
             }
         },
 
@@ -4248,9 +4309,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.pageLoading = false;
                 window.servDataLoading?.finish?.();
                 await this.refreshMapLayers();
-                this.$nextTick(() =>
-                    this.refreshMapLayout({ immediate: true, force: true }),
-                );
+                this.$nextTick(() => {
+                    this.refreshMapLayout({ immediate: true, force: true });
+                    this.ensureMapInteractions();
+                });
             }
         },
 
@@ -4296,6 +4358,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this._filterSignature = this.filterSignature();
                 }
                 await this.scheduleMapRefresh();
+                this.ensureMapInteractions();
             }
         },
 
@@ -4526,14 +4589,36 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
             });
 
+            this.map.on("dragstart", () => {
+                if (!this._mapProgrammaticMove) {
+                    this._mapUserAdjustedView = true;
+                }
+            });
+
             this.map.on("dragend", () => {
-                this._mapUserAdjustedView = true;
+                if (!this._mapProgrammaticMove) {
+                    this._mapUserAdjustedView = true;
+                }
                 this.repositionFloatingPanels();
             });
 
+            this.map.on("zoomstart", () => {
+                if (!this._mapProgrammaticMove) {
+                    this._mapUserAdjustedView = true;
+                }
+            });
+
             this.map.on("zoomend", () => {
+                if (!this._mapProgrammaticMove) {
+                    this._mapUserAdjustedView = true;
+                }
+                this.ensureMapInteractions();
                 this.refreshCanvasMarkersAfterZoom();
                 this.repositionFloatingPanels();
+            });
+
+            this.map.on("moveend", () => {
+                this._mapProgrammaticMove = false;
             });
 
             this.map.on("move", () => {
@@ -4587,7 +4672,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 "hideApproxOnMap",
             ].forEach((key) => this.$watch(key, onFilterChange));
 
-            this.$watch("mapView", () => void this.scheduleMapRefresh());
+            this.$watch("mapView", () => {
+                if (this.isRegionalMode) {
+                    this._preserveViewOnNextRender = true;
+                }
+                void this.scheduleMapRefresh();
+            });
         },
 
         cancelPendingMapRefresh() {
@@ -4640,11 +4730,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return;
                 }
                 this.map.invalidateSize({ animate: false });
-                this.map.fitBounds(bounds, {
-                    padding,
-                    maxZoom,
-                    animate: force,
-                });
+                this.programmaticMapMove(() =>
+                    this.map.fitBounds(bounds, {
+                        padding,
+                        maxZoom,
+                        animate: force,
+                    }),
+                );
             };
 
             fit();
@@ -4676,13 +4768,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         setChoroplethOverviewUi(active) {
             const el = this.$refs.map;
             if (el instanceof HTMLElement) {
-                el.classList.toggle("is-choropleth-overview", active);
+                el.classList.toggle("is-choropleth-overview", Boolean(active));
             }
-            this.applyChoroplethPointerPolicy(active);
+            this.applyChoroplethPointerPolicy(Boolean(active));
         },
 
         applyChoroplethPointerPolicy(active) {
             if (!this.map) {
+                return;
+            }
+
+            // Em modo regional limpa sempre overrides inline — o CSS da classe
+            // is-choropleth-overview só deve actuar no overview/meso.
+            if (!active) {
+                this.clearMapPointerOverrides();
+
                 return;
             }
 
@@ -4692,14 +4792,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     continue;
                 }
                 pane.querySelectorAll("canvas").forEach((canvas) => {
-                    canvas.style.pointerEvents = active ? "none" : "";
+                    canvas.style.pointerEvents = "none";
+                    canvas.style.visibility = "hidden";
                 });
             }
 
             const overlay = this.map.getPane("overlayPane");
             if (overlay) {
                 overlay.querySelectorAll("svg").forEach((svg) => {
-                    svg.style.pointerEvents = active ? "auto" : "";
+                    svg.style.pointerEvents = "auto";
                 });
             }
         },
@@ -5128,40 +5229,33 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
 
-            const remove = [];
-            this.map.eachLayer((layer) => {
-                if (isLeafletCanvasRenderer(layer) || isLeafletSvgRenderer(layer)) {
-                    remove.push(layer);
-                }
-            });
-            for (const layer of remove) {
-                this.map.removeLayer(layer);
-            }
-
-            if (this.canvasRenderer) {
-                try {
-                    this.map.removeLayer(this.canvasRenderer);
-                } catch {
-                    /* já removido */
-                }
-                this.canvasRenderer = null;
-            }
-
-            for (const paneName of [
-                "tilePane",
-                "overlayPane",
-                "markerPane",
-                "shadowPane",
-            ]) {
-                const pane = this.map.getPane(paneName);
-                if (!pane) {
-                    continue;
-                }
-                pane.querySelectorAll("canvas").forEach((canvas) => {
-                    canvas.style.pointerEvents = active ? "none" : "";
-                    canvas.style.visibility = active ? "hidden" : "";
+            // Só remove renderers órfãos no modo coroplético. Em regional, limpar
+            // o canvas activo desalinha hit-areas e pode bloquear zoom/cliques.
+            if (active) {
+                const remove = [];
+                this.map.eachLayer((layer) => {
+                    if (
+                        isLeafletCanvasRenderer(layer) ||
+                        isLeafletSvgRenderer(layer)
+                    ) {
+                        remove.push(layer);
+                    }
                 });
+                for (const layer of remove) {
+                    this.map.removeLayer(layer);
+                }
+
+                if (this.canvasRenderer) {
+                    try {
+                        this.map.removeLayer(this.canvasRenderer);
+                    } catch {
+                        /* já removido */
+                    }
+                    this.canvasRenderer = null;
+                }
             }
+
+            this.applyChoroplethPointerPolicy(Boolean(active));
         },
 
         setOverviewLayerVisibility() {
@@ -5280,6 +5374,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.mapRendering = false;
                 this.renderProgress = 100;
                 this.loadingMessage = "";
+                this.ensureMapInteractions();
 
                 if (pinnedStillVisible && pinnedMarker && this.isRegionalMode) {
                     const latest =
@@ -5290,18 +5385,19 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.tooltipPinned = true;
                     this.positionTooltip();
                     this.syncMuniModalScrollLock();
+                    this.resyncEnrollmentSeriesChart();
                 }
 
-                this.$nextTick(() =>
+                this.$nextTick(() => {
                     this.syncMapViewport({
                         immediate: true,
                         force: true,
-                        preserveView:
-                            this.isRegionalMode &&
-                            (this._mapUserAdjustedView ||
-                                this._preserveViewOnNextRender),
-                    }),
-                );
+                        preserveView: this.shouldPreserveMapView(
+                            this.isRegionalMode,
+                        ),
+                    });
+                    this.ensureMapInteractions();
+                });
             }
         },
 
@@ -5769,21 +5865,27 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return;
             }
             const valid = bounds.filter(([la, ln]) => isValidCoord(la, ln));
-            if (valid.length > 0) {
-                const heavy = Boolean(this.regionalDisplayPolicy?.heavy_regional);
-                const maxZoom = this.scopeUf
-                    ? heavy
-                        ? 7
+            this.programmaticMapMove(() => {
+                if (valid.length > 0) {
+                    const heavy = Boolean(this.regionalDisplayPolicy?.heavy_regional);
+                    const maxZoom = this.scopeUf
+                        ? heavy
+                            ? 7
+                            : valid.length > 80
+                              ? 7
+                              : 8
                         : valid.length > 80
-                          ? 7
-                          : 8
-                    : valid.length > 80
-                      ? 5
-                      : 6;
-                this.map.fitBounds(valid, { padding: [48, 48], maxZoom, animate: !heavy });
-            } else {
-                this.map.setView([-14.2, -51.9], fallbackZoom);
-            }
+                          ? 5
+                          : 6;
+                    this.map.fitBounds(valid, {
+                        padding: [48, 48],
+                        maxZoom,
+                        animate: !heavy,
+                    });
+                } else {
+                    this.map.setView([-14.2, -51.9], fallbackZoom);
+                }
+            });
         },
 
         refreshCanvasMarkersAfterZoom() {
@@ -6038,15 +6140,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 viewportCap,
             );
             this.tooltipStyle = `--horizonte-muni-modal-h:${Math.round(maxH)}px;`;
-            if (
-                this.tooltipPinned &&
-                this._enrollmentSeriesChartPayload &&
-                !this._enrollmentSeriesChart
-            ) {
-                this.scheduleEnrollmentSeriesChartRefresh({
-                    attempts: 4,
-                    delayMs: 60,
-                });
+            if (this.tooltipPinned && this._enrollmentSeriesChartPayload) {
+                this.resyncEnrollmentSeriesChart();
             }
         },
 
@@ -6069,6 +6164,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.syncMuniModalScrollLock();
             this.syncMuniModalPortal();
             this.refreshBoundaryHighlight();
+            this.ensureMapInteractions();
         },
 
         closeUfSummary() {
@@ -6404,12 +6500,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             this.showAllOnMap = true;
             this.renderCapDismissed = true;
+            if (this.isRegionalMode) {
+                this._preserveViewOnNextRender = true;
+            }
             void this.scheduleMapRefresh();
         },
 
         restoreMapRenderCap() {
             this.showAllOnMap = false;
             this.renderCapDismissed = false;
+            if (this.isRegionalMode) {
+                this._preserveViewOnNextRender = true;
+            }
             void this.scheduleMapRefresh();
         },
 
@@ -6875,6 +6977,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         detachEnrollmentSeriesChart() {
+            this.disconnectEnrollmentSeriesChartObserver();
             if (this._enrollmentSeriesChart) {
                 this._enrollmentSeriesChart.destroy();
                 this._enrollmentSeriesChart = null;
@@ -6903,13 +7006,63 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             );
         },
 
-        scheduleEnrollmentSeriesChartRefresh({ attempts = 5, delayMs = 80 } = {}) {
+        enrollmentSeriesChartIsLive() {
+            const chart = this._enrollmentSeriesChart;
+            const canvas = this.$refs.enrollmentSeriesCanvas;
+            return (
+                Boolean(chart) &&
+                canvas instanceof HTMLCanvasElement &&
+                canvas.isConnected &&
+                chart.canvas === canvas
+            );
+        },
+
+        /** Preferir resize ao destruir/recriar — evita piscar contadores e linhas. */
+        resyncEnrollmentSeriesChart() {
+            if (!this.enrollmentSeriesChartShouldRender()) {
+                return;
+            }
+
+            if (this.enrollmentSeriesChartIsLive()) {
+                this.scheduleEnrollmentSeriesChartRefresh({
+                    attempts: 1,
+                    delayMs: 60,
+                    resizeOnly: true,
+                });
+                return;
+            }
+
+            this.detachEnrollmentSeriesChart();
+            this.scheduleEnrollmentSeriesChartRefresh({
+                attempts: 6,
+                delayMs: 120,
+            });
+        },
+
+        scheduleEnrollmentSeriesChartRefresh({
+            attempts = 5,
+            delayMs = 80,
+            resizeOnly = false,
+        } = {}) {
             if (this._enrollmentSeriesRefreshTimer) {
                 window.clearTimeout(this._enrollmentSeriesRefreshTimer);
             }
             this._enrollmentSeriesRefreshTimer = window.setTimeout(() => {
                 this._enrollmentSeriesRefreshTimer = null;
                 if (!this.enrollmentSeriesChartShouldRender()) {
+                    return;
+                }
+                if (resizeOnly && this.enrollmentSeriesChartIsLive()) {
+                    try {
+                        this._enrollmentSeriesChart.resize();
+                        this._enrollmentSeriesChart.update("none");
+                        if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
+                            this.enrollmentSeriesError = null;
+                        }
+                    } catch {
+                        this.detachEnrollmentSeriesChart();
+                        void this.ensureEnrollmentSeriesChartRendered(attempts);
+                    }
                     return;
                 }
                 void this.ensureEnrollmentSeriesChartRendered(attempts);
@@ -6932,6 +7085,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             let resizeTimer = null;
+            let lastW = 0;
+            let lastH = 0;
             this._enrollmentSeriesChartObserver = new ResizeObserver(() => {
                 if (resizeTimer) {
                     window.clearTimeout(resizeTimer);
@@ -6941,13 +7096,26 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     if (!this.enrollmentSeriesChartShouldRender()) {
                         return;
                     }
-                    if (this._enrollmentSeriesChart) {
+                    const { width, height } =
+                        this.enrollmentSeriesCanvasDimensions(canvas);
+                    if (
+                        Math.abs(width - lastW) < 2 &&
+                        Math.abs(height - lastH) < 2
+                    ) {
+                        return;
+                    }
+                    lastW = width;
+                    lastH = height;
+                    if (width <= 8 || height <= 8) {
+                        return;
+                    }
+                    if (this.enrollmentSeriesChartIsLive()) {
                         this._enrollmentSeriesChart.resize();
                         this._enrollmentSeriesChart.update("none");
                         return;
                     }
                     void this.ensureEnrollmentSeriesChartRendered(2);
-                }, 80);
+                }, 120);
             });
             this._enrollmentSeriesChartObserver.observe(wrap);
         },
@@ -7136,7 +7304,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return false;
             }
 
-            if (ok || this._enrollmentSeriesChart) {
+            if (ok || this.enrollmentSeriesChartIsLive()) {
                 if (this.enrollmentSeriesError === ENROLLMENT_SERIES_DRAW_ERROR) {
                     this.enrollmentSeriesError = null;
                 }
@@ -7144,8 +7312,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return true;
             }
 
+            // Falha só no canvas: não esconder contadores/filtros já carregados.
             if (
                 this.enrollmentSeriesChartShouldRender() &&
+                this.enrollmentSeriesReady &&
                 !this.enrollmentSeriesError
             ) {
                 this.enrollmentSeriesError = ENROLLMENT_SERIES_DRAW_ERROR;
@@ -7170,15 +7340,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 dependencia === this._enrollmentSeriesLoadedDependencia &&
                 (this.enrollmentSeriesReady || this.enrollmentSeriesLoading)
             ) {
-                if (
-                    this.enrollmentSeriesReady &&
-                    this._enrollmentSeriesChartPayload &&
-                    !this._enrollmentSeriesChart
-                ) {
-                    this.scheduleEnrollmentSeriesChartRefresh({
-                        attempts: 4,
-                        delayMs: 80,
-                    });
+                if (this.enrollmentSeriesReady) {
+                    this.resyncEnrollmentSeriesChart();
                 }
 
                 return;

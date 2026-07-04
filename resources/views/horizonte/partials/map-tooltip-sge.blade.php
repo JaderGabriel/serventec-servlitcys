@@ -217,7 +217,7 @@
                         </p>
                     </div>
                     <div
-                        x-show="!enrollmentSeriesLoading && !enrollmentSeriesError"
+                        x-show="!enrollmentSeriesLoading && enrollmentSeriesReady"
                         class="serv-horizonte-muni-tooltip__enrollment-series-filters"
                         role="group"
                         :aria-label="@js(__('Recorte por dependência administrativa'))"
@@ -239,7 +239,7 @@
                     >{{ __('A carregar…') }}</span>
                 </div>
                 <p
-                    x-show="enrollmentSeriesError && !_enrollmentSeriesChart"
+                    x-show="enrollmentSeriesError && !enrollmentSeriesReady"
                     x-text="enrollmentSeriesError"
                     class="serv-horizonte-muni-tooltip__enrollment-series-error"
                 ></p>
@@ -256,9 +256,15 @@
                     >
                         <span class="serv-horizonte-muni-tooltip__enrollment-series-chart-loading-spinner"></span>
                     </div>
+                    <p
+                        x-show="enrollmentSeriesReady && enrollmentSeriesError && !enrollmentSeriesChartIsLive()"
+                        x-cloak
+                        x-text="enrollmentSeriesError"
+                        class="serv-horizonte-muni-tooltip__enrollment-series-error"
+                    ></p>
                 </div>
                 <div
-                    x-show="!enrollmentSeriesLoading && !enrollmentSeriesError && enrollmentSeriesReady && enrollmentSeriesStageCounters.length"
+                    x-show="!enrollmentSeriesLoading && enrollmentSeriesReady && enrollmentSeriesStageCounters.length"
                     x-cloak
                     class="serv-horizonte-muni-tooltip__enrollment-series-stages"
                 >

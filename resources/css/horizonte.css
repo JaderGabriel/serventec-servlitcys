@@ -2862,12 +2862,15 @@ html.serv-horizonte-muni-modal-open body {
     height: 11.25rem;
     margin: 0;
     padding: 0;
+    /* Evita que pinça/roda do Chart.js global capture gestos do modal/mapa. */
+    touch-action: pan-y;
 }
 
 .serv-horizonte-muni-tooltip__enrollment-series-chart-wrap canvas {
     display: block;
     width: 100% !important;
     height: 100% !important;
+    touch-action: pan-y;
 }
 
 .serv-horizonte-muni-tooltip__enrollment-series-chart-wrap.is-loading canvas {
