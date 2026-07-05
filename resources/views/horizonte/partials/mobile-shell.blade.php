@@ -25,8 +25,12 @@
                 class="serv-horizonte-mobile__layout-btn"
                 @click="toggleLayoutVariant()"
                 :title="layoutToggleHint()"
+                :aria-label="layoutToggleHint()"
             >
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.875H19.5M10.5 1.875a2.625 2.625 0 1 1-5.25 0M10.5 1.875V7.5m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M4.875 7.5H3.375m17.25 8.625H10.5m0 0a2.625 2.625 0 1 1-5.25 0M10.5 16.125V21m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M19.5 7.5v8.625m0 0a2.625 2.625 0 0 1-5.25 0m5.25 0H21" /></svg>
+                <span class="serv-horizonte-mobile__layout-btn-icon" aria-hidden="true">
+                    <svg x-show="isMobileLayout" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path fill-rule="evenodd" d="M2 4.25A2.25 2.25 0 014.25 2h11.5A2.25 2.25 0 0118 4.25v8.5A2.25 2.25 0 0115.75 15h-3.105a3.501 3.501 0 004.247 2.75.75.75 0 01-.584.985.75.75 0 01-.832-.667A2.001 2.001 0 0010 15.25h-3a2 2 0 00-1.832 1.117.75.75 0 01-.832.667.75.75 0 01-.584-.985A3.501 3.501 0 007.355 15H4.25A2.25 2.25 0 012 12.75v-8.5z" clip-rule="evenodd" /></svg>
+                    <svg x-show="!isMobileLayout" x-cloak xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4"><path d="M7 1a2 2 0 00-2 2v14a2 2 0 002 2h6a2 2 0 002-2V3a2 2 0 00-2-2H7zm1 14.5a.75.75 0 100 1.5h4a.75.75 0 100-1.5H8z" /></svg>
+                </span>
                 <span x-text="layoutToggleLabel()"></span>
             </button>
         </div>

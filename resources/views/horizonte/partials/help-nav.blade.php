@@ -1,5 +1,6 @@
 @props([
     'docUrl' => '#',
+    'showLayoutToggle' => false,
 ])
 
 <nav {{ $attributes->merge(['class' => 'serv-horizonte-help-nav']) }} aria-label="{{ __('Ajuda Horizonte') }}">
@@ -35,4 +36,21 @@
         </span>
         <span class="serv-horizonte-help-nav__label">{{ __('Documentação') }}</span>
     </a>
+    @if ($showLayoutToggle)
+        <button
+            type="button"
+            id="horizonte-layout-toggle"
+            class="serv-horizonte-help-nav__item serv-horizonte-help-nav__item--layout"
+            title="{{ __('Alternar entre interface desktop e versão para telemóvel.') }}"
+            aria-label="{{ __('Alternar entre interface desktop e versão para telemóvel.') }}"
+            onclick="window.dispatchEvent(new CustomEvent('horizonte-layout-toggle'))"
+        >
+            <span class="serv-horizonte-help-nav__icon" id="horizonte-layout-toggle-icon" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4">
+                    <path d="M7 1a2 2 0 00-2 2v14a2 2 0 002 2h6a2 2 0 002-2V3a2 2 0 00-2-2H7zm1 14.5a.75.75 0 100 1.5h4a.75.75 0 100-1.5H8z" />
+                </svg>
+            </span>
+            <span class="serv-horizonte-help-nav__label" id="horizonte-layout-toggle-label">{{ __('Versão mão') }}</span>
+        </button>
+    @endif
 </nav>

@@ -17,6 +17,32 @@ const ENROLLMENT_SERIES_STYLES = [
 const ENROLLMENT_SERIES_DRAW_ERROR =
     "Não foi possível desenhar o gráfico de matrículas.";
 
+const HORIZONTE_LAYOUT_ICON_MOBILE =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path d="M7 1a2 2 0 00-2 2v14a2 2 0 002 2h6a2 2 0 002-2V3a2 2 0 00-2-2H7zm1 14.5a.75.75 0 100 1.5h4a.75.75 0 100-1.5H8z" /></svg>';
+
+const HORIZONTE_LAYOUT_ICON_DESKTOP =
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M2 4.25A2.25 2.25 0 014.25 2h11.5A2.25 2.25 0 0118 4.25v8.5A2.25 2.25 0 0115.75 15h-3.105a3.501 3.501 0 004.247 2.75.75.75 0 01-.584.985.75.75 0 01-.832-.667A2.001 2.001 0 0010 15.25h-3a2 2 0 00-1.832 1.117.75.75 0 01-.832.667.75.75 0 01-.584-.985A3.501 3.501 0 007.355 15H4.25A2.25 2.25 0 012 12.75v-8.5z" clip-rule="evenodd" /></svg>';
+
+function syncHorizonteLayoutToggleButton(detail) {
+    const button = document.getElementById("horizonte-layout-toggle");
+    const label = document.getElementById("horizonte-layout-toggle-label");
+    const icon = document.getElementById("horizonte-layout-toggle-icon");
+    if (!button || !label) {
+        return;
+    }
+
+    label.textContent = detail?.label ?? "Versão mão";
+    const hint = detail?.hint ?? "Alternar entre interface desktop e versão para telemóvel.";
+    button.title = hint;
+    button.setAttribute("aria-label", hint);
+
+    if (icon) {
+        icon.innerHTML = detail?.isMobileLayout
+            ? HORIZONTE_LAYOUT_ICON_DESKTOP
+            : HORIZONTE_LAYOUT_ICON_MOBILE;
+    }
+}
+
 function enrollmentChartIsDark() {
     return document.documentElement.classList.contains("dark");
 }
@@ -3189,6 +3215,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             this.syncLayoutRootClass();
+            this.syncLayoutToggleButton();
 
             if (this.isMobileLayout) {
                 this.filtersVisible = false;
@@ -3209,6 +3236,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     hint === "mobile" ||
                     hint === "tablet";
                 this.syncLayoutRootClass();
+                this.syncLayoutToggleButton();
                 if (this.layoutPreference === "auto" && this.map) {
                     this.$nextTick(() =>
                         this.syncMapViewport({
@@ -3245,13 +3273,22 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         layoutToggleHint() {
             if (this.layoutPreference === "auto") {
                 return this.isMobileLayout
-                    ? "Detecção automática · dispositivo de mão. Clique para forçar desktop."
-                    : "Detecção automática · ecrã largo. Clique para forçar versão mão.";
+                    ? "Detecção automática (dispositivo de mão). Clique para forçar a interface desktop."
+                    : "Detecção automática (ecrã largo). Clique para abrir a interface optimizada para telemóvel.";
             }
 
             return this.isMobileLayout
-                ? "Versão mão activa. Clique para alternar para desktop."
-                : "Versão desktop activa. Clique para alternar para mão.";
+                ? "Interface mão activa. Clique para voltar à versão desktop."
+                : "Interface desktop activa. Clique para abrir a versão mão.";
+        },
+
+        syncLayoutToggleButton() {
+            syncHorizonteLayoutToggleButton({
+                label: this.layoutToggleLabel(),
+                hint: this.layoutToggleHint(),
+                isMobileLayout: this.isMobileLayout,
+                preference: this.layoutPreference,
+            });
         },
 
         layoutModeBadge() {
@@ -3286,6 +3323,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             document.cookie = `horizonte_layout_preference=${encodeURIComponent(next)};path=/;max-age=31536000;SameSite=Lax`;
 
             this.syncLayoutRootClass();
+            this.syncLayoutToggleButton();
 
             if (this.isMobileLayout) {
                 this.filtersVisible = false;

@@ -49,16 +49,7 @@
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
-                @include('horizonte.partials.help-nav', ['docUrl' => $docUrl])
-                <button
-                    type="button"
-                    class="serv-btn-secondary text-xs inline-flex items-center gap-1.5"
-                    @click="toggleLayoutVariant()"
-                    :title="layoutToggleHint()"
-                >
-                    <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.875H19.5M10.5 1.875a2.625 2.625 0 1 1-5.25 0M10.5 1.875V7.5m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M4.875 7.5H3.375m17.25 8.625H10.5m0 0a2.625 2.625 0 1 1-5.25 0M10.5 16.125V21m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M19.5 7.5v8.625m0 0a2.625 2.625 0 0 1-5.25 0m5.25 0H21" /></svg>
-                    <span x-text="layoutToggleLabel()"></span>
-                </button>
+                @include('horizonte.partials.help-nav', ['docUrl' => $docUrl, 'showLayoutToggle' => true])
             </div>
         </div>
     </x-slot>
@@ -89,6 +80,7 @@
         ]))"
         x-init="init()"
         @horizonte-guide.window="onHorizonteGuide($event.detail)"
+        @horizonte-layout-toggle.window="toggleLayoutVariant()"
     >
         <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8 space-y-5">
 

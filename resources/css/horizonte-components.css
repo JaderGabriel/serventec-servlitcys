@@ -643,6 +643,18 @@
         @apply bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300;
     }
 
+    .serv-horizonte-help-nav__item--layout {
+        @apply text-emerald-900 hover:bg-emerald-100/80 dark:text-emerald-100 dark:hover:bg-emerald-950/50;
+    }
+
+    .serv-horizonte-help-nav__item--layout .serv-horizonte-help-nav__icon {
+        @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300;
+    }
+
+    html.serv-horizonte-mobile-layout #horizonte-layout-toggle {
+        display: none;
+    }
+
     .serv-horizonte-rail {
         @apply space-y-3 lg:sticky lg:top-[calc(var(--horizonte-cmd-sticky-top,0px)+var(--horizonte-cmd-height,0px)+0.5rem)] lg:max-h-[calc(100dvh-var(--horizonte-cmd-sticky-top,0px)-var(--horizonte-cmd-height,0px)-1rem)] lg:overflow-y-auto lg:self-start;
     }
@@ -1656,6 +1668,10 @@
     .serv-horizonte-mobile__layout-btn {
         @apply inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5
             text-[11px] font-semibold text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200;
+    }
+
+    .serv-horizonte-mobile__layout-btn-icon {
+        @apply inline-flex shrink-0 items-center justify-center;
     }
 
     .serv-horizonte-mobile__uf-select select {
