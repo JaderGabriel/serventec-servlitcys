@@ -133,6 +133,9 @@ Implementação futura: nova faixa em `faixas_etarias`, KPI separado, documenta�
 | Ficheiro | Função |
 |----------|--------|
 | `app/Services/Cadunico/CadunicoRedeGapAnalyzer.php` | Lacuna, faixas, cobertura |
+| `app/Services/Cadunico/CadunicoEscolarizacaoDecisionCardBuilder.php` | Card escolarização (na escola / fora / Censo / EJA) |
+| `app/Services/Cadunico/CadunicoEscolarizacaoFeedService.php` | Abastecimento bimestral CadÚnico + Censo |
+| `app/Console/Commands/CadunicoEscolarizacaoFeedCommand.php` | `cadunico:escolarizacao-feed` |
 | `app/Services/Cadunico/CadunicoFinanceScenarioBuilder.php` | Cenários NEE/AEE/VAAR |
 | `app/Repositories/Ieducar/CadunicoPrevisaoRepository.php` | Montagem do painel |
 | `app/Models/CadunicoMunicipioSnapshot.php` | Colunas por faixa |

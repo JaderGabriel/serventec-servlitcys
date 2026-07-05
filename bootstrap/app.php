@@ -213,6 +213,39 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->runInBackground();
         }
 
+        if (filter_var(config('ieducar.cadunico.escolarizacao_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('ieducar.cadunico.escolarizacao_feed.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = $timezone ?? (string) config('app.timezone', 'UTC');
+            $escCron = \App\Support\Cadunico\CadunicoEscolarizacaoFeedScheduleCadence::cronExpression();
+            $escOverlap = max(60, (int) config('ieducar.cadunico.escolarizacao_feed.schedule.overlap_minutes', 4320));
+            $escStepInterval = max(5, (int) config('ieducar.cadunico.escolarizacao_feed.schedule.step_interval_minutes', 30));
+            $escStaged = filter_var(config('ieducar.cadunico.escolarizacao_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
+
+            if ($escStaged) {
+                $schedule->command('cadunico:escolarizacao-feed --staged --reset')
+                    ->cron($escCron)
+                    ->name('cadunico-escolarizacao-feed-start')
+                    ->withoutOverlapping($escOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+
+                $schedule->command('cadunico:escolarizacao-feed --staged --continue')
+                    ->cron('*/'.$escStepInterval.' * * * *')
+                    ->name('cadunico-escolarizacao-feed-step')
+                    ->withoutOverlapping(max(5, $escStepInterval - 1))
+                    ->when(static fn (): bool => \App\Support\Cadunico\CadunicoEscolarizacaoFeedPipeline::isActive())
+                    ->timezone($timezone)
+                    ->runInBackground();
+            } else {
+                $schedule->command('cadunico:escolarizacao-feed --all')
+                    ->cron($escCron)
+                    ->name('cadunico-escolarizacao-feed')
+                    ->withoutOverlapping($escOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+            }
+        }
+
         if ((bool) config('public_data_availability.enabled', true)
             && (bool) config('public_data_availability.schedule.enabled', true)) {
             $timezone = (string) config('app.timezone', 'UTC');

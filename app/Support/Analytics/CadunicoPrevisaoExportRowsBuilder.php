@@ -60,6 +60,40 @@ final class CadunicoPrevisaoExportRowsBuilder
             ];
         }
 
+        $escolarizacao = is_array($data['escolarizacao_card'] ?? null) ? $data['escolarizacao_card'] : [];
+        foreach (is_array($escolarizacao['linhas'] ?? null) ? $escolarizacao['linhas'] : [] as $linha) {
+            $rows[] = [
+                'secao' => __('Escolarização'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => (string) ($linha['faixa'] ?? ''),
+                'valor' => (string) ($linha['fora_rede_municipal_fmt'] ?? ''),
+                'detalhe' => __('CadÚnico: :c · Rede: :r · Censo: :cen · Fora escola: :fe · :dec', [
+                    'c' => (string) ($linha['cadunico_fmt'] ?? ''),
+                    'r' => (string) ($linha['na_rede_municipal_fmt'] ?? ''),
+                    'cen' => (string) ($linha['no_municipio_censo_fmt'] ?? '—'),
+                    'fe' => (string) ($linha['possivel_fora_escola_fmt'] ?? '—'),
+                    'dec' => (string) ($linha['decisao'] ?? ''),
+                ]),
+            ];
+        }
+
+        $eja = is_array($escolarizacao['eja'] ?? null) ? $escolarizacao['eja'] : [];
+        if ($eja['available'] ?? false) {
+            $rows[] = [
+                'secao' => __('EJA'),
+                'cidade' => $city,
+                'ano' => $year,
+                'indicador' => __('Matrículas EJA'),
+                'valor' => (string) ($eja['censo_total_fmt'] ?? '—'),
+                'detalhe' => __('i-Educar: :i · Censo municipal: :m · Não municipal: :nm', [
+                    'i' => (string) ($eja['ieducar_municipal_fmt'] ?? '—'),
+                    'm' => (string) ($eja['censo_municipal_fmt'] ?? '—'),
+                    'nm' => (string) ($eja['censo_nao_municipal_fmt'] ?? '—'),
+                ]),
+            ];
+        }
+
         $cenarios = is_array($gap['cenarios_financeiros'] ?? null) ? $gap['cenarios_financeiros'] : [];
         foreach (is_array($cenarios['itens'] ?? null) ? $cenarios['itens'] : [] as $item) {
             $rows[] = [

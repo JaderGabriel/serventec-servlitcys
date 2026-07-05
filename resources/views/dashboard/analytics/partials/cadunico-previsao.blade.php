@@ -24,10 +24,12 @@
     $vulnerabilidade = is_array($gap['vulnerabilidade'] ?? null) ? $gap['vulnerabilidade'] : [];
     $territorial = is_array($d['territorial'] ?? null) ? $d['territorial'] : [];
     $demandaOferta = is_array($d['demanda_oferta'] ?? null) ? $d['demanda_oferta'] : [];
+    $escolarizacaoCard = is_array($d['escolarizacao_card'] ?? null) ? $d['escolarizacao_card'] : [];
     $rankingTerr = is_array($territorial['ranking'] ?? null) ? $territorial['ranking'] : [];
 
     $flowSteps = ConsultoriaFlow::numberedSteps([
         ['label' => __('Resumo'), 'anchor' => 'cad-previsao-resumo', 'visible' => count($kpis) > 0],
+        ['label' => __('Escolarização'), 'anchor' => 'cad-previsao-escolarizacao', 'visible' => ($escolarizacaoCard['available'] ?? false)],
         ['label' => __('Demanda'), 'anchor' => 'cad-previsao-demanda', 'visible' => ($demandaOferta['available'] ?? false)],
         ['label' => __('Cenários'), 'anchor' => 'cad-previsao-cenarios', 'visible' => ($cenarios['available'] ?? false)],
         ['label' => __('Mapa'), 'anchor' => 'cad-previsao-mapa', 'visible' => count($territorial['markers'] ?? []) > 0],
@@ -141,6 +143,17 @@
             @if (filled($impacto['formula'] ?? null))
                 <p class="serv-callout text-sm mt-3">{{ $impacto['formula'] }}</p>
             @endif
+        </x-dashboard.consultoria-section>
+    @endif
+
+    @if ($escolarizacaoCard['available'] ?? false)
+        <x-dashboard.consultoria-section
+            :step="$cadStep['cad-previsao-escolarizacao'] ?? null"
+            anchor="cad-previsao-escolarizacao"
+            :title="__('Escolarização por faixa etária — na escola vs fora')"
+            :subtitle="__('CadÚnico × rede municipal × Censo INEP, com bloco EJA para reinserção escolar.')"
+        >
+            @include('dashboard.analytics.partials.cadunico-escolarizacao-card', ['card' => $escolarizacaoCard])
         </x-dashboard.consultoria-section>
     @endif
 

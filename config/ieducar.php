@@ -1617,6 +1617,25 @@ return [
                 'lng' => ['longitude', 'lng', 'lon'],
             ],
         ],
+        'escolarizacao_feed' => [
+            'enabled' => filter_var(env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'staged' => filter_var(env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_STAGED', true), FILTER_VALIDATE_BOOL),
+            'memory_limit' => env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_MEMORY_LIMIT', '512M'),
+            'pipeline_cache_ttl' => max(3600, (int) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_PIPELINE_TTL', 604800)),
+            'schedule' => [
+                'enabled' => filter_var(env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+                /** Dia do mês (1–28) — por defeito dia 8 (após feed Horizonte dia 1). */
+                'day' => max(1, min(28, (int) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_SCHEDULE_DAY', 8))),
+                /** Meses ímpares = bimestral. */
+                'months' => array_values(array_filter(array_map(
+                    'intval',
+                    explode(',', (string) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_SCHEDULE_MONTHS', '1,3,5,7,9,11')),
+                ))),
+                'time' => env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_TIME', '05:00'),
+                'overlap_minutes' => max(60, (int) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_OVERLAP_MINUTES', 4320)),
+                'step_interval_minutes' => max(5, (int) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_STEP_INTERVAL', 30)),
+            ],
+        ],
         'weekly_allow_partial' => filter_var(env('IEDUCAR_CADUNICO_WEEKLY_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
         'fontes_oficiais' => [
             'SAGI/Misocial — Matriz de Informação Social (MDS)',

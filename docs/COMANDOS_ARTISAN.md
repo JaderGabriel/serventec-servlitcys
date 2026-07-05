@@ -76,6 +76,7 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 | `cadunico:import-territorio` | CSV agregado bairro/setor → `cadunico_territorio_snapshots` (`--city=`, `--ano=`) |
 | `cadunico:pull-territorio` | **Produção:** download HTTP do CSV (`IEDUCAR_CADUNICO_TERRITORIO_CSV_URL`) + import (`--all`, `--force`, `--download-only`) |
 | `cadunico:sync-territorio` | IBGE Censo 2022 (FTP) + malha WFS; rateia CadÚnico municipal (`--all`, `--ano=`, `--queue`) |
+| `cadunico:escolarizacao-feed` | **Bimestral:** CadÚnico + Censo para card Escolarização (`--staged`, `--reset`, `--continue`, `--all`) |
 
 **Interface web:** `/admin/cadunico-sync` · hub `/admin/dados-publicos`
 

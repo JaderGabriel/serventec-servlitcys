@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
 use App\Services\Cadunico\CadunicoDemandaOfertaSlice;
+use App\Services\Cadunico\CadunicoEscolarizacaoDecisionCardBuilder;
 use App\Services\Cadunico\CadunicoRedeGapAnalyzer;
 use App\Services\Cadunico\CadunicoTerritorialPressureBuilder;
 use App\Services\CityDataConnection;
@@ -13,6 +14,7 @@ use App\Support\Analytics\CadunicoPrevisaoInformeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Dashboard\PublicDataSourcesCatalog;
 use App\Support\Ieducar\CadunicoFaixaEtariaCounts;
+use App\Support\Ieducar\CadunicoIeducarEjaMatriculaCount;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use App\Support\Ieducar\InclusionDashboardQueries;
@@ -25,6 +27,7 @@ final class CadunicoPrevisaoRepository
         private CadunicoMunicipioSnapshotRepository $cadunicoSnapshots,
         private InepCensoMunicipioMatriculaRepository $censoMunicipio,
         private CadunicoRedeGapAnalyzer $gapAnalyzer,
+        private CadunicoEscolarizacaoDecisionCardBuilder $escolarizacaoCard,
         private CadunicoTerritorialPressureBuilder $territorialBuilder,
         private SchoolUnitsRepository $schoolUnits,
     ) {}
@@ -46,6 +49,7 @@ final class CadunicoPrevisaoRepository
             'demanda_oferta' => [],
             'metodologia' => [],
             'informe' => ['available' => false, 'blocos' => []],
+            'escolarizacao_card' => [],
             'alerts' => [],
             'public_data_sources' => $this->publicSourcesCatalog(),
             'error' => null,
@@ -112,6 +116,13 @@ final class CadunicoPrevisaoRepository
             $territorial = $this->territorialBuilder->build($city, $filters, $gap, $schoolMarkers);
             $demandaOferta = CadunicoDemandaOfertaSlice::build($gap, $territorial);
 
+            $ieducarEja = $this->cityData->run(
+                $city,
+                static fn ($db) => CadunicoIeducarEjaMatriculaCount::count($db, $city, $filters),
+            );
+
+            $escolarizacaoCard = $this->escolarizacaoCard->build($gap, $censoRow, $ieducarEja);
+
             $report = array_merge($empty, [
                 'available' => true,
                 'city_name' => (string) $city->name,
@@ -119,6 +130,7 @@ final class CadunicoPrevisaoRepository
                     'Estimativa de crianças/jovens em idade escolar no CadÚnico do município que não aparecem na rede municipal filtrada, com lacuna por faixa etária, cenários financeiros (NEE/AEE) e mapa territorial quando houver importação por bairro/setor.'
                 ),
                 'gap' => $gap,
+                'escolarizacao_card' => $escolarizacaoCard,
                 'territorial' => $territorial,
                 'demanda_oferta' => $demandaOferta,
                 'kpis' => $this->buildKpis($gap, $matriculas, $alunos, $territorial),
