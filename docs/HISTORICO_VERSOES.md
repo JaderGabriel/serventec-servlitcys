@@ -1,14 +1,14 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.0`** · tag de deploy **`20260705-Ploutos`** · ver [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.1`** · tag de deploy **`20260705b-Moneta`** · ver [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md)
 
 | Indicador | Valor actual |
 |-----------|----------------|
-| **Versão semântica em produção** | **7.0.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **7.0.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260705-Ploutos` |
+| **Tag de deploy (servidor)** | `20260705b-Moneta` |
 | **Data de referência** | **05/07/2026** |
-| **Último marco documentado** | **Horizonte enriquecimento (Ploutos)** — SICONFI, Transparência, tendência SAEB, scoring ampliado — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
+| **Último marco documentado** | **Horizonte FUNDEB UF + warm-map-cache (Moneta)** — tooltip estadual e aquecimento sem lock — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 | **Commit de release** | `d07f58a` (#**482**) |
 
@@ -47,6 +47,7 @@ timeline
     2026-07-02 : 6.2.0 Educacenso — contadores por etapa, filtro dependência
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
+    2026-07-05 : 7.0.1 Moneta — tooltip FUNDEB por UF, warm-map-cache sem lock
     2026-07-05 : 7.0.0 Ploutos — SICONFI, Transparência, tendência SAEB, scoring ampliado
 ```
 
@@ -58,7 +59,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 7.0.0** | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | **Produção:** Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
+| **▶ 7.0.1** | — / `20260705b-Moneta` → `main` | — | 05/07/2026 | **Produção:** Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
+| 7.0.0 | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
 | 6.5.0 | `d07f58a` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |
 | 6.3.0 | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | Modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Entregas pós-tag integradas em **6.5.0**. |
 | 6.2.0 | — / `20260702-Educacenso` → `main` | — | 02/07/2026 | Contadores por etapa no gráfico Horizonte (Educacenso INEP), correção agregação matrículas — [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md). |

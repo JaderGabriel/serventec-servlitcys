@@ -24,10 +24,10 @@ return [
     */
 
     'product' => [
-        'version' => '7.0.0',
-        'release_tag' => '20260705-Ploutos',
-        'commit_short' => 'e3caa40',
-        'commit_number' => 483,
+        'version' => '7.0.1',
+        'release_tag' => '20260705b-Moneta',
+        'commit_short' => '',
+        'commit_number' => 0,
         'revision_date' => '2026-07-05',
         'in_production' => true,
         'production_label' => 'Em produção',

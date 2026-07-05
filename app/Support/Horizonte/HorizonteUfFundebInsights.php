@@ -50,6 +50,82 @@ final class HorizonteUfFundebInsights
     }
 
     /**
+     * Métricas FUNDEB por UF para tooltip do mapa nacional (rank, total, % federal).
+     *
+     * @param  array<string, array<string, mixed>>  $nationalByUf
+     * @return array<string, array<string, mixed>>
+     */
+    public static function overviewFundebMetrics(array $nationalByUf): array
+    {
+        if ($nationalByUf === []) {
+            return [];
+        }
+
+        $receitaRows = [];
+        $nationalReceita = 0.0;
+        $nationalCompl = 0.0;
+
+        foreach ($nationalByUf as $code => $row) {
+            $receita = (float) ($row['receita_portaria_total'] ?? 0);
+            $compl = (float) ($row['complementacao_total'] ?? 0);
+            if ($receita > 0) {
+                $receitaRows[] = ['uf' => strtoupper($code), 'value' => $receita];
+                $nationalReceita += $receita;
+            }
+            if ($compl > 0) {
+                $nationalCompl += $compl;
+            }
+        }
+
+        usort($receitaRows, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
+
+        $rankByUf = [];
+        foreach ($receitaRows as $i => $row) {
+            $rankByUf[$row['uf']] = $i + 1;
+        }
+
+        $totalUfs = count($receitaRows);
+        $out = [];
+
+        foreach ($nationalByUf as $code => $row) {
+            $uf = strtoupper(trim((string) $code));
+            if ($uf === '') {
+                continue;
+            }
+
+            $receita = (float) ($row['receita_portaria_total'] ?? 0);
+            $compl = (float) ($row['complementacao_total'] ?? 0);
+            $total = $receita + $compl;
+
+            if ($receita <= 0 && $compl <= 0) {
+                continue;
+            }
+
+            $out[$uf] = [
+                'exercise_year' => is_numeric($row['exercise_year'] ?? null)
+                    ? (int) $row['exercise_year']
+                    : null,
+                'receita_total' => $receita > 0 ? round($receita, 2) : null,
+                'complementacao_total' => $compl > 0 ? round($compl, 2) : null,
+                'total_previsto' => $total > 0 ? round($total, 2) : null,
+                'rank_receita' => $rankByUf[$uf] ?? null,
+                'total_ufs' => $totalUfs,
+                'share_receita_pct' => $nationalReceita > 0 && $receita > 0
+                    ? round(($receita / $nationalReceita) * 100.0, 2)
+                    : null,
+                'pct_federal' => $total > 0 && $compl > 0
+                    ? round(($compl / $total) * 100.0, 1)
+                    : null,
+                'share_complementacao_pct' => $nationalCompl > 0 && $compl > 0
+                    ? round(($compl / $nationalCompl) * 100.0, 2)
+                    : null,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $markers
      * @return array<string, array<string, mixed>>
      */

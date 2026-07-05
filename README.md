@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise e ligação a bases **i-Educar** por cidade (ligação **MySQL ou PostgreSQL** conforme configuração da cidade).
 
-**Versão em produção (`main`):** **7.0.0** · tag **`20260705-Ploutos`** · [release](docs/RELEASE_20260705_PLUTOS.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **7.0.1** · tag **`20260705b-Moneta`** · [release](docs/RELEASE_20260705b_MONETA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 

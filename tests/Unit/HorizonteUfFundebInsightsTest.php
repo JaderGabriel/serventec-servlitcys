@@ -52,6 +52,34 @@ final class HorizonteUfFundebInsightsTest extends TestCase
         $this->assertArrayHasKey('portaria', $insights);
     }
 
+    #[Test]
+    public function overview_fundeb_metrics_para_tooltip_nacional(): void
+    {
+        $refYear = 2025;
+        $currentYear = HorizonteFundebRepasseOutlook::currentYear();
+        if ($currentYear <= $refYear) {
+            $this->markTestSkipped('Ano corrente deve ser maior que o ano de referência.');
+        }
+
+        $nationalByUf = HorizonteUfFundebInsights::aggregateNationalByUf(
+            [
+                $this->marker('BA', 1000000.0, 500000.0, 10000.0, 250000.0),
+                $this->marker('SP', 5000000.0, 1000000.0, 50000.0, 1200000.0),
+            ],
+            $refYear,
+            $currentYear,
+        );
+
+        $metrics = HorizonteUfFundebInsights::overviewFundebMetrics($nationalByUf);
+
+        $this->assertSame(1, $metrics['SP']['rank_receita']);
+        $this->assertSame(2, $metrics['BA']['rank_receita']);
+        $this->assertSame(2, $metrics['SP']['total_ufs']);
+        $this->assertSame(6000000.0, $metrics['SP']['total_previsto']);
+        $this->assertSame(16.7, $metrics['SP']['pct_federal']);
+        $this->assertSame(33.3, $metrics['BA']['pct_federal']);
+    }
+
     /**
      * @return array<string, mixed>
      */

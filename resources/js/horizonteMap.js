@@ -2238,15 +2238,58 @@ function bindChoroplethInteractions(layer, baseStyle, tooltipHtml, hoverStyleFn 
     });
 }
 
+function ufOverviewFundebTooltipLines(fundeb) {
+    if (!fundeb || typeof fundeb !== "object") {
+        return "";
+    }
+
+    const lines = [];
+    const rank = Number(fundeb.rank_receita);
+    const totalUfs = Number(fundeb.total_ufs);
+    if (Number.isFinite(rank) && rank > 0 && Number.isFinite(totalUfs) && totalUfs > 0) {
+        lines.push(`${rank}º em receita FUNDEB entre ${totalUfs} UFs`);
+    }
+
+    const year = fundeb.exercise_year;
+    const total = fundeb.total_previsto ?? fundeb.receita_total;
+    if (total != null && Number(total) > 0) {
+        const yearSuffix =
+            year != null && !Number.isNaN(Number(year)) ? ` (${Number(year)})` : "";
+        lines.push(`Total FUNDEB${yearSuffix}: ${formatCurrencyBrl(total)}`);
+    }
+
+    const pctFederal = fundeb.pct_federal;
+    if (pctFederal != null && !Number.isNaN(Number(pctFederal))) {
+        lines.push(
+            `Complementação federal: ${Number(pctFederal).toLocaleString("pt-BR", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+            })}% do total`,
+        );
+    }
+
+    if (lines.length === 0) {
+        return "";
+    }
+
+    return (
+        `<span class="serv-horizonte-geo-tooltip__fundeb">` +
+        lines.map((line) => escapeHtml(line)).join("<br>") +
+        `</span><br>`
+    );
+}
+
 function ufOverviewTooltipHtml(p, ufLabelFn) {
     const ufLabel = escapeHtml(
         p.uf_name ? `${p.uf} — ${p.uf_name}` : ufLabelFn(p.uf),
     );
+    const fundebBlock = ufOverviewFundebTooltipLines(p.fundeb);
 
     return (
         `<strong>${ufLabel}</strong><br>` +
         `${nf(p.high_pressure ?? 0)} alta pressão · ${nf(p.high_prospect ?? 0)} alta propensão<br>` +
         `${nf(p.total)} com dados · ${nf(p.prospect_count)} prospectos<br>` +
+        fundebBlock +
         `<span class="text-slate-500">Clique para abrir camada municipal filtrada</span>`
     );
 }

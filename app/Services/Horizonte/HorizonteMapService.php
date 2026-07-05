@@ -103,7 +103,7 @@ final class HorizonteMapService
      *
      * @return array<string, mixed>
      */
-    public function buildForRequest(string $scope, ?string $uf): array
+    public function buildForRequest(string $scope, ?string $uf, bool $warmCache = false): array
     {
         if (! (bool) config('horizonte.enabled', true)) {
             return $this->asOverviewPayload($this->emptyPayload());
@@ -144,50 +144,68 @@ final class HorizonteMapService
 
             $staleKey = 'horizonte:map:regional-response:stale:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $lockKey = 'horizonte:map:lock:regional:'.$refYear.':'.$uf.':'.$fingerprint;
+            $builder = function () use ($refYear, $uf, $regKey, $fingerprint, $ttl): array {
+                $repo = AdminHomeMapCache::repository();
+                $regional = $repo->get($regKey);
+                if (! is_array($regional)) {
+                    $regional = PulseOperationRecorder::measure(
+                        PulseOperationRecorder::horizonteMapKey('regional', $uf, false),
+                        fn (): array => $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf),
+                    );
+                    $repo->put($regKey, $regional, $ttl);
+                }
 
-            $payload = $this->rememberMapPayload(
-                $responseKey,
-                $staleKey,
-                $lockKey,
-                function () use ($refYear, $uf, $regKey, $fingerprint, $ttl): array {
-                    $repo = AdminHomeMapCache::repository();
-                    $regional = $repo->get($regKey);
-                    if (! is_array($regional)) {
-                        $regional = PulseOperationRecorder::measure(
-                            PulseOperationRecorder::horizonteMapKey('regional', $uf, false),
-                            fn (): array => $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf),
-                        );
-                        $repo->put($regKey, $regional, $ttl);
-                    }
+                $built = $this->asRegionalPayload($regional, $uf);
 
-                    $built = $this->asRegionalPayload($regional, $uf);
+                return $this->attachNationalUfRankings($built, $refYear, $fingerprint);
+            };
 
-                    return $this->attachNationalUfRankings($built, $refYear, $fingerprint);
-                },
-                $ttl,
-            );
-
-            return $payload;
+            return $warmCache
+                ? $this->storeMapPayload($responseKey, $staleKey, $builder, $ttl)
+                : $this->rememberMapPayload($responseKey, $staleKey, $lockKey, $builder, $ttl);
         }
 
         $overviewKey = 'horizonte:map:overview:v2:'.$refYear.':'.$fingerprint;
         $staleKey = 'horizonte:map:overview:stale:v2:'.$refYear.':'.$fingerprint;
         $lockKey = 'horizonte:map:lock:overview:'.$refYear.':'.$fingerprint;
+        $builder = function () use ($refYear, $mapScope): array {
+            $assembled = PulseOperationRecorder::measure(
+                PulseOperationRecorder::horizonteMapKey($mapScope, null, false),
+                fn (): array => $this->assemble($refYear, requireCoordinates: false),
+            );
 
-        return $this->rememberMapPayload(
-            $overviewKey,
-            $staleKey,
-            $lockKey,
-            function () use ($refYear, $mapScope): array {
-                $assembled = PulseOperationRecorder::measure(
-                    PulseOperationRecorder::horizonteMapKey($mapScope, null, false),
-                    fn (): array => $this->assemble($refYear, requireCoordinates: false),
-                );
+            return $this->asOverviewPayload($assembled);
+        };
 
-                return $this->asOverviewPayload($assembled);
-            },
-            $ttl,
-        );
+        return $warmCache
+            ? $this->storeMapPayload($overviewKey, $staleKey, $builder, $ttl)
+            : $this->rememberMapPayload($overviewKey, $staleKey, $lockKey, $builder, $ttl);
+    }
+
+    /**
+     * Grava payload no cache sem lock (CLI `horizonte:warm-map-cache`).
+     *
+     * @param  callable(): array<string, mixed>  $builder
+     * @return array<string, mixed>
+     */
+    private function storeMapPayload(
+        string $cacheKey,
+        string $staleKey,
+        callable $builder,
+        int $ttl,
+    ): array {
+        $repo = AdminHomeMapCache::repository();
+        $cached = $repo->get($cacheKey);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $payload = $builder();
+        $staleTtl = max($ttl, 86400);
+        $repo->put($cacheKey, $payload, $ttl);
+        $repo->put($staleKey, $payload, $staleTtl);
+
+        return $payload;
     }
 
     /**
@@ -270,12 +288,52 @@ final class HorizonteMapService
     private function asOverviewPayload(array $full): array
     {
         $markers = is_array($full['markers'] ?? null) ? $full['markers'] : [];
+        $refYear = (int) ($full['reference_year'] ?? config('horizonte.reference_year', (int) date('Y') - 1));
+        $currentYear = (int) ($full['current_year'] ?? HorizonteFundebRepasseOutlook::currentYear());
         $full['mode'] = 'overview';
         $ufPoints = $this->buildUfMapPoints($markers);
-        $full['uf_map_points'] = $ufPoints !== [] ? $ufPoints : $this->buildDefaultUfMapPoints();
+        if ($ufPoints !== []) {
+            $ufPoints = $this->enrichUfMapPointsWithFundeb($ufPoints, $markers, $refYear, $currentYear);
+        } else {
+            $ufPoints = $this->buildDefaultUfMapPoints();
+        }
+        $full['uf_map_points'] = $ufPoints;
         $full['markers'] = [];
 
         return $full;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $ufPoints
+     * @param  list<array<string, mixed>>  $markers
+     * @return list<array<string, mixed>>
+     */
+    private function enrichUfMapPointsWithFundeb(
+        array $ufPoints,
+        array $markers,
+        int $refYear,
+        int $currentYear,
+    ): array {
+        if ($ufPoints === [] || $markers === []) {
+            return $ufPoints;
+        }
+
+        $nationalByUf = HorizonteUfFundebInsights::aggregateNationalByUf($markers, $refYear, $currentYear);
+        $fundebByUf = HorizonteUfFundebInsights::overviewFundebMetrics($nationalByUf);
+        if ($fundebByUf === []) {
+            return $ufPoints;
+        }
+
+        foreach ($ufPoints as &$point) {
+            $uf = strtoupper(trim((string) ($point['uf'] ?? '')));
+            if ($uf === '' || ! isset($fundebByUf[$uf])) {
+                continue;
+            }
+            $point['fundeb'] = $fundebByUf[$uf];
+        }
+        unset($point);
+
+        return $ufPoints;
     }
 
     /**

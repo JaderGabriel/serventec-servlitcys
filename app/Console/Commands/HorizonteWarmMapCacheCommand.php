@@ -37,7 +37,7 @@ class HorizonteWarmMapCacheCommand extends Command
         if (! $this->option('skip-overview') && $ufFilter === null) {
             $this->info(__('Overview…'));
             set_time_limit($overviewLimit);
-            $overview = $map->buildForRequest('overview', null);
+            $overview = $map->buildForRequest('overview', null, warmCache: true);
             $count = count($overview['uf_rankings'] ?? []);
             $this->line(__('  OK — :count UFs no ranking', ['count' => $count]));
         }
@@ -51,7 +51,7 @@ class HorizonteWarmMapCacheCommand extends Command
             $n = $index + 1;
             $this->info("[{$n}/{$total}] {$uf}…");
             set_time_limit($regionalLimit);
-            $payload = $map->buildForRequest('regional', $uf);
+            $payload = $map->buildForRequest('regional', $uf, warmCache: true);
             $markers = count($payload['markers'] ?? []);
             $this->line(__('  OK — :count marcadores', ['count' => $markers]));
         }
