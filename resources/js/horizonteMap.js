@@ -1375,6 +1375,298 @@ function formatTrendArrow(trend) {
     return "";
 }
 
+const HORIZONTE_ENRICH_ICONS = {
+    fiscal: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>`,
+    pedagogy: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342"/></svg>`,
+    education: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>`,
+    scale: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.589-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.589-1.202L5.25 4.971Z"/></svg>`,
+    wallet: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.375M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z"/></svg>`,
+    trend: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg>`,
+    users: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.193M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>`,
+    building: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18h10.5V3.75M6.75 9h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/></svg>`,
+};
+
+function enrichMetricHtml({ label, hint, valueHtml, tone = "neutral", iconHtml = "" }) {
+    const toneClass =
+        tone && tone !== "neutral"
+            ? ` serv-horizonte-muni-tooltip__enrich-metric--${escapeHtml(tone)}`
+            : "";
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__enrich-metric${toneClass}">` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-metric-main">` +
+        (iconHtml
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-metric-icon-wrap" aria-hidden="true">${iconHtml}</span>`
+            : "") +
+        `<div class="serv-horizonte-muni-tooltip__enrich-metric-text">` +
+        `<span class="serv-horizonte-muni-tooltip__enrich-metric-label">${escapeHtml(label)}</span>` +
+        (hint
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-metric-hint">${escapeHtml(hint)}</span>`
+            : "") +
+        `</div></div>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-metric-value">${valueHtml}</div>` +
+        `</div>`
+    );
+}
+
+function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtml, foot = "" }) {
+    const yearTag =
+        year !== ""
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(year)}</span>`
+            : "";
+    const signalHtml =
+        signal && typeof signal === "object" && signal.text
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-signal serv-horizonte-muni-tooltip__enrich-signal--${escapeHtml(signal.tone)}">${escapeHtml(signal.text)}</span>`
+            : "";
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__enrich-block serv-horizonte-muni-tooltip__enrich-block--${escapeHtml(tone)}">` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head">` +
+        `<span class="serv-horizonte-muni-tooltip__enrich-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head-text">` +
+        `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml(title)}${yearTag}${signalHtml}</h4>` +
+        (lead ? `<p class="serv-horizonte-muni-tooltip__enrich-lead">${escapeHtml(lead)}</p>` : "") +
+        `</div></div>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metricsHtml}</div>` +
+        (foot ? `<p class="serv-horizonte-muni-tooltip__enrich-foot">${escapeHtml(foot)}</p>` : "") +
+        `</section>`
+    );
+}
+
+function fiscalEnrichmentSignal(m) {
+    const pctEdu = Number(m.fiscal_pct_educacao);
+    const pctMin = Number(m.fiscal_pct_minimo_constitucional);
+    const restos = Number(m.fiscal_restos_pagar);
+    if (Number.isFinite(pctEdu) && pctEdu < 25) {
+        return { tone: "warn", text: "Atenção: educação abaixo do piso" };
+    }
+    if (Number.isFinite(pctMin) && pctMin < 100) {
+        return { tone: "warn", text: "Mínimo constitucional em risco" };
+    }
+    if (Number.isFinite(restos) && restos > 0) {
+        return { tone: "warn", text: "Restos a pagar em aberto" };
+    }
+    if (m.has_fiscal) {
+        return { tone: "ok", text: "Capacidade fiscal estável" };
+    }
+    return null;
+}
+
+function pedagogyEnrichmentSignal(m) {
+    if (m.saeb_trend === "down") {
+        return { tone: "warn", text: "Aprendizagem em queda" };
+    }
+    if (m.enrollment_trend === "down") {
+        return { tone: "warn", text: "Matrículas em retração" };
+    }
+    if (m.saeb_trend === "up" || m.enrollment_trend === "up") {
+        return { tone: "ok", text: "Trajetória positiva" };
+    }
+    if (m.has_saeb || m.has_censo) {
+        return { tone: "neutral", text: "Rede estável" };
+    }
+    return null;
+}
+
+function muniFiscalEnrichmentHtml(m) {
+    const rows = [];
+    const ano = m.fiscal_ano != null ? String(m.fiscal_ano) : "";
+
+    if (m.fiscal_pct_educacao != null) {
+        const pct = Number(m.fiscal_pct_educacao);
+        rows.push(
+            enrichMetricHtml({
+                label: "Despesa educação / receita",
+                hint: "Quanto da receita corrente liquidada financia a educação municipal.",
+                valueHtml: escapeHtml(formatPctValue(m.fiscal_pct_educacao)),
+                tone: Number.isFinite(pct) && pct < 25 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.education,
+            }),
+        );
+    }
+    if (m.fiscal_pct_minimo_constitucional != null) {
+        const pct = Number(m.fiscal_pct_minimo_constitucional);
+        rows.push(
+            enrichMetricHtml({
+                label: "% mínimo constitucional",
+                hint: "Cumprimento do piso de 25% da receita em educação (CF art. 212).",
+                valueHtml: escapeHtml(formatPctValue(m.fiscal_pct_minimo_constitucional)),
+                tone: Number.isFinite(pct) && pct < 100 ? "warn" : "ok",
+                iconHtml: HORIZONTE_ENRICH_ICONS.scale,
+            }),
+        );
+    }
+    if (m.fiscal_divida_consolidada != null || m.fiscal_disponibilidade_caixa != null) {
+        const debt = m.fiscal_divida_consolidada != null ? formatCurrencyBrl(m.fiscal_divida_consolidada) : "—";
+        const cash = m.fiscal_disponibilidade_caixa != null ? formatCurrencyBrl(m.fiscal_disponibilidade_caixa) : "—";
+        rows.push(
+            enrichMetricHtml({
+                label: "Dívida / caixa",
+                hint: "Endividamento consolidado versus liquidez disponível em caixa.",
+                valueHtml: `<span>${escapeHtml(debt)}</span><span class="serv-horizonte-muni-tooltip__enrich-metric-sep">/</span><span>${escapeHtml(cash)}</span>`,
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+            }),
+        );
+    }
+    if (m.fiscal_restos_pagar != null && Number(m.fiscal_restos_pagar) > 0) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Restos a pagar",
+                hint: "Despesas empenhadas ainda não pagas — pressionam o caixa.",
+                valueHtml: escapeHtml(formatCurrencyBrl(m.fiscal_restos_pagar)),
+                tone: "warn",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+            }),
+        );
+    }
+    if (m.fiscal_pct_receita_propria != null) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Captação própria",
+                hint: "Parcela da receita gerada no município (não transferida).",
+                valueHtml: escapeHtml(formatPctValue(m.fiscal_pct_receita_propria)),
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+            }),
+        );
+    }
+
+    if (rows.length === 0) {
+        return "";
+    }
+
+    const signal = fiscalEnrichmentSignal(m);
+
+    return enrichBlockHtml({
+        tone: "fiscal",
+        title: "Finanças e capacidade fiscal",
+        year: ano,
+        lead: "Saúde fiscal para investir em educação — indicadores RREO/SICONFI.",
+        signal,
+        iconHtml: HORIZONTE_ENRICH_ICONS.fiscal,
+        metricsHtml: rows.join(""),
+        foot: "Fonte: SICONFI / RREO (Tesouro Nacional). Valores indicativos para priorização comercial.",
+    });
+}
+
+function muniPedagogyEnrichmentHtml(m) {
+    const rows = [];
+
+    if (m.saeb_trend && m.saeb_trend !== "unknown") {
+        const arrow = formatTrendArrow(m.saeb_trend);
+        const label = String(m.saeb_trend_label ?? m.saeb_trend);
+        const deltaParts = [];
+        if (m.saeb_delta_lp != null) {
+            deltaParts.push(`LP ${Number(m.saeb_delta_lp) > 0 ? "+" : ""}${Number(m.saeb_delta_lp).toLocaleString("pt-BR")}`);
+        }
+        if (m.saeb_delta_mat != null) {
+            deltaParts.push(`MAT ${Number(m.saeb_delta_mat) > 0 ? "+" : ""}${Number(m.saeb_delta_mat).toLocaleString("pt-BR")}`);
+        }
+        const trendTone =
+            m.saeb_trend === "down" ? "warn" : m.saeb_trend === "up" ? "ok" : "neutral";
+        rows.push(
+            enrichMetricHtml({
+                label: "Tendência SAEB",
+                hint: "Evolução de LP e MAT nos últimos ciclos oficiais INEP.",
+                valueHtml:
+                    `<span class="serv-horizonte-muni-tooltip__enrich-trend serv-horizonte-muni-tooltip__enrich-trend--${escapeHtml(String(m.saeb_trend))}">${escapeHtml(`${arrow} ${label}`.trim())}</span>` +
+                    (deltaParts.length
+                        ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(deltaParts.join(" · "))}</span>`
+                        : ""),
+                tone: trendTone,
+                iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+            }),
+        );
+    }
+    if (m.enrollment_trend && m.enrollment_trend !== "unknown") {
+        const arrow = formatTrendArrow(m.enrollment_trend);
+        const trendTone =
+            m.enrollment_trend === "down"
+                ? "warn"
+                : m.enrollment_trend === "up"
+                  ? "ok"
+                  : "neutral";
+        rows.push(
+            enrichMetricHtml({
+                label: "Matrículas Censo",
+                hint: "Dinâmica de matrículas na rede municipal nos últimos anos.",
+                valueHtml:
+                    `<span class="serv-horizonte-muni-tooltip__enrich-trend serv-horizonte-muni-tooltip__enrich-trend--${escapeHtml(String(m.enrollment_trend))}">${escapeHtml(`${arrow} ${String(m.enrollment_trend_label ?? "")}`.trim())}</span>` +
+                    (m.enrollment_delta_pct != null
+                        ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.enrollment_delta_pct, 1))}</span>`
+                        : ""),
+                tone: trendTone,
+                iconHtml: HORIZONTE_ENRICH_ICONS.users,
+            }),
+        );
+    }
+    if (m.censo_aluno_docente_municipal != null || m.censo_aluno_docente_total != null) {
+        const municipal =
+            m.censo_aluno_docente_municipal != null
+                ? Number(m.censo_aluno_docente_municipal).toLocaleString("pt-BR")
+                : "—";
+        const total =
+            m.censo_aluno_docente_total != null
+                ? Number(m.censo_aluno_docente_total).toLocaleString("pt-BR")
+                : "—";
+        rows.push(
+            enrichMetricHtml({
+                label: "Aluno / docente",
+                hint: "Tamanho médio de turma — municipal (rede própria) e total no território.",
+                valueHtml: `<span>Mun. ${escapeHtml(municipal)}</span><span class="serv-horizonte-muni-tooltip__enrich-metric-sep">·</span><span>Rede ${escapeHtml(total)}</span>`,
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.users,
+            }),
+        );
+    }
+    if (m.censo_pct_integral != null || m.censo_pct_profissional != null) {
+        const integral = m.censo_pct_integral != null ? formatPctValue(m.censo_pct_integral, 0) : "—";
+        const prof = m.censo_pct_profissional != null ? formatPctValue(m.censo_pct_profissional, 0) : "—";
+        rows.push(
+            enrichMetricHtml({
+                label: "Integral / profissional",
+                hint: "Matrículas em tempo integral e na educação profissional técnica.",
+                valueHtml: `<span>${escapeHtml(integral)}</span><span class="serv-horizonte-muni-tooltip__enrich-metric-sep">/</span><span>${escapeHtml(prof)}</span>`,
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.education,
+            }),
+        );
+    }
+    if (m.censo_dependency_label) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Dependência administrativa",
+                hint: "Quem administra as escolas no município (municipal, estadual, privada).",
+                valueHtml:
+                    escapeHtml(String(m.censo_dependency_label)) +
+                    (m.censo_pct_municipal != null
+                        ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.censo_pct_municipal, 0) + " municipal")}</span>`
+                        : ""),
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.building,
+            }),
+        );
+    }
+
+    if (rows.length === 0) {
+        return "";
+    }
+
+    const signal = pedagogyEnrichmentSignal(m);
+
+    return enrichBlockHtml({
+        tone: "pedagogy",
+        title: "Pedagogia e escala",
+        year: "",
+        lead: "Qualidade de aprendizagem e escala da rede — SAEB e Educacenso INEP.",
+        signal,
+        iconHtml: HORIZONTE_ENRICH_ICONS.pedagogy,
+        metricsHtml: rows.join(""),
+        foot: "Use tendência SAEB + matrículas para calibrar proposta pedagógica e expansão.",
+    });
+}
+
 function muniEnrichmentHtml(m) {
     if (!m) {
         return "";
@@ -1387,43 +1679,9 @@ function muniEnrichmentHtml(m) {
         m.fiscal_despesa_educacao != null ||
         m.fiscal_pct_educacao != null;
     if (hasFiscal) {
-        const rows = [];
-        const ano = m.fiscal_ano != null ? String(m.fiscal_ano) : "";
-        if (m.fiscal_pct_educacao != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Despesa educação / receita")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_educacao))}</span></div>`,
-            );
-        }
-        if (m.fiscal_pct_minimo_constitucional != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("% mínimo constitucional")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_minimo_constitucional))}</span></div>`,
-            );
-        }
-        if (m.fiscal_divida_consolidada != null || m.fiscal_disponibilidade_caixa != null) {
-            const debt = m.fiscal_divida_consolidada != null ? formatCurrencyBrl(m.fiscal_divida_consolidada) : "—";
-            const cash = m.fiscal_disponibilidade_caixa != null ? formatCurrencyBrl(m.fiscal_disponibilidade_caixa) : "—";
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Dívida / caixa")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${debt} / ${cash}`)}</span></div>`,
-            );
-        }
-        if (m.fiscal_restos_pagar != null && Number(m.fiscal_restos_pagar) > 0) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Restos a pagar")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--warn">${escapeHtml(formatCurrencyBrl(m.fiscal_restos_pagar))}</span></div>`,
-            );
-        }
-        if (m.fiscal_pct_receita_propria != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Captação própria")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_receita_propria))}</span></div>`,
-            );
-        }
-        if (rows.length > 0) {
-            blocks.push(
-                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
-                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Finanças e capacidade fiscal")}${ano ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(ano)}</span>` : ""}</h4>` +
-                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
-                    `<p class="serv-horizonte-muni-tooltip__enrich-foot">${escapeHtml("Fonte: SICONFI / RREO (Tesouro Nacional).")}</p>` +
-                `</section>`,
-            );
+        const fiscalBlock = muniFiscalEnrichmentHtml(m);
+        if (fiscalBlock !== "") {
+            blocks.push(fiscalBlock);
         }
     }
 
@@ -1469,53 +1727,9 @@ function muniEnrichmentHtml(m) {
         m.censo_aluno_docente_municipal != null ||
         m.censo_pct_integral != null;
     if (hasPedagogy) {
-        const rows = [];
-        if (m.saeb_trend && m.saeb_trend !== "unknown") {
-            const arrow = formatTrendArrow(m.saeb_trend);
-            const label = String(m.saeb_trend_label ?? m.saeb_trend);
-            const deltaParts = [];
-            if (m.saeb_delta_lp != null) {
-                deltaParts.push(`LP ${Number(m.saeb_delta_lp) > 0 ? "+" : ""}${Number(m.saeb_delta_lp).toLocaleString("pt-BR")}`);
-            }
-            if (m.saeb_delta_mat != null) {
-                deltaParts.push(`MAT ${Number(m.saeb_delta_mat) > 0 ? "+" : ""}${Number(m.saeb_delta_mat).toLocaleString("pt-BR")}`);
-            }
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Tendência SAEB")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--trend-${escapeHtml(String(m.saeb_trend))}">${escapeHtml(`${arrow} ${label}`.trim())}${deltaParts.length ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(deltaParts.join(" · "))}</span>` : ""}</span></div>`,
-            );
-        }
-        if (m.enrollment_trend && m.enrollment_trend !== "unknown") {
-            const arrow = formatTrendArrow(m.enrollment_trend);
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Matrículas Censo")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${arrow} ${String(m.enrollment_trend_label ?? "")}`.trim())}${m.enrollment_delta_pct != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.enrollment_delta_pct, 1))}</span>` : ""}</span></div>`,
-            );
-        }
-        if (m.censo_aluno_docente_municipal != null || m.censo_aluno_docente_total != null) {
-            const municipal = m.censo_aluno_docente_municipal != null ? Number(m.censo_aluno_docente_municipal).toLocaleString("pt-BR") : "—";
-            const total = m.censo_aluno_docente_total != null ? Number(m.censo_aluno_docente_total).toLocaleString("pt-BR") : "—";
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Aluno/docente")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`Municipal ${municipal} · Rede ${total}`)}</span></div>`,
-            );
-        }
-        if (m.censo_pct_integral != null || m.censo_pct_profissional != null) {
-            const integral = m.censo_pct_integral != null ? formatPctValue(m.censo_pct_integral, 0) : "—";
-            const prof = m.censo_pct_profissional != null ? formatPctValue(m.censo_pct_profissional, 0) : "—";
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Integral / profissional")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${integral} / ${prof}`)}</span></div>`,
-            );
-        }
-        if (m.censo_dependency_label) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Dependência")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(String(m.censo_dependency_label))}${m.censo_pct_municipal != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.censo_pct_municipal, 0) + " municipal")}</span>` : ""}</span></div>`,
-            );
-        }
-        if (rows.length > 0) {
-            blocks.push(
-                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
-                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Pedagogia e escala")}</h4>` +
-                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
-                `</section>`,
-            );
+        const pedagogyBlock = muniPedagogyEnrichmentHtml(m);
+        if (pedagogyBlock !== "") {
+            blocks.push(pedagogyBlock);
         }
     }
 
