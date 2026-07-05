@@ -16,7 +16,7 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 |-----------|-------|
 | **Versão semântica** | **7.0.0** |
 | **Tag de deploy** | `20260705-Ploutos` |
-| **Commit de referência** | *(ver release)* |
+| **Commit de referência** | `e3caa40` |
 | **Data de referência** | 2026-07-05 |
 | **Release** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
 | **Marco** | **Ploutos** — Horizonte enriquecimento: SICONFI, Transparência, tendência SAEB, scoring ampliado |
