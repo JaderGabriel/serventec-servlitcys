@@ -5,7 +5,7 @@
         details="{{ __('Operações `horizonte:*` (mapa GIS, fases do feed bimestral) e pedidos HTTP lentos em rotas Horizonte. Período:') }} {{ $this->periodForHumans() }}"
     >
         <x-slot:icon>
-            <x-pulse::icons.globe-alt />
+            <x-pulse::icons.cloud-arrow-up />
         </x-slot:icon>
     </x-pulse::card-header>
     <x-pulse::scroll :expand="$expand" wire:poll.15s="">
