@@ -27,7 +27,9 @@ final class HorizonteAccessTest extends TestCase
 
         $this->actingAs($admin)
             ->get(route('dashboard.horizonte'))
-            ->assertOk();
+            ->assertOk()
+            ->assertSee('serv-horizonte-mobile', false)
+            ->assertSee('layoutPreference', false);
 
         $this->actingAs($admin)
             ->get(route('dashboard.horizonte.map-data'))

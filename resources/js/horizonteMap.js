@@ -2500,6 +2500,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         filterPanelOpen: false,
         filterDockOpen: false,
         filtersVisible: true,
+        layoutPreference:
+            typeof options.layoutPreference === "string"
+                ? options.layoutPreference
+                : "auto",
+        deviceHint:
+            typeof options.deviceHint === "string" ? options.deviceHint : "unknown",
+        _deviceSuggestsMobile: Boolean(options.deviceSuggestsMobile),
+        _layoutMediaHandler: null,
+        mobileTab: "map",
         mapFullscreen: false,
         _fullscreenChangeHandler: null,
         _mapLayoutObserver: null,
@@ -2537,6 +2546,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         get kpiLoading() {
             return this.pageLoading || this.regionalLoading;
+        },
+
+        get isMobileLayout() {
+            if (this.layoutPreference === "mobile") {
+                return true;
+            }
+            if (this.layoutPreference === "desktop") {
+                return false;
+            }
+
+            return this._deviceSuggestsMobile;
         },
 
         get tourStepsList() {
@@ -3113,6 +3133,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         async init() {
+            this.initLayoutDetection();
             this.initMap();
             this._guideListener = (event) => {
                 this.onHorizonteGuide(event?.detail ?? {});
@@ -3144,6 +3165,197 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return "…";
             }
             return nf(value ?? 0);
+        },
+
+        initLayoutDetection() {
+            const phoneWidth = window.matchMedia("(max-width: 767px)").matches;
+            const narrowWidth = window.matchMedia("(max-width: 1023px)").matches;
+            const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+            const hint = String(this.deviceHint ?? "").toLowerCase();
+
+            this._deviceSuggestsMobile =
+                phoneWidth ||
+                (narrowWidth && coarsePointer) ||
+                hint === "mobile" ||
+                hint === "tablet";
+
+            try {
+                const stored = localStorage.getItem("horizonte_layout_preference");
+                if (stored === "auto" || stored === "mobile" || stored === "desktop") {
+                    this.layoutPreference = stored;
+                }
+            } catch {
+                /* localStorage indisponível */
+            }
+
+            this.syncLayoutRootClass();
+
+            if (this.isMobileLayout) {
+                this.filtersVisible = false;
+                this.filterDockOpen = false;
+                this.cmdBarExpanded = false;
+                if (this.mobileTab !== "list" && this.mobileTab !== "more") {
+                    this.mobileTab = "map";
+                }
+            }
+
+            const onLayoutMediaChange = () => {
+                const phone = window.matchMedia("(max-width: 767px)").matches;
+                const narrow = window.matchMedia("(max-width: 1023px)").matches;
+                const coarse = window.matchMedia("(pointer: coarse)").matches;
+                this._deviceSuggestsMobile =
+                    phone ||
+                    (narrow && coarse) ||
+                    hint === "mobile" ||
+                    hint === "tablet";
+                this.syncLayoutRootClass();
+                if (this.layoutPreference === "auto" && this.map) {
+                    this.$nextTick(() =>
+                        this.syncMapViewport({
+                            immediate: true,
+                            force: true,
+                            preserveView: true,
+                        }),
+                    );
+                }
+            };
+
+            this._layoutMediaHandler = onLayoutMediaChange;
+            window
+                .matchMedia("(max-width: 1023px)")
+                .addEventListener("change", onLayoutMediaChange);
+            window
+                .matchMedia("(pointer: coarse)")
+                .addEventListener("change", onLayoutMediaChange);
+        },
+
+        syncLayoutRootClass() {
+            document.documentElement.classList.toggle(
+                "serv-horizonte-mobile-layout",
+                this.isMobileLayout,
+            );
+        },
+
+        layoutToggleLabel() {
+            return this.isMobileLayout
+                ? "Versão desktop"
+                : "Versão mão";
+        },
+
+        layoutToggleHint() {
+            if (this.layoutPreference === "auto") {
+                return this.isMobileLayout
+                    ? "Detecção automática · dispositivo de mão. Clique para forçar desktop."
+                    : "Detecção automática · ecrã largo. Clique para forçar versão mão.";
+            }
+
+            return this.isMobileLayout
+                ? "Versão mão activa. Clique para alternar para desktop."
+                : "Versão desktop activa. Clique para alternar para mão.";
+        },
+
+        layoutModeBadge() {
+            if (this.layoutPreference === "auto") {
+                return this.isMobileLayout ? "Auto · mão" : "Auto · desktop";
+            }
+
+            return this.layoutPreference === "mobile" ? "Mão" : "Desktop";
+        },
+
+        toggleLayoutVariant() {
+            this.setLayoutPreference(this.isMobileLayout ? "desktop" : "mobile");
+        },
+
+        resetLayoutPreference() {
+            this.setLayoutPreference("auto");
+        },
+
+        setLayoutPreference(preference) {
+            const next =
+                preference === "mobile" || preference === "desktop"
+                    ? preference
+                    : "auto";
+            this.layoutPreference = next;
+
+            try {
+                localStorage.setItem("horizonte_layout_preference", next);
+            } catch {
+                /* ignore */
+            }
+
+            document.cookie = `horizonte_layout_preference=${encodeURIComponent(next)};path=/;max-age=31536000;SameSite=Lax`;
+
+            this.syncLayoutRootClass();
+
+            if (this.isMobileLayout) {
+                this.filtersVisible = false;
+                this.filterDockOpen = false;
+                if (this.mobileTab === "filters") {
+                    this.mobileTab = "map";
+                }
+            } else if (this.mapFullscreen) {
+                void this.toggleMapFullscreen();
+            }
+
+            this.$nextTick(() => {
+                window.setTimeout(() => {
+                    this.syncMapViewport({
+                        immediate: true,
+                        force: true,
+                        preserveView: true,
+                    });
+                    this.ensureMapInteractions();
+                }, 80);
+            });
+        },
+
+        setMobileTab(tab) {
+            const next = String(tab ?? "").trim();
+            if (!next || this.mobileTab === next) {
+                return;
+            }
+
+            if (next === "filters") {
+                this.mobileTab = "filters";
+                this.openFiltersDock();
+                return;
+            }
+
+            if (this.mobileTab === "filters") {
+                this.filterDockOpen = false;
+                this.filtersVisible = false;
+            }
+
+            this.mobileTab = next;
+
+            if (next === "list") {
+                this.workspaceTab = "list";
+            }
+
+            if (next === "map") {
+                this.$nextTick(() => {
+                    window.setTimeout(
+                        () =>
+                            this.syncMapViewport({
+                                immediate: true,
+                                force: true,
+                                preserveView: true,
+                            }),
+                        60,
+                    );
+                });
+            }
+        },
+
+        mobileTabLabel(tab) {
+            const labels = {
+                map: "Mapa",
+                list: "Lista",
+                filters: "Filtros",
+                more: "Mais",
+            };
+
+            return labels[tab] ?? tab;
         },
 
         formatCount(value) {
@@ -3375,7 +3587,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         toggleFiltersPanel() {
-            const isDesktop = window.matchMedia("(min-width: 1280px)").matches;
+            const isDesktop =
+                !this.isMobileLayout &&
+                window.matchMedia("(min-width: 1280px)").matches;
             if (isDesktop) {
                 this.filtersVisible = !this.filtersVisible;
                 if (!this.filtersVisible) {
@@ -3385,6 +3599,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.filterDockOpen = !this.filterDockOpen;
                 if (this.filterDockOpen) {
                     this.filtersVisible = true;
+                    if (this.isMobileLayout) {
+                        this.mobileTab = "filters";
+                    }
+                } else if (this.isMobileLayout && this.mobileTab === "filters") {
+                    this.mobileTab = "map";
                 }
             }
             this.$nextTick(() => {
@@ -6402,6 +6621,15 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async flyToMarker(m) {
             await this.focusMunicipality(m);
+        },
+
+        async openMunicipalityFromMobile(m) {
+            if (!m) {
+                return;
+            }
+            this.setMobileTab("map");
+            await this.flyToMarker(m);
+            this.selectMarker(m);
         },
 
         async prepareMunicipalityFocus(m) {

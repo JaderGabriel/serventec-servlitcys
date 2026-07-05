@@ -30,6 +30,9 @@
         'consultoria_active' => ['label' => __('Consultoria'), 'color' => $colors['consultoria_active'] ?? '#0d9488'],
         'catalog_pending' => ['label' => __('Catálogo pendente'), 'color' => $colors['catalog_pending'] ?? '#ea580c'],
     ];
+    $layoutPreference = $layoutPreference ?? \App\Support\Horizonte\HorizonteLayout::PREFERENCE_AUTO;
+    $deviceHint = $deviceHint ?? 'unknown';
+    $deviceSuggestsMobile = (bool) ($deviceSuggestsMobile ?? false);
 @endphp
 
 <x-app-layout>
@@ -47,12 +50,22 @@
             </div>
             <div class="flex flex-wrap items-center gap-3 shrink-0">
                 @include('horizonte.partials.help-nav', ['docUrl' => $docUrl])
+                <button
+                    type="button"
+                    class="serv-btn-secondary text-xs inline-flex items-center gap-1.5"
+                    @click="toggleLayoutVariant()"
+                    :title="layoutToggleHint()"
+                >
+                    <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.875H19.5M10.5 1.875a2.625 2.625 0 1 1-5.25 0M10.5 1.875V7.5m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M4.875 7.5H3.375m17.25 8.625H10.5m0 0a2.625 2.625 0 1 1-5.25 0M10.5 16.125V21m0 0H4.875m5.625 0a2.625 2.625 0 1 1-5.25 0M19.5 7.5v8.625m0 0a2.625 2.625 0 0 1-5.25 0m5.25 0H21" /></svg>
+                    <span x-text="layoutToggleLabel()"></span>
+                </button>
             </div>
         </div>
     </x-slot>
 
     <div
-        class="py-6 sm:py-8"
+        class="py-6 sm:py-8 serv-horizonte-root"
+        :class="isMobileLayout ? 'is-mobile-layout' : 'is-desktop-layout'"
         x-data="horizonteMap([], @js($colors), @js([
             'loadUrl' => $mapDataUrl,
             'mapGeoUrl' => $mapGeoUrl,
@@ -70,6 +83,9 @@
             'sgeRegistryUrl' => $sgeRegistryUrl,
             'initialUf' => $initialUf,
             'ufNames' => $ufNames,
+            'layoutPreference' => $layoutPreference,
+            'deviceHint' => $deviceHint,
+            'deviceSuggestsMobile' => $deviceSuggestsMobile,
         ]))"
         x-init="init()"
         @horizonte-guide.window="onHorizonteGuide($event.detail)"
@@ -86,17 +102,34 @@
                 </div>
             </div>
 
-            @include('horizonte.partials.cmd-dock')
+            @include('horizonte.partials.mobile-shell', [
+                'ufNames' => $ufNames,
+                'viewPresets' => $viewPresets,
+                'tierPresets' => $tierPresets,
+                'canManageSge' => $canManageSge,
+                'docUrl' => $docUrl,
+            ])
 
-            {{-- Mapa + rail de acção --}}
-            <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_16rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]">
+            <div x-show="!isMobileLayout" x-cloak>
+            @include('horizonte.partials.cmd-dock')
+            </div>
+
+            {{-- Mapa + rail de acção (mapa partilhado entre desktop e versão mão) --}}
+            <div
+                class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_16rem] 2xl:grid-cols-[minmax(0,1fr)_17rem]"
+                :class="isMobileLayout ? 'serv-horizonte-map-layout--mobile' : ''"
+            >
                 <section
                     class="serv-panel overflow-hidden min-w-0 serv-horizonte-gis flex flex-col"
                     x-ref="mapShell"
-                    :class="mapFullscreen ? 'is-map-fullscreen' : ''"
+                    x-show="!isMobileLayout || mobileTab === 'map'"
+                    :class="[
+                        mapFullscreen ? 'is-map-fullscreen' : '',
+                        isMobileLayout ? 'serv-horizonte-gis--mobile-slot' : '',
+                    ]"
                     aria-labelledby="horizonte-map-heading"
                 >
-                    <div class="serv-horizonte-map-toolbar">
+                    <div class="serv-horizonte-map-toolbar" x-show="!isMobileLayout" x-cloak>
                         <h3 id="horizonte-map-heading" class="text-sm font-semibold text-serv-navy dark:text-slate-100 me-auto min-w-0">
                             <span x-show="isOverviewMode">{{ __('Mapa — alta pressão por UF') }}</span>
                             <span x-show="isMesoOverviewMode" x-cloak>{{ __('Mesorregiões') }} — <span x-text="ufLabel(scopeUf)"></span></span>
@@ -293,7 +326,7 @@
                                 'is-open': filterDockOpen,
                                 'is-collapsed': !filtersVisible && !filterDockOpen,
                             }"
-                            x-show="isUfScopedMode"
+                            x-show="isUfScopedMode && !isMobileLayout"
                             x-cloak
                             aria-label="{{ __('Filtros do mapa') }}"
                             :aria-hidden="!filtersVisible && !filterDockOpen ? 'true' : 'false'"
@@ -315,7 +348,7 @@
                             x-ref="mapCanvas"
                         >
                         <div
-                            x-show="isRegionalMode || (mapFullscreen && isUfScopedMode)"
+                            x-show="(isRegionalMode || (mapFullscreen && isUfScopedMode)) && !isMobileLayout"
                             x-cloak
                             class="serv-horizonte-map-float-controls"
                             role="toolbar"
@@ -451,7 +484,7 @@
                     @include('horizonte.partials.map-tooltip-sge')
                 </section>
 
-                <aside class="serv-horizonte-rail" aria-label="{{ __('Próximas acções') }}" data-horizonte-tour="rail">
+                <aside class="serv-horizonte-rail" x-show="!isMobileLayout" x-cloak aria-label="{{ __('Próximas acções') }}" data-horizonte-tour="rail">
                     <div class="serv-horizonte-rail__card">
                         <h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Abordar primeiro') }}</h3>
                         <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ __('Clique para centrar no mapa.') }}</p>
@@ -496,8 +529,8 @@
                 </aside>
             </div>
 
-            {{-- Área de trabalho — abas --}}
-            <section class="serv-panel p-4 sm:p-5" aria-label="{{ __('Área de trabalho') }}" data-horizonte-tour="workspace">
+            {{-- Área de trabalho — abas (desktop) --}}
+            <section x-show="!isMobileLayout" x-cloak class="serv-panel p-4 sm:p-5" aria-label="{{ __('Área de trabalho') }}" data-horizonte-tour="workspace">
                 <nav class="serv-horizonte-workspace__tabs" role="tablist">
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'actions' ? 'is-active' : ''" @click="workspaceTab = 'actions'">{{ __('Resumo') }}</button>
                     <button type="button" role="tab" class="serv-horizonte-workspace__tab" :class="workspaceTab === 'list' ? 'is-active' : ''" @click="workspaceTab = 'list'">{{ __('Lista de prospecção') }}</button>
@@ -719,9 +752,9 @@
                 </div>
             </section>
 
-            {{-- Demonstração animada --}}
+            {{-- Demonstração animada (desktop) --}}
             <section
-                x-show="guideOpen"
+                x-show="!isMobileLayout && guideOpen"
                 x-cloak
                 x-transition
                 data-horizonte-guide="demo"

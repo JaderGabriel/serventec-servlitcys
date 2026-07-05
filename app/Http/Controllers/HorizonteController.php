@@ -7,6 +7,7 @@ use App\Services\Horizonte\HorizonteMapService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
 use App\Support\Brazil\BrazilUfNames;
 use App\Support\Horizonte\HorizonteMapPresenter;
+use App\Support\Horizonte\HorizonteLayout;
 use App\Support\Horizonte\HorizonteMapBusyException;
 use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Http\JsonResponse;
@@ -42,6 +43,9 @@ class HorizonteController extends Controller
             'sgeRegistryUrl' => route('admin.horizonte.sge.upsert', ['ibge' => '__IBGE__']),
             'initialUf' => HorizonteUfScope::normalize($request->query('uf')) ?? '',
             'ufNames' => BrazilUfNames::all(),
+            'layoutPreference' => HorizonteLayout::initialPreference($request),
+            'deviceHint' => HorizonteLayout::deviceHint($request),
+            'deviceSuggestsMobile' => HorizonteLayout::suggestsMobileLayout($request),
         ]);
     }
 
