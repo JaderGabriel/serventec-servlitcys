@@ -547,7 +547,11 @@ final class HorizonteFortnightlyFeedService
         if ($memory !== '') {
             @ini_set('memory_limit', $memory);
         }
-        @set_time_limit(max(60, (int) config('horizonte.fortnightly_feed.time_limit', 900)));
+        $timeLimit = match ($phaseKey) {
+            'siconfi_sync' => max(300, (int) config('horizonte.siconfi_sync.time_limit', 3600)),
+            default => max(60, (int) config('horizonte.fortnightly_feed.time_limit', 900)),
+        };
+        @set_time_limit($timeLimit);
     }
 
     /**
@@ -980,9 +984,14 @@ final class HorizonteFortnightlyFeedService
         try {
             $result = $this->siconfiSync->syncBatch(array_merge($options, [
                 'year' => $refYear,
+                'period' => max(1, min(6, (int) config('horizonte.siconfi.period', 6))),
                 'uf' => HorizonteUfScope::normalize($options['uf'] ?? null),
+                'by_uf' => true,
+                'ufs_per_step' => max(1, (int) config('horizonte.siconfi_sync.ufs_per_step', 1)),
             ]));
             $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return array_merge(['key' => 'siconfi_sync'], $result);
 
             return $result;
         } catch (\Throwable $e) {
@@ -1314,6 +1323,18 @@ final class HorizonteFortnightlyFeedService
                 'done' => (string) $phaseResult['educacenso_done'],
                 'total' => (string) $phaseResult['educacenso_total'],
             ]));
+        }
+
+        if (($phaseResult['partial'] ?? false) && isset($phaseResult['siconfi_done'], $phaseResult['siconfi_total'])) {
+            $this->debugLog($options, __('SICONFI — progresso :done/:total UF(s).', [
+                'done' => (string) $phaseResult['siconfi_done'],
+                'total' => (string) $phaseResult['siconfi_total'],
+            ]));
+            if (is_array($phaseResult['remaining_ufs'] ?? null) && ($phaseResult['remaining_ufs'] ?? []) !== []) {
+                $this->debugLog($options, __('Próxima(s) UF(s): :ufs', [
+                    'ufs' => implode(', ', array_slice($phaseResult['remaining_ufs'], 0, 5)),
+                ]));
+            }
         }
     }
 

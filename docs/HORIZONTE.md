@@ -529,7 +529,7 @@ Variáveis: `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL`, `HORIZONTE_MUNICIPAL_ALE
 
 ### 9.1d SICONFI — capacidade fiscal municipal
 
-Comando: **`horizonte:sync-siconfi`** — importa RREO via API Tesouro (`municipal_fiscal_snapshots`). Processa **lotes incrementais** (municípios pendentes no ano de referência). Rotina **semestral** (jan/jul) via agendador Laravel; manualmente use `--reset --continue` para iniciar cobertura nacional e `--continue` para retomar.
+Comando: **`horizonte:sync-siconfi`** — importa RREO via API Tesouro (`municipal_fiscal_snapshots`). No **feed**, a fase `siconfi_sync` processa **1 UF inteira** por invocação (27 repetições para cobrir o país). O comando dedicado continua a aceitar lotes por município (`--limit=`).
 
 ```bash
 php artisan horizonte:sync-siconfi --limit=8
@@ -538,8 +538,8 @@ php artisan horizonte:sync-siconfi --year=2024 --period=6
 php artisan horizonte:sync-siconfi --reset --continue    # inicia ciclo nacional
 php artisan horizonte:sync-siconfi --continue              # retoma lote pendente
 php artisan horizonte:sync-siconfi --refresh --limit=20    # actualiza período RREO inferior
-php artisan horizonte:sync-siconfi --ibge=2927408 --dry-run
-php artisan horizonte:fortnightly-feed --phase=siconfi_sync
+php artisan horizonte:fortnightly-feed --phase=siconfi_sync --reset   # reinicia fila por UF
+php artisan horizonte:fortnightly-feed --phase=siconfi_sync             # 1 UF inteira por execução (repetir ~27×)
 php artisan horizonte:fortnightly-feed --skip-siconfi   # ignorar no feed
 ```
 

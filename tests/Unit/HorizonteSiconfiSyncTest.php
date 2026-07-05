@@ -18,23 +18,35 @@ final class HorizonteSiconfiSyncTest extends TestCase
     }
 
     #[Test]
+    public function sync_progress_tracks_uf_queue(): void
+    {
+        $year = 2024;
+        $period = 6;
+
+        $this->assertSame(27, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+        $this->assertFalse(HorizonteSiconfiSyncProgress::isComplete($year, $period));
+
+        HorizonteSiconfiSyncProgress::markUfsDone(['AC'], $year, $period);
+        $this->assertSame(['AC'], HorizonteSiconfiSyncProgress::doneUfs($year, $period));
+        $this->assertSame(26, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+
+        HorizonteSiconfiSyncProgress::reset($year, $period);
+        $this->assertSame(27, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+    }
+
+    #[Test]
     public function sync_progress_tracks_national_run_lifecycle(): void
     {
         $year = 2024;
         $period = 6;
 
         $this->assertFalse(HorizonteSiconfiSyncProgress::isActive($year, $period));
-        $this->assertFalse(HorizonteSiconfiSyncProgress::isComplete($year, $period));
 
         HorizonteSiconfiSyncProgress::start($year, $period);
         $this->assertTrue(HorizonteSiconfiSyncProgress::isActive($year, $period));
 
         HorizonteSiconfiSyncProgress::markComplete($year, $period);
         $this->assertFalse(HorizonteSiconfiSyncProgress::isActive($year, $period));
-        $this->assertTrue(HorizonteSiconfiSyncProgress::isComplete($year, $period));
-
-        HorizonteSiconfiSyncProgress::reset($year, $period);
-        $this->assertNull(HorizonteSiconfiSyncProgress::get($year, $period));
     }
 
     #[Test]

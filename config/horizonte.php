@@ -56,6 +56,10 @@ return [
     /** Sincronização dedicada SICONFI (`horizonte:sync-siconfi`) — semestral recomendada. */
     'siconfi_sync' => [
         'progress_ttl' => max(3600, (int) env('HORIZONTE_SICONFI_PROGRESS_TTL', 7776000)),
+        /** UFs processadas por invocação na fase `siconfi_sync` (predefinição: 1 UF inteira). */
+        'ufs_per_step' => max(1, min(3, (int) env('HORIZONTE_SICONFI_UFS_PER_STEP', 1))),
+        /** Tempo máximo por UF no feed (SP ~645 municípios). */
+        'time_limit' => max(300, (int) env('HORIZONTE_SICONFI_TIME_LIMIT', 3600)),
         'schedule' => [
             'enabled' => filter_var(env('HORIZONTE_SICONFI_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
             /** Dia do mês (1–28) em que inicia cada ciclo semestral. */
