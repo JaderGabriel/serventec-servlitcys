@@ -78,6 +78,10 @@ final class HorizonteUfFundebInsightsTest extends TestCase
         $this->assertSame(6000000.0, $metrics['SP']['total_previsto']);
         $this->assertSame(16.7, $metrics['SP']['pct_federal']);
         $this->assertSame(33.3, $metrics['BA']['pct_federal']);
+        $this->assertSame(80.0, $metrics['SP']['share_total_previsto_pct']);
+        $this->assertSame(20.0, $metrics['BA']['share_total_previsto_pct']);
+        $this->assertSame(66.67, $metrics['SP']['share_complementacao_pct']);
+        $this->assertSame(33.33, $metrics['BA']['share_complementacao_pct']);
     }
 
     /**

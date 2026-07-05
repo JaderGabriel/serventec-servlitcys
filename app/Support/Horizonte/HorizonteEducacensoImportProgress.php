@@ -4,6 +4,7 @@ namespace App\Support\Horizonte;
 
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /** Progresso incremental Educacenso Horizonte — um passo = ano × UF. */
 final class HorizonteEducacensoImportProgress
@@ -17,6 +18,8 @@ final class HorizonteEducacensoImportProgress
 
     /** @deprecated legado */
     private const CACHE_KEY_FAILED = 'horizonte:educacenso_import:last_failed';
+
+    private static bool $hydrating = false;
 
     public static function stepKey(int $year, string $uf): string
     {
@@ -40,6 +43,8 @@ final class HorizonteEducacensoImportProgress
      */
     public static function doneSteps(): array
     {
+        self::ensureHydrated();
+
         $cached = Cache::get(self::CACHE_KEY_STEPS);
 
         return is_array($cached)
@@ -67,6 +72,8 @@ final class HorizonteEducacensoImportProgress
 
     public static function lastFailedStep(): ?string
     {
+        self::ensureHydrated();
+
         $step = Cache::get(self::CACHE_KEY_FAILED_STEP);
 
         return is_string($step) && $step !== '' ? $step : null;
@@ -191,6 +198,8 @@ final class HorizonteEducacensoImportProgress
 
     public static function markStepDone(int $year, string $uf): void
     {
+        self::ensureHydrated();
+
         $steps = self::doneSteps();
         $key = self::stepKey($year, $uf);
         if (! in_array($key, $steps, true)) {
@@ -210,8 +219,12 @@ final class HorizonteEducacensoImportProgress
 
     public static function markStepFailed(int $year, string $uf): void
     {
+        self::ensureHydrated();
+
+        $failedKey = self::stepKey($year, $uf);
         $ttl = self::cacheTtl();
-        Cache::put(self::CACHE_KEY_FAILED_STEP, self::stepKey($year, $uf), now()->addSeconds($ttl));
+        Cache::put(self::CACHE_KEY_FAILED_STEP, $failedKey, now()->addSeconds($ttl));
+        HorizonteEducacensoImportProgressSnapshot::write(self::doneSteps(), $failedKey);
     }
 
     /** @deprecated use markStepFailed() */
@@ -224,6 +237,7 @@ final class HorizonteEducacensoImportProgress
     {
         Cache::forget(self::CACHE_KEY_FAILED_STEP);
         Cache::forget(self::CACHE_KEY_FAILED);
+        HorizonteEducacensoImportProgressSnapshot::write(self::doneSteps(), null);
     }
 
     public static function reset(): void
@@ -232,6 +246,7 @@ final class HorizonteEducacensoImportProgress
         Cache::forget(self::CACHE_KEY_FAILED_STEP);
         Cache::forget(self::CACHE_KEY);
         Cache::forget(self::CACHE_KEY_FAILED);
+        HorizonteEducacensoImportProgressSnapshot::delete();
     }
 
     /**
@@ -250,12 +265,85 @@ final class HorizonteEducacensoImportProgress
         return IbgeMunicipalityCatalog::brazilianUfs();
     }
 
+    private static function ensureHydrated(): void
+    {
+        if (self::$hydrating || Cache::has(self::CACHE_KEY_STEPS)) {
+            return;
+        }
+
+        self::$hydrating = true;
+        try {
+            $snapshot = HorizonteEducacensoImportProgressSnapshot::read();
+            if ($snapshot !== null && $snapshot['steps_done'] !== []) {
+                self::restoreFromSnapshot($snapshot, 'snapshot');
+
+                return;
+            }
+
+            if (filter_var(
+                config('horizonte.fortnightly_feed.educacenso_infer_progress_from_db', true),
+                FILTER_VALIDATE_BOOLEAN,
+            )) {
+                $years = HorizonteEducacensoYearWindow::years();
+                $inferred = HorizonteEducacensoImportProgressInferrer::inferDoneSteps($years);
+                if ($inferred !== []) {
+                    self::restoreFromSnapshot([
+                        'steps_done' => $inferred,
+                        'last_failed_step' => null,
+                        'source' => 'inferred',
+                    ], 'inferred');
+                }
+            }
+        } finally {
+            self::$hydrating = false;
+        }
+    }
+
+    /**
+     * @param  array{steps_done: list<string>, last_failed_step: ?string, source?: ?string}  $snapshot
+     */
+    private static function restoreFromSnapshot(array $snapshot, string $source): void
+    {
+        $steps = array_values(array_unique(array_filter(array_map('strval', $snapshot['steps_done'] ?? []))));
+        if ($steps === []) {
+            return;
+        }
+
+        $ttl = self::cacheTtl();
+        Cache::put(self::CACHE_KEY_STEPS, $steps, now()->addSeconds($ttl));
+
+        $failed = $snapshot['last_failed_step'] ?? null;
+        if (is_string($failed) && $failed !== '') {
+            Cache::put(self::CACHE_KEY_FAILED_STEP, $failed, now()->addSeconds($ttl));
+        }
+
+        HorizonteEducacensoImportProgressSnapshot::write(
+            $steps,
+            is_string($failed) && $failed !== '' ? $failed : null,
+            $source,
+        );
+
+        Log::info('horizonte.educacenso_progress_hydrated', [
+            'source' => $source,
+            'steps' => count($steps),
+        ]);
+    }
+
     /**
      * @param  list<string>  $steps
      */
     private static function storeSteps(array $steps): void
     {
+        $steps = array_values(array_unique(array_filter(array_map('strval', $steps))));
         Cache::put(self::CACHE_KEY_STEPS, $steps, now()->addSeconds(self::cacheTtl()));
+        HorizonteEducacensoImportProgressSnapshot::write($steps, self::lastFailedStepFromCache());
+    }
+
+    private static function lastFailedStepFromCache(): ?string
+    {
+        $step = Cache::get(self::CACHE_KEY_FAILED_STEP);
+
+        return is_string($step) && $step !== '' ? $step : null;
     }
 
     private static function cacheTtl(): int

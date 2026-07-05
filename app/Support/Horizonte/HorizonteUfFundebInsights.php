@@ -64,6 +64,7 @@ final class HorizonteUfFundebInsights
         $receitaRows = [];
         $nationalReceita = 0.0;
         $nationalCompl = 0.0;
+        $nationalTotalPrevisto = 0.0;
 
         foreach ($nationalByUf as $code => $row) {
             $receita = (float) ($row['receita_portaria_total'] ?? 0);
@@ -74,6 +75,10 @@ final class HorizonteUfFundebInsights
             }
             if ($compl > 0) {
                 $nationalCompl += $compl;
+            }
+            $totalRow = $receita + $compl;
+            if ($totalRow > 0) {
+                $nationalTotalPrevisto += $totalRow;
             }
         }
 
@@ -112,6 +117,9 @@ final class HorizonteUfFundebInsights
                 'total_ufs' => $totalUfs,
                 'share_receita_pct' => $nationalReceita > 0 && $receita > 0
                     ? round(($receita / $nationalReceita) * 100.0, 2)
+                    : null,
+                'share_total_previsto_pct' => $nationalTotalPrevisto > 0 && $total > 0
+                    ? round(($total / $nationalTotalPrevisto) * 100.0, 1)
                     : null,
                 'pct_federal' => $total > 0 && $compl > 0
                     ? round(($compl / $total) * 100.0, 1)

@@ -3,18 +3,29 @@
 namespace Tests\Unit;
 
 use App\Support\Horizonte\HorizonteEducacensoImportProgress;
+use App\Support\Horizonte\HorizonteEducacensoImportProgressSnapshot;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class HorizonteEducacensoImportProgressTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('local');
+        config([
+            'horizonte.fortnightly_feed.educacenso_progress_snapshot_path' => 'horizonte/educacenso_import_progress.json',
+            'horizonte.fortnightly_feed.educacenso_infer_progress_from_db' => false,
+        ]);
+        Cache::flush();
+        HorizonteEducacensoImportProgress::reset();
+    }
+
     #[Test]
     public function tracks_done_years_and_remaining(): void
     {
-        Cache::flush();
-        HorizonteEducacensoImportProgress::reset();
-
         $all = [2020, 2022, 2024];
         $this->assertSame($all, HorizonteEducacensoImportProgress::remainingYears($all));
 
@@ -29,9 +40,6 @@ final class HorizonteEducacensoImportProgressTest extends TestCase
     #[Test]
     public function ordered_remaining_puts_failed_step_at_end(): void
     {
-        Cache::flush();
-        HorizonteEducacensoImportProgress::reset();
-
         $all = [2020, 2022];
         HorizonteEducacensoImportProgress::markStepFailed(2020, 'SP');
 
@@ -45,9 +53,6 @@ final class HorizonteEducacensoImportProgressTest extends TestCase
     #[Test]
     public function mark_done_clears_last_failed(): void
     {
-        Cache::flush();
-        HorizonteEducacensoImportProgress::reset();
-
         HorizonteEducacensoImportProgress::markStepFailed(2020, 'BA');
         HorizonteEducacensoImportProgress::markDone(2020);
 
@@ -69,4 +74,28 @@ final class HorizonteEducacensoImportProgressTest extends TestCase
         $expected = count($years) * count(HorizonteEducacensoImportProgress::allUfs());
         $this->assertSame($expected, HorizonteEducacensoImportProgress::totalSteps($years));
     }
+
+    #[Test]
+    public function snapshot_sobrevive_a_cache_clear(): void
+    {
+        HorizonteEducacensoImportProgress::markStepDone(2024, 'BA');
+
+        $this->assertTrue(Storage::disk('local')->exists(HorizonteEducacensoImportProgressSnapshot::relativePath()));
+
+        Cache::flush();
+
+        $this->assertContains('2024:BA', HorizonteEducacensoImportProgress::doneSteps());
+    }
+
+    #[Test]
+    public function reset_apaga_snapshot(): void
+    {
+        HorizonteEducacensoImportProgress::markStepDone(2023, 'SP');
+        $this->assertTrue(Storage::disk('local')->exists(HorizonteEducacensoImportProgressSnapshot::relativePath()));
+
+        HorizonteEducacensoImportProgress::reset();
+
+        $this->assertFalse(Storage::disk('local')->exists(HorizonteEducacensoImportProgressSnapshot::relativePath()));
+    }
 }
+

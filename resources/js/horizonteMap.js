@@ -2452,6 +2452,15 @@ function bindChoroplethInteractions(layer, baseStyle, tooltipHtml, hoverStyleFn 
     });
 }
 
+function ufOverviewFundebShareSuffix(pct) {
+    const formatted = formatPercentValue(pct);
+    if (formatted === null) {
+        return "";
+    }
+
+    return ` (${formatted} do todo)`;
+}
+
 function ufOverviewFundebTooltipLines(fundeb) {
     if (!fundeb || typeof fundeb !== "object") {
         return "";
@@ -2460,25 +2469,24 @@ function ufOverviewFundebTooltipLines(fundeb) {
     const lines = [];
     const rank = Number(fundeb.rank_receita);
     const totalUfs = Number(fundeb.total_ufs);
-    if (Number.isFinite(rank) && rank > 0 && Number.isFinite(totalUfs) && totalUfs > 0) {
-        lines.push(`${rank}º em receita FUNDEB entre ${totalUfs} UFs`);
-    }
+    const rankPrefix =
+        Number.isFinite(rank) && rank > 0 && Number.isFinite(totalUfs) && totalUfs > 0
+            ? `${rank}/${totalUfs} `
+            : "";
 
-    const year = fundeb.exercise_year;
     const total = fundeb.total_previsto ?? fundeb.receita_total;
     if (total != null && Number(total) > 0) {
-        const yearSuffix =
-            year != null && !Number.isNaN(Number(year)) ? ` (${Number(year)})` : "";
-        lines.push(`Total FUNDEB${yearSuffix}: ${formatCurrencyBrl(total)}`);
+        const shareTotal =
+            fundeb.share_total_previsto_pct ?? fundeb.share_receita_pct ?? null;
+        lines.push(
+            `${rankPrefix}FUNDEB: ${formatCurrencyBrl(total)}${ufOverviewFundebShareSuffix(shareTotal)}`,
+        );
     }
 
-    const pctFederal = fundeb.pct_federal;
-    if (pctFederal != null && !Number.isNaN(Number(pctFederal))) {
+    const compl = fundeb.complementacao_total;
+    if (compl != null && Number(compl) > 0) {
         lines.push(
-            `Complementação federal: ${Number(pctFederal).toLocaleString("pt-BR", {
-                minimumFractionDigits: 1,
-                maximumFractionDigits: 1,
-            })}% do total`,
+            `Complem. Federal (VAAF + VAAT + VAAR): ${formatCurrencyBrl(compl)}${ufOverviewFundebShareSuffix(fundeb.share_complementacao_pct)}`,
         );
     }
 

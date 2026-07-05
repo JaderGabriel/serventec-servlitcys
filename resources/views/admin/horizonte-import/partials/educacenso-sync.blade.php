@@ -14,7 +14,7 @@
         <div>
             <h4 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Educacenso — reimportação ano × UF') }}</h4>
             <p class="mt-1 text-xs text-teal-900 dark:text-teal-100 max-w-3xl">
-                {{ __('Necessário para o gráfico de matrículas (segmentos, etapas e filtro Municipal/Não municipal). Cada passo indexa uma UF num ano da janela.') }}
+                {{ __('Necessário para o gráfico de matrículas (segmentos, etapas e filtro Municipal/Não municipal). Cada passo indexa uma UF num ano da janela. O progresso persiste em disco após deploy (cache:clear).') }}
             </p>
         </div>
         <div class="text-right text-xs tabular-nums text-teal-800 dark:text-teal-200">

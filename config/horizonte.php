@@ -150,6 +150,14 @@ return [
         'educacenso_years_per_step' => max(1, min(5, (int) env('HORIZONTE_EDUCACENSO_YEARS_PER_STEP', 1))),
         'educacenso_steps_per_step' => max(1, min(27, (int) env('HORIZONTE_EDUCACENSO_STEPS_PER_STEP', 1))),
         'educacenso_memory_limit' => env('HORIZONTE_EDUCACENSO_MEMORY_LIMIT', '1024M'),
+        /** Checkpoint ano×UF — persiste em storage/app/… (sobrevive a cache:clear no deploy). */
+        'educacenso_progress_snapshot_path' => env(
+            'HORIZONTE_EDUCACENSO_PROGRESS_SNAPSHOT_PATH',
+            'horizonte/educacenso_import_progress.json',
+        ),
+        /** Reconstruir passos concluídos a partir de inep_censo_municipio_matriculas se snapshot ausente. */
+        'educacenso_infer_progress_from_db' => filter_var(env('HORIZONTE_EDUCACENSO_INFER_PROGRESS', true), FILTER_VALIDATE_BOOL),
+        'educacenso_infer_min_coverage_ratio' => max(0.5, min(1.0, (float) env('HORIZONTE_EDUCACENSO_INFER_MIN_RATIO', 0.7))),
         'snapshot_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_SNAPSHOT_CACHE_TTL', 604800)),
         'pipeline_cache_ttl' => max(3600, (int) env('HORIZONTE_FORTNIGHTLY_PIPELINE_CACHE_TTL', 604800)),
 
