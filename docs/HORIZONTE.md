@@ -529,18 +529,21 @@ Variáveis: `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL`, `HORIZONTE_MUNICIPAL_ALE
 
 ### 9.1d SICONFI — capacidade fiscal municipal
 
-Comando: **`horizonte:sync-siconfi`** — importa RREO via API Tesouro (`municipal_fiscal_snapshots`). Processa **lotes incrementais** (municípios ainda não importados no ano de referência).
+Comando: **`horizonte:sync-siconfi`** — importa RREO via API Tesouro (`municipal_fiscal_snapshots`). Processa **lotes incrementais** (municípios pendentes no ano de referência). Rotina **semestral** (jan/jul) via agendador Laravel; manualmente use `--reset --continue` para iniciar cobertura nacional e `--continue` para retomar.
 
 ```bash
 php artisan horizonte:sync-siconfi --limit=8
 php artisan horizonte:sync-siconfi --uf=BA --limit=20
 php artisan horizonte:sync-siconfi --year=2024 --period=6
+php artisan horizonte:sync-siconfi --reset --continue    # inicia ciclo nacional
+php artisan horizonte:sync-siconfi --continue              # retoma lote pendente
+php artisan horizonte:sync-siconfi --refresh --limit=20    # actualiza período RREO inferior
 php artisan horizonte:sync-siconfi --ibge=2927408 --dry-run
 php artisan horizonte:fortnightly-feed --phase=siconfi_sync
 php artisan horizonte:fortnightly-feed --skip-siconfi   # ignorar no feed
 ```
 
-Variáveis: `HORIZONTE_SICONFI_ENABLED`, `HORIZONTE_SICONFI_BASE_URL`, `HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
+Variáveis: `HORIZONTE_SICONFI_*`, `HORIZONTE_SICONFI_SCHEDULE_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
 ### 9.1e Portal da Transparência — convénios e empenhos
 

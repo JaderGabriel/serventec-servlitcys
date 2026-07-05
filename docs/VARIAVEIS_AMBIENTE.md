@@ -313,6 +313,12 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_SICONFI_HTTP_TIMEOUT` | `45` | Timeout HTTP SICONFI (segundos) |
 | `HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP` | `8` | Municípios por lote (`horizonte:sync-siconfi` / fase `siconfi_sync`) |
 | `HORIZONTE_SICONFI_PERIOD` | `6` | Período RREO (1–6, bimestre) |
+| `HORIZONTE_SICONFI_SCHEDULE_ENABLED` | `true` | Agendador semestral dedicado (`horizonte:sync-siconfi`) |
+| `HORIZONTE_SICONFI_SCHEDULE_DAY` | `15` | Dia do mês (1–28) de início de cada ciclo |
+| `HORIZONTE_SICONFI_SCHEDULE_MONTHS` | `1,7` | Meses do ciclo semestral (2×/ano) |
+| `HORIZONTE_SICONFI_SCHEDULE_TIME` | `04:00` | Hora de início do ciclo |
+| `HORIZONTE_SICONFI_SCHEDULE_STEP_INTERVAL` | `30` | Minutos entre lotes `--continue` enquanto a sync nacional estiver activa |
+| `HORIZONTE_SICONFI_PROGRESS_TTL` | `7776000` | TTL do progresso em cache (segundos) |
 | `HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP` | `5` | Municípios por lote Portal da Transparência |
 | `HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT` | `25` | Timeout HTTP Portal da Transparência |
 | `PORTAL_TRANSPARENCIA_API_KEY` | — | Chave API Portal (obrigatória para `horizonte:sync-transparency`) |

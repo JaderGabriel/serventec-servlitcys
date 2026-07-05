@@ -273,5 +273,43 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->runInBackground();
             }
         }
+
+        if (filter_var(config('horizonte.siconfi.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('horizonte.siconfi_sync.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $siconfiCron = \App\Support\Horizonte\HorizonteSiconfiScheduleCadence::cronExpression();
+            $siconfiOverlap = max(3600, (int) config('horizonte.siconfi_sync.schedule.overlap_minutes', 43200));
+            $siconfiStepInterval = max(5, (int) config('horizonte.siconfi_sync.schedule.step_interval_minutes', 30));
+            $siconfiStaged = filter_var(config('horizonte.siconfi_sync.schedule.staged', true), FILTER_VALIDATE_BOOLEAN);
+
+            if ($siconfiStaged) {
+                $schedule->command('horizonte:sync-siconfi --reset --continue')
+                    ->cron($siconfiCron)
+                    ->name('horizonte-siconfi-sync-start')
+                    ->withoutOverlapping($siconfiOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+
+                $schedule->command('horizonte:sync-siconfi --continue')
+                    ->cron('*/'.$siconfiStepInterval.' * * * *')
+                    ->name('horizonte-siconfi-sync-step')
+                    ->withoutOverlapping(max(5, $siconfiStepInterval - 1))
+                    ->when(static function (): bool {
+                        $year = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+                        $period = max(1, min(6, (int) config('horizonte.siconfi.period', 6)));
+
+                        return \App\Support\Horizonte\HorizonteSiconfiSyncProgress::isActive($year, $period);
+                    })
+                    ->timezone($timezone)
+                    ->runInBackground();
+            } else {
+                $schedule->command('horizonte:sync-siconfi --reset')
+                    ->cron($siconfiCron)
+                    ->name('horizonte-siconfi-sync')
+                    ->withoutOverlapping($siconfiOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+            }
+        }
     })
     ->create();

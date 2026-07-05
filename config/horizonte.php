@@ -53,6 +53,26 @@ return [
         'municipios_per_step' => max(1, min(50, (int) env('HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP', 8))),
     ],
 
+    /** Sincronização dedicada SICONFI (`horizonte:sync-siconfi`) — semestral recomendada. */
+    'siconfi_sync' => [
+        'progress_ttl' => max(3600, (int) env('HORIZONTE_SICONFI_PROGRESS_TTL', 7776000)),
+        'schedule' => [
+            'enabled' => filter_var(env('HORIZONTE_SICONFI_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            /** Dia do mês (1–28) em que inicia cada ciclo semestral. */
+            'day' => max(1, min(28, (int) env('HORIZONTE_SICONFI_SCHEDULE_DAY', 15))),
+            /** Meses do ano (1–12) — por defeito jan e jul (2×/ano). */
+            'months' => array_values(array_filter(array_map(
+                'intval',
+                explode(',', (string) env('HORIZONTE_SICONFI_SCHEDULE_MONTHS', '1,7')),
+            ))),
+            'time' => env('HORIZONTE_SICONFI_SCHEDULE_TIME', '04:00'),
+            'overlap_minutes' => max(3600, (int) env('HORIZONTE_SICONFI_SCHEDULE_OVERLAP_MINUTES', 43200)),
+            'step_interval_minutes' => max(5, (int) env('HORIZONTE_SICONFI_SCHEDULE_STEP_INTERVAL', 30)),
+            /** Uma invocação por lote (recomendado em produção). */
+            'staged' => filter_var(env('HORIZONTE_SICONFI_SCHEDULE_STAGED', true), FILTER_VALIDATE_BOOL),
+        ],
+    ],
+
     'transparency' => [
         'municipios_per_step' => max(1, min(30, (int) env('HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP', 5))),
         'http_timeout' => max(10, (int) env('HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT', 25)),

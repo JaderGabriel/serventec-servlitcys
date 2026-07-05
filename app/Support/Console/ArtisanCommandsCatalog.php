@@ -561,16 +561,20 @@ final class ArtisanCommandsCatalog
                     [
                         'name' => 'horizonte:sync-siconfi',
                         'summary' => __('Indicadores fiscais municipais via API SICONFI (RREO) — capacidade fiscal Horizonte.'),
-                        'signature' => 'horizonte:sync-siconfi {--uf=} {--year=} {--period=} {--limit=} {--ibge=*} {--dry-run}',
+                        'signature' => 'horizonte:sync-siconfi {--uf=} {--year=} {--period=} {--limit=} {--ibge=*} {--continue} {--reset} {--refresh} {--dry-run}',
                         'examples' => [
                             'php artisan horizonte:sync-siconfi --limit=8',
                             'php artisan horizonte:sync-siconfi --uf=BA --limit=20',
+                            'php artisan horizonte:sync-siconfi --reset --continue',
+                            'php artisan horizonte:sync-siconfi --continue',
                             'php artisan horizonte:fortnightly-feed --phase=siconfi_sync',
                         ],
                         'env' => [
                             'HORIZONTE_SICONFI_ENABLED',
                             'HORIZONTE_SICONFI_BASE_URL',
                             'HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP',
+                            'HORIZONTE_SICONFI_SCHEDULE_ENABLED',
+                            'HORIZONTE_SICONFI_SCHEDULE_MONTHS',
                         ],
                         'doc_anchor' => 'horizonte',
                     ],

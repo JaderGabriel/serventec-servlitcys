@@ -19,6 +19,7 @@ use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
+use App\Support\Horizonte\HorizonteSiconfiSyncProgress;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\InepMicrodadosCadastroEscolasPath;
@@ -179,6 +180,10 @@ final class HorizonteFortnightlyFeedService
             'ibge_catalog' => HorizonteIbgeWarmProgress::reset(),
             'ibge_municipal_geo' => HorizonteIbgeMunicipalGeoImportProgress::reset(),
             'sidra_demography' => HorizonteSidraImportProgress::reset(),
+            'siconfi_sync' => HorizonteSiconfiSyncProgress::reset(
+                (int) config('horizonte.reference_year', (int) date('Y') - 1),
+                max(1, min(6, (int) config('horizonte.siconfi.period', 6))),
+            ),
             default => null,
         };
     }

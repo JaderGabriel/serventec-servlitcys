@@ -144,11 +144,13 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, Educacenso (série matrículas), CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, **malha municipal**, SGE, verificação oficial. Fases incrementais: `--phase=educacenso` (passos ano×UF), `--phase=censo_matriculas`, `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=ibge_municipal_geo`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
 | `horizonte:verify-educacenso-coverage` | Audita cobertura da janela Educacenso em municípios aleatórios (`--sample=50`, `--seed=`, `--json`). |
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
-| `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--dry-run`. Fase `siconfi_sync` no feed. |
+| `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--continue`, `--reset`, `--refresh`, `--dry-run`. Fase `siconfi_sync` no feed. **Agendamento semestral** (jan/jul) com lotes `--continue`. |
 | `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
 
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
+
+**SICONFI (semestral):** dia **15** às **04:00** nos meses **1, 7** — início com `--reset --continue` + passos `--continue` a cada `HORIZONTE_SICONFI_SCHEDULE_STEP_INTERVAL` min enquanto a sync nacional estiver activa.
 
 ```bash
 # Nacional (recomendado): 1 UF por execução até concluir as 27
