@@ -28,6 +28,8 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-cadunico : Ignorar sincronização CadÚnico}
                             {--skip-sidra : Ignorar população IBGE SIDRA 4–17}
                             {--skip-repasses : Ignorar repasses Tesouro CKAN}
+                            {--skip-siconfi : Ignorar indicadores fiscais SICONFI (RREO)}
+                            {--skip-transparency : Ignorar Portal da Transparência (convénios/empenhos)}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-ibge-municipal-geo : Ignorar malha municipal IBGE e área territorial}
@@ -160,6 +162,8 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_cadunico' => (bool) $this->option('skip-cadunico'),
             'skip_sidra' => (bool) $this->option('skip-sidra'),
             'skip_repasses' => (bool) $this->option('skip-repasses'),
+            'skip_siconfi' => (bool) $this->option('skip-siconfi'),
+            'skip_transparency' => (bool) $this->option('skip-transparency'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
             'skip_ibge_municipal_geo' => (bool) $this->option('skip-ibge-municipal-geo'),

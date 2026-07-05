@@ -559,6 +559,37 @@ final class ArtisanCommandsCatalog
                         'details' => __('Uma UF por invocação por defeito. Grava cache ibge_municipality_centroid:{ibge} e invalida o mapa Horizonte ao concluir cada passo.'),
                     ],
                     [
+                        'name' => 'horizonte:sync-siconfi',
+                        'summary' => __('Indicadores fiscais municipais via API SICONFI (RREO) — capacidade fiscal Horizonte.'),
+                        'signature' => 'horizonte:sync-siconfi {--uf=} {--year=} {--period=} {--limit=} {--ibge=*} {--dry-run}',
+                        'examples' => [
+                            'php artisan horizonte:sync-siconfi --limit=8',
+                            'php artisan horizonte:sync-siconfi --uf=BA --limit=20',
+                            'php artisan horizonte:fortnightly-feed --phase=siconfi_sync',
+                        ],
+                        'env' => [
+                            'HORIZONTE_SICONFI_ENABLED',
+                            'HORIZONTE_SICONFI_BASE_URL',
+                            'HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                    ],
+                    [
+                        'name' => 'horizonte:sync-transparency',
+                        'summary' => __('Convénios MEC/FNDE e empenhos educação/tecnologia — Portal da Transparência.'),
+                        'signature' => 'horizonte:sync-transparency {--uf=} {--year=} {--limit=} {--ibge=*} {--dry-run}',
+                        'examples' => [
+                            'php artisan horizonte:sync-transparency --limit=5',
+                            'php artisan horizonte:sync-transparency --uf=SP',
+                            'php artisan horizonte:fortnightly-feed --phase=transparency_sync',
+                        ],
+                        'env' => [
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                    ],
+                    [
                         'name' => 'horizonte:sync-municipal-alerts',
                         'summary' => __('Importa alertas oficiais MEC/FNDE (VAAT inabilitados, registo manual) para o modal municipal.'),
                         'signature' => 'horizonte:sync-municipal-alerts {--uf=} {--skip-fnde} {--dry-run} {--reset}',

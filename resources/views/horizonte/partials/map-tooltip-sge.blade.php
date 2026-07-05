@@ -42,6 +42,13 @@
                                 x-cloak
                             >
                                 <span class="serv-horizonte-muni-modal__saeb-tag">SAEB</span>
+                                <span
+                                    class="serv-horizonte-muni-modal__saeb-trend"
+                                    x-show="modalHeaderSaebTrendLabel(active)"
+                                    x-cloak
+                                    :class="modalHeaderSaebTrendClass(active)"
+                                    x-text="modalHeaderSaebTrendLabel(active)"
+                                ></span>
                                 <template x-for="(row, idx) in modalHeaderSaebByYear(active)" :key="'saeb-' + row.year + '-' + idx">
                                     <span
                                         class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb-year"

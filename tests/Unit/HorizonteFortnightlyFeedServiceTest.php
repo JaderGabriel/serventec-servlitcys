@@ -18,12 +18,13 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
         $result = app(HorizonteFortnightlyFeedService::class)->run(['dry_run' => true]);
 
         $this->assertTrue($result['success']);
-        $this->assertCount(11, $result['phases']);
+        $this->assertCount(14, $result['phases']);
         $keys = array_column($result['phases'], 'key');
         $this->assertSame(
             [
                 'fundeb_receita', 'censo_matriculas', 'educacenso', 'cadunico_sync', 'sidra_demography',
-                'repasses_tesouro', 'saeb_planilhas', 'ibge_catalog', 'ibge_municipal_geo', 'sge_registry', 'municipal_alerts', 'official_check',
+                'repasses_tesouro', 'siconfi_sync', 'transparency_sync', 'saeb_planilhas', 'ibge_catalog',
+                'ibge_municipal_geo', 'sge_registry', 'municipal_alerts', 'official_check',
             ],
             $keys,
         );
@@ -44,6 +45,8 @@ final class HorizonteFortnightlyFeedServiceTest extends TestCase
             'skip_cadunico' => true,
             'skip_sidra' => true,
             'skip_repasses' => true,
+            'skip_siconfi' => true,
+            'skip_transparency' => true,
             'skip_saeb' => true,
             'skip_ibge' => false,
             'skip_sge' => true,

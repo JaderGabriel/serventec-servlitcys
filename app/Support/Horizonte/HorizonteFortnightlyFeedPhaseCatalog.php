@@ -17,6 +17,8 @@ final class HorizonteFortnightlyFeedPhaseCatalog
             ['key' => 'cadunico_sync', 'label' => 'CadÚnico', 'skip_option' => 'skip_cadunico'],
             ['key' => 'sidra_demography', 'label' => 'SIDRA', 'skip_option' => 'skip_sidra'],
             ['key' => 'repasses_tesouro', 'label' => 'Repasses', 'skip_option' => 'skip_repasses'],
+            ['key' => 'siconfi_sync', 'label' => 'SICONFI', 'skip_option' => 'skip_siconfi'],
+            ['key' => 'transparency_sync', 'label' => 'Transparência', 'skip_option' => 'skip_transparency'],
             ['key' => 'saeb_planilhas', 'label' => 'SAEB', 'skip_option' => 'skip_saeb'],
             ['key' => 'ibge_catalog', 'label' => 'IBGE', 'skip_option' => 'skip_ibge'],
             ['key' => 'ibge_municipal_geo', 'label' => 'IBGE malha', 'skip_option' => 'skip_ibge_municipal_geo'],

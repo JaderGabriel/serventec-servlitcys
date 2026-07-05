@@ -8,6 +8,9 @@ use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Models\MunicipalAreaSnapshot;
 use App\Models\MunicipalDemographySnapshot;
+use App\Models\MunicipalFiscalSnapshot;
+use App\Models\MunicipalPnadSnapshot;
+use App\Models\MunicipalTransparencySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\MunicipalAreaSnapshotRepository;
@@ -27,7 +30,10 @@ use App\Support\Horizonte\HorizonteMapPresenter;
 use App\Support\Horizonte\HorizonteTransferScoring;
 use App\Support\Horizonte\HorizonteMapBusyException;
 use App\Support\Horizonte\HorizonteMapCacheBuster;
+use App\Support\Horizonte\HorizonteCadunicoEnrichment;
+use App\Support\Horizonte\HorizonteCensoIndicators;
 use App\Support\Horizonte\HorizonteSaebLookupYears;
+use App\Support\Horizonte\HorizonteSaebTrend;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use Illuminate\Database\Eloquent\Model;
@@ -835,9 +841,14 @@ final class HorizonteMapService
 
         $fundebByIbge = $this->fundebByIbge($refYear, $ibgePrefix);
         $censoByIbge = $this->censoByIbge($refYear, $ibgePrefix);
+        $censoRowsByIbge = $this->censoRowsByIbge($refYear, $ibgePrefix);
+        $censoSeriesByIbge = $this->censoSeriesByIbge($refYear, $ibgePrefix);
         $saebByIbge = $this->saebByIbge($refYear, $ibgePrefix);
         $cadunicoByIbge = $this->cadunicoByIbge($refYear, $ibgePrefix);
         $demographyByIbge = $this->demographyByIbge($refYear, $ibgePrefix);
+        $fiscalByIbge = $this->fiscalByIbge($refYear, $ibgePrefix);
+        $transparencyByIbge = $this->transparencyByIbge($refYear, $ibgePrefix);
+        $pnadByIbge = $this->pnadByIbge($refYear, $ibgePrefix);
         $areaByIbge = $this->areaByIbge($ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
 
@@ -880,7 +891,13 @@ final class HorizonteMapService
         foreach (array_keys($transfersByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
-        foreach (array_keys($fundebRealtimeByIbge) as $ibge) {
+        foreach (array_keys($fiscalByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($transparencyByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($pnadByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
 
@@ -943,12 +960,28 @@ final class HorizonteMapService
             $city = $citiesByIbge[$ibge] ?? null;
             $fundeb = $fundebByIbge[$ibge] ?? null;
             $censo = $censoByIbge[$ibge] ?? null;
+            $censoRow = $censoRowsByIbge[$ibge] ?? null;
             $saeb = $saebByIbge[$ibge] ?? null;
             $cadunico = $cadunicoByIbge[$ibge] ?? null;
             $demography = $demographyByIbge[$ibge] ?? null;
+            $fiscal = $fiscalByIbge[$ibge] ?? null;
+            $transparency = $transparencyByIbge[$ibge] ?? null;
+            $pnad = $pnadByIbge[$ibge] ?? null;
             $area = $areaByIbge[$ibge] ?? null;
             $transfer = $transfersByIbge[$ibge] ?? null;
             $fundebRealtime = $fundebRealtimeByIbge[$ibge] ?? null;
+
+            $saebTrend = HorizonteSaebTrend::analyze(
+                array_values($saeb['lp_series'] ?? []),
+                array_values($saeb['mat_series'] ?? []),
+            );
+            $censoIndicators = HorizonteCensoIndicators::fromRow($censoRow);
+            $enrollmentMomentum = HorizonteCensoIndicators::enrollmentMomentum($censoSeriesByIbge[$ibge] ?? []);
+            $cadunicoEnrichment = HorizonteCadunicoEnrichment::analyze(
+                $cadunico['escolar'] ?? null,
+                $censo['matriculas_total'] ?? null,
+                $demography['populacao_4_17'] ?? null,
+            );
 
             $meta = null;
             $fromIbge = $ibgeMetaIndex[$ibge] ?? null;
@@ -991,12 +1024,20 @@ final class HorizonteMapService
                 'sidra_pop_4_17' => $demography['populacao_4_17'] ?? null,
                 'pct_criancas_pbf' => $cadunico['pct_pbf'] ?? null,
                 'transfer_total' => HorizonteTransferScoring::resolveTotalForScoring($transfer, $fundeb),
+                'fiscal_capacity_score' => $fiscal['fiscal_capacity_score'] ?? null,
+                'learning_trajectory_score' => $saebTrend['learning_trajectory_score'] ?? null,
+                'enrollment_momentum_score' => $enrollmentMomentum['momentum_score'] ?? null,
+                'inclusion_gap_score' => $cadunicoEnrichment['inclusion_gap_score'] ?? null,
+                'pct_receita_propria' => $fiscal['pct_receita_propria'] ?? null,
                 'has_fundeb' => $fundeb !== null,
                 'has_censo' => $censo !== null,
                 'has_saeb' => $saeb !== null,
                 'has_cadunico' => $cadunico !== null,
                 'has_demography' => $demography !== null,
                 'has_transfers' => $transfer !== null,
+                'has_fiscal' => $fiscal !== null,
+                'has_transparency' => $transparency !== null,
+                'has_pnad' => $pnad !== null,
                 'consultoria_active' => $consultoriaActive,
                 'in_catalog' => $inCatalog,
             ];
@@ -1037,6 +1078,10 @@ final class HorizonteMapService
                 'scale_score' => $scores['scale_score'],
                 'social_demand' => $scores['social_demand'],
                 'transfer_dependency' => $scores['transfer_dependency'],
+                'fiscal_capacity' => $scores['fiscal_capacity'],
+                'learning_trajectory' => $scores['learning_trajectory'],
+                'enrollment_momentum' => $scores['enrollment_momentum'],
+                'inclusion_gap' => $scores['inclusion_gap'],
                 'data_readiness' => $scores['data_readiness'],
                 'heat_intensity' => round($heatIntensity, 3),
                 'consultoria_active' => $consultoriaActive,
@@ -1047,6 +1092,9 @@ final class HorizonteMapService
                 'has_cadunico' => $cadunico !== null,
                 'has_demography' => $demography !== null,
                 'has_transfers' => $transfer !== null,
+                'has_fiscal' => $fiscal !== null,
+                'has_transparency' => $transparency !== null,
+                'has_pnad' => $pnad !== null,
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
                 'censo_ano' => $censo['ano'] ?? null,
                 'cadunico_escolar' => $cadunico['escolar'] ?? null,
@@ -1097,8 +1145,40 @@ final class HorizonteMapService
                 'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
-                'saeb_lp_series' => array_values($saeb['lp_series'] ?? []),
-                'saeb_mat_series' => array_values($saeb['mat_series'] ?? []),
+                'saeb_lp_series' => array_values($saebTrend['lp_series'] ?? ($saeb['lp_series'] ?? [])),
+                'saeb_mat_series' => array_values($saebTrend['mat_series'] ?? ($saeb['mat_series'] ?? [])),
+                'saeb_trend' => $saebTrend['trend'] ?? 'unknown',
+                'saeb_trend_label' => $saebTrend['trend_label'] ?? '',
+                'saeb_delta_lp' => $saebTrend['delta_lp'] ?? null,
+                'saeb_delta_mat' => $saebTrend['delta_mat'] ?? null,
+                'enrollment_trend' => $enrollmentMomentum['trend'] ?? 'unknown',
+                'enrollment_trend_label' => $enrollmentMomentum['trend_label'] ?? '',
+                'enrollment_delta_pct' => $enrollmentMomentum['delta_pct'] ?? null,
+                'censo_pct_municipal' => $censoIndicators['pct_municipal'] ?? null,
+                'censo_pct_integral' => $censoIndicators['pct_integral'] ?? null,
+                'censo_pct_profissional' => $censoIndicators['pct_profissional'] ?? null,
+                'censo_aluno_docente_total' => $censoIndicators['aluno_docente_total'] ?? null,
+                'censo_aluno_docente_municipal' => $censoIndicators['aluno_docente_municipal'] ?? null,
+                'censo_dependency_label' => $censoIndicators['dependency_label'] ?? null,
+                'cadunico_fora_escola' => $cadunicoEnrichment['criancas_fora_escola'] ?? null,
+                'cadunico_pct_fora_escola' => $cadunicoEnrichment['pct_fora_escola'] ?? null,
+                'fiscal_ano' => $fiscal['ano'] ?? null,
+                'fiscal_receita_corrente' => $fiscal['receita_corrente_liquida'] ?? null,
+                'fiscal_despesa_educacao' => $fiscal['despesa_educacao_liquidada'] ?? null,
+                'fiscal_pct_educacao' => $fiscal['pct_educacao_receita_corrente'] ?? null,
+                'fiscal_pct_minimo_constitucional' => $fiscal['pct_minimo_constitucional'] ?? null,
+                'fiscal_divida_consolidada' => $fiscal['divida_consolidada'] ?? null,
+                'fiscal_disponibilidade_caixa' => $fiscal['disponibilidade_caixa'] ?? null,
+                'fiscal_restos_pagar' => $fiscal['restos_pagar_processados'] ?? null,
+                'fiscal_pct_receita_propria' => $fiscal['pct_receita_propria'] ?? null,
+                'transparency_convenios' => $transparency['convenios_ativos'] ?? null,
+                'transparency_empenhos_educacao' => $transparency['empenhos_educacao'] ?? null,
+                'transparency_empenhos_tecnologia' => $transparency['empenhos_tecnologia'] ?? null,
+                'transparency_contratos_software' => $transparency['contratos_software'] ?? null,
+                'transparency_highlights' => $transparency['highlights'] ?? [],
+                'pnad_escolaridade_media' => $pnad['escolaridade_media'] ?? null,
+                'pnad_pct_neet' => $pnad['pct_neet_jovem'] ?? null,
+                'pnad_ano' => $pnad['ano'] ?? null,
                 'analytics_url' => $city !== null && $consultoriaActive
                     ? route('dashboard.analytics', ['city_id' => $city['id']])
                     : null,
@@ -1366,7 +1446,7 @@ final class HorizonteMapService
                     continue 2;
                 }
             }
-            if (count($bucket) < 2) {
+            if (count($bucket) < 4) {
                 $bucket[] = ['year' => $year, 'value' => $value];
             }
         }
@@ -1378,6 +1458,141 @@ final class HorizonteMapService
                 'mat' => $data['mat'][0]['value'] ?? null,
                 'lp_series' => $data['lp'],
                 'mat_series' => $data['mat'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, InepCensoMunicipioMatricula>
+     */
+    private function censoRowsByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        $years = [$refYear, $refYear - 1, $refYear - 2];
+        $rows = $this->latestModelRowsPerIbge(InepCensoMunicipioMatricula::class, 'ano', $years, $ibgePrefix);
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge !== null) {
+                $out[$ibge] = $row;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, list<array{ano: int, matriculas_total: int}>>
+     */
+    private function censoSeriesByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        $years = range($refYear - 4, $refYear);
+        $query = InepCensoMunicipioMatricula::query()->whereIn('ano', $years);
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
+        }
+        $rows = $query->orderBy('ano')->get();
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            $out[$ibge][] = [
+                'ano' => (int) $row->ano,
+                'matriculas_total' => (int) $row->matriculas_total,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function fiscalByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        if (! Schema::hasTable('municipal_fiscal_snapshots')) {
+            return [];
+        }
+
+        $years = [$refYear, $refYear - 1];
+        $rows = $this->latestModelRowsPerIbge(MunicipalFiscalSnapshot::class, 'ano', $years, $ibgePrefix);
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            $out[$ibge] = [
+                'ano' => (int) $row->ano,
+                'receita_corrente_liquida' => $row->receita_corrente_liquida,
+                'despesa_educacao_liquidada' => $row->despesa_educacao_liquidada,
+                'pct_educacao_receita_corrente' => $row->pct_educacao_receita_corrente,
+                'pct_minimo_constitucional' => $row->pct_minimo_constitucional,
+                'divida_consolidada' => $row->divida_consolidada,
+                'disponibilidade_caixa' => $row->disponibilidade_caixa,
+                'restos_pagar_processados' => $row->restos_pagar_processados,
+                'pct_receita_propria' => $row->pct_receita_propria,
+                'fiscal_capacity_score' => $row->fiscal_capacity_score,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function transparencyByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        if (! Schema::hasTable('municipal_transparency_snapshots')) {
+            return [];
+        }
+
+        $years = [$refYear, $refYear - 1];
+        $rows = $this->latestModelRowsPerIbge(MunicipalTransparencySnapshot::class, 'ano', $years, $ibgePrefix);
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            $out[$ibge] = [
+                'ano' => (int) $row->ano,
+                'convenios_ativos' => (int) $row->convenios_ativos,
+                'empenhos_educacao' => $row->empenhos_educacao,
+                'empenhos_tecnologia' => $row->empenhos_tecnologia,
+                'contratos_software' => (int) $row->contratos_software,
+                'highlights' => is_array($row->highlights) ? $row->highlights : [],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function pnadByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        if (! Schema::hasTable('municipal_pnad_snapshots')) {
+            return [];
+        }
+
+        $years = [$refYear, $refYear - 1, $refYear - 2];
+        $rows = $this->latestModelRowsPerIbge(MunicipalPnadSnapshot::class, 'ano_referencia', $years, $ibgePrefix);
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            $out[$ibge] = [
+                'ano' => (int) $row->ano_referencia,
+                'escolaridade_media' => $row->escolaridade_media,
+                'pct_neet_jovem' => $row->pct_neet_jovem,
             ];
         }
 
@@ -1620,6 +1835,9 @@ final class HorizonteMapService
             [SaebIndicatorPoint::class, 'updated_at'],
             [CadunicoMunicipioSnapshot::class, 'imported_at'],
             [MunicipalDemographySnapshot::class, 'imported_at'],
+            [MunicipalFiscalSnapshot::class, 'imported_at'],
+            [MunicipalTransparencySnapshot::class, 'imported_at'],
+            [MunicipalPnadSnapshot::class, 'imported_at'],
             [MunicipalAreaSnapshot::class, 'imported_at'],
         ] as [$model, $col]) {
             if (! \Illuminate\Support\Facades\Schema::hasTable((new $model)->getTable())) {

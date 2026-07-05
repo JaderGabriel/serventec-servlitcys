@@ -1,6 +1,6 @@
 # Horizonte — mapa de oportunidade municipal
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 7.0.0 · **Última revisão:** 2026-07-05
 
 **Rota:** `/dashboard/horizonte` (`dashboard.horizonte`)  
 **Menu:** Consultoria → **Horizonte** (perfil com `canViewHorizonte()`)  
@@ -48,6 +48,8 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 | **Malha municipal IBGE** | `storage/app/horizonte/geo/municipal-{UF}.json` + `municipal_area_snapshots` | Modo **Contornos** no mapa + área km², coordenadas e distância à capital no modal |
 
 O universo do mapa = **união de IBGE** presentes em qualquer fonte acima ou no catálogo.
+
+> **Roadmap de novas fontes:** §11.2–§11.9 (geo escolas, SICONFI, IDHM, momentum Educacenso, etc.).
 
 ---
 
@@ -133,7 +135,7 @@ Modal **centrado** (`x-teleport`), altura limitada (~**88dvh** / **45rem**), **c
 
 · roda de propensão (% + Alta/Média/Baixa).
 
-**Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
+**Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → **enriquecimento público** (§6.11) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
 
 **Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (sync nunca executado). Após `cache:clear` no deploy, o mapa **reidrata** o snapshot `storage/app/horizonte/municipal_alerts_snapshot.json` automaticamente. Comando para primeira importação ou actualização FNDE: `horizonte:sync-municipal-alerts`.
 
@@ -151,6 +153,19 @@ Três leituras **complementares** por exercício (não somar entre blocos nem en
 - Valores monetários com **centavos**; previsão do ano corrente reutiliza lógica de **Finanças → Tempo Real**.
 
 Serviço: `HorizonteFundebRepasseOutlook` · payload `fundeb_realtime_*` em cada marcador.
+
+### 6.11 Enriquecimento público (finanças, pedagogia, social)
+
+Blocos no modal quando existem snapshots importados (`has_fiscal`, `has_transparency`, `has_saeb`, `has_censo`, `has_cadunico`, `has_pnad`):
+
+| Bloco | Fonte | Indicadores |
+|-------|-------|-------------|
+| **Finanças e capacidade fiscal** | SICONFI RREO | Despesa educação/receita; % mínimo constitucional; dívida/caixa; restos a pagar; captação própria |
+| **Portal da Transparência** | API Portal (opcional) | Convénios MEC/FNDE; empenhos educação/tecnologia; contratos software |
+| **Pedagogia e escala** | SAEB + Educacenso | Tendência LP/MAT (3–4 ciclos); dinâmica matrículas; aluno/docente; % integral/profissional; dependência administrativa |
+| **Social e demanda** | PNAD + CadÚnico | Escolaridade média; NEET jovem; crianças 0–17 fora da escola (estimativa CadÚnico − Censo) |
+
+Comandos dedicados: §9.2 · dimensões de score: §7 · metodologia UI: `HorizonteMapPresenter::methodologyUi()`.
 
 **Último repasse YTD:** rótulo do último mês com valor em `meta.mensal` ou `imported_at` (`HorizonteFundebTransferTemporal`).
 
@@ -386,6 +401,8 @@ Por defeito corre **em etapas** (`HORIZONTE_FORTNIGHTLY_FEED_STAGED=true`): cada
 | **CadÚnico** | Sincroniza snapshots municipais (`cadunico_municipio_snapshots`) — criancas escolares e PBF |
 | **SIDRA** | População **total** e 4–17 por município (API agregado 9514) → `municipal_demography_snapshots` — **1 UF por passo** |
 | **Repasses Tesouro** | Transferências federais (CKAN Tesouro / FUNDEB) → enriquece `fundeb_municipio_references` |
+| **SICONFI** | Indicadores fiscais municipais (RREO Anexos 01/02/06/14) → `municipal_fiscal_snapshots` — **N municípios por passo** |
+| **Transparência** | Convénios e empenhos Portal da Transparência → `municipal_transparency_snapshots` (requer API key) |
 | **SAEB** | Planilhas oficiais INEP — **1 ano por passo** por defeito (`HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP=1`) |
 | **IBGE** | Aquece catálogo de centroides (**1 UF por invocação** por defeito — `HORIZONTE_FORTNIGHTLY_IBGE_UFS_PER_STEP=1`) |
 | **IBGE malha** | Malha municipal + área km² (**1 UF por passo** — `HORIZONTE_MUNICIPAL_GEO_UFS_PER_STEP=1`; comando `horizonte:import-municipal-geo --all`) |
@@ -404,6 +421,8 @@ php artisan horizonte:fortnightly-feed --phase=cadunico_sync
 php artisan horizonte:fortnightly-feed --phase=sidra_demography
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
 php artisan horizonte:fortnightly-feed --phase=repasses_tesouro
+php artisan horizonte:fortnightly-feed --phase=siconfi_sync
+php artisan horizonte:fortnightly-feed --phase=transparency_sync
 php artisan horizonte:fortnightly-feed --phase=saeb_planilhas
 php artisan horizonte:fortnightly-feed --phase=saeb_planilhas --reset
 php artisan horizonte:fortnightly-feed --phase=ibge_catalog
@@ -508,9 +527,35 @@ php artisan horizonte:sync-municipal-alerts --reset
 
 Variáveis: `HORIZONTE_FNDE_VAAT_INABILITADOS_CSV_URL`, `HORIZONTE_MUNICIPAL_ALERTS_PATH` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
 
+### 9.1d SICONFI — capacidade fiscal municipal
+
+Comando: **`horizonte:sync-siconfi`** — importa RREO via API Tesouro (`municipal_fiscal_snapshots`). Processa **lotes incrementais** (municípios ainda não importados no ano de referência).
+
+```bash
+php artisan horizonte:sync-siconfi --limit=8
+php artisan horizonte:sync-siconfi --uf=BA --limit=20
+php artisan horizonte:sync-siconfi --year=2024 --period=6
+php artisan horizonte:sync-siconfi --ibge=2927408 --dry-run
+php artisan horizonte:fortnightly-feed --phase=siconfi_sync
+php artisan horizonte:fortnightly-feed --skip-siconfi   # ignorar no feed
+```
+
+Variáveis: `HORIZONTE_SICONFI_ENABLED`, `HORIZONTE_SICONFI_BASE_URL`, `HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11b.
+
+### 9.1e Portal da Transparência — convénios e empenhos
+
+Comando: **`horizonte:sync-transparency`** — convénios MEC/FNDE, empenhos educação/tecnologia e proxy de contratos software (`municipal_transparency_snapshots`). **Requer** `PORTAL_TRANSPARENCIA_API_KEY` no `.env`.
+
+```bash
+php artisan horizonte:sync-transparency --limit=5
+php artisan horizonte:sync-transparency --uf=SP --limit=10
+php artisan horizonte:fortnightly-feed --phase=transparency_sync
+php artisan horizonte:fortnightly-feed --skip-transparency
+```
+
 ### 9.2 Uso comercial (gestores)
 
-1. **Enriquecer dados:** garantir rotina **bimestral** activa + importações pontuais em Dados públicos; correr **`horizonte:sync-municipal-alerts`** após deploy ou quando o FNDE publicar nova lista VAAT.
+1. **Enriquecer dados:** garantir rotina **bimestral** activa + importações pontuais em Dados públicos; correr **`horizonte:sync-municipal-alerts`**, **`horizonte:sync-siconfi`** e **`horizonte:sync-transparency`** (com API key) após deploy ou quando houver novas listas/fontes.
 2. **Actualizar mapa:** abrir `/dashboard/horizonte` — shell rápido + JSON assíncrono; use **Como usar** / **Demonstração** no topo para onboarding da equipa.
 3. **Priorizar expansão:** modo **Calor**, segmentos «Onde buscar clientes», filtros de propensão/FUNDEB/Censo/SAEB; em UFs extensas, navegue por **mesorregião** antes do detalhe municipal.
 4. **Onboarding:** criar cidade no catálogo → configurar conexão → tier passa a `catalog_pending` → `consultoria_active`.
@@ -556,17 +601,169 @@ Após activar Consultoria, use **Painel analítico → Diagnóstico** para indic
 
 ## 11. Roadmap
 
-| Fase | Melhoria |
-|------|----------|
-| **v1 (actual)** | Mapa IBGE conhecidos + scores + busca + rankings UF/prospectos |
-| **v1.1** | Importação nacional por UF (job batch) sem cadastrar cidade |
-| **v1.2 (feito)** | Coroplético IBGE UF + mesorregiões + export CSV prospectos |
-| **v2 (parcial)** | CadÚnico no feed + dimensão demanda social + filtro mapa · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 · alertas MEC/FNDE VAAT |
-| **v2** | Comparativo antes/depois para clientes (delta compliance_score) |
+### 11.1 Linha do tempo (produto)
 
-Ver backlog §H em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
+| Fase | Melhoria | Estado |
+|------|----------|--------|
+| **v1** | Mapa IBGE conhecidos + scores + busca + rankings UF/prospectos | Concluído |
+| **v1.1** | Importação nacional por UF (job batch) sem cadastrar cidade | Concluído |
+| **v1.2** | Coroplético IBGE UF + mesorregiões + export CSV prospectos | Concluído |
+| **v2 (parcial)** | CadÚnico + demanda social · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 · alertas VAAT · malha municipal · Educacenso modal | Concluído |
+| **v2.1** | Versão mão (detecção automática + alternância manual) | Concluído |
+| **v2.2** | Enriquecimento por bases públicas (§11.2–§11.6) | Planeado |
+| **v3** | Comparativo antes/depois para clientes (`delta compliance_score`) | Planeado |
+
+Itens rastreáveis: secção **J** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`HOR-*`). Estudo transversal: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
 
 ---
+
+### 11.2 Enriquecimento por bases públicas — visão geral
+
+O Horizonte consome hoje o **triângulo FUNDEB–Censo–SAEB**, complementado por CadÚnico, SIDRA (população), repasses Tesouro, malha IBGE e alertas VAAT. O roadmap abaixo organiza **novas fontes públicas** por:
+
+| Eixo | Objectivo |
+|------|-----------|
+| **Mapa** | Camadas visuais, coropléticos e densidade territorial |
+| **Ficha municipal** | Campos no modal (finanças, pedagogia, social, compliance) |
+| **Decisão comercial** | Novas dimensões de score, filtros e segmentos «Onde buscar clientes» |
+
+**Princípios** (alinhados ao [estudo de integrações](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) §2):
+
+1. Agregado por **IBGE 7 dígitos** — sem CPF/NIS em massa.
+2. Ingestão via **feed bimestral** ou hub Dados públicos — nunca consulta pesada no clique.
+3. Indicadores **indicativos** para priorização comercial; repasses oficiais continuam FNDE/Tesouro/Simec.
+4. Reutilizar pipelines **Onda 0** já existentes no SERVLITCYS antes de abrir fontes novas.
+
+```mermaid
+flowchart LR
+  subgraph Onda0[Onda 0 — reutilizar]
+    GEO[Geo INEP escolas]
+    CEN[Educacenso série]
+    SAEB[SAEB / IDEB série]
+  end
+  subgraph Onda1[Onda 1 — ingestão nova]
+    SIC[SICONFI]
+    IDHM[IDHM Atlas]
+    SIDRA[SIDRA ampliado]
+    FNDE[Programas FNDE]
+  end
+  subgraph Onda2[Onda 2 — contexto]
+    CNES[CNES / DATASUS]
+    PNAD[PNAD Contínua]
+  end
+  Onda0 --> HOR[Horizonte mapa + modal + score]
+  Onda1 --> HOR
+  Onda2 --> HOR
+```
+
+---
+
+### 11.3 Prioridade 1 — quick wins (Onda 0)
+
+Fontes **já importáveis** no hub `/admin/dados-publicos`; falta expor no Horizonte.
+
+| ID | Fonte | Mapa | Ficha | Decisão | Entrega |
+|----|-------|------|-------|---------|---------|
+| **HOR-01** | **Geo INEP escolas** (`school_unit_geos`) | Camada de pontos/cluster ao abrir UF ou município; heatmap densidade rede | Contagem escolas mapeadas vs matrículas Censo | Segmento «fragmentação de rede»; filtro municípios com muitas unidades pequenas | v2.2a |
+| **HOR-02** | **Educacenso — momentum** (série já no modal §6.9) | Cor opcional por Δ matrículas 5 anos | Chip «tendência» (↑ estável ↓) no cabeçalho do modal | Dimensão `enrollment_momentum` no scorer; segmento «mercado em retração» | v2.2a |
+| **HOR-03** | **SAEB / IDEB — série histórica** (`saeb_indicator_points`) | — | Gráfico ou sparkline LP/MAT (últimos 3–4 ciclos) | Dimensão `learning_trajectory` (tendência, não só nível) | v2.2a |
+
+**Critério de prioridade:** alto impacto comercial, **zero API nova** — derivar do que o feed bimestral já indexa.
+
+---
+
+### 11.4 Prioridade 2 — mapa e ficha municipal (Onda 1)
+
+| ID | Fonte | Ingestão | Mapa | Ficha | Decisão | Entrega |
+|----|-------|----------|------|-------|---------|---------|
+| **HOR-04** | **SICONFI** (API Contas Tesouro) | API REST por ente IBGE + exercício · ver INT-06 | — | Despesa educação/receita, endividamento, liquidez, restos a pagar | Dimensão `fiscal_capacity`; filtro «capacidade fiscal mínima» | v2.2b |
+| **HOR-05** | **IDHM** (Atlas IPEA/PNUD) | CSV/API quinquenal por município | Coroplético «IDHM educação» (modo Contornos ou UF) | Pílula IDHM educação + ranking na UF | Refina `social_demand` e narrativa socioeconómica | v2.2b |
+| **HOR-06** | **IBGE SIDRA ampliado** | API agregados (urbanização, migração, domicílios c/ crianças) · base INT-05 parcial | Choropleth «pressão demográfica» | População 0–14, taxa urbanização, saldo migratório | Dimensão `demographic_pressure`; segmento «crescimento populacional» | v2.2c |
+| **HOR-07** | **Programas FNDE** (PDDE, PNAE, PNATE) | CKAN FNDE / CSV repasses programáticos | Intensidade por município (opcional) | Volume histórico por programa | Segmento «dependência de programas»; risco prestação de contas | v2.2c |
+| **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) | — | Convénios MEC/FNDE activos; empenhos tech/educação | Proxy «SGE/incumbent» + projecto em curso | v2.2c |
+
+**Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots` — incluir no bundle offline v3 quando existir.
+
+---
+
+### 11.5 Prioridade 3 — decisão comercial e scoring v3 (Onda 1–2)
+
+Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` após dados disponíveis):
+
+| Dimensão | Fontes | Detecta | Indica |
+|----------|--------|---------|--------|
+| `enrollment_momentum` | Educacenso | Queda ou alta de matrículas 5 anos | Urgência de modernização vs mercado maduro |
+| `learning_trajectory` | SAEB série | IDEB estável / em queda / em recuperação | Argumento pedagógico na abordagem |
+| `fiscal_capacity` | SICONFI | Endividamento, % educação, liquidez | Viabilidade de contrato e prazo de ROI |
+| `inclusion_gap` | CadÚnico × Censo | Crianças vulneráveis vs cobertura municipal | Prioridade inclusão / PBF |
+| `network_fragmentation` | Geo INEP + Censo | Muitas escolas pequenas / km² | Dor de gestão — fit i-Educar |
+| `demographic_pressure` | SIDRA migração | Crescimento 0–14 vs oferta | Expansão futura de matrículas |
+| `program_dependency` | FNDE programas | Alto PDDE/PNAE sem VAAR OK | Risco operacional / oportunidade consultoria |
+| `regional_cluster` | Catálogo `cities` | Consultorias activas em corredor geográfico | Planeamento de visitas comerciais |
+
+**Segmentos «Onde buscar clientes»** previstos: mercado em retração · alta fragmentação · capacidade fiscal · tendência IDEB negativa · corredor regional.
+
+**Scoring v3:** rebalancear pesos actuais (§5.1) após calibragem com amostra nacional; manter benchmarks dinâmicos (`saeb_p25`, medianas FUNDEB/transferências).
+
+| ID | Entrega |
+|----|---------|
+| **HOR-11** | Novos segmentos + filtros mapa (depende HOR-01–04) |
+| **HOR-12** | Visual «corredor regional» — consultorias activas + prospectos adjacentes |
+| **HOR-13** | Comparativo antes/depois `compliance_score` (clientes com Consultoria activa) — **v3** |
+
+---
+
+### 11.6 Contexto territorial e saúde (Onda 2 — opcional)
+
+| ID | Fonte | Mapa | Ficha | Notas |
+|----|-------|------|-------|-------|
+| **HOR-09** | **CNES** (DATASUS) | Camada UBS/UPA; distância média escola–UBS | Equipamentos saúde no município | Ver INT-08; agregado público |
+| **HOR-10** | **PNAD Contínua** (IBGE) | — | Escolaridade média, NEET jovem | Argumento EJA; CSV/API municipal |
+
+---
+
+### 11.7 Fora de âmbito (Onda 3 ou não aplicável)
+
+| Fonte | Motivo |
+|-------|--------|
+| CadÚnico Serviços (CPF/NIS individual) | LGPD; credencial Conecta gov.br |
+| e-SUS APS / RNDS clínico | Credencial SMS; sem API municipal simples |
+| SIAFI, CADIN | Não aplicável ao recorte municipal comercial |
+| Scraping massivo Simec | Instável; preferir listas FNDE + alertas pontuais (VAAT já implementado) |
+| Dados eleitorais automatizados | Baixo valor / alto ruído para score comercial |
+
+---
+
+### 11.8 Ordem de implementação recomendada
+
+| Ordem | IDs | Esforço | Impacto | Dependências |
+|-------|-----|---------|---------|--------------|
+| 1 | HOR-01 | Baixo | Alto (visual) | `school_unit_geos` + endpoint mapa regional |
+| 2 | HOR-02, HOR-03 | Baixo | Alto (decisão) | Série Educacenso/SAEB já indexada |
+| 3 | HOR-04 | Médio | Alto (fecho comercial) | INT-06 · API SICONFI |
+| 4 | HOR-11, HOR-12 | Médio | Médio | HOR-01–04 |
+| 5 | HOR-05, HOR-06 | Médio | Médio | INT-05 ampliado |
+| 6 | HOR-07, HOR-08 | Médio–alto | Médio | CKAN FNDE · API Transparência |
+| 7 | HOR-09, HOR-10 | Alto | Baixo–médio | Onda 2 |
+| 8 | HOR-13 | Médio | Alto (retention) | Consultoria activa + histórico compliance |
+
+---
+
+### 11.9 Rastreabilidade com o backlog global
+
+| ID Horizonte | ID transversal | Documento |
+|--------------|----------------|-----------|
+| HOR-04 | INT-06 | SICONFI |
+| HOR-06 | INT-05 | SIDRA demografia |
+| HOR-07 | — | Programas FNDE (catálogo `PublicDataSourcesCatalog`) |
+| HOR-08 | — | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) § Portal Transparência |
+| HOR-09 | INT-08 | DATASUS / CNES |
+| HOR-01 | — | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · `geo_inep` |
+
+Ao concluir cada item: mover para **G** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+
+---
+
 
 ## 12. Testes
 
@@ -578,4 +775,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-07-02 · Módulo Horizonte v6.5 — Jord: malha IBGE, Contornos, pílulas geo, copiar coordenadas*
+*Última revisão: 2026-07-05 · Módulo Horizonte v6.5 — roadmap enriquecimento bases públicas (§11.2–§11.9)*

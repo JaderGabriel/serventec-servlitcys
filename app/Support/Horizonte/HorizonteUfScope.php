@@ -62,4 +62,21 @@ final class HorizonteUfScope
 
         return $map;
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function nationalIbgeCodes(IbgeMunicipalityCatalog $catalog): array
+    {
+        $all = [];
+        foreach (IbgeMunicipalityCatalog::brazilianUfs() as $uf) {
+            foreach (array_keys($catalog->municipalitiesForUf($uf)) as $ibge) {
+                $all[] = (string) $ibge;
+            }
+        }
+
+        sort($all);
+
+        return $all;
+    }
 }

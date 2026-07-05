@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 7.0.0 · **Última revisão:** 2026-07-05
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa visual da documentação em produção: versão actual **6.5.0**, linha **6.x** (Horizonte territorial — malha IBGE, Contornos, modal geográfico), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **7.0.0**, linha **7.x** (Horizonte enriquecimento — SICONFI, Transparência, scoring ampliado), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **6.5.0** |
-| **Tag de deploy** | `20260702c-Jord` |
-| **Commit de referência** | `d07f58a` (#482) |
-| **Data de referência** | 2026-07-02 |
-| **Release** | [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
-| **Marco** | **Jord** — Horizonte territorial: malha IBGE, Contornos, pílulas geo, Educacenso nacional |
+| **Versão semântica** | **7.0.0** |
+| **Tag de deploy** | `20260705-Ploutos` |
+| **Commit de referência** | *(ver release)* |
+| **Data de referência** | 2026-07-05 |
+| **Release** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
+| **Marco** | **Ploutos** — Horizonte enriquecimento: SICONFI, Transparência, tendência SAEB, scoring ampliado |
 
 ---
 

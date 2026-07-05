@@ -163,6 +163,7 @@ flowchart TB
 | Horizonte — modal: pílulas geográficas (posição, distância à capital, área) + copiar coordenadas decimal | Implementado (6.5.0) — [HORIZONTE.md](HORIZONTE.md) §6.5 |
 | Horizonte — overlay microrregiões; SAEB LP/MAT (dois últimos anos); gráfico matrículas após canvas visível | Implementado (6.5.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — Educacenso reimportação nacional 2020–2024 (`horizonte:sync-educacenso --reset --all`) | Implementado (6.5.0) — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
+| Horizonte — enriquecimento SICONFI + Transparência + scoring ampliado (`horizonte:sync-siconfi`, `horizonte:sync-transparency`) | Implementado (7.0.0) — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
 | Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |

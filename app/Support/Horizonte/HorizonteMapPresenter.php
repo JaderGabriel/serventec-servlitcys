@@ -74,6 +74,18 @@ final class HorizonteMapPresenter
                     'feeds' => __('Repasses federais agregados — dependência de transferências (FUNDEB + educação).'),
                 ],
                 [
+                    'label' => __('SICONFI / API Contas (Tesouro)'),
+                    'feeds' => __('RREO municipal — despesa educação/receita, mínimo constitucional, dívida/caixa, restos a pagar e captação própria.'),
+                ],
+                [
+                    'label' => __('Portal da Transparência'),
+                    'feeds' => __('Convénios MEC/FNDE, empenhos educação/tecnologia e contratos software (proxy SGE concorrente).'),
+                ],
+                [
+                    'label' => __('IBGE PNAD Contínua'),
+                    'feeds' => __('Escolaridade média e NEET jovem — argumento para EJA e expansão de oferta.'),
+                ],
+                [
                     'label' => __('Alertas MEC/FNDE (VAAT)'),
                     'feeds' => __('Lista oficial FNDE de municípios inabilitados ao VAAT — chip no modal municipal (importação periódica).'),
                 ],
@@ -119,17 +131,19 @@ final class HorizonteMapPresenter
                 ],
             ],
             'success_title' => __('Propensão a sucesso (0–100)'),
-            'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + prontidão :wr% + benefício×escala :wb%.', [
+            'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + capacidade fiscal :wfc% + dinâmica matrículas :wm% + prontidão :wr% + benefício×escala :wb%.', [
                 'wf' => $pct('financial_pressure'),
                 'wp' => $pct('pedagogical_gap'),
                 'ws' => $pct('scale'),
                 'wd' => $pct('social_demand'),
                 'wt' => $pct('transfer_dependency'),
+                'wfc' => $pct('fiscal_capacity'),
+                'wm' => $pct('enrollment_momentum'),
                 'wr' => $pct('data_readiness'),
                 'wb' => $pct('benefit_scale'),
             ]),
             'benefit_title' => __('Benefício territorial (0–100)'),
-            'benefit_formula' => __('28% pedagógico + 28% financeiro + 18% demanda social + 14% escala + 7% transferências + 5% prontidão — enfatiza impacto regional.'),
+            'benefit_formula' => __('24% pedagógico + 22% financeiro + 16% social + 12% escala + 10% dinâmica matrículas + 8% (100−cap. fiscal) + 8% transferências.'),
             'tier_rules' => __('Alta propensão ≥ :high · Média ≥ :medium · Baixa abaixo de :medium.', [
                 'high' => $high,
                 'medium' => $medium,
@@ -189,8 +203,8 @@ final class HorizonteMapPresenter
                     'key' => 'transfer_dependency',
                     'label' => __('Dependência de transferências'),
                     'weight' => $pct('transfer_dependency'),
-                    'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional; sem CKAN, usa complementação FNDE como proxy.'),
-                    'detects' => __('Soma repasses CKAN (FUNDEB + educação) ou complementação FUNDEB quando repasses não importados.'),
+                    'formula' => __('Repasses Tesouro ÷ max(receita, complementação FUNDEB) vs mediana nacional; refinado com % receita própria SICONFI quando disponível.'),
+                    'detects' => __('Soma repasses CKAN (FUNDEB + educação) ou complementação FUNDEB; captação própria via RREO Anexo 01.'),
                     'indicates' => __('Quanto maior, mais o município depende de transferências federais versus receita própria; quanto menor, menor peso dos repasses no financiamento.'),
                     'scenarios' => [
                         __('Alto: repasses federais pesam mais que a mediana — dependência de transferências constitucionais.'),
@@ -199,10 +213,58 @@ final class HorizonteMapPresenter
                     ],
                 ],
                 [
+                    'key' => 'fiscal_capacity',
+                    'label' => __('Capacidade fiscal'),
+                    'weight' => $pct('fiscal_capacity'),
+                    'formula' => __('Score SICONFI: liquidez (caixa/dívida), restos a pagar e % educação/receita — invertido na propensão (100−score).'),
+                    'detects' => __('RREO Anexos 01, 02, 06 e 14 — despesa educação, mínimo constitucional, dívida consolidada e disponibilidade de caixa.'),
+                    'indicates' => __('Quanto maior o score, melhor capacidade de pagar consultoria e i-Educar; na propensão, baixa capacidade aumenta prioridade.'),
+                    'scenarios' => [
+                        __('Alto: caixa confortável, baixa dívida relativa — menor urgência financeira.'),
+                        __('Baixo: restos a pagar elevados ou liquidez fraca — pressão operacional.'),
+                    ],
+                ],
+                [
+                    'key' => 'learning_trajectory',
+                    'label' => __('Trajectória SAEB'),
+                    'weight' => 0,
+                    'formula' => __('Tendência LP/MAT nos últimos 3–4 ciclos SAEB (↑↓) — compõe 35% do déficit pedagógico.'),
+                    'detects' => __('Série histórica SAEB municipal — delta entre ciclo mais recente e mais antigo da janela.'),
+                    'indicates' => __('Queda recente aumenta prioridade pedagógica; recuperação indica momentum positivo.'),
+                    'scenarios' => [
+                        __('Queda: proficiência em deterioração — argumento para intervenção pedagógica.'),
+                        __('Estável/recuperação: menos urgência relativa na dimensão pedagógica.'),
+                    ],
+                ],
+                [
+                    'key' => 'enrollment_momentum',
+                    'label' => __('Dinâmica de matrículas'),
+                    'weight' => $pct('enrollment_momentum'),
+                    'formula' => __('Variação % matrículas Censo entre os dois pontos mais recentes da série Educacenso.'),
+                    'detects' => __('Série Educacenso municipal — crescimento ou retração da rede.'),
+                    'indicates' => __('Quanto maior, expansão recente da rede — oportunidade de escala e onboarding.'),
+                    'scenarios' => [
+                        __('Alto: crescimento acelerado de matrículas.'),
+                        __('Baixo: rede estável ou em retração.'),
+                    ],
+                ],
+                [
+                    'key' => 'inclusion_gap',
+                    'label' => __('Lacuna de inclusão'),
+                    'weight' => 0,
+                    'formula' => __('Estimativa crianças 0–17 CadÚnico/SIDRA fora da escola — compõe 25% da demanda social.'),
+                    'detects' => __('Cruzamento CadÚnico escolar vs Censo/SIDRA 4–17.'),
+                    'indicates' => __('Quanto maior, mais crianças potencialmente fora da escola — argumento EJA/inclusão.'),
+                    'scenarios' => [
+                        __('Alto: gap CadÚnico−matrículas elevado.'),
+                        __('Baixo: cobertura escolar alinhada ao universo CadÚnico.'),
+                    ],
+                ],
+                [
                     'key' => 'data_readiness',
                     'label' => __('Prontidão de dados'),
                     'weight' => $pct('data_readiness'),
-                    'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses).'),
+                    'formula' => __('Presença FUNDEB + Censo + SAEB + CadÚnico (+ bónus SIDRA/repasses/SICONFI/transparência/PNAD).'),
                     'detects' => __('Contagem de fontes disponíveis por IBGE — não mede qualidade do cadastro escolar.'),
                     'indicates' => __('Quanto maior, mais fontes públicas disponíveis e score de propensão mais confiável; quanto menor, dados parciais ou ausentes.'),
                     'scenarios' => [

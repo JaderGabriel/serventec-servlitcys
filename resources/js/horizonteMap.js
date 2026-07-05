@@ -1314,9 +1314,13 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
     const dims = [
         { key: "financial_pressure", label: "Pressão FUNDEB" },
         { key: "pedagogical_gap", label: "Pedagógica" },
+        { key: "learning_trajectory", label: "Trajectória SAEB" },
         { key: "scale_score", label: "Escala" },
+        { key: "enrollment_momentum", label: "Dinâmica matr." },
         { key: "social_demand", label: "Social" },
+        { key: "inclusion_gap", label: "Inclusão" },
         { key: "transfer_dependency", label: "Transf. fed." },
+        { key: "fiscal_capacity", label: "Cap. fiscal", invert: true },
         { key: "data_readiness", label: "Prontidão" },
     ];
     const rows = [
@@ -1324,7 +1328,8 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
         `<div class="serv-horizonte-muni-tooltip__dims">`,
     ];
     for (const d of dims) {
-        const val = Math.max(0, Math.min(100, Number(m[d.key] ?? 0)));
+        const raw = Number(m[d.key] ?? 0);
+        const val = Math.max(0, Math.min(100, d.invert ? 100 - raw : raw));
         const isTransfer = d.key === "transfer_dependency";
         const dimLabel =
             isTransfer && transferAno ? `${d.label} (${transferAno})` : d.label;
@@ -1348,6 +1353,212 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
     return rows.join("");
 }
 
+function formatPctValue(value, digits = 1) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) {
+        return "—";
+    }
+    return `${n.toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits })}%`;
+}
+
+function formatTrendArrow(trend) {
+    const key = String(trend ?? "").toLowerCase();
+    if (key === "up") {
+        return "↑";
+    }
+    if (key === "down") {
+        return "↓";
+    }
+    if (key === "stable") {
+        return "→";
+    }
+    return "";
+}
+
+function muniEnrichmentHtml(m) {
+    if (!m) {
+        return "";
+    }
+
+    const blocks = [];
+
+    const hasFiscal =
+        m.has_fiscal ||
+        m.fiscal_despesa_educacao != null ||
+        m.fiscal_pct_educacao != null;
+    if (hasFiscal) {
+        const rows = [];
+        const ano = m.fiscal_ano != null ? String(m.fiscal_ano) : "";
+        if (m.fiscal_pct_educacao != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Despesa educação / receita")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_educacao))}</span></div>`,
+            );
+        }
+        if (m.fiscal_pct_minimo_constitucional != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("% mínimo constitucional")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_minimo_constitucional))}</span></div>`,
+            );
+        }
+        if (m.fiscal_divida_consolidada != null || m.fiscal_disponibilidade_caixa != null) {
+            const debt = m.fiscal_divida_consolidada != null ? formatCurrencyBrl(m.fiscal_divida_consolidada) : "—";
+            const cash = m.fiscal_disponibilidade_caixa != null ? formatCurrencyBrl(m.fiscal_disponibilidade_caixa) : "—";
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Dívida / caixa")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${debt} / ${cash}`)}</span></div>`,
+            );
+        }
+        if (m.fiscal_restos_pagar != null && Number(m.fiscal_restos_pagar) > 0) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Restos a pagar")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--warn">${escapeHtml(formatCurrencyBrl(m.fiscal_restos_pagar))}</span></div>`,
+            );
+        }
+        if (m.fiscal_pct_receita_propria != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Captação própria")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.fiscal_pct_receita_propria))}</span></div>`,
+            );
+        }
+        if (rows.length > 0) {
+            blocks.push(
+                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
+                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Finanças e capacidade fiscal")}${ano ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(ano)}</span>` : ""}</h4>` +
+                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
+                    `<p class="serv-horizonte-muni-tooltip__enrich-foot">${escapeHtml("Fonte: SICONFI / RREO (Tesouro Nacional).")}</p>` +
+                `</section>`,
+            );
+        }
+    }
+
+    const hasTransparency =
+        m.has_transparency ||
+        m.transparency_convenios != null ||
+        m.transparency_empenhos_educacao != null;
+    if (hasTransparency) {
+        const rows = [];
+        if (m.transparency_convenios != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Convénios MEC/FNDE")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(nf(m.transparency_convenios))}</span></div>`,
+            );
+        }
+        if (m.transparency_empenhos_educacao != null && Number(m.transparency_empenhos_educacao) > 0) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Empenhos educação")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatCurrencyBrl(m.transparency_empenhos_educacao))}</span></div>`,
+            );
+        }
+        if (m.transparency_empenhos_tecnologia != null && Number(m.transparency_empenhos_tecnologia) > 0) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Empenhos tecnologia")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatCurrencyBrl(m.transparency_empenhos_tecnologia))}</span></div>`,
+            );
+        }
+        if (m.transparency_contratos_software != null && Number(m.transparency_contratos_software) > 0) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Contratos software")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(nf(m.transparency_contratos_software))}</span></div>`,
+            );
+        }
+        if (rows.length > 0) {
+            blocks.push(
+                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
+                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Portal da Transparência")}</h4>` +
+                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
+                `</section>`,
+            );
+        }
+    }
+
+    const hasPedagogy =
+        m.has_saeb ||
+        m.has_censo ||
+        m.censo_aluno_docente_municipal != null ||
+        m.censo_pct_integral != null;
+    if (hasPedagogy) {
+        const rows = [];
+        if (m.saeb_trend && m.saeb_trend !== "unknown") {
+            const arrow = formatTrendArrow(m.saeb_trend);
+            const label = String(m.saeb_trend_label ?? m.saeb_trend);
+            const deltaParts = [];
+            if (m.saeb_delta_lp != null) {
+                deltaParts.push(`LP ${Number(m.saeb_delta_lp) > 0 ? "+" : ""}${Number(m.saeb_delta_lp).toLocaleString("pt-BR")}`);
+            }
+            if (m.saeb_delta_mat != null) {
+                deltaParts.push(`MAT ${Number(m.saeb_delta_mat) > 0 ? "+" : ""}${Number(m.saeb_delta_mat).toLocaleString("pt-BR")}`);
+            }
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Tendência SAEB")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--trend-${escapeHtml(String(m.saeb_trend))}">${escapeHtml(`${arrow} ${label}`.trim())}${deltaParts.length ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(deltaParts.join(" · "))}</span>` : ""}</span></div>`,
+            );
+        }
+        if (m.enrollment_trend && m.enrollment_trend !== "unknown") {
+            const arrow = formatTrendArrow(m.enrollment_trend);
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Matrículas Censo")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${arrow} ${String(m.enrollment_trend_label ?? "")}`.trim())}${m.enrollment_delta_pct != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.enrollment_delta_pct, 1))}</span>` : ""}</span></div>`,
+            );
+        }
+        if (m.censo_aluno_docente_municipal != null || m.censo_aluno_docente_total != null) {
+            const municipal = m.censo_aluno_docente_municipal != null ? Number(m.censo_aluno_docente_municipal).toLocaleString("pt-BR") : "—";
+            const total = m.censo_aluno_docente_total != null ? Number(m.censo_aluno_docente_total).toLocaleString("pt-BR") : "—";
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Aluno/docente")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`Municipal ${municipal} · Rede ${total}`)}</span></div>`,
+            );
+        }
+        if (m.censo_pct_integral != null || m.censo_pct_profissional != null) {
+            const integral = m.censo_pct_integral != null ? formatPctValue(m.censo_pct_integral, 0) : "—";
+            const prof = m.censo_pct_profissional != null ? formatPctValue(m.censo_pct_profissional, 0) : "—";
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Integral / profissional")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(`${integral} / ${prof}`)}</span></div>`,
+            );
+        }
+        if (m.censo_dependency_label) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Dependência")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(String(m.censo_dependency_label))}${m.censo_pct_municipal != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.censo_pct_municipal, 0) + " municipal")}</span>` : ""}</span></div>`,
+            );
+        }
+        if (rows.length > 0) {
+            blocks.push(
+                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
+                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Pedagogia e escala")}</h4>` +
+                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
+                `</section>`,
+            );
+        }
+    }
+
+    const hasSocial =
+        m.has_pnad ||
+        m.has_cadunico ||
+        m.cadunico_fora_escola != null ||
+        m.pnad_escolaridade_media != null;
+    if (hasSocial) {
+        const rows = [];
+        if (m.pnad_escolaridade_media != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Escolaridade média")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(Number(m.pnad_escolaridade_media).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }))} ${escapeHtml("anos")}</span></div>`,
+            );
+        }
+        if (m.pnad_pct_neet != null) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("NEET jovem")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.pnad_pct_neet))}</span></div>`,
+            );
+        }
+        if (m.cadunico_fora_escola != null && Number(m.cadunico_fora_escola) > 0) {
+            rows.push(
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Crianças 0–17 fora da escola")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--warn">${escapeHtml(nf(m.cadunico_fora_escola))}${m.cadunico_pct_fora_escola != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.cadunico_pct_fora_escola))}</span>` : ""}</span></div>`,
+            );
+        }
+        if (rows.length > 0) {
+            const pnadAno = m.pnad_ano != null ? String(m.pnad_ano) : "";
+            blocks.push(
+                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
+                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Social e demanda")}${pnadAno ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(pnadAno)}</span>` : ""}</h4>` +
+                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
+                `</section>`,
+            );
+        }
+    }
+
+    if (blocks.length === 0) {
+        return "";
+    }
+
+    return `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`;
+}
+
 function muniMetaHtml(m) {
     const segments = [];
 
@@ -1356,6 +1567,9 @@ function muniMetaHtml(m) {
         m.has_censo ? "Censo" : null,
         m.has_saeb ? "SAEB" : null,
         m.has_cadunico ? "CadÚnico" : null,
+        m.has_fiscal ? "SICONFI" : null,
+        m.has_transparency ? "Transparência" : null,
+        m.has_pnad ? "PNAD" : null,
     ].filter(Boolean);
     if (sources.length > 0) {
         segments.push(
@@ -7206,7 +7420,24 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return [...byYear.values()]
                 .filter((row) => row.lp !== null || row.mat !== null)
                 .sort((a, b) => b.year - a.year)
-                .slice(0, 2);
+                .slice(0, 4);
+        },
+
+        modalHeaderSaebTrendLabel(m) {
+            if (!m || !m.saeb_trend || m.saeb_trend === "unknown") {
+                return "";
+            }
+            const arrow = formatTrendArrow(m.saeb_trend);
+            const label = String(m.saeb_trend_label ?? "").trim();
+            return `${arrow} ${label}`.trim();
+        },
+
+        modalHeaderSaebTrendClass(m) {
+            const trend = String(m?.saeb_trend ?? "").toLowerCase();
+            if (!trend || trend === "unknown") {
+                return "";
+            }
+            return `serv-horizonte-muni-modal__saeb-trend--${trend}`;
         },
 
         modalHeaderHasSaeb(m) {
@@ -7879,6 +8110,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 lines.push(consultoriaNote);
                 lines.push("</div>");
             }
+
+            lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--enrichment">');
+            lines.push(muniEnrichmentHtml(m));
+            lines.push("</div>");
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--dims">');
             lines.push(muniDimensionsHtml(m, transferAno, this.methodology));

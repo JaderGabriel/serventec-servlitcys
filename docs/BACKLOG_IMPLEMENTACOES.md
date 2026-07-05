@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-05
 
 > **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -121,8 +121,8 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-02 | P2 | Série matrícula + população IBGE municipal | Pendente | Onda 1 |
 | INT-03 | P2 | Alertas risco superlotação (capacidade vs. tendência) | Pendente | Onda 1 |
 | INT-04 | P3 | PDF: bloco contexto socioeconómico (IBGE + repasses) | Pendente | Onda 1 |
-| INT-05 | P3 | Import agregado IBGE SIDRA → `municipal_demography_snapshots` | Pendente | Onda 1 |
-| INT-06 | P3 | SICONFI indicadores por ente (API Tesouro) | Pendente | Onda 1 |
+| INT-05 | P3 | Import agregado IBGE SIDRA → `municipal_demography_snapshots` | Parcial (pop. total e 4–17 no Horizonte; ampliar § HOR-06) | Onda 1 |
+| INT-06 | P3 | SICONFI indicadores por ente (API Tesouro) | Concluído (7.0.0) | Onda 1 |
 | INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Parcial (lacuna por faixa, cenários, mapa territorial, demanda×oferta) | Onda 2 |
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
@@ -140,6 +140,29 @@ Detalhe: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) §
 | CUN-03 | P3 | Busca ativa: match CPF/NIS Conecta ↔ i-Educar (módulo admin, LGPD) | Pendente | Onda 2–3 |
 
 *Complementa INT-07 (entregue parcialmente). Qualidade de cadastro i-Educar (P0):* [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
+
+---
+
+## J. Horizonte — enriquecimento por bases públicas
+
+Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md) §11.2–§11.9.
+
+| ID | Prioridade | Item | Estado | Janela / fase |
+|----|------------|------|--------|---------------|
+| HOR-01 | **P1** | Geo INEP escolas no mapa Horizonte (camada + cluster por UF/município) | Pendente | Onda 0 · v2.2a |
+| HOR-02 | **P1** | Momentum Educacenso — Δ matrículas 5 anos no modal e no scorer | Concluído (7.0.0) | Onda 0 · v2.2a |
+| HOR-03 | **P1** | Série IDEB/SAEB no modal + dimensão `learning_trajectory` | Concluído (7.0.0) | Onda 0 · v2.2a |
+| HOR-04 | P2 | SICONFI no modal + dimensão `fiscal_capacity` | Concluído (7.0.0) | Onda 1 · INT-06 · v2.2b |
+| HOR-05 | P2 | IDHM educação — coroplético mapa + pílula modal (Atlas IPEA) | Pendente | Onda 1 · v2.2b |
+| HOR-06 | P2 | SIDRA ampliado (urbanização, migração, domicílios) | Pendente | Onda 1 · INT-05 · v2.2c |
+| HOR-07 | P2 | Programas FNDE agregados (PDDE, PNAE, PNATE) por município | Pendente | Onda 1 · v2.2c |
+| HOR-08 | P2 | Portal Transparência — convénios e empenhos tech/educação | Concluído (7.0.0) | Onda 1 · v2.2c |
+| HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
+| HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Pendente | Onda 2 |
+| HOR-11 | P2 | Segmentos comerciais novos (momentum, fiscal, fragmentação rede) | Pendente | v2.2 · depende HOR-01–04 |
+| HOR-12 | P2 | Corredor regional — cluster consultoria + prospectos adjacentes | Pendente | v2.2 |
+| HOR-13 | P2 | Comparativo antes/depois `compliance_score` (clientes) | Pendente | v3 |
+| HOR-14 | P2 | Versão mão — detecção automática + alternância manual | Concluído | v6.5 |
 
 ---
 
@@ -185,7 +208,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | NOVO-XX | P? | Descrição curta | Pendente | Origem (issue, reunião, doc) |
 ```
 
-1. Inserir na secção correcta (A–I).
+1. Inserir na secção correcta (A–J).
 2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Ao concluir, mover linha para **G** e atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
 4. Sugestão de cadastro/integração → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §F.

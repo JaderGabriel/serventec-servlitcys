@@ -200,6 +200,34 @@ html.serv-horizonte-muni-modal-open body {
     color: rgb(15 23 42);
 }
 
+.serv-horizonte-muni-modal__saeb-trend {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.08rem 0.42rem;
+    border-radius: 999px;
+    border: 1px solid rgb(203 213 225 / 0.95);
+    background: rgb(248 250 252 / 0.98);
+    color: rgb(71 85 105);
+}
+
+.serv-horizonte-muni-modal__saeb-trend--up {
+    color: rgb(4 120 87);
+    border-color: rgb(167 243 208 / 0.95);
+    background: rgb(236 253 245 / 0.98);
+}
+
+.serv-horizonte-muni-modal__saeb-trend--down {
+    color: rgb(190 18 60);
+    border-color: rgb(254 205 211 / 0.95);
+    background: rgb(255 241 242 / 0.98);
+}
+
+.serv-horizonte-muni-modal__saeb-trend--stable {
+    color: rgb(180 83 9);
+    border-color: rgb(253 230 138 / 0.95);
+    background: rgb(255 251 235 / 0.98);
+}
+
 .serv-horizonte-muni-modal__fact__icon {
     width: 0.8125rem;
     height: 0.8125rem;
@@ -2140,6 +2168,96 @@ html.serv-horizonte-muni-modal-open body {
 }
 
 .dark .serv-horizonte-muni-tooltip__dim-glossary-indicates span {
+    color: rgb(148 163 184);
+}
+
+.serv-horizonte-muni-tooltip__enrichment {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+
+.serv-horizonte-muni-tooltip__enrich-block {
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.55rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: rgb(248 250 252 / 0.75);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block {
+    border-color: rgb(51 65 85 / 0.85);
+    background: rgb(15 23 42 / 0.55);
+}
+
+.serv-horizonte-muni-tooltip__enrich-title {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0 0.35rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-title {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-muni-tooltip__enrich-ano {
+    font-weight: 600;
+    font-size: 0.625rem;
+    color: rgb(100 116 139);
+}
+
+.serv-horizonte-muni-tooltip__enrich-rows {
+    display: grid;
+    gap: 0.28rem;
+}
+
+.serv-horizonte-muni-tooltip__enrich-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+}
+
+.serv-horizonte-muni-tooltip__enrich-label {
+    color: rgb(100 116 139);
+    flex: 1 1 auto;
+}
+
+.serv-horizonte-muni-tooltip__enrich-value {
+    font-weight: 600;
+    color: rgb(15 23 42);
+    text-align: right;
+    flex: 0 0 auto;
+}
+
+.serv-horizonte-muni-tooltip__enrich-value--warn {
+    color: rgb(180 83 9);
+}
+
+.serv-horizonte-muni-tooltip__enrich-value--trend-down {
+    color: rgb(190 18 60);
+}
+
+.serv-horizonte-muni-tooltip__enrich-value--trend-up {
+    color: rgb(4 120 87);
+}
+
+.serv-horizonte-muni-tooltip__enrich-sub {
+    display: block;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: rgb(100 116 139);
+}
+
+.serv-horizonte-muni-tooltip__enrich-foot {
+    margin: 0.35rem 0 0;
+    font-size: 0.625rem;
     color: rgb(148 163 184);
 }
 

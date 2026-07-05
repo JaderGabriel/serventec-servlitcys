@@ -308,8 +308,16 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_EDUCACENSO_ALLOW_EMPTY` | `false` | Marca ano como concluído mesmo sem matrículas agregadas |
 | `HORIZONTE_EDUCACENSO_YEARS_PER_STEP` | `1` | Anos Educacenso processados por invocação (máx. 5) |
 | `HORIZONTE_EDUCACENSO_MEMORY_LIMIT` | `1024M` | RAM da fase Educacenso no `horizonte:fortnightly-feed` |
+| `HORIZONTE_SICONFI_ENABLED` | `true` | Activa importação SICONFI / RREO |
+| `HORIZONTE_SICONFI_BASE_URL` | URL apidatalake Tesouro | Base API SICONFI |
+| `HORIZONTE_SICONFI_HTTP_TIMEOUT` | `45` | Timeout HTTP SICONFI (segundos) |
+| `HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP` | `8` | Municípios por lote (`horizonte:sync-siconfi` / fase `siconfi_sync`) |
+| `HORIZONTE_SICONFI_PERIOD` | `6` | Período RREO (1–6, bimestre) |
+| `HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP` | `5` | Municípios por lote Portal da Transparência |
+| `HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT` | `25` | Timeout HTTP Portal da Transparência |
+| `PORTAL_TRANSPARENCIA_API_KEY` | — | Chave API Portal (obrigatória para `horizonte:sync-transparency`) |
 
-Comando: `php artisan horizonte:sync-municipal-alerts` · Malha municipal: `php artisan horizonte:import-municipal-geo --all` · Auditoria série: `php artisan horizonte:verify-educacenso-coverage` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9–§6.10, §8–§9.1 e `php artisan horizonte:fortnightly-feed --help`.
+Comando: `php artisan horizonte:sync-municipal-alerts` · SICONFI: `php artisan horizonte:sync-siconfi` · Transparência: `php artisan horizonte:sync-transparency` · Malha municipal: `php artisan horizonte:import-municipal-geo --all` · Auditoria série: `php artisan horizonte:verify-educacenso-coverage` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9–§6.11, §9.1d–§9.1e e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

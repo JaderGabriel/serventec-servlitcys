@@ -44,6 +44,8 @@ final class HorizonteFortnightlyFeedService
         private readonly HorizonteTesouroTransferSyncService $tesouroTransferSync,
         private readonly HorizonteEducacensoMatriculasSyncService $educacensoMatriculas,
         private readonly HorizonteIbgeMunicipalGeoImportService $municipalGeoImport,
+        private readonly HorizonteSiconfiMunicipalSyncService $siconfiSync,
+        private readonly HorizonteMunicipalTransparencySyncService $transparencySync,
     ) {}
 
     /**
@@ -197,6 +199,8 @@ final class HorizonteFortnightlyFeedService
             'cadunico_sync' => $this->syncCadunicoNacional($options),
             'sidra_demography' => $this->importSidraDemography($options),
             'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
+            'siconfi_sync' => $this->syncSiconfi($refYear, $options),
+            'transparency_sync' => $this->syncTransparency($refYear, $options),
             'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
             'ibge_catalog' => $this->warmIbgeCatalog($options),
             'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
@@ -461,6 +465,8 @@ final class HorizonteFortnightlyFeedService
             'skip_cadunico' => (bool) ($options['skip_cadunico'] ?? false),
             'skip_sidra' => (bool) ($options['skip_sidra'] ?? false),
             'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
+            'skip_siconfi' => (bool) ($options['skip_siconfi'] ?? false),
+            'skip_transparency' => (bool) ($options['skip_transparency'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
             'skip_ibge_municipal_geo' => (bool) ($options['skip_ibge_municipal_geo'] ?? false),
@@ -957,6 +963,60 @@ final class HorizonteFortnightlyFeedService
         $this->debugLog($options, __('Repasses Tesouro — FUNDEB CKAN nacional…'));
 
         return $this->tesouroTransferSync->syncNationalFundeb($refYear, $options);
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int, partial?: bool, skipped?: bool}
+     */
+    private function syncSiconfi(int $refYear, array $options = []): array
+    {
+        $this->debugLog($options, __('SICONFI — indicadores fiscais municipais (RREO)…'));
+        try {
+            $result = $this->siconfiSync->syncBatch(array_merge($options, [
+                'year' => $refYear,
+                'uf' => HorizonteUfScope::normalize($options['uf'] ?? null),
+            ]));
+            $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return $result;
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.siconfi_sync_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'message' => __('SICONFI: importação indisponível neste passo.'),
+                'imported' => 0,
+            ];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int, partial?: bool, skipped?: bool}
+     */
+    private function syncTransparency(int $refYear, array $options = []): array
+    {
+        $this->debugLog($options, __('Portal da Transparência — convénios e empenhos…'));
+        try {
+            $result = $this->transparencySync->syncBatch(array_merge($options, [
+                'year' => $refYear,
+                'uf' => HorizonteUfScope::normalize($options['uf'] ?? null),
+            ]));
+            $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return $result;
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.transparency_sync_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'success' => true,
+                'skipped' => true,
+                'message' => __('Transparência: importação indisponível neste passo.'),
+                'imported' => 0,
+            ];
+        }
     }
 
     /**

@@ -144,6 +144,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:fortnightly-feed` | Sincroniza dados públicos **nacionais** para o mapa Horizonte: FUNDEB, Censo, Educacenso (série matrículas), CadÚnico, SIDRA, repasses, SAEB, catálogo IBGE, **malha municipal**, SGE, verificação oficial. Fases incrementais: `--phase=educacenso` (passos ano×UF), `--phase=censo_matriculas`, `--phase=saeb_planilhas`, `--phase=ibge_catalog`, `--phase=ibge_municipal_geo`, `--phase=sidra_demography` (repetir até concluir; `--reset` recomeça o lote da fase). |
 | `horizonte:verify-educacenso-coverage` | Audita cobertura da janela Educacenso em municípios aleatórios (`--sample=50`, `--seed=`, `--json`). |
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
+| `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--dry-run`. Fase `siconfi_sync` no feed. |
+| `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
 
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
@@ -168,6 +170,10 @@ php artisan horizonte:fortnightly-feed --phase=ibge_catalog
 php artisan horizonte:fortnightly-feed --phase=sidra_demography --reset
 php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
 php artisan horizonte:sync-municipal-alerts --dry-run
+php artisan horizonte:sync-siconfi --limit=8
+php artisan horizonte:sync-transparency --limit=5
+php artisan horizonte:fortnightly-feed --phase=siconfi_sync
+php artisan horizonte:fortnightly-feed --phase=transparency_sync
 php artisan schedule:list | grep horizonte
 ```
 

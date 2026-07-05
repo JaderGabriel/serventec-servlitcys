@@ -33,13 +33,29 @@ return [
     'medium_opportunity_threshold' => max(1, min(98, (int) env('HORIZONTE_MEDIUM_THRESHOLD', 40))),
 
     'weights' => [
-        'financial_pressure' => 0.22,
-        'pedagogical_gap' => 0.18,
-        'scale' => 0.12,
-        'social_demand' => 0.18,
-        'transfer_dependency' => 0.10,
-        'data_readiness' => 0.10,
-        'benefit_scale' => 0.10,
+        'financial_pressure' => 0.18,
+        'pedagogical_gap' => 0.16,
+        'scale' => 0.10,
+        'social_demand' => 0.16,
+        'transfer_dependency' => 0.08,
+        'fiscal_capacity' => 0.10,
+        'enrollment_momentum' => 0.06,
+        'data_readiness' => 0.08,
+        'benefit_scale' => 0.08,
+    ],
+
+    'siconfi' => [
+        'enabled' => filter_var(env('HORIZONTE_SICONFI_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'base_url' => env('HORIZONTE_SICONFI_BASE_URL', 'https://apidatalake.tesouro.gov.br/ords/siconfi/tt'),
+        'http_timeout' => max(15, (int) env('HORIZONTE_SICONFI_HTTP_TIMEOUT', 45)),
+        'page_limit' => max(500, min(5000, (int) env('HORIZONTE_SICONFI_PAGE_LIMIT', 5000))),
+        'period' => max(1, min(6, (int) env('HORIZONTE_SICONFI_PERIOD', 6))),
+        'municipios_per_step' => max(1, min(50, (int) env('HORIZONTE_SICONFI_MUNICIPIOS_PER_STEP', 8))),
+    ],
+
+    'transparency' => [
+        'municipios_per_step' => max(1, min(30, (int) env('HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP', 5))),
+        'http_timeout' => max(10, (int) env('HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT', 25)),
     ],
 
     'sidra' => [
