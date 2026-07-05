@@ -182,7 +182,7 @@ php artisan schedule:list | grep horizonte
 
 Documentação: [HORIZONTE.md](HORIZONTE.md) §9.1 · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 · variáveis §11b em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
 
-**Hub admin:** `/admin/dados-publicos?hub=horizonte` · botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`)
+| **Hub admin:** `/admin/horizonte/abastecimento` · seleccionar fases e executar (POST `admin.horizonte-import.feed`)
 
 ---
 

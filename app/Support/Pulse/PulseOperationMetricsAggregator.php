@@ -107,6 +107,10 @@ final class PulseOperationMetricsAggregator
             return __('i-Educar :ctx', ['ctx' => substr($key, strlen('ieducar:'))]);
         }
 
+        if (str_starts_with($key, 'horizonte:')) {
+            return __('Horizonte :ctx', ['ctx' => substr($key, strlen('horizonte:'))]);
+        }
+
         return $key;
     }
 }

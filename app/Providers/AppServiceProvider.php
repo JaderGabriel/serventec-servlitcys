@@ -8,6 +8,7 @@ use App\Livewire\Pulse\DatabaseDiagnosticsCard;
 use App\Livewire\Pulse\ApplicationInsightsCard;
 use App\Livewire\Pulse\DatabaseHealthCard;
 use App\Livewire\Pulse\DiskSpaceCard;
+use App\Livewire\Pulse\HorizonteOperationsPulseCard;
 use App\Livewire\Pulse\InstitutionTrafficCard;
 use App\Livewire\Pulse\MonitoringExecutiveStrip;
 use App\Livewire\Pulse\MunicipalDatabaseDiagnosticsCard;
@@ -111,6 +112,7 @@ class AppServiceProvider extends ServiceProvider
         Livewire::component('pulse.disk-space-card', DiskSpaceCard::class);
         Livewire::component('pulse.server-status-strip', ServerStatusStrip::class);
         Livewire::component('pulse.sync-admin-pulse-card', SyncAdminPulseCard::class);
+        Livewire::component('pulse.horizonte-operations-pulse-card', HorizonteOperationsPulseCard::class);
         Livewire::component('pulse.monitoring-executive-strip', MonitoringExecutiveStrip::class);
         Livewire::component('pulse.database-diagnostics-card', DatabaseDiagnosticsCard::class);
         Livewire::component('pulse.municipal-database-diagnostics-card', MunicipalDatabaseDiagnosticsCard::class);

@@ -627,7 +627,7 @@
                                 <p class="text-xs text-slate-400 mb-2">{{ __('Actualizar dados') }}</p>
                                 <code class="block text-xs text-emerald-300 font-mono break-all" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
                                 @if ($canRefreshData)
-                                    <a :href="meta.hub_url || @js(route('admin.public-data.index', ['hub' => 'horizonte']))" class="mt-2 inline-block text-xs font-medium text-sky-300 hover:underline">{{ __('Hub Horizonte') }} →</a>
+                                    <a :href="meta.hub_url || @js(route('admin.horizonte-import.index'))" class="mt-2 inline-block text-xs font-medium text-sky-300 hover:underline">{{ __('Hub Horizonte') }} →</a>
                                 @endif
                             </div>
                         </div>

@@ -91,4 +91,19 @@ final class PulseOperationRecorder
 
         return $key;
     }
+
+    public static function horizonteMapKey(string $scope, ?string $uf = null, bool $cacheHit = false): string
+    {
+        $key = 'horizonte:map:'.$scope;
+        if ($uf !== null && $uf !== '') {
+            $key .= '|uf:'.$uf;
+        }
+
+        return $key.($cacheHit ? '|cache:hit' : '|cache:miss');
+    }
+
+    public static function horizonteFeedPhaseKey(string $phaseKey): string
+    {
+        return 'horizonte:feed:phase:'.$phaseKey;
+    }
 }

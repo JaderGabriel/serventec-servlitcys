@@ -36,6 +36,7 @@ use App\Support\Horizonte\HorizonteSaebLookupYears;
 use App\Support\Horizonte\HorizonteSaebTrend;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -79,10 +80,15 @@ final class HorizonteMapService
 
         $cached = AdminHomeMapCache::get($cacheKey);
         if (is_array($cached)) {
+            PulseOperationRecorder::record(PulseOperationRecorder::horizonteMapKey('build', null, true), 1);
+
             return $cached;
         }
 
-        $payload = $this->assemble($refYear, requireCoordinates: true);
+        $payload = PulseOperationRecorder::measure(
+            PulseOperationRecorder::horizonteMapKey('build', null, false),
+            fn (): array => $this->assemble($refYear, requireCoordinates: true),
+        );
         AdminHomeMapCache::repository()->put(
             $cacheKey,
             $payload,
@@ -107,11 +113,14 @@ final class HorizonteMapService
         $fingerprint = $this->dataFingerprint();
         $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
         $uf = \App\Support\Horizonte\HorizonteUfScope::normalize($uf);
+        $mapScope = $scope === 'regional' && $uf !== null ? 'regional' : 'overview';
 
         if ($scope === 'regional' && $uf !== null) {
             $responseKey = 'horizonte:map:regional-response:v3:'.$refYear.':'.$uf.':'.$fingerprint;
             $cachedResponse = AdminHomeMapCache::get($responseKey);
             if (is_array($cachedResponse)) {
+                PulseOperationRecorder::record(PulseOperationRecorder::horizonteMapKey('regional', $uf, true), 1);
+
                 return $this->attachNationalUfRankings($cachedResponse, $refYear, $fingerprint);
             }
 
@@ -119,6 +128,7 @@ final class HorizonteMapService
             $repo = AdminHomeMapCache::repository();
             $assembledRegional = $repo->get($regKey);
             if (is_array($assembledRegional)) {
+                PulseOperationRecorder::record(PulseOperationRecorder::horizonteMapKey('regional', $uf, true), 1);
                 $built = $this->asRegionalPayload($assembledRegional, $uf);
                 $payload = $this->attachNationalUfRankings($built, $refYear, $fingerprint);
                 $staleTtl = max($ttl, 86400);
@@ -143,7 +153,10 @@ final class HorizonteMapService
                     $repo = AdminHomeMapCache::repository();
                     $regional = $repo->get($regKey);
                     if (! is_array($regional)) {
-                        $regional = $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf);
+                        $regional = PulseOperationRecorder::measure(
+                            PulseOperationRecorder::horizonteMapKey('regional', $uf, false),
+                            fn (): array => $this->assemble($refYear, requireCoordinates: true, scopeUf: $uf),
+                        );
                         $repo->put($regKey, $regional, $ttl);
                     }
 
@@ -165,8 +178,11 @@ final class HorizonteMapService
             $overviewKey,
             $staleKey,
             $lockKey,
-            function () use ($refYear): array {
-                $assembled = $this->assemble($refYear, requireCoordinates: false);
+            function () use ($refYear, $mapScope): array {
+                $assembled = PulseOperationRecorder::measure(
+                    PulseOperationRecorder::horizonteMapKey($mapScope, null, false),
+                    fn (): array => $this->assemble($refYear, requireCoordinates: false),
+                );
 
                 return $this->asOverviewPayload($assembled);
             },

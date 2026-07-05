@@ -101,7 +101,7 @@
 
         <x-slot name="shortcuts">
             <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub">{{ __('Horizonte') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.horizonte-import.index') }}">{{ __('Horizonte') }}</x-admin.import-hub.link-chip>
             @if (auth()->user()?->canViewHorizonte())
                 <x-admin.import-hub.link-chip tone="indigo" href="{{ route('dashboard.horizonte') }}">{{ __('Mapa Horizonte') }}</x-admin.import-hub.link-chip>
             @endif

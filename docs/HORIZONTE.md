@@ -509,7 +509,7 @@ O script `horizonte-sync-br-continue.sh` executa `horizonte:fortnightly-feed --a
 
 O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância), detecta OOM/parcial e exporta `HORIZONTE_SAEB_MEMORY_LIMIT=2048M` por defeito. **Não** corra em paralelo com `php artisan horizonte:fortnightly-feed` manual.
 
-**Hub admin:** `/admin/dados-publicos?hub=horizonte` · painéis `#horizonte-hub`, `#horizonte-educacenso-sync`, `#horizonte-municipal-geo-sync` — cobertura nacional (FUNDEB, Censo, SAEB, CadÚnico, SIDRA, repasses, **malha IBGE**), botão «Abastecer Horizonte» com skips por fase, **export/import de pacote offline v2** e ligações a cada fonte. Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11.
+**Hub admin:** `/admin/horizonte/abastecimento` · seleccionar fases e executar (POST `admin.horizonte-import.feed`)
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 

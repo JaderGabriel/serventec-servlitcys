@@ -41,6 +41,8 @@ return [
       'sync_stale_days' => max(1, (int) env('MODULE_MONITOR_SYNC_STALE_DAYS', 14)),
       'sync_failure_window_days' => max(1, (int) env('MODULE_MONITOR_SYNC_FAILURE_WINDOW_DAYS', 7)),
       'public_data_cache_stale_hours' => max(1, (int) env('MODULE_MONITOR_PUBLIC_DATA_STALE_HOURS', 48)),
+      /** Abastecimento bimestral Horizonte — alerta se último feed concluído exceder este prazo (dias). */
+      'horizonte_feed_stale_days' => max(14, (int) env('MODULE_MONITOR_HORIZONTE_FEED_STALE_DAYS', 70)),
   ],
 
 ];

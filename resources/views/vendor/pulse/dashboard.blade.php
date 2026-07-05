@@ -66,6 +66,14 @@
                 icon="cloud-arrow-up"
             />
             <livewire:pulse.sync-admin-pulse-card cols="full" rows="1" />
+
+            <x-pulse-dashboard.section
+                :title="__('Horizonte — mapa nacional')"
+                :subtitle="__('Montagem do mapa GIS, recortes por UF e fases do abastecimento bimestral (`horizonte:*`).')"
+                accent="teal"
+                icon="globe-alt"
+            />
+            <livewire:pulse.horizonte-operations-pulse-card cols="full" rows="1" />
         </div>
 
         {{-- Painel: Infraestrutura --}}

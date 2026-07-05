@@ -40,7 +40,7 @@
                     </a>
                 @endif
                 @if ($canRunFeed)
-                    <a href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub" class="rounded-lg bg-sky-600 px-3 py-2 font-medium text-white hover:bg-sky-500">
+                    <a href="{{ route('admin.horizonte-import.index') }}" class="rounded-lg bg-sky-600 px-3 py-2 font-medium text-white hover:bg-sky-500">
                         {{ __('Abastecer no hub') }} →
                     </a>
                 @endif
@@ -85,7 +85,7 @@
         </x-admin.import-hub.stats-grid>
 
         @if ($pipeline !== null)
-            @include('admin.public-data.partials.horizonte-feed-pipeline', [
+            @include('admin.horizonte-import.partials.feed-pipeline', [
                 'pipeline' => $pipeline,
                 'stepInterval' => $hub['feed_step_interval'] ?? 20,
             ])

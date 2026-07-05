@@ -15,6 +15,7 @@ class ModuleMonitorCatalogTest extends TestCase
         $this->assertContains('analytics', $ids);
         $this->assertContains('educacenso', $ids);
         $this->assertContains('geo', $ids);
+        $this->assertContains('horizonte', $ids);
         $this->assertContains('queue', $ids);
     }
 
@@ -35,6 +36,16 @@ class ModuleMonitorCatalogTest extends TestCase
         $this->assertSame(
             'educacenso',
             ModuleMonitorCatalog::moduleIdForPulseKey('educacenso:analysis|cid:1')
+        );
+
+        $this->assertSame(
+            'horizonte',
+            ModuleMonitorCatalog::moduleIdForPulseKey('horizonte:map:overview|cache:miss')
+        );
+
+        $this->assertSame(
+            'horizonte',
+            ModuleMonitorCatalog::moduleIdForPulseKey('http:route:dashboard.horizonte.map-data')
         );
     }
 

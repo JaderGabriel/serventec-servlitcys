@@ -462,8 +462,8 @@ final class ArtisanCommandsCatalog
                 'id' => 'horizonte',
                 'title' => __('Horizonte — inteligência comercial'),
                 'description' => __('Abastecimento nacional do mapa de oportunidade municipal (FUNDEB, Censo, SAEB, CadÚnico, IBGE, repasses).'),
-                'admin_route' => 'admin.public-data.index',
-                'admin_route_query' => ['hub' => 'horizonte'],
+                'admin_route' => 'admin.horizonte-import.index',
+                'admin_route_query' => null,
                 'commands' => [
                     [
                         'name' => 'horizonte:fortnightly-feed',

@@ -23,6 +23,7 @@ use App\Support\Horizonte\HorizonteSiconfiSyncProgress;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
 use App\Support\Horizonte\HorizonteUfScope;
 use App\Support\InepMicrodadosCadastroEscolasPath;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 
@@ -196,27 +197,34 @@ final class HorizonteFortnightlyFeedService
     {
         $this->applyResourceLimits($phaseKey);
         $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+        $pulseKey = PulseOperationRecorder::horizonteFeedPhaseKey($phaseKey);
 
-        $result = match ($phaseKey) {
-            'fundeb_receita' => $this->syncFundebReceitaNacional($refYear, $options),
-            'censo_matriculas' => $this->indexCensoMatriculas($options),
-            'educacenso' => $this->importEducacensoMatriculas($options),
-            'cadunico_sync' => $this->syncCadunicoNacional($options),
-            'sidra_demography' => $this->importSidraDemography($options),
-            'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
-            'siconfi_sync' => $this->syncSiconfi($refYear, $options),
-            'transparency_sync' => $this->syncTransparency($refYear, $options),
-            'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
-            'ibge_catalog' => $this->warmIbgeCatalog($options),
-            'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
-            'sge_registry' => $this->syncSgeRegistry($options),
-            'municipal_alerts' => $this->syncMunicipalAlerts($options),
-            'official_check' => $this->runOfficialCheck($options),
-            default => [
-                'success' => false,
-                'message' => __('Fase Horizonte desconhecida: :key', ['key' => $phaseKey]),
-            ],
-        };
+        $result = PulseOperationRecorder::measure($pulseKey, function () use ($phaseKey, $options, $refYear): array {
+            return match ($phaseKey) {
+                'fundeb_receita' => $this->syncFundebReceitaNacional($refYear, $options),
+                'censo_matriculas' => $this->indexCensoMatriculas($options),
+                'educacenso' => $this->importEducacensoMatriculas($options),
+                'cadunico_sync' => $this->syncCadunicoNacional($options),
+                'sidra_demography' => $this->importSidraDemography($options),
+                'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
+                'siconfi_sync' => $this->syncSiconfi($refYear, $options),
+                'transparency_sync' => $this->syncTransparency($refYear, $options),
+                'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
+                'ibge_catalog' => $this->warmIbgeCatalog($options),
+                'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
+                'sge_registry' => $this->syncSgeRegistry($options),
+                'municipal_alerts' => $this->syncMunicipalAlerts($options),
+                'official_check' => $this->runOfficialCheck($options),
+                default => [
+                    'success' => false,
+                    'message' => __('Fase Horizonte desconhecida: :key', ['key' => $phaseKey]),
+                ],
+            };
+        });
+
+        if (($result['success'] ?? true) === false) {
+            PulseOperationRecorder::recordFailure($pulseKey);
+        }
 
         return array_merge(['key' => $phaseKey], $result);
     }

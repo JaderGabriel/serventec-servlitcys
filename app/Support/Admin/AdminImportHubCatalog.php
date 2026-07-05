@@ -44,9 +44,9 @@ final class AdminImportHubCatalog
             ],
             [
                 'key' => 'horizonte',
-                'route' => 'admin.public-data.index',
-                'query' => ['hub' => 'horizonte'],
-                'fragment' => 'horizonte-hub',
+                'route' => 'admin.horizonte-import.index',
+                'query' => null,
+                'fragment' => null,
                 'label' => __('Horizonte'),
                 'hint' => __('Mapa de oportunidade — abastecimento nacional'),
                 'accent' => AdminVisualCatalog::shellAccentForHubKey('horizonte'),

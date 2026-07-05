@@ -436,7 +436,7 @@ final class HorizonteMapPresenter
             'needs_refresh' => $needsRefresh,
             'refresh_command' => 'php artisan horizonte:fortnightly-feed',
             'refresh_dry_run_command' => 'php artisan horizonte:fortnightly-feed --dry-run',
-            'hub_url' => route('admin.public-data.index', ['hub' => 'horizonte']),
+            'hub_url' => route('admin.horizonte-import.index'),
             'message' => $message,
         ];
     }

@@ -129,7 +129,7 @@ function inferLoadingPreset(form) {
 
     if (writeMethod) {
         if (
-            /\/admin\/(geo-sync|pedagogical-sync|dados-publicos)(\/|$)|fundeb-sync|fundeb-import|sync-queue\/.*\/resume/i.test(
+            /\/admin\/(geo-sync|pedagogical-sync|dados-publicos|horizonte\/abastecimento)(\/|$)|fundeb-sync|fundeb-import|sync-queue\/.*\/resume/i.test(
                 path,
             )
         ) {
@@ -161,7 +161,7 @@ function inferLoadingPreset(form) {
             return "diagnostic";
         }
         if (
-            /\/admin\/(conexoes|sync-queue|ieducar-compatibility|geo-sync|pedagogical-sync|dados-publicos)/i.test(
+            /\/admin\/(conexoes|sync-queue|ieducar-compatibility|geo-sync|pedagogical-sync|dados-publicos|horizonte\/abastecimento)/i.test(
                 path,
             )
         ) {

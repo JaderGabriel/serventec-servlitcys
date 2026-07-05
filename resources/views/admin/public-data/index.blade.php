@@ -4,16 +4,16 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Dados públicos') }}
+                {{ __('Dados públicos — consultoria') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Fontes oficiais (FNDE, INEP, MDS/Cecad, Tesouro) fora do i-Educar — alimentam consultoria, relatório PDF e mapa Horizonte.') }}
+                {{ __('Fontes oficiais por município (FNDE, INEP, MDS/Cecad, Tesouro) que alimentam a consultoria Analytics, relatório PDF e Finanças → Tempo Real. O abastecimento nacional do mapa Horizonte tem hub próprio.') }}
             </p>
         </div>
     </x-slot>
 
     @php
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-sm';
+        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm';
         $fundeb = $snapshot['fundeb'] ?? [];
         $censo = $snapshot['censo'] ?? [];
         $transfers = $snapshot['transfers'] ?? [];
@@ -21,24 +21,18 @@
         $cadunico = $snapshot['cadunico'] ?? [];
         $md = $snapshot['microdados'] ?? [];
         $syncYears = $snapshot['sync_years'] ?? [];
-    @endphp
-
-    @php
         $hubActive = $hubActive ?? 'hub';
         $isRepassesFocus = $hubActive === 'repasses';
-        $isHorizonteFocus = $hubActive === 'horizonte';
     @endphp
 
     <x-admin.import-hub.shell
         :active="$hubActive"
-        :accent="$isHorizonteFocus ? 'indigo' : ($isRepassesFocus ? 'emerald' : 'emerald')"
-        :eyebrow="$isHorizonteFocus ? __('Horizonte') : ($isRepassesFocus ? __('Repasses / Tempo Real') : __('Hub de dados públicos'))"
-        :title="$isHorizonteFocus ? __('Abastecimento nacional — mapa de oportunidade') : ($isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura'))"
-        :description="$isHorizonteFocus
-            ? __('FUNDEB receita, Censo matrículas, SAEB planilhas INEP e catálogo IBGE para prospectos no mapa Horizonte. Use a rotina bimestral ou importe fontes individuais abaixo.')
-            : ($isRepassesFocus
+        accent="emerald"
+        :eyebrow="$isRepassesFocus ? __('Repasses / Tempo Real') : __('Consultoria municipal')"
+        :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura por município')"
+        :description="$isRepassesFocus
             ? __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real na consultoria.')
-            : __('Com base no modelo do relatório PDF ATM e na planilha Serventec: VAAF FNDE, Censo INEP, repasses e SAEB. Alimenta consultoria, PDF e mapa Horizonte. Dados do i-Educar continuam em VAAF e sincronizações específicas.'))"
+            : __('VAAF FNDE, Censo INEP, repasses, SAEB e CadÚnico por município — alimentam consultoria e PDF ATM. Dados do i-Educar continuam em VAAF e sincronizações específicas.')"
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"
         :doc-label="__('Documentação de importação')"
     >
@@ -48,8 +42,8 @@
             </x-admin.import-hub.badge>
             <x-admin.import-hub.badge>{{ __('IBGE: :n', ['n' => $snapshot['cities_with_ibge'] ?? 0]) }}</x-admin.import-hub.badge>
             <x-admin.import-hub.badge>{{ __('Anos FUNDEB: :anos', ['anos' => implode(', ', array_map('strval', $syncYears))]) }}</x-admin.import-hub.badge>
-            <a href="{{ route('admin.documentation.show', ['doc' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md']) }}" class="rounded-full bg-violet-50 dark:bg-violet-950/40 px-3 py-1 font-medium text-violet-800 dark:text-violet-200 ring-1 ring-violet-200/80 dark:ring-violet-800 hover:bg-violet-100 dark:hover:bg-violet-900/50 text-xs">
-                {{ __('Integrações e previsão de demanda') }} →
+            <a href="{{ route('admin.horizonte-import.index') }}" class="rounded-full bg-sky-50 dark:bg-sky-950/40 px-3 py-1 font-medium text-sky-800 dark:text-sky-200 ring-1 ring-sky-200/80 dark:ring-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/50 text-xs">
+                {{ __('Hub Horizonte') }} →
             </a>
         </x-slot>
 
@@ -84,10 +78,6 @@
             'officialCheckScheduleTime' => $officialCheckScheduleTime ?? '07:00',
         ])
 
-        @include('admin.public-data.partials.horizonte-hub-panel', [
-            'horizonteHub' => $horizonteHub ?? [],
-        ])
-
         <x-slot name="stats">
             <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 <x-admin.import-hub.stat label="FUNDEB" :value="($fundeb['cities_with_any'] ?? 0).'/'.($snapshot['cities_with_ibge'] ?? 0)" :hint="__('municípios com referência')" tone="amber">
@@ -111,7 +101,7 @@
         </x-slot>
 
         <section class="space-y-3">
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Áreas temáticas') }}</h3>
+            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Áreas temáticas — consultoria') }}</h3>
             @include('admin.partials.import-hub-theme-overview', [
                 'cards' => $themeOverviewCards,
                 'hrefMode' => 'anchor',
@@ -138,7 +128,7 @@
                                     <td class="py-2 pe-4 font-mono">{{ $row['gap_code'] }}</td>
                                     <td class="py-2 pe-4">{{ $row['section'] }}</td>
                                     <td class="py-2">
-                                        <a href="#source-{{ $row['source_id'] }}" class="text-sky-600 dark:text-sky-400 hover:underline">{{ $row['source_id'] }}</a>
+                                        <a href="#source-{{ $row['source_id'] }}" class="text-emerald-600 dark:text-emerald-400 hover:underline">{{ $row['source_id'] }}</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -165,10 +155,10 @@
         </section>
 
         <x-slot name="shortcuts">
-            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('admin.public-data.index', ['hub' => 'horizonte']) }}#horizonte-hub">{{ __('Horizonte — abastecimento') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="indigo" href="{{ route('dashboard.horizonte') }}">{{ __('Mapa Horizonte') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_hint') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.horizonte-import.index') }}">{{ __('Horizonte — abastecimento') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('dashboard.horizonte') }}">{{ __('Mapa Horizonte') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses / Tempo Real') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_hint') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="violet" href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB pedagógico') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="fuchsia" href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico / Cecad') }}</x-admin.import-hub.link-chip>

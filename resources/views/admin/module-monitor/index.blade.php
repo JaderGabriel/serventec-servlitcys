@@ -13,6 +13,7 @@
     $groupLabels = [
         'consultoria' => __('Consultoria'),
         'sincronizacao' => __('Sincronização e importações'),
+        'horizonte' => __('Horizonte'),
         'infra' => __('Infraestrutura'),
     ];
 
@@ -66,7 +67,7 @@
                     {{ __('Monitor de módulos') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Saúde operacional por área — filas admin, Pulse, sondas diárias e incidentes. Módulos em repouso permanecem saudáveis quando a recolha estrutural está actualizada.') }}
+                    {{ __('Saúde operacional por área — filas admin, Pulse, sondas estruturais (a cada :n min) e incidentes. Horizonte: feed bimestral com cobertura triád e fases.', ['n' => (int) config('module_monitor.schedule.interval_minutes', 10)]) }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">

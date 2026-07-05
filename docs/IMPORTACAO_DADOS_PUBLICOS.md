@@ -182,8 +182,8 @@ O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** 
 
 | Onde ver | Rota / artefacto |
 |----------|------------------|
-| Hub | `/admin/dados-publicos?hub=horizonte` · painel **Horizonte — abastecimento nacional** (`#horizonte-hub`) |
-| Abastecimento manual | Botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`) |
+| Hub | `/admin/horizonte/abastecimento` · hub dedicado Horizonte (`#horizonte-hub`) |
+| Abastecimento manual | Seleccionar fases + «Executar fases seleccionadas» (POST `admin.horizonte-import.feed`) |
 | Mapa | `/dashboard/horizonte` |
 | Rotina bimestral | `php artisan horizonte:fortnightly-feed` (dia 1 nos meses 1, 3, 5, 7, 9, 11) |
 | Documentação | [HORIZONTE.md](HORIZONTE.md) §9 |

@@ -9,6 +9,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Support\Admin\ModuleMonitorCatalog;
+use App\Support\Admin\ModuleMonitorHorizonteProbe;
 use App\Support\Admin\ModuleMonitorSnapshotCache;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -153,6 +154,7 @@ final class ModuleMonitorProbeService
             'analytics', 'rx', 'educacenso' => $this->probeConsultoriaModule($moduleId, $system),
             'pdf' => $this->probePdfModule(),
             'public_data' => $this->probePublicDataModule(),
+            'horizonte' => $this->probeHorizonteModule(),
             'connections' => $this->probeConnectionsModule($system),
             'database' => $this->probeDatabaseModule($system),
             'queue' => $this->probeQueueModule($system),
@@ -299,6 +301,28 @@ final class ModuleMonitorProbeService
                 'n' => count($findings),
             ]),
             tags: [__(':n fontes', ['n' => count($findings)])],
+        );
+    }
+
+    /**
+     * @return array{signal: string, detail: string, last_success_at: ?string, last_failure_at: ?string, tags: list<string>}
+     */
+    private function probeHorizonteModule(): array
+    {
+        try {
+            $status = app(HorizonteImportHubStatusService::class)->build();
+        } catch (Throwable) {
+            return $this->probeResult('unknown', __('Não foi possível avaliar cobertura Horizonte.'));
+        }
+
+        $probe = ModuleMonitorHorizonteProbe::probe($status);
+
+        return $this->probeResult(
+            $probe['signal'],
+            $probe['detail'],
+            $probe['last_success_at'],
+            $probe['last_failure_at'],
+            $probe['tags'],
         );
     }
 

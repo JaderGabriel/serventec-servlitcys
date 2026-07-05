@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\LegalDocumentAdminController;
 use App\Http\Controllers\Admin\CadunicoSyncController;
 use App\Http\Controllers\Admin\PedagogicalSyncController;
 use App\Http\Controllers\Admin\HorizonteSgeRegistryController;
+use App\Http\Controllers\Admin\HorizonteImportController;
 use App\Http\Controllers\Admin\PublicDataImportController;
 use App\Http\Controllers\HorizonteController;
 use App\Http\Controllers\AnalyticsDashboardController;
@@ -149,12 +150,20 @@ Route::middleware(['auth', 'verified', 'profile.complete', 'legal.consent', 'adm
 
     Route::get('/admin/dados-publicos', [PublicDataImportController::class, 'index'])->name('admin.public-data.index');
     Route::post('/admin/dados-publicos/verificar-oficial', [PublicDataImportController::class, 'checkOfficial'])->name('admin.public-data.check-official');
-    Route::match(['get', 'post'], '/admin/dados-publicos/horizonte-feed', [PublicDataImportController::class, 'horizonteFeed'])->name('admin.public-data.horizonte-feed');
-    Route::post('/admin/dados-publicos/horizonte-educacenso-sync', [PublicDataImportController::class, 'horizonteEducacensoSync'])->name('admin.public-data.horizonte-educacenso-sync');
-    Route::post('/admin/dados-publicos/horizonte-municipal-geo-sync', [PublicDataImportController::class, 'horizonteMunicipalGeoSync'])->name('admin.public-data.horizonte-municipal-geo-sync');
-    Route::post('/admin/dados-publicos/horizonte-bundle-export', [PublicDataImportController::class, 'horizonteBundleExport'])->name('admin.public-data.horizonte-bundle-export');
-    Route::post('/admin/dados-publicos/horizonte-bundle-import', [PublicDataImportController::class, 'horizonteBundleImport'])->name('admin.public-data.horizonte-bundle-import');
     Route::post('/admin/dados-publicos', [PublicDataImportController::class, 'run'])->name('admin.public-data.run');
+
+    Route::get('/admin/horizonte/abastecimento', [HorizonteImportController::class, 'index'])->name('admin.horizonte-import.index');
+    Route::match(['get', 'post'], '/admin/horizonte/abastecimento/feed', [HorizonteImportController::class, 'feed'])->name('admin.horizonte-import.feed');
+    Route::post('/admin/horizonte/abastecimento/educacenso-sync', [HorizonteImportController::class, 'educacensoSync'])->name('admin.horizonte-import.educacenso-sync');
+    Route::post('/admin/horizonte/abastecimento/municipal-geo-sync', [HorizonteImportController::class, 'municipalGeoSync'])->name('admin.horizonte-import.municipal-geo-sync');
+    Route::post('/admin/horizonte/abastecimento/bundle-export', [HorizonteImportController::class, 'bundleExport'])->name('admin.horizonte-import.bundle-export');
+    Route::post('/admin/horizonte/abastecimento/bundle-import', [HorizonteImportController::class, 'bundleImport'])->name('admin.horizonte-import.bundle-import');
+
+    Route::match(['get', 'post'], '/admin/dados-publicos/horizonte-feed', [HorizonteImportController::class, 'feed'])->name('admin.public-data.horizonte-feed');
+    Route::post('/admin/dados-publicos/horizonte-educacenso-sync', [HorizonteImportController::class, 'educacensoSync'])->name('admin.public-data.horizonte-educacenso-sync');
+    Route::post('/admin/dados-publicos/horizonte-municipal-geo-sync', [HorizonteImportController::class, 'municipalGeoSync'])->name('admin.public-data.horizonte-municipal-geo-sync');
+    Route::post('/admin/dados-publicos/horizonte-bundle-export', [HorizonteImportController::class, 'bundleExport'])->name('admin.public-data.horizonte-bundle-export');
+    Route::post('/admin/dados-publicos/horizonte-bundle-import', [HorizonteImportController::class, 'bundleImport'])->name('admin.public-data.horizonte-bundle-import');
 
     Route::get('/admin/horizonte/sge/{ibge}', [HorizonteSgeRegistryController::class, 'show'])->name('admin.horizonte.sge.show');
     Route::put('/admin/horizonte/sge/{ibge}', [HorizonteSgeRegistryController::class, 'upsert'])->name('admin.horizonte.sge.upsert');

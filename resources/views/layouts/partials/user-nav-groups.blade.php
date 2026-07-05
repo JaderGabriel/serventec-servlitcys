@@ -148,15 +148,23 @@
             'title' => __('Dados públicos'),
             'icon' => 'globe-alt',
             'tone' => 'emerald',
-            'routes' => ['admin.public-data.*', 'admin.geo-sync.*', 'admin.pedagogical-sync.*', 'admin.cadunico-sync.*', 'admin.sync-queue.*', 'sync-queue.*'],
+            'routes' => ['admin.public-data.*', 'admin.horizonte-import.*', 'admin.geo-sync.*', 'admin.pedagogical-sync.*', 'admin.cadunico-sync.*', 'admin.sync-queue.*', 'sync-queue.*'],
             'items' => [
                 [
                     'show' => true,
                     'href' => route('admin.public-data.index'),
-                    'label' => __('Dados públicos'),
+                    'label' => __('Consultoria municipal'),
                     'icon' => 'squares-2x2',
-                    'active' => $req->routeIs('admin.public-data.*') && $req->query('hub', 'hub') === 'hub',
-                    'title' => __('Visão geral, lacunas PDF e fontes por área.'),
+                    'active' => $req->routeIs('admin.public-data.*') && ! $req->routeIs('admin.horizonte-import.*') && $req->query('hub', 'hub') === 'hub',
+                    'title' => __('FUNDEB, Censo, repasses e SAEB por município — alimenta Analytics e PDF.'),
+                ],
+                [
+                    'show' => $user->canViewHorizonte() || $user->isAdmin(),
+                    'href' => route('admin.horizonte-import.index'),
+                    'label' => __('Horizonte — abastecimento'),
+                    'icon' => 'map',
+                    'active' => $req->routeIs('admin.horizonte-import.*'),
+                    'title' => __('Pipeline nacional FUNDEB × Censo × SAEB para o mapa de oportunidade.'),
                 ],
                 [
                     'show' => true,

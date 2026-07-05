@@ -18,7 +18,7 @@ final class ModuleMonitorProbeServiceTest extends TestCase
         $this->assertArrayHasKey('collected_at', $snapshot);
         $this->assertArrayHasKey('modules', $snapshot);
         $this->assertArrayHasKey('analytics', $snapshot['modules']);
-        $this->assertArrayHasKey('geo', $snapshot['modules']);
+        $this->assertArrayHasKey('horizonte', $snapshot['modules']);
         $this->assertContains(
             $snapshot['modules']['analytics']['signal'],
             ['operational', 'idle', 'degraded', 'failed', 'unknown'],

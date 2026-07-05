@@ -100,8 +100,8 @@ final class HomeQuickActionsCatalog
                     [
                         'id' => 'public_data',
                         'href' => route('admin.public-data.index'),
-                        'title' => __('Dados públicos'),
-                        'description' => __('Hub de importação — FUNDEB, CadÚnico, SAEB, repasses Tesouro e abastecimento Horizonte.'),
+                        'title' => __('Consultoria municipal'),
+                        'description' => __('Hub de importação por município — FUNDEB, CadÚnico, SAEB e repasses Tesouro.'),
                         'icon' => 'globe-alt',
                         'kicker' => __('Importação'),
                         'featured' => false,
@@ -109,6 +109,20 @@ final class HomeQuickActionsCatalog
                         'badge_tone' => 'neutral',
                         'alert' => false,
                     ],
+                    ($user?->canViewHorizonte() || $user?->isAdmin())
+                        ? [
+                            'id' => 'horizonte_import',
+                            'href' => route('admin.horizonte-import.index'),
+                            'title' => __('Horizonte — abastecimento'),
+                            'description' => __('Pipeline nacional de dados públicos para o mapa de oportunidade.'),
+                            'icon' => 'map',
+                            'kicker' => __('Horizonte'),
+                            'featured' => false,
+                            'badge' => null,
+                            'badge_tone' => 'neutral',
+                            'alert' => false,
+                        ]
+                        : null,
                     $user?->canImportOrConfigure()
                         ? [
                             'id' => 'module_monitor',

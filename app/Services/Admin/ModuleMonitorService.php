@@ -8,6 +8,7 @@ use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
 use App\Support\Admin\ModuleMonitorCatalog;
+use App\Support\Admin\ModuleMonitorHorizonteProbe;
 use App\Support\Admin\ModuleMonitorSnapshotCache;
 use App\Support\Pulse\PulseAggregateBridge;
 use App\Support\Pulse\PulseOperationMetricsAggregator;
@@ -49,6 +50,7 @@ final class ModuleMonitorService
         $snapshot = ModuleMonitorSnapshotCache::get();
         $probes = is_array($snapshot['modules'] ?? null) ? $snapshot['modules'] : [];
         $snapshotFresh = ModuleMonitorSnapshotCache::isFresh($snapshot);
+        $horizonteKpi = $this->horizonteKpiSummary();
 
         $modules = [];
         foreach (ModuleMonitorCatalog::modules() as $def) {
@@ -79,7 +81,7 @@ final class ModuleMonitorService
             'pulse_available' => $pulseAvailable,
             'system' => $system,
             'module_summary' => $moduleSummary,
-            'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary),
+            'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary, $horizonteKpi),
             'modules' => $modules,
             'incidents' => array_slice($incidents, 0, (int) config('module_monitor.incidents_limit', 50)),
             'snapshot_collected_at' => is_array($snapshot) ? ($snapshot['collected_at'] ?? null) : null,
@@ -623,9 +625,10 @@ final class ModuleMonitorService
     /**
      * @param  array<string, mixed>  $system
      * @param  array{total: int, healthy: int, warning: int, critical: int, unknown: int}  $moduleSummary
+     * @param  array<string, mixed>|null  $horizonteKpi
      * @return list<array<string, mixed>>
      */
-    private function buildSystemKpis(array $system, bool $pulseAvailable, array $moduleSummary): array
+    private function buildSystemKpis(array $system, bool $pulseAvailable, array $moduleSummary, ?array $horizonteKpi = null): array
     {
         $kpis = [
             [
@@ -676,7 +679,60 @@ final class ModuleMonitorService
             ];
         }
 
+        if ($horizonteKpi !== null) {
+            $universe = max(1, (int) ($horizonteKpi['universe'] ?? 0));
+            $triad = (int) ($horizonteKpi['triad'] ?? 0);
+            $triadPct = (int) round(($triad / $universe) * 100);
+            $phasesOk = (int) ($horizonteKpi['phases_ok'] ?? 0);
+            $phasesTotal = max(1, (int) ($horizonteKpi['phases_total'] ?? 1));
+
+            $kpis[] = [
+                'label' => __('Horizonte — triád'),
+                'value' => $triad.' / '.$universe,
+                'tone' => $triadPct >= 60 ? 'teal' : ($triadPct >= 30 ? 'amber' : 'rose'),
+                'explicacao_resumo' => __('FUNDEB×Censo×SAEB — :pct%', ['pct' => $triadPct]),
+            ];
+
+            $kpis[] = [
+                'label' => __('Horizonte — fases'),
+                'value' => $phasesOk.' / '.$phasesTotal,
+                'tone' => $phasesOk >= (int) ceil($phasesTotal * 0.75) ? 'teal' : 'amber',
+                'explicacao_resumo' => ($horizonteKpi['pipeline_running'] ?? false)
+                    ? __('Pipeline de abastecimento em curso')
+                    : __('Cobertura das fases do feed bimestral'),
+            ];
+
+            $collectMinutes = max(1, (int) config('module_monitor.schedule.interval_minutes', 10));
+            $feedAge = $horizonteKpi['feed_age_days'] ?? null;
+            $kpis[] = [
+                'label' => __('Recolha monitor'),
+                'value' => __(':n min', ['n' => $collectMinutes]),
+                'tone' => 'slate',
+                'explicacao_resumo' => $feedAge !== null
+                    ? __('Feed há :d d · sonda a cada :n min', ['d' => $feedAge, 'n' => $collectMinutes])
+                    : __('Sonda estrutural a cada :n min · feed bimestral', ['n' => $collectMinutes]),
+            ];
+        }
+
         return $kpis;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function horizonteKpiSummary(): ?array
+    {
+        if (! (bool) config('horizonte.enabled', true)) {
+            return null;
+        }
+
+        try {
+            $status = app(HorizonteImportHubStatusService::class)->build();
+
+            return ModuleMonitorHorizonteProbe::kpiSummary($status);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     private function systemStatusHint(
