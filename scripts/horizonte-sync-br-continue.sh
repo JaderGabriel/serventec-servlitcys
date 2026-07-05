@@ -136,8 +136,10 @@ if (( ROUND >= MAX_ROUNDS )); then
   log "AVISO: limite de rondas (${MAX_ROUNDS}) atingido — verifique pendências manualmente."
 fi
 
-log "Invalidando cache do mapa Horizonte"
-php artisan cache:clear 2>&1 | tee -a "$LOG" || true
+log "Invalidando cache do mapa Horizonte e aquecendo overview + UFs"
+php artisan horizonte:warm-map-cache 2>&1 | tee -a "$LOG" || {
+  log "AVISO: warm-map-cache falhou — tentar manualmente: php artisan horizonte:warm-map-cache"
+}
 
 log "Cobertura final (hub):"
 php -r "

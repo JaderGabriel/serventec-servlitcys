@@ -322,6 +322,15 @@ return [
         'hide_approximate_on_map' => filter_var(env('HORIZONTE_MAP_HIDE_APPROXIMATE', true), FILTER_VALIDATE_BOOL),
     ],
 
+    /** Aquecimento do cache JSON do mapa (`horizonte:warm-map-cache`). */
+    'map_cache_warm' => [
+        'enabled' => filter_var(env('HORIZONTE_MAP_CACHE_WARM_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+        /** 0 = domingo … 6 = sábado */
+        'day_of_week' => max(0, min(6, (int) env('HORIZONTE_MAP_CACHE_WARM_DAY', 0))),
+        'time' => env('HORIZONTE_MAP_CACHE_WARM_TIME', '05:30'),
+        'overlap_minutes' => max(60, (int) env('HORIZONTE_MAP_CACHE_WARM_OVERLAP_MINUTES', 720)),
+    ],
+
     /** Sincronização dedicada de centroides IBGE (`horizonte:sync-ibge-centroids`). */
     'ibge_centroid_sync' => [
         'delay_ms' => max(0, (int) env('HORIZONTE_IBGE_CENTROID_DELAY_MS', 120)),

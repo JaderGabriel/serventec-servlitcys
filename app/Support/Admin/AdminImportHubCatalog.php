@@ -133,11 +133,11 @@ final class AdminImportHubCatalog
     public static function statusBadgeClasses(): array
     {
         return [
-            'ok' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200',
-            'partial' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200',
-            'warn' => 'bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-200',
-            'info' => 'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200',
-            'neutral' => 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200',
+            'ok' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-100',
+            'partial' => 'bg-amber-100 text-amber-900 dark:bg-amber-900 dark:text-amber-100',
+            'warn' => 'bg-rose-100 text-rose-900 dark:bg-rose-900 dark:text-rose-100',
+            'info' => 'bg-sky-100 text-sky-900 dark:bg-sky-900 dark:text-sky-100',
+            'neutral' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100',
         ];
     }
 }

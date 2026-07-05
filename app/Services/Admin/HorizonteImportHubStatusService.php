@@ -7,6 +7,8 @@ use App\Models\FundebMunicipioReference;
 use App\Models\InepCensoMunicipioMatricula;
 use App\Models\MunicipalAreaSnapshot;
 use App\Models\MunicipalDemographySnapshot;
+use App\Models\MunicipalFiscalSnapshot;
+use App\Models\MunicipalTransparencySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
@@ -18,7 +20,9 @@ use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
+use App\Support\Horizonte\HorizonteMunicipalAlertsCache;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
+use App\Support\Horizonte\HorizonteSiconfiSyncProgress;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
 use App\Support\InepMicrodadosCadastroEscolasPath;
 use Illuminate\Support\Facades\Storage;
@@ -101,6 +105,24 @@ final class HorizonteImportHubStatusService
                 ->count('ano')
             : 0;
 
+        $refYear = (int) config('horizonte.reference_year', (int) date('Y') - 1);
+        $siconfiPeriod = max(1, min(6, (int) config('horizonte.siconfi.period', 6)));
+        $siconfiMunicipios = \Illuminate\Support\Facades\Schema::hasTable('municipal_fiscal_snapshots')
+            ? (int) MunicipalFiscalSnapshot::query()
+                ->where('ano', $refYear)
+                ->whereNotNull('ibge_municipio')
+                ->distinct()
+                ->count('ibge_municipio')
+            : 0;
+        $transparencyMunicipios = \Illuminate\Support\Facades\Schema::hasTable('municipal_transparency_snapshots')
+            ? (int) MunicipalTransparencySnapshot::query()
+                ->whereNotNull('ibge_municipio')
+                ->distinct()
+                ->count('ibge_municipio')
+            : 0;
+        $transparencyApiKey = trim((string) config('ieducar.other_funding.public_queries.portal_transparencia.api_key', ''));
+        $alertsMeta = HorizonteMunicipalAlertsCache::getMeta();
+
         return [
             'enabled' => (bool) config('horizonte.enabled', true),
             'feed_enabled' => (bool) config('horizonte.fortnightly_feed.enabled', true),
@@ -134,7 +156,24 @@ final class HorizonteImportHubStatusService
                 'censo_latest' => InepCensoMunicipioMatricula::query()->max('imported_at'),
                 'saeb_latest' => SaebIndicatorPoint::query()->max('updated_at'),
             ],
-            'phases' => $this->feedPhases($fundebSet, $censoSet, $saebSet, $microdadosPath, $ibgeUfsWarmed, $ibgeUfsTotal, $cadunicoCount, $demographyCount, $educacensoWindow, $educacensoYearsIndexed),
+            'phases' => $this->feedPhases(
+                $fundebSet,
+                $censoSet,
+                $saebSet,
+                $microdadosPath,
+                $ibgeUfsWarmed,
+                $ibgeUfsTotal,
+                $cadunicoCount,
+                $demographyCount,
+                $educacensoWindow,
+                $educacensoYearsIndexed,
+                $refYear,
+                $siconfiPeriod,
+                $siconfiMunicipios,
+                $transparencyMunicipios,
+                $transparencyApiKey,
+                $alertsMeta,
+            ),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
             'pipeline' => HorizonteFortnightlyFeedPipeline::get(),
             'feed_staged' => filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN),
@@ -166,8 +205,24 @@ final class HorizonteImportHubStatusService
      * @param  array<string, int>  $saebSet
      * @return list<array<string, mixed>>
      */
-    private function feedPhases(array $fundebSet, array $censoSet, array $saebSet, ?string $microdadosPath, int $ibgeUfsWarmed, int $ibgeUfsTotal, int $cadunicoCount, int $demographyCount, array $educacensoWindow, int $educacensoYearsIndexed): array
-    {
+    private function feedPhases(
+        array $fundebSet,
+        array $censoSet,
+        array $saebSet,
+        ?string $microdadosPath,
+        int $ibgeUfsWarmed,
+        int $ibgeUfsTotal,
+        int $cadunicoCount,
+        int $demographyCount,
+        array $educacensoWindow,
+        int $educacensoYearsIndexed,
+        int $refYear,
+        int $siconfiPeriod,
+        int $siconfiMunicipios,
+        int $transparencyMunicipios,
+        string $transparencyApiKey,
+        ?array $alertsMeta,
+    ): array {
         $phases = [
             [
                 'key' => 'fundeb_receita',
@@ -255,6 +310,36 @@ final class HorizonteImportHubStatusService
                 'metric_label' => __('municípios'),
             ],
             [
+                'key' => 'siconfi_sync',
+                'label' => __('SICONFI — indicadores fiscais (RREO)'),
+                'description' => __('Capacidade fiscal municipal via API Tesouro — 1 UF inteira por passo no feed bimestral.'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
+                'cli' => 'php artisan horizonte:sync-siconfi --reset --continue',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=siconfi_sync --reset',
+                'ok' => $siconfiMunicipios >= 100
+                    || HorizonteSiconfiSyncProgress::isComplete($refYear, $siconfiPeriod),
+                'metric' => $siconfiMunicipios,
+                'metric_label' => __('municípios'),
+            ],
+            [
+                'key' => 'transparency_sync',
+                'label' => __('Portal da Transparência'),
+                'description' => __('Convénios MEC/FNDE e empenhos educação/tecnologia — requer PORTAL_TRANSPARENCIA_API_KEY.'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
+                'cli' => 'php artisan horizonte:sync-transparency --limit=5',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=transparency_sync',
+                'ok' => $transparencyApiKey !== '' && $transparencyMunicipios >= 50,
+                'metric' => $transparencyMunicipios,
+                'metric_label' => __('municípios'),
+                'blocked' => $transparencyApiKey === ''
+                    ? __('PORTAL_TRANSPARENCIA_API_KEY não configurada no .env')
+                    : null,
+            ],
+            [
                 'key' => 'saeb_planilhas',
                 'label' => __('SAEB — planilhas INEP (nacional)'),
                 'description' => __('Indicadores LP/MAT por município — :n ano(s) por passo (HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP). Repita o comando até concluir todos os anos.', [
@@ -311,6 +396,19 @@ final class HorizonteImportHubStatusService
                 'ok' => true,
                 'metric' => null,
                 'metric_label' => null,
+            ],
+            [
+                'key' => 'municipal_alerts',
+                'label' => __('Alertas MEC/FNDE (VAAT)'),
+                'description' => __('Lista oficial FNDE de municípios inabilitados + registo JSON manual — chip no modal Horizonte.'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
+                'cli' => 'php artisan horizonte:sync-municipal-alerts',
+                'cli_reset' => 'php artisan horizonte:sync-municipal-alerts --reset',
+                'ok' => is_array($alertsMeta) && filled($alertsMeta['synced_at'] ?? null),
+                'metric' => is_array($alertsMeta) ? count(HorizonteMunicipalAlertsCache::getIndex()) : 0,
+                'metric_label' => __('IBGE com alerta'),
             ],
             [
                 'key' => 'official_check',

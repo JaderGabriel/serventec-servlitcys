@@ -16,13 +16,13 @@
     use App\Support\Admin\AdminVisualCatalog;
 
     $gradients = [
-        'emerald' => 'from-emerald-50 to-white dark:from-emerald-950/30 dark:to-gray-900',
-        'violet' => 'from-violet-50 to-white dark:from-violet-950/40 dark:to-gray-900/80',
-        'fuchsia' => 'from-fuchsia-50 to-white dark:from-fuchsia-950/30 dark:to-gray-900',
-        'indigo' => 'from-sky-50 to-white dark:from-sky-950/30 dark:to-gray-900',
-        'sky' => 'from-sky-50 to-white dark:from-sky-950/30 dark:to-gray-900',
-        'amber' => 'from-amber-50 to-white dark:from-amber-950/30 dark:to-gray-900',
-        'slate' => 'from-gray-50 to-white dark:from-gray-900 dark:to-gray-900/80',
+        'emerald' => 'from-emerald-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'violet' => 'from-violet-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'fuchsia' => 'from-fuchsia-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'indigo' => 'from-sky-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'sky' => 'from-sky-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'amber' => 'from-amber-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'slate' => 'from-gray-50 to-white dark:from-gray-900 dark:to-gray-900',
     ];
     $eyebrowColors = [
         'emerald' => 'text-emerald-800 dark:text-emerald-300',
@@ -54,8 +54,8 @@
                             title="{{ $item['hint'] ?? '' }}"
                             @class([
                                 'inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition',
-                                'bg-white/90 text-gray-900 shadow-sm ring-1 ring-gray-200/90 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-600' => $isActive,
-                                'text-gray-600 hover:bg-white/60 dark:text-gray-400 dark:hover:bg-gray-800/60' => ! $isActive,
+                                'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-600' => $isActive,
+                                'text-gray-600 hover:bg-white dark:text-gray-300 dark:hover:bg-gray-800' => ! $isActive,
                             ])
                         >
                             <span class="import-hub-nav-icon import-hub-nav-icon--{{ $navAccent }}" aria-hidden="true">

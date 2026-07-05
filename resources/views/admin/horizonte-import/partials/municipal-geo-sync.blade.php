@@ -10,29 +10,29 @@
     $pct = min(100, max(0, (int) round(($ufsDone / $ufsTotal) * 100)));
 @endphp
 
-<section id="horizonte-municipal-geo-sync" class="scroll-mt-24 rounded-xl border border-indigo-200/80 bg-indigo-50/40 dark:border-indigo-900/50 dark:bg-indigo-950/20 p-4 space-y-3">
+<section id="horizonte-municipal-geo-sync" class="scroll-mt-24 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-slate-900 p-4 space-y-3">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h4 class="text-sm font-semibold text-indigo-950 dark:text-indigo-100">{{ __('Área geográfica municipal — malha IBGE') }}</h4>
-            <p class="mt-1 text-xs text-indigo-900/80 dark:text-indigo-200/80 max-w-3xl">
+            <p class="mt-1 text-xs text-indigo-900 dark:text-indigo-100 max-w-3xl">
                 {{ __('Importação nacional por UF: polígonos municipais (contornos no mapa Horizonte) e área territorial km² por município.') }}
             </p>
         </div>
         <div class="text-right text-xs tabular-nums text-indigo-800 dark:text-indigo-200">
             <span class="font-semibold">{{ $ufsDone }}/{{ $ufsTotal }}</span>
-            <span class="text-indigo-700/70 dark:text-indigo-300/70">{{ __('UFs') }}</span>
+            <span class="text-indigo-700 dark:text-indigo-300">{{ __('UFs') }}</span>
             @if ($areaCount > 0)
-                <p class="mt-0.5 text-[10px] text-indigo-700/80 dark:text-indigo-300/80">{{ number_format($areaCount, 0, ',', '.') }} {{ __('municípios com área') }}</p>
+                <p class="mt-0.5 text-[10px] text-indigo-800 dark:text-indigo-200">{{ number_format($areaCount, 0, ',', '.') }} {{ __('municípios com área') }}</p>
             @endif
         </div>
     </div>
 
     <div>
-        <div class="flex justify-between text-[10px] text-indigo-800/80 dark:text-indigo-200/80 mb-1">
+        <div class="flex justify-between text-[10px] text-indigo-800 dark:text-indigo-200 mb-1">
             <span>{{ __('Progresso nacional') }}</span>
             <span>{{ $pct }}%</span>
         </div>
-        <div class="h-2 rounded-full bg-indigo-100 dark:bg-indigo-950/60 overflow-hidden">
+        <div class="h-2 rounded-full bg-indigo-100 dark:bg-indigo-900 overflow-hidden">
             <div class="h-full rounded-full bg-indigo-500 transition-all" style="width: {{ $pct }}%"></div>
         </div>
     </div>
@@ -56,12 +56,12 @@
 
     @if ($recentSteps !== [])
         <div>
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800/70 dark:text-indigo-300/80 mb-1.5">{{ __('Últimas UFs importadas') }}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-200 mb-1.5">{{ __('Últimas UFs importadas') }}</p>
             <ul class="flex flex-wrap gap-1.5">
                 @foreach ($recentSteps as $step)
-                    <li class="inline-flex items-center rounded-full bg-white/80 dark:bg-slate-900/50 border border-indigo-200/70 dark:border-indigo-900/50 px-2 py-0.5 text-[10px] font-mono text-indigo-900 dark:text-indigo-100">
+                    <li class="inline-flex items-center rounded-full bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-mono text-indigo-900 dark:text-indigo-100">
                         {{ $step['uf'] ?? '—' }}
-                        <span class="ml-1 text-indigo-600/80">{{ number_format((int) ($step['imported'] ?? 0), 0, ',', '.') }}</span>
+                        <span class="ml-1 text-indigo-600 dark:text-indigo-300">{{ number_format((int) ($step['imported'] ?? 0), 0, ',', '.') }}</span>
                     </li>
                 @endforeach
             </ul>
@@ -98,11 +98,11 @@
                 <button type="submit" name="mode" value="step" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500">
                     {{ __('Executar próximo(s) passo(s)') }}
                 </button>
-                <button type="submit" name="mode" value="all" class="inline-flex items-center justify-center rounded-lg border border-indigo-300 bg-white/80 px-3 py-2 text-xs font-semibold text-indigo-800 hover:bg-indigo-50 dark:border-indigo-800 dark:bg-slate-900/50 dark:text-indigo-100">
+                <button type="submit" name="mode" value="all" class="inline-flex items-center justify-center rounded-lg border border-indigo-300 dark:border-indigo-600 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-semibold text-indigo-900 dark:text-indigo-100 hover:bg-indigo-50 dark:hover:bg-slate-700">
                     {{ __('Importar nacional (--all)') }}
                 </button>
             </div>
         </form>
-        <code class="block rounded bg-white/70 dark:bg-slate-900/50 px-2 py-1.5 text-[10px] text-indigo-900 dark:text-indigo-100 font-mono">php artisan horizonte:import-municipal-geo --all</code>
+        <code class="block rounded bg-white dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 px-2 py-1.5 text-[10px] text-indigo-900 dark:text-indigo-100 font-mono">php artisan horizonte:import-municipal-geo --all</code>
     @endif
 </section>

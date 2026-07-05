@@ -6,13 +6,13 @@
 
 @if ($phases !== [])
     <div class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
-        <div class="border-b border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-900/60 px-4 py-3">
+        <div class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3">
             <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Cobertura por fase') }}</h4>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ __('Estado operacional e comandos CLI de cada fonte Horizonte.') }}</p>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full text-left text-xs">
-                <thead class="bg-slate-50/50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     <tr>
                         <th class="px-4 py-2.5 font-semibold">{{ __('Fase') }}</th>
                         <th class="px-4 py-2.5 font-semibold">{{ __('Cobertura') }}</th>
@@ -29,7 +29,7 @@
                                 ?? AdminImportHubCatalog::statusBadgeClasses()['neutral'];
                             $hubLink = $phase['admin_url'] ?? route('admin.horizonte-import.index');
                         @endphp
-                        <tr class="bg-white dark:bg-gray-900/40">
+                        <tr class="bg-white dark:bg-slate-900">
                             <td class="px-4 py-3 align-top">
                                 <p class="font-medium text-gray-900 dark:text-gray-100">{{ $phase['label'] ?? '' }}</p>
                                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ $phase['description'] ?? '' }}</p>
@@ -59,9 +59,9 @@
                             </td>
                             <td class="px-4 py-3 align-top">
                                 @if (filled($phase['cli'] ?? null))
-                                    <code class="block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-800 dark:bg-gray-800 dark:text-gray-200">{{ $phase['cli'] }}</code>
+                                    <code class="block rounded bg-gray-100 px-2 py-1 text-[10px] text-gray-800 dark:bg-slate-800 dark:text-gray-100">{{ $phase['cli'] }}</code>
                                 @else
-                                    <span class="text-gray-400">—</span>
+                                    <span class="text-gray-500 dark:text-gray-400">—</span>
                                 @endif
                             </td>
                         </tr>

@@ -488,8 +488,42 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_EDUCACENSO_YEARS_PER_STEP',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, saeb_planilhas, ibge_catalog, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE e SIDRA aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, siconfi_sync, transparency_sync, saeb_planilhas, ibge_catalog, ibge_municipal_geo, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE, SIDRA e SICONFI aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
+                    ],
+                    [
+                        'name' => 'horizonte:sync-educacenso',
+                        'summary' => __('Reimporta Educacenso ano × UF para o gráfico Horizonte (segmentos, etapas, dependência).'),
+                        'signature' => 'horizonte:sync-educacenso {--reset} {--all} {--continue} {--year=} {--uf=}',
+                        'examples' => [
+                            'php artisan horizonte:sync-educacenso --reset --all',
+                            'php artisan horizonte:sync-educacenso --year=2024 --uf=BA',
+                            'php artisan horizonte:sync-educacenso --continue',
+                        ],
+                        'env' => [
+                            'HORIZONTE_EDUCACENSO_ENABLED',
+                            'HORIZONTE_EDUCACENSO_STEPS_PER_STEP',
+                            'HORIZONTE_EDUCACENSO_MEMORY_LIMIT',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('135 passos por defeito (5 anos × 27 UFs). Equivalente a --phase=educacenso no feed bimestral.'),
+                    ],
+                    [
+                        'name' => 'horizonte:warm-map-cache',
+                        'summary' => __('Aquece cache JSON do mapa (overview + 27 UFs) — evita 503 na primeira visita.'),
+                        'signature' => 'horizonte:warm-map-cache {--uf=} {--skip-overview}',
+                        'examples' => [
+                            'php artisan horizonte:warm-map-cache',
+                            'php artisan horizonte:warm-map-cache --uf=MG',
+                            'php artisan horizonte:warm-map-cache --skip-overview',
+                        ],
+                        'env' => [
+                            'HORIZONTE_MAP_CACHE_WARM_SCHEDULE_ENABLED',
+                            'HORIZONTE_MAP_CACHE_WARM_DAY',
+                            'HORIZONTE_MAP_CACHE_WARM_TIME',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'schedule' => __('Semanal — domingo HORIZONTE_MAP_CACHE_WARM_TIME (default 05:30).'),
                     ],
                     [
                         'name' => 'horizonte:verify-educacenso-coverage',

@@ -26,23 +26,15 @@
     }
 
     $toneBorder = static fn (string $tone): string => match ($tone) {
-        'amber' => 'border-amber-300/80 dark:border-amber-800/60 ring-amber-200/50',
-        'emerald' => 'border-emerald-300/80 dark:border-emerald-800/60 ring-emerald-200/50',
-        'sky' => 'border-sky-300/80 dark:border-sky-800/60 ring-sky-200/50',
-        'rose' => 'border-rose-300/80 dark:border-rose-800/60 ring-rose-200/50',
-        'violet' => 'border-violet-300/80 dark:border-violet-800/60 ring-violet-200/50',
-        'indigo' => 'border-indigo-300/80 dark:border-indigo-800/60 ring-indigo-200/50',
-        default => 'border-slate-300/80 dark:border-slate-700/60 ring-slate-200/50',
+        'amber' => 'border-amber-300 dark:border-amber-700',
+        'emerald' => 'border-emerald-300 dark:border-emerald-700',
+        'sky' => 'border-sky-300 dark:border-sky-700',
+        'rose' => 'border-rose-300 dark:border-rose-700',
+        'violet' => 'border-violet-300 dark:border-violet-700',
+        'indigo' => 'border-indigo-300 dark:border-indigo-700',
+        default => 'border-slate-300 dark:border-slate-600',
     };
-    $toneBg = static fn (string $tone): string => match ($tone) {
-        'amber' => 'bg-amber-50/90 dark:bg-amber-950/30',
-        'emerald' => 'bg-emerald-50/90 dark:bg-emerald-950/30',
-        'sky' => 'bg-sky-50/90 dark:bg-sky-950/30',
-        'rose' => 'bg-rose-50/90 dark:bg-rose-950/30',
-        'violet' => 'bg-violet-50/90 dark:bg-violet-950/30',
-        'indigo' => 'bg-indigo-50/90 dark:bg-indigo-950/30',
-        default => 'bg-slate-50/90 dark:bg-slate-900/50',
-    };
+    $toneBg = static fn (string $tone): string => 'bg-white dark:bg-slate-800';
     $toneIcon = static fn (string $tone): string => match ($tone) {
         'amber' => 'text-amber-700 dark:text-amber-300',
         'emerald' => 'text-emerald-700 dark:text-emerald-300',
@@ -67,11 +59,11 @@
                 <h3 class="mt-2 text-lg sm:text-xl font-bold tracking-tight" style="font-family: Outfit, ui-sans-serif, system-ui, sans-serif;">
                     {{ __('Abastecimento nacional do mapa') }}
                 </h3>
-                <p class="mt-2 text-sm text-sky-100/90 leading-relaxed">
+                <p class="mt-2 text-sm text-sky-50 leading-relaxed">
                     {{ __('Marque as fases que deseja executar. O pipeline corre em etapas (1 fase por invocação); fases incrementais — Educacenso, SAEB, IBGE, SIDRA, SICONFI — continuam com passos automáticos.') }}
                 </p>
                 @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
-                    <p class="mt-2 text-xs text-sky-200/70">
+                    <p class="mt-2 text-xs text-sky-100">
                         {{ __('Agendamento: :summary', ['summary' => $scheduleSummary]) }}
                         @if ($lastFeed && filled($lastFeed['finished_at'] ?? null))
                             · {{ __('Última execução: :when', [
@@ -86,9 +78,12 @@
                     <x-ui.icon name="map" class="h-3.5 w-3.5" />
                     {{ __('Mapa') }}
                 </a>
-                <a href="{{ $hub['doc_url'] ?? route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-medium text-white hover:bg-white/15">
+                <a href="{{ $hub['doc_url'] ?? route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/25 px-3 py-2 text-xs font-semibold text-white hover:bg-white/35 shadow-sm">
                     {{ __('Docs') }}
                 </a>
+                <span class="inline-flex items-center rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-[10px] font-mono text-sky-100" title="{{ __('Após abastecimento completo ou deploy') }}">
+                    php artisan horizonte:warm-map-cache
+                </span>
             </div>
         </div>
     </div>
@@ -101,14 +96,14 @@
         <x-admin.import-hub.callout :variant="($feedFlash['success'] ?? false) ? 'success' : 'warning'" :title="($feedFlash['success'] ?? false) ? __('Pipeline iniciado') : __('Pipeline com falhas')">
             {{ $feedFlash['message'] ?? '' }}
             @if ($feedFlash['staged'] ?? false)
-                <p class="mt-2 text-xs opacity-90">{{ __('Modo em etapas — fases restantes continuam pelo agendador ou:') }}</p>
-                <code class="mt-1 block text-[10px] font-mono opacity-90">php artisan horizonte:fortnightly-feed --staged --continue</code>
+                <p class="mt-2 text-xs">{{ __('Modo em etapas — fases restantes continuam pelo agendador ou:') }}</p>
+                <code class="mt-1 block text-[10px] font-mono">php artisan horizonte:fortnightly-feed --staged --continue</code>
             @endif
         </x-admin.import-hub.callout>
     @endif
 
     @if ($enabled && $feedEnabled)
-        <form method="POST" action="{{ route('admin.horizonte-import.feed') }}" id="horizonte-feed-form" class="rounded-2xl border border-sky-200/90 dark:border-sky-900/50 bg-white/80 dark:bg-slate-900/40 p-4 sm:p-5 space-y-4 shadow-sm">
+        <form method="POST" action="{{ route('admin.horizonte-import.feed') }}" id="horizonte-feed-form" class="rounded-2xl border border-sky-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 sm:p-5 space-y-4 shadow-sm">
             @csrf
 
             <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -122,9 +117,9 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-[11px]">
-                    <button type="button" data-horizonte-phases="all" class="rounded-md border border-sky-200 dark:border-sky-800 px-2.5 py-1 font-medium text-sky-800 dark:text-sky-200 hover:bg-sky-50 dark:hover:bg-sky-950/40">{{ __('Todas') }}</button>
-                    <button type="button" data-horizonte-phases="core" class="rounded-md border border-slate-200 dark:border-slate-700 px-2.5 py-1 font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60">{{ __('Núcleo triad') }}</button>
-                    <button type="button" data-horizonte-phases="none" class="rounded-md border border-slate-200 dark:border-slate-700 px-2.5 py-1 font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/60">{{ __('Limpar') }}</button>
+                    <button type="button" data-horizonte-phases="all" class="rounded-md border border-sky-300 dark:border-sky-600 bg-sky-50 dark:bg-sky-900 px-2.5 py-1 font-semibold text-sky-900 dark:text-sky-100 hover:bg-sky-100 dark:hover:bg-sky-800">{{ __('Todas') }}</button>
+                    <button type="button" data-horizonte-phases="core" class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1 font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700">{{ __('Núcleo triad') }}</button>
+                    <button type="button" data-horizonte-phases="none" class="rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2.5 py-1 font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">{{ __('Limpar') }}</button>
                 </div>
             </div>
 
@@ -135,11 +130,11 @@
                 <div class="space-y-2">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ $groupMeta['label'] }}</p>
-                        <p class="text-[11px] text-slate-500 dark:text-slate-500">{{ $groupMeta['description'] }}</p>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-400">{{ $groupMeta['description'] }}</p>
                     </div>
                     <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         @foreach ($phasesByGroup[$groupKey] as $def)
-                            <label class="group flex gap-3 rounded-xl border p-3 cursor-pointer transition {{ $toneBorder($def['tone']) }} {{ $toneBg($def['tone']) }} has-[:checked]:ring-2 has-[:checked]:ring-sky-500/60">
+                            <label class="group flex gap-3 rounded-xl border p-3 cursor-pointer transition {{ $toneBorder($def['tone']) }} {{ $toneBg($def['tone']) }} has-[:checked]:ring-2 has-[:checked]:ring-sky-500 dark:has-[:checked]:ring-sky-400">
                                 <input
                                     type="checkbox"
                                     name="phases[]"
@@ -154,10 +149,10 @@
                                         <x-ui.icon :name="$def['icon']" class="h-4 w-4 shrink-0 {{ $toneIcon($def['tone']) }}" />
                                         <span class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __($def['label']) }}</span>
                                         @if ($def['incremental'])
-                                            <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200">{{ __('Incremental') }}</span>
+                                            <span class="rounded px-1 py-0.5 text-[9px] font-bold uppercase bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-100">{{ __('Incremental') }}</span>
                                         @endif
                                     </span>
-                                    <span class="mt-1 block text-[11px] text-slate-600 dark:text-slate-400 leading-snug">{{ $def['description'] }}</span>
+                                    <span class="mt-1 block text-[11px] text-slate-700 dark:text-slate-300 leading-snug">{{ $def['description'] }}</span>
                                 </span>
                             </label>
                         @endforeach
@@ -165,7 +160,7 @@
                 </div>
             @endforeach
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between pt-2 border-t border-slate-200/80 dark:border-slate-700/80">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
                 <label class="block text-xs text-slate-700 dark:text-slate-300 sm:max-w-xs">
                     <span class="font-medium">{{ __('Restringir a UF (opcional)') }}</span>
                     <select name="uf" class="mt-1 block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-sky-500 focus:ring-sky-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100">
@@ -174,7 +169,7 @@
                             <option value="{{ $ufOption }}">{{ $ufOption }}</option>
                         @endforeach
                     </select>
-                    <span class="mt-0.5 block text-[10px] text-slate-500">{{ __('Filtra FUNDEB, Censo, SAEB, IBGE e SGE à UF escolhida.') }}</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-600 dark:text-slate-400">{{ __('Filtra FUNDEB, Censo, SAEB, IBGE e SGE à UF escolhida.') }}</span>
                 </label>
                 <button
                     type="submit"

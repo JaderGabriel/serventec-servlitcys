@@ -146,13 +146,13 @@ final class AdminVisualCatalog
     public static function chipClasses(string $accent = 'indigo'): string
     {
         return match ($accent) {
-            'emerald' => 'rounded-lg border border-emerald-300/80 px-3 py-1.5 font-medium text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40',
-            'amber' => 'rounded-lg border border-amber-300/80 px-3 py-1.5 font-medium text-amber-900 dark:text-amber-100 hover:bg-amber-50/60 dark:hover:bg-amber-950/40',
-            'sky' => 'rounded-lg border border-sky-300/80 px-3 py-1.5 font-medium text-sky-900 dark:text-sky-100 hover:bg-sky-50/60 dark:hover:bg-sky-950/40',
-            'violet' => 'rounded-lg border border-violet-300/80 px-3 py-1.5 font-medium text-violet-900 dark:text-violet-100 hover:bg-violet-50/60 dark:hover:bg-violet-950/40',
-            'fuchsia' => 'rounded-lg border border-fuchsia-300/80 px-3 py-1.5 font-medium text-fuchsia-900 dark:text-fuchsia-100 hover:bg-fuchsia-50/60 dark:hover:bg-fuchsia-950/40',
-            'slate' => 'rounded-lg border border-slate-300/80 px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50/60 dark:hover:bg-slate-900/40',
-            default => 'rounded-lg border border-indigo-300/80 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-white/60 dark:hover:bg-indigo-950/40',
+            'emerald' => 'rounded-lg border border-emerald-300 dark:border-emerald-700 px-3 py-1.5 font-medium text-emerald-900 dark:text-emerald-100 hover:bg-emerald-50 dark:hover:bg-emerald-900',
+            'amber' => 'rounded-lg border border-amber-300 dark:border-amber-700 px-3 py-1.5 font-medium text-amber-900 dark:text-amber-100 hover:bg-amber-50 dark:hover:bg-amber-900',
+            'sky' => 'rounded-lg border border-sky-300 dark:border-sky-700 px-3 py-1.5 font-medium text-sky-900 dark:text-sky-100 hover:bg-sky-50 dark:hover:bg-sky-900',
+            'violet' => 'rounded-lg border border-violet-300 dark:border-violet-700 px-3 py-1.5 font-medium text-violet-900 dark:text-violet-100 hover:bg-violet-50 dark:hover:bg-violet-900',
+            'fuchsia' => 'rounded-lg border border-fuchsia-300 dark:border-fuchsia-700 px-3 py-1.5 font-medium text-fuchsia-900 dark:text-fuchsia-100 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900',
+            'slate' => 'rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-1.5 font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700',
+            default => 'rounded-lg border border-indigo-300 dark:border-indigo-700 px-3 py-1.5 font-medium text-indigo-900 dark:text-indigo-100 hover:bg-indigo-50 dark:hover:bg-indigo-900',
         };
     }
 

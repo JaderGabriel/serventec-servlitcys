@@ -344,5 +344,20 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->runInBackground();
             }
         }
+
+        if ((bool) config('horizonte.enabled', true)
+            && filter_var(config('horizonte.map_cache_warm.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $warmDay = max(0, min(6, (int) config('horizonte.map_cache_warm.day_of_week', 0)));
+            $warmTime = (string) config('horizonte.map_cache_warm.time', '05:30');
+            $warmOverlap = max(60, (int) config('horizonte.map_cache_warm.overlap_minutes', 720));
+
+            $schedule->command('horizonte:warm-map-cache')
+                ->weeklyOn($warmDay, $warmTime)
+                ->name('horizonte-warm-map-cache')
+                ->withoutOverlapping($warmOverlap)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
     })
     ->create();

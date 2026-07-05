@@ -1,41 +1,5 @@
 @php
-    use App\Support\Admin\AdminImportHubCatalog;
-    use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
-    use App\Support\Horizonte\HorizonteFeedPhaseOptions;
-
     $hub = is_array($horizonteHub ?? null) ? $horizonteHub : [];
-    $phaseGroups = HorizonteFortnightlyFeedPhaseCatalog::groups();
-    $phaseDefinitions = HorizonteFortnightlyFeedPhaseCatalog::definitions();
-    $defaultPhases = HorizonteFeedPhaseOptions::defaultSelectedPhaseKeys();
-    $toneBorder = static fn (string $tone): string => match ($tone) {
-        'amber' => 'border-amber-300/80 dark:border-amber-800/60',
-        'emerald' => 'border-emerald-300/80 dark:border-emerald-800/60',
-        'sky' => 'border-sky-300/80 dark:border-sky-800/60',
-        'rose' => 'border-rose-300/80 dark:border-rose-800/60',
-        'violet' => 'border-violet-300/80 dark:border-violet-800/60',
-        'indigo' => 'border-indigo-300/80 dark:border-indigo-800/60',
-        'slate' => 'border-slate-300/80 dark:border-slate-700/60',
-        default => 'border-slate-300/80 dark:border-slate-700/60',
-    };
-    $toneBg = static fn (string $tone): string => match ($tone) {
-        'amber' => 'bg-amber-50/80 dark:bg-amber-950/25',
-        'emerald' => 'bg-emerald-50/80 dark:bg-emerald-950/25',
-        'sky' => 'bg-sky-50/80 dark:bg-sky-950/25',
-        'rose' => 'bg-rose-50/80 dark:bg-rose-950/25',
-        'violet' => 'bg-violet-50/80 dark:bg-violet-950/25',
-        'indigo' => 'bg-indigo-50/80 dark:bg-indigo-950/25',
-        'slate' => 'bg-slate-50/80 dark:bg-slate-900/40',
-        default => 'bg-slate-50/80 dark:bg-slate-900/40',
-    };
-    $toneIcon = static fn (string $tone): string => match ($tone) {
-        'amber' => 'text-amber-700 dark:text-amber-300',
-        'emerald' => 'text-emerald-700 dark:text-emerald-300',
-        'sky' => 'text-sky-700 dark:text-sky-300',
-        'rose' => 'text-rose-700 dark:text-rose-300',
-        'violet' => 'text-violet-700 dark:text-violet-300',
-        'indigo' => 'text-indigo-700 dark:text-indigo-300',
-        default => 'text-slate-600 dark:text-slate-300',
-    };
 @endphp
 
 <x-app-layout>
@@ -64,14 +28,14 @@
             @if ($hub['feed_enabled'] ?? false)
                 <x-admin.import-hub.badge>{{ $hub['schedule_summary'] ?? '' }}</x-admin.import-hub.badge>
             @endif
-            <a href="{{ route('dashboard.horizonte') }}" class="rounded-full bg-sky-100 dark:bg-sky-950/50 px-3 py-1 font-medium text-sky-800 dark:text-sky-200 ring-1 ring-sky-200/80 dark:ring-sky-800 hover:bg-sky-200/80 dark:hover:bg-sky-900/50 text-xs">
+            <a href="{{ route('dashboard.horizonte') }}" class="rounded-full bg-sky-100 dark:bg-sky-900 px-3 py-1 font-medium text-sky-800 dark:text-sky-100 ring-1 ring-sky-200 dark:ring-sky-700 hover:bg-sky-200 dark:hover:bg-sky-800 text-xs">
                 {{ __('Abrir mapa') }} →
             </a>
         </x-slot>
 
         <x-slot name="flashes">
             @if (session('public_data_error'))
-                <div class="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100" role="alert">
+                <div class="rounded-lg border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-slate-800 dark:text-rose-100" role="alert">
                     {{ session('public_data_error') }}
                 </div>
             @endif

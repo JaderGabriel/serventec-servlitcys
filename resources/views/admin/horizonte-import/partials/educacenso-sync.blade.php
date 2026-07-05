@@ -9,26 +9,26 @@
     $pct = min(100, max(0, (int) round(($stepsDone / $stepsTotal) * 100)));
 @endphp
 
-<section id="horizonte-educacenso-sync" class="scroll-mt-24 rounded-xl border border-teal-200/80 bg-teal-50/40 dark:border-teal-900/50 dark:bg-teal-950/20 p-4 space-y-3">
+<section id="horizonte-educacenso-sync" class="scroll-mt-24 rounded-xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-slate-900 p-4 space-y-3">
     <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <h4 class="text-sm font-semibold text-teal-950 dark:text-teal-100">{{ __('Educacenso — reimportação ano × UF') }}</h4>
-            <p class="mt-1 text-xs text-teal-900/80 dark:text-teal-200/80 max-w-3xl">
+            <p class="mt-1 text-xs text-teal-900 dark:text-teal-100 max-w-3xl">
                 {{ __('Necessário para o gráfico de matrículas (segmentos, etapas e filtro Municipal/Não municipal). Cada passo indexa uma UF num ano da janela.') }}
             </p>
         </div>
         <div class="text-right text-xs tabular-nums text-teal-800 dark:text-teal-200">
             <span class="font-semibold">{{ $stepsDone }}/{{ $stepsTotal }}</span>
-            <span class="text-teal-700/70 dark:text-teal-300/70">{{ __('passos') }}</span>
+            <span class="text-teal-700 dark:text-teal-300">{{ __('passos') }}</span>
         </div>
     </div>
 
     <div>
-        <div class="flex justify-between text-[10px] text-teal-800/80 dark:text-teal-200/80 mb-1">
+        <div class="flex justify-between text-[10px] text-teal-800 dark:text-teal-200 mb-1">
             <span>{{ __('Progresso nacional') }}</span>
             <span>{{ $pct }}%</span>
         </div>
-        <div class="h-2 rounded-full bg-teal-100 dark:bg-teal-950/60 overflow-hidden">
+        <div class="h-2 rounded-full bg-teal-100 dark:bg-teal-900 overflow-hidden">
             <div class="h-full rounded-full bg-teal-500 transition-all" style="width: {{ $pct }}%"></div>
         </div>
     </div>
@@ -51,10 +51,10 @@
 
     @if ($recentSteps !== [])
         <div>
-            <p class="text-[11px] font-semibold uppercase tracking-wide text-teal-800/70 dark:text-teal-300/80 mb-1.5">{{ __('Últimos passos concluídos') }}</p>
+            <p class="text-[11px] font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200 mb-1.5">{{ __('Últimos passos concluídos') }}</p>
             <ul class="flex flex-wrap gap-1.5">
                 @foreach ($recentSteps as $step)
-                    <li class="inline-flex items-center rounded-full bg-white/80 dark:bg-slate-900/50 border border-teal-200/70 dark:border-teal-900/50 px-2 py-0.5 text-[10px] font-mono text-teal-900 dark:text-teal-100">
+                    <li class="inline-flex items-center rounded-full bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800 px-2 py-0.5 text-[10px] font-mono text-teal-900 dark:text-teal-100">
                         {{ (int) ($step['year'] ?? 0) }}/{{ $step['uf'] ?? '—' }}
                     </li>
                 @endforeach
@@ -92,6 +92,6 @@
                 </button>
             </div>
         </form>
-        <code class="block rounded bg-white/70 dark:bg-slate-900/50 px-2 py-1.5 text-[10px] text-teal-900 dark:text-teal-100 font-mono">php artisan horizonte:sync-educacenso --reset --all</code>
+        <code class="block rounded bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800 px-2 py-1.5 text-[10px] text-teal-900 dark:text-teal-100 font-mono">php artisan horizonte:sync-educacenso --reset --all</code>
     @endif
 </section>
