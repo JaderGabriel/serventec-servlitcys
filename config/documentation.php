@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '7.0.1',
         'release_tag' => '20260705b-Moneta',
-        'commit_short' => '',
-        'commit_number' => 0,
+        'commit_short' => '04ecf63',
+        'commit_number' => 506,
         'revision_date' => '2026-07-05',
         'in_production' => true,
         'production_label' => 'Em produção',

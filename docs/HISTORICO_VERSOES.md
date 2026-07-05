@@ -59,7 +59,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 7.0.1** | — / `20260705b-Moneta` → `main` | — | 05/07/2026 | **Produção:** Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
+| **▶ 7.0.1** | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | **Produção:** Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
 | 7.0.0 | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
 | 6.5.0 | `d07f58a` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |
 | 6.3.0 | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | Modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Entregas pós-tag integradas em **6.5.0**. |
