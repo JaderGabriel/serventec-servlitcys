@@ -139,14 +139,38 @@
                     @endforeach
                 @else
                     <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ __('Use a tela dedicada ou os comandos CLI:') }}
-                        <code class="text-xs">{{ implode(', ', $source['cli'] ?? []) }}</code>
+                        {{ __('Use a tela dedicada indicada acima ou os comandos CLI abaixo.') }}
                     </p>
                 @endif
 
-                @if (($source['cli'] ?? []) !== [] && $hasActions)
-                    <p class="text-[11px] text-gray-500 dark:text-gray-500">CLI: {{ implode(' · ', $source['cli']) }}</p>
+                @php
+                    $horizonteLink = is_array($source['horizonte_link'] ?? null) ? $source['horizonte_link'] : null;
+                    $cliExamples = is_array($source['cli_examples'] ?? null) ? $source['cli_examples'] : [];
+                    $cliCommands = is_array($source['cli'] ?? null) ? $source['cli'] : [];
+                @endphp
+
+                @if ($horizonteLink !== null)
+                    @php
+                        $hzUrl = route($horizonteLink['route'] ?? 'admin.horizonte-import.index');
+                        if (filled($horizonteLink['fragment'] ?? null)) {
+                            $hzUrl .= '#'.($horizonteLink['fragment']);
+                        }
+                    @endphp
+                    <div class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50 dark:bg-slate-800 px-3 py-2.5">
+                        <p class="text-[11px] font-semibold text-sky-900 dark:text-sky-100">{{ $horizonteLink['label'] ?? __('Hub Horizonte') }}</p>
+                        @if (filled($horizonteLink['hint'] ?? null))
+                            <p class="mt-0.5 text-[11px] text-sky-800 dark:text-sky-200">{{ $horizonteLink['hint'] }}</p>
+                        @endif
+                        <a href="{{ $hzUrl }}" class="mt-2 inline-flex text-xs font-medium {{ AdminVisualCatalog::linkClasses('sky') }}">
+                            {{ __('Abrir no hub Horizonte') }} →
+                        </a>
+                    </div>
                 @endif
+
+                <x-admin.import-hub.cli-block
+                    :examples="$cliExamples"
+                    :commands="$cliExamples === [] ? $cliCommands : []"
+                />
             </x-admin.import-hub.source-card>
         @endforeach
     </div>

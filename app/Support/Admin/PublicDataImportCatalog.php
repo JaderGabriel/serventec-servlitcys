@@ -31,7 +31,8 @@ final class PublicDataImportCatalog
      *         needs_years_range: bool,
      *         hint: ?string
      *     }>,
-     *     cli: list<string>
+     *     cli: list<string>,
+     *     cli_examples: list<array{command: string, summary?: string}>
      * }>
      */
     public static function sources(): array
@@ -174,6 +175,11 @@ final class PublicDataImportCatalog
                 ],
             ],
             'cli' => ['fundeb:import-api', 'fundeb:import-references'],
+            'cli_examples' => [
+                ['summary' => __('Um município e ano'), 'command' => 'php artisan fundeb:import-api --city=1 --ano=2025'],
+                ['summary' => __('Todos os municípios (um ano)'), 'command' => 'php artisan fundeb:import-api --all-cities --ano=2025'],
+                ['summary' => __('CSV de referências (VAAF/VAAT/VAAR)'), 'command' => 'php artisan fundeb:import-references storage/app/fundeb.csv'],
+            ],
         ];
     }
 
@@ -234,6 +240,12 @@ final class PublicDataImportCatalog
                 'cadunico:sync-city',
                 'cadunico:import-cecad',
             ],
+            'cli_examples' => [
+                ['summary' => __('Nacional multi-ano (Misocial)'), 'command' => 'php artisan cadunico:import-misocial --from=2020'],
+                ['summary' => __('Automático (download + lacunas)'), 'command' => 'php artisan cadunico:auto-sync --ano=2026'],
+                ['summary' => __('Um município'), 'command' => 'php artisan cadunico:sync-city 1 --ano=2026'],
+                ['summary' => __('CSV Cecad manual'), 'command' => 'php artisan cadunico:import-cecad storage/app/cecad.csv --ano=2024'],
+            ],
         ];
     }
 
@@ -245,7 +257,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'censo_inep_matriculas',
             'title' => __('Censo INEP — matrículas por município'),
-            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Escala municipal no Horizonte e cruzamento PDF — não substitui matrículas i-Educar. Para a série histórica do gráfico de prospectos, use horizonte:fortnightly-feed --phase=educacenso.'),
+            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Alimenta consultoria e PDF — não substitui matrículas i-Educar. A série multi-ano do gráfico Horizonte fica no hub Horizonte (Educacenso).'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'inep_censo_municipio_matriculas',
@@ -265,20 +277,20 @@ final class PublicDataImportCatalog
                     'needs_city' => false,
                     'needs_year' => false,
                     'needs_years_range' => false,
-                    'hint' => __('Requer ficheiro em storage (pipeline geo passo 3 ou download manual).'),
-                ],
-                [
-                    'key' => 'educacenso_horizonte_series',
-                    'label' => __('Educacenso — série multi-ano (gráfico Horizonte)'),
-                    'task_domain' => null,
-                    'task_key' => null,
-                    'needs_city' => false,
-                    'needs_year' => false,
-                    'needs_years_range' => false,
-                    'hint' => __('CLI: php artisan horizonte:fortnightly-feed --phase=educacenso (repetir até concluir a janela). Auditar: horizonte:verify-educacenso-coverage.'),
+                    'hint' => __('Requer arquivo em storage (pipeline geo passo 3 ou download manual).'),
                 ],
             ],
-            'cli' => ['inep:index-censo-geo-agg', 'inep:import-microdados-cadastro-escolas-geo', 'horizonte:fortnightly-feed --phase=educacenso', 'horizonte:verify-educacenso-coverage'],
+            'horizonte_link' => [
+                'route' => 'admin.horizonte-import.index',
+                'fragment' => 'horizonte-educacenso-sync',
+                'label' => __('Educacenso nacional (gráfico Horizonte)'),
+                'hint' => __('Reimportação ano × UF — hub Horizonte, não consultoria municipal.'),
+            ],
+            'cli' => ['inep:index-censo-geo-agg', 'inep:import-microdados-cadastro-escolas-geo'],
+            'cli_examples' => [
+                ['summary' => __('Indexar matrículas a partir do CSV de microdados'), 'command' => 'php artisan inep:index-censo-geo-agg'],
+                ['summary' => __('Importar microdados + coordenadas escolas'), 'command' => 'php artisan inep:import-microdados-cadastro-escolas-geo storage/app/microdados.csv'],
+            ],
         ];
     }
 
@@ -350,7 +362,12 @@ final class PublicDataImportCatalog
                 ],
             ],
             'cli' => [
-                'php artisan funding:rebuild-finance-realtime --all-cities --ano=2026 --confirm=rebuild-repasses-2026',
+                'funding:rebuild-finance-realtime',
+            ],
+            'cli_examples' => [
+                ['summary' => __('Rebuild um município'), 'command' => 'php artisan funding:rebuild-finance-realtime --city=1 --ano=2025'],
+                ['summary' => __('Simular rebuild nacional'), 'command' => 'php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --dry-run'],
+                ['summary' => __('Rebuild todos os municípios'), 'command' => 'php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --confirm=rebuild-repasses-2025'],
             ],
         ];
     }
@@ -376,6 +393,11 @@ final class PublicDataImportCatalog
             'admin_route' => 'admin.pedagogical-sync.index',
             'actions' => [],
             'cli' => ['saeb:sync-microdados', 'saeb:import-official', 'saeb:import-csv'],
+            'cli_examples' => [
+                ['summary' => __('Microdados SAEB'), 'command' => 'php artisan saeb:sync-microdados'],
+                ['summary' => __('Planilhas oficiais INEP'), 'command' => 'php artisan saeb:import-official'],
+                ['summary' => __('CSV local'), 'command' => 'php artisan saeb:import-csv storage/app/saeb.csv'],
+            ],
         ];
     }
 
@@ -399,7 +421,12 @@ final class PublicDataImportCatalog
             'pdf_gaps' => ['map_unavailable'],
             'admin_route' => 'admin.geo-sync.index',
             'actions' => [],
-            'cli' => ['geo:sync-inep', 'inep:probe-geo-fallbacks'],
+            'cli' => ['geo:sync-inep', 'inep:probe-geo-fallbacks', 'inep:import-microdados-cadastro-escolas-geo'],
+            'cli_examples' => [
+                ['summary' => __('Sincronizar coordenadas INEP'), 'command' => 'php artisan geo:sync-inep'],
+                ['summary' => __('Diagnosticar fallbacks geo'), 'command' => 'php artisan inep:probe-geo-fallbacks'],
+                ['summary' => __('Microdados cadastro escolas + geo'), 'command' => 'php artisan inep:import-microdados-cadastro-escolas-geo storage/app/microdados.csv'],
+            ],
         ];
     }
 
@@ -431,7 +458,13 @@ final class PublicDataImportCatalog
                     'hint' => __('Pode demorar horas; acompanhe na fila de processamento.'),
                 ],
             ],
-            'cli' => ['weekly-mass-sync:run'],
+            'cli' => ['weekly-mass-sync:run', 'public-data:check-official'],
+            'cli_examples' => [
+                ['summary' => __('Orquestração semanal (geo, FUNDEB, repasses, Censo, SAEB)'), 'command' => 'php artisan weekly-mass-sync:run'],
+                ['summary' => __('Retomar checkpoint'), 'command' => 'php artisan weekly-mass-sync:run --resume=42'],
+                ['summary' => __('Verificar fontes oficiais (read-only)'), 'command' => 'php artisan public-data:check-official'],
+                ['summary' => __('Verificação sem notificação'), 'command' => 'php artisan public-data:check-official --no-notify'],
+            ],
         ];
     }
 }

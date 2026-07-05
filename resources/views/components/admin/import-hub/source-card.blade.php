@@ -31,8 +31,8 @@
 >
     <div @class([
         'flex flex-wrap items-start justify-between gap-3 px-5 py-4',
-        'border-b border-gray-100 dark:border-gray-800 bg-gray-50/80 dark:bg-gray-900/50' => ! $nested,
-        'border-b border-slate-100/90 dark:border-slate-800/80' => $nested,
+        'border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-slate-800' => ! $nested,
+        'border-b border-slate-200 dark:border-slate-700' => $nested,
     ])>
         <div class="flex gap-3 min-w-0 flex-1">
             @if (filled($icon) && $accentKey)

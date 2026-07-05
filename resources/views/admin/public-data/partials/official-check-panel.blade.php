@@ -39,7 +39,7 @@
             <form
                 method="POST"
                 action="{{ route('admin.public-data.check-official') }}"
-                class="shrink-0 rounded-xl border border-gray-200/90 bg-gray-50/80 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/50"
+                class="shrink-0 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-slate-800"
             >
                 @csrf
                 <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
@@ -63,8 +63,8 @@
     </div>
 
     @if (! $enabled)
-        <x-admin.import-hub.callout variant="info" :title="__('Verificação desactivada')">
-            {{ __('Defina PUBLIC_DATA_DAILY_CHECK_ENABLED=true para activar o comando public-data:check-official e este painel.') }}
+        <x-admin.import-hub.callout variant="info" :title="__('Verificação desativada')">
+            {{ __('Defina PUBLIC_DATA_DAILY_CHECK_ENABLED=true para ativar o comando public-data:check-official e este painel.') }}
         </x-admin.import-hub.callout>
     @elseif ($report === null)
         <x-admin.import-hub.callout variant="info" :title="__('Sem relatório recente')">
@@ -77,17 +77,17 @@
             @endif
             <div class="mt-2 flex flex-wrap gap-2 text-[11px] font-medium">
                 @if ((int) ($counts['new_count'] ?? $summary['news'] ?? 0) > 0)
-                    <span class="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-violet-800 dark:bg-violet-900/40 dark:text-violet-200">
+                    <span class="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-violet-800 dark:bg-violet-900 dark:text-violet-100">
                         {{ trans_choice(':n novidade|:n novidades', (int) ($counts['new_count'] ?? $summary['news'] ?? 0), ['n' => (int) ($counts['new_count'] ?? $summary['news'] ?? 0)]) }}
                     </span>
                 @endif
                 @if ((int) ($counts['attention_count'] ?? $summary['attention'] ?? 0) > 0)
-                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 dark:bg-amber-900/40 dark:text-amber-100">
+                    <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-amber-900 dark:bg-amber-900 dark:text-amber-100">
                         {{ trans_choice(':n requer atenção|:n requerem atenção', (int) ($counts['attention_count'] ?? $summary['attention'] ?? 0), ['n' => (int) ($counts['attention_count'] ?? $summary['attention'] ?? 0)]) }}
                     </span>
                 @endif
                 @if ((int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0) > 0)
-                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">
+                    <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-100">
                         {{ trans_choice(':n alinhada|:n alinhadas', (int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0), ['n' => (int) ($counts['aligned_count'] ?? $summary['aligned'] ?? 0)]) }}
                     </span>
                 @endif
@@ -118,5 +118,14 @@
                 ])
             </div>
         @endif
+    @endif
+
+    @if ($enabled)
+        <x-admin.import-hub.cli-block
+            :examples="[
+                ['summary' => __('Verificação completa'), 'command' => 'php artisan public-data:check-official'],
+                ['summary' => __('Sem notificar administradores'), 'command' => 'php artisan public-data:check-official --no-notify'],
+            ]"
+        />
     @endif
 </section>

@@ -16,6 +16,7 @@ final class AdminImportHubCatalogTest extends TestCase
 
         $this->assertContains('repasses', $keys);
         $this->assertContains('hub', $keys);
+        $this->assertSame('Consultoria', collect($items)->firstWhere('key', 'hub')['label'] ?? '');
 
         $repasses = collect($items)->firstWhere('key', 'repasses');
         $this->assertNotNull($repasses);
