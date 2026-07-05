@@ -3497,10 +3497,60 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             const choroplethMode =
                 this.isOverviewMode || this.isMesoOverviewMode;
+            const boundariesMode =
+                this.isRegionalMode && this.mapView === "boundaries";
+
             this.setChoroplethOverviewUi(choroplethMode);
-            if (!choroplethMode) {
+
+            if (boundariesMode) {
+                this.detachRegionalCanvasRenderer();
+                this.ensureMunicipalBoundaryPaneInteractive();
+            } else if (!choroplethMode) {
                 this.clearMapPointerOverrides();
+                this.resetMunicipalBoundaryPaneZIndex();
             }
+        },
+
+        /** Canvas regional (overlay z≈400) cobre polígonos de contorno (z≈398). */
+        detachRegionalCanvasRenderer() {
+            if (!this.map || !this.canvasRenderer) {
+                return;
+            }
+
+            try {
+                this.map.removeLayer(this.canvasRenderer);
+            } catch {
+                /* já removido */
+            }
+        },
+
+        resetMunicipalBoundaryPaneZIndex() {
+            const pane = this.map?.getPane("horizonteMunicipalBoundary");
+            if (pane) {
+                pane.style.zIndex = "398";
+            }
+        },
+
+        ensureMunicipalBoundaryPaneInteractive() {
+            if (!this.map) {
+                return;
+            }
+
+            this.ensureMunicipalBoundaryPane();
+            const pane = this.map.getPane("horizonteMunicipalBoundary");
+            if (!pane) {
+                return;
+            }
+
+            pane.style.zIndex = "650";
+            pane.style.pointerEvents = "auto";
+            pane.querySelectorAll("svg").forEach((svg) => {
+                svg.style.pointerEvents = "auto";
+            });
+            pane.querySelectorAll("path.leaflet-interactive").forEach((path) => {
+                path.style.pointerEvents = "auto";
+                path.style.cursor = "pointer";
+            });
         },
 
         clearMapPointerOverrides() {
@@ -4941,6 +4991,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const filtered = { type: "FeatureCollection", features };
             const geoLayer = L.geoJSON(filtered, {
                 pane: "horizonteMunicipalBoundary",
+                interactive: true,
                 smoothFactor: 1.25,
                 style: (feature) => {
                     const ibge = normalizeIbgeCodarea(feature?.properties?.codarea);
@@ -4981,7 +5032,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             this.municipalBoundaryLayer = geoLayer;
             geoLayer.addTo(this.map);
-            this.applyChoroplethPointerPolicy(true);
+            this.ensureMunicipalBoundaryPaneInteractive();
 
             if (this._preserveViewOnNextRender) {
                 this._preserveViewOnNextRender = false;
@@ -4994,10 +5045,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     }
                 });
                 if (bounds.length > 0) {
-                    this.map.fitBounds(bounds, {
-                        padding: [40, 40],
-                        maxZoom: this.scopeMeso ? 9 : 8,
-                    });
+                    this.programmaticMapMove(() =>
+                        this.map.fitBounds(bounds, {
+                            padding: [40, 40],
+                            maxZoom: this.scopeMeso ? 9 : 8,
+                        }),
+                    );
                 }
             }
 
@@ -5287,7 +5340,11 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.setChoroplethOverviewUi(false);
             this.clearChoroplethLayer();
             this.purgeBlockingOverlays(false);
-            this.ensureRegionalCanvasRenderer();
+            if (this.mapView === "boundaries") {
+                this.detachRegionalCanvasRenderer();
+            } else {
+                this.ensureRegionalCanvasRenderer();
+            }
             if (!this.map.hasLayer(this.layer)) {
                 this.layer.addTo(this.map);
             }

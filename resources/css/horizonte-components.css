@@ -333,6 +333,16 @@
         pointer-events: auto;
     }
 
+    /* Modo Contornos — polígonos municipais acima do canvas regional residual. */
+    .serv-horizonte-gis__map .leaflet-horizonte-municipal-boundary-pane {
+        pointer-events: auto !important;
+    }
+
+    .serv-horizonte-gis__map .leaflet-horizonte-municipal-boundary-pane path.leaflet-interactive {
+        pointer-events: auto !important;
+        cursor: pointer;
+    }
+
     .dark .serv-horizonte-gis__map path.leaflet-interactive {
         stroke: #cbd5e1;
     }
