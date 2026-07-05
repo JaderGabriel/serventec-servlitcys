@@ -1,17 +1,13 @@
 @php
-    use App\Support\Admin\AdminImportHubCatalog;
     use App\Support\Brazil\IbgeMunicipalityCatalog;
     use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
-    use App\Support\Horizonte\HorizonteFeedPhaseOptions;
 
     $hub = is_array($horizonteHub ?? null) ? $horizonteHub : [];
     $brazilianUfs = IbgeMunicipalityCatalog::brazilianUfs();
     $coverage = is_array($hub['coverage'] ?? null) ? $hub['coverage'] : [];
     $phases = is_array($hub['phases'] ?? null) ? $hub['phases'] : [];
-    $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
     $feedFlash = session('horizonte_feed');
     $pipeline = is_array($hub['pipeline'] ?? null) ? $hub['pipeline'] : (is_array($feedFlash['pipeline'] ?? null) ? $feedFlash['pipeline'] : null);
-    $scheduleSummary = (string) ($hub['schedule_summary'] ?? '');
     $enabled = (bool) ($hub['enabled'] ?? true);
     $feedEnabled = (bool) ($hub['feed_enabled'] ?? true);
     $bundle = is_array($hub['bundle'] ?? null) ? $hub['bundle'] : [];
@@ -19,7 +15,6 @@
 
     $phaseDefinitions = HorizonteFortnightlyFeedPhaseCatalog::definitions();
     $phaseGroups = HorizonteFortnightlyFeedPhaseCatalog::groups();
-    $defaultPhases = HorizonteFeedPhaseOptions::defaultSelectedPhaseKeys();
     $phasesByGroup = [];
     foreach ($phaseDefinitions as $def) {
         $phasesByGroup[$def['group']][] = $def;
@@ -47,50 +42,9 @@
 @endphp
 
 <section id="horizonte-hub" class="scroll-mt-24 space-y-5">
-    {{-- Hero Horizonte --}}
-    <div class="relative overflow-hidden rounded-2xl border border-sky-200/80 dark:border-sky-900/60 bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 p-5 sm:p-6 text-white shadow-lg">
-        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at 20% 20%, rgb(56 189 248 / 0.35), transparent 45%), radial-gradient(circle at 80% 70%, rgb(99 102 241 / 0.25), transparent 40%);"></div>
-        <div class="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div class="min-w-0 max-w-2xl">
-                <div class="flex items-center gap-2 text-sky-300">
-                    <x-ui.icon name="map" class="h-5 w-5 shrink-0" />
-                    <span class="text-xs font-semibold uppercase tracking-widest">{{ __('Horizonte') }}</span>
-                </div>
-                <h3 class="mt-2 text-lg sm:text-xl font-bold tracking-tight" style="font-family: Outfit, ui-sans-serif, system-ui, sans-serif;">
-                    {{ __('Abastecimento nacional do mapa') }}
-                </h3>
-                <p class="mt-2 text-sm text-sky-50 leading-relaxed">
-                    {{ __('Marque as fases que deseja executar. O pipeline corre em etapas (1 fase por invocação); fases incrementais — Educacenso, SAEB, IBGE, SIDRA, SICONFI — continuam com passos automáticos.') }}
-                </p>
-                @if ($feedEnabled && ($hub['schedule_enabled'] ?? true))
-                    <p class="mt-2 text-xs text-sky-100">
-                        {{ __('Agendamento: :summary', ['summary' => $scheduleSummary]) }}
-                        @if ($lastFeed && filled($lastFeed['finished_at'] ?? null))
-                            · {{ __('Última execução: :when', [
-                                'when' => \Illuminate\Support\Carbon::parse($lastFeed['finished_at'])->timezone(config('app.timezone'))->format('d/m/Y H:i'),
-                            ]) }}
-                        @endif
-                    </p>
-                @endif
-            </div>
-            <div class="flex flex-wrap gap-2 shrink-0">
-                <a href="{{ $hub['map_url'] ?? route('dashboard.horizonte') }}" class="inline-flex items-center gap-1.5 rounded-lg bg-sky-500 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-400 shadow-sm">
-                    <x-ui.icon name="map" class="h-3.5 w-3.5" />
-                    {{ __('Mapa') }}
-                </a>
-                <a href="{{ $hub['doc_url'] ?? route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']) }}" class="inline-flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/25 px-3 py-2 text-xs font-semibold text-white hover:bg-white/35 shadow-sm">
-                    {{ __('Docs') }}
-                </a>
-                <span class="inline-flex items-center rounded-lg border border-slate-600 bg-slate-950 px-3 py-2 text-[10px] font-mono text-sky-100" title="{{ __('Após abastecimento completo ou deploy') }}">
-                    php artisan horizonte:warm-map-cache
-                </span>
-            </div>
-        </div>
-    </div>
-
     @if (! $enabled)
-        <x-admin.import-hub.callout variant="info" :title="__('Horizonte desactivado')">
-            {{ __('Defina HORIZONTE_ENABLED=true para activar o mapa e este painel.') }}
+        <x-admin.import-hub.callout variant="info" :title="__('Horizonte desativado')">
+            {{ __('Defina HORIZONTE_ENABLED=true para ativar o mapa e este painel.') }}
         </x-admin.import-hub.callout>
     @elseif (is_array($feedFlash))
         <x-admin.import-hub.callout :variant="($feedFlash['success'] ?? false) ? 'success' : 'warning'" :title="($feedFlash['success'] ?? false) ? __('Pipeline iniciado') : __('Pipeline com falhas')">
@@ -113,7 +67,7 @@
                         {{ __('Fases a executar') }}
                     </h4>
                     <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-2xl">
-                        {{ __('Seleccione o que deseja importar neste ciclo. A ordem de execução segue a sequência oficial do feed bimestral.') }}
+                        {{ __('Marque o que importar neste ciclo. A ordem segue a sequência oficial do feed bimestral.') }}
                     </p>
                 </div>
                 <div class="flex flex-wrap gap-2 text-[11px]">
@@ -169,14 +123,14 @@
                             <option value="{{ $ufOption }}">{{ $ufOption }}</option>
                         @endforeach
                     </select>
-                    <span class="mt-0.5 block text-[10px] text-slate-600 dark:text-slate-400">{{ __('Filtra FUNDEB, Censo, SAEB, IBGE e SGE à UF escolhida.') }}</span>
+                    <span class="mt-0.5 block text-[10px] text-slate-600 dark:text-slate-400">{{ __('Filtra FUNDEB, Censo, SAEB, IBGE e SGE pela UF escolhida.') }}</span>
                 </label>
                 <button
                     type="submit"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:from-sky-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-sky-700 bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-white dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 dark:focus:ring-offset-slate-900"
                 >
-                    <x-ui.icon name="arrow-path" class="h-4 w-4" />
-                    {{ __('Executar fases seleccionadas') }}
+                    <x-ui.icon name="arrow-path" class="h-4 w-4 text-white" />
+                    {{ __('Executar fases selecionadas') }}
                 </button>
             </div>
         </form>

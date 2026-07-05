@@ -20,7 +20,7 @@
         'violet' => 'from-violet-50 to-white dark:from-slate-800 dark:to-gray-900',
         'fuchsia' => 'from-fuchsia-50 to-white dark:from-slate-800 dark:to-gray-900',
         'indigo' => 'from-sky-50 to-white dark:from-slate-800 dark:to-gray-900',
-        'sky' => 'from-sky-50 to-white dark:from-slate-800 dark:to-gray-900',
+        'sky' => 'from-sky-100 via-sky-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-gray-900',
         'amber' => 'from-amber-50 to-white dark:from-slate-800 dark:to-gray-900',
         'slate' => 'from-gray-50 to-white dark:from-gray-900 dark:to-gray-900',
     ];
@@ -41,7 +41,7 @@
 <div {{ $attributes->merge(['class' => 'py-10']) }}>
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="rounded-2xl border border-gray-200/90 bg-white shadow-sm ring-1 ring-gray-950/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10 overflow-hidden">
-            <div class="border-b border-gray-100 bg-gradient-to-r {{ $gradient }} px-6 py-5 dark:border-gray-800 sm:px-8">
+            <div class="border-b border-gray-100 bg-gradient-to-r {{ $gradient }} px-6 py-5 dark:border-slate-700 sm:px-8">
                 <nav class="mb-4 flex flex-wrap gap-1.5" aria-label="{{ __('Importação e sincronização') }}">
                     @foreach ($navItems as $item)
                         @php
@@ -71,7 +71,7 @@
                 @endif
                 <h1 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $title }}</h1>
                 @if (filled($description))
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400 max-w-3xl leading-relaxed">{{ $description }}</p>
+                    <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 max-w-3xl leading-relaxed">{{ $description }}</p>
                 @endif
 
                 @isset($badges)
