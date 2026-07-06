@@ -12,7 +12,7 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Recurso | Descrição |
 |---------|-----------|
-| **Menu lateral** | Nove seções com **cor, ícone e analogia** (ver legenda abaixo) + releases descobertos |
+| **Menu lateral** | Seções **modulares** (1–11) com accordion, cor e ícone por módulo + releases |
 | **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, seção e cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras nos títulos `h1`–`h4` |
 | **Idioma** | **pt-BR** em toda a UI, menus e documentação viva (usuário, seção, atualizar, convênio) |
@@ -25,13 +25,20 @@ Cada seção do índice usa identidade própria (implementação: `Documentation
 |--------|-----|-------|----------|
 | **1 · Entrada** | Blue | `home` | Porta de entrada — versão, perfis e hub |
 | **2 · Arquitetura** | Sky | `squares-2x2` | Planta do sistema — camadas e decisões |
-| **3 · Consultoria municipal** | Sky | `chart-bar` | Painel municipal — analytics e Horizonte |
-| **4 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF, repasses e extratos |
-| **5 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
-| **6 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
+| **3 · Módulos** | Indigo | `squares-2x2` | Mapa modular — espelha o menu da app |
+| **4 · Painel analítico** | Blue | `chart-bar` | Painel analítico — cinco áreas |
+| **5 · Horizonte** | Emerald | `globe-alt` | Mapa GIS — oportunidade municipal |
+| **6 · Cadastro e CadÚnico** | Violet | `users` | Cadastro × CadÚnico — inclusão |
+| **7 · Pedagogia e SAEB** | Sky | `academic-cap` | SAEB / IDEB — pedagogia |
+| **8 · RX — Censo** | Amber | `clipboard-document-list` | RX — Educacenso e ritmo |
+| **9 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
+| **10 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
+| **11 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
 | **Entregas escalonadas** | Fuchsia | `arrow-path` | Linha do tempo — entregas mensais |
 | **Arquivo** | Slate | `clipboard-document-list` | Arquivo — notas executivas antigas |
 | **Outros documentos** | Emerald | `document-text` | Acervo extra — releases e descobertas |
+
+Índice de módulos: [modulos/README.md](modulos/README.md).
 
 ---
 

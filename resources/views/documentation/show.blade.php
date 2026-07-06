@@ -1,19 +1,47 @@
 @php
     $docRoute = $documentationRoutePrefix ?? 'documentation';
     $headings = is_array($documentHeadings ?? null) ? $documentHeadings : [];
+    $sectionTone = (string) ($currentSectionTone ?? 'slate');
+    $sectionIcon = (string) ($currentSectionIcon ?? 'document-text');
 @endphp
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-            <div class="min-w-0">
-                <p class="serv-eyebrow">{{ __('Documentação') }}</p>
-                @if ($currentSection)
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $currentSection }}</p>
-                @endif
-                <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight mt-1">
-                    {{ $currentLabel }}
-                </h2>
-                <p class="mt-1 text-xs font-mono text-blue-800/80 dark:text-blue-300/80">{{ $currentPath }}</p>
+            <div class="min-w-0 flex-1">
+                <nav class="serv-docs-breadcrumb mb-2" aria-label="{{ __('Navegação') }}">
+                    <ol class="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <li>
+                            <a
+                                href="{{ route($docRoute.'.show', ['doc' => $defaultDoc ?? 'docs/README.md']) }}"
+                                class="hover:text-blue-700 dark:hover:text-blue-300 transition"
+                            >
+                                {{ __('Documentação') }}
+                            </a>
+                        </li>
+                        @if ($currentSection)
+                            <li aria-hidden="true" class="text-slate-300 dark:text-slate-600">/</li>
+                            <li class="font-medium text-slate-600 dark:text-slate-300">{{ $currentSection }}</li>
+                        @endif
+                    </ol>
+                </nav>
+                <div class="flex items-start gap-3">
+                    @if ($currentSection)
+                        <span @class([
+                            'serv-docs-header-badge',
+                            'serv-docs-header-badge--'.$sectionTone,
+                        ]) aria-hidden="true">
+                            <x-ui.icon :name="$sectionIcon" class="h-4 w-4" />
+                        </span>
+                    @endif
+                    <div class="min-w-0">
+                        <h2 class="font-display font-semibold text-xl sm:text-2xl text-serv-navy dark:text-white leading-tight">
+                            {{ $currentLabel }}
+                        </h2>
+                        @if (! empty($currentSection))
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{{ $currentSection }}</p>
+                        @endif
+                    </div>
+                </div>
             </div>
             <div class="flex flex-wrap items-center gap-1 shrink-0">
                 <a
@@ -40,17 +68,17 @@
         </div>
     </x-slot>
 
-    <div class="py-6 sm:py-8">
-        <div class="max-w-[96rem] mx-auto sm:px-6 lg:px-8">
+    <div class="py-6 sm:py-8 serv-docs-page">
+        <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8">
             <div @class([
-                'gap-8 xl:gap-10',
-                'lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)]' => count($headings) === 0,
-                'lg:grid lg:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)] xl:grid-cols-[minmax(14rem,17rem)_minmax(0,1fr)_minmax(12rem,14rem)]' => count($headings) > 0,
+                'serv-docs-layout gap-6 xl:gap-8',
+                'lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]' => count($headings) === 0,
+                'lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)] xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)_minmax(11rem,13rem)]' => count($headings) > 0,
             ])>
-                <aside class="hidden lg:block serv-docs-sidebar">
-                    <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto space-y-4">
+                <aside class="hidden lg:block serv-docs-sidebar-column">
+                    <div class="serv-docs-sidebar-panel sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
                         @if (($productVersion ?? '') !== '')
-                            <div class="rounded-lg border border-blue-200/80 bg-blue-50/60 dark:border-blue-800/50 dark:bg-blue-950/25 px-3 py-2.5 text-xs space-y-2">
+                            <div class="m-3 mb-0 rounded-lg border border-blue-200/80 bg-blue-50/60 dark:border-blue-800/50 dark:bg-blue-950/25 px-3 py-2.5 text-xs space-y-2">
                                 @if ($productInProduction ?? false)
                                     <p class="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-sm">
                                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-200 animate-pulse" aria-hidden="true"></span>
@@ -86,6 +114,7 @@
                                 </a>
                             </div>
                         @endif
+                        <div class="serv-docs-sidebar-inner space-y-3">
                         @include('documentation.partials.search', [
                             'documentationRoutePrefix' => $docRoute,
                         ])
@@ -94,6 +123,7 @@
                             'currentPath' => $currentPath,
                             'documentationRoutePrefix' => $docRoute,
                         ])
+                        </div>
                     </div>
                 </aside>
 
@@ -157,22 +187,25 @@
                         </p>
                     @endif
 
-                    <article class="serv-panel serv-docs-article">
+                    <article class="serv-docs-article">
                         @if ($modifiedAt)
-                            <p class="px-5 sm:px-8 pt-4 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">
-                                {{ __('Última alteração no servidor:') }}
-                                <time datetime="{{ date('c', $modifiedAt) }}">{{ date('d/m/Y H:i', $modifiedAt) }}</time>
+                            <p class="serv-docs-article__meta px-5 sm:px-8 lg:px-10 pt-4 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span>
+                                    {{ __('Última alteração:') }}
+                                    <time datetime="{{ date('c', $modifiedAt) }}">{{ date('d/m/Y H:i', $modifiedAt) }}</time>
+                                </span>
+                                <span class="font-mono text-slate-400 dark:text-slate-500">{{ $currentPath }}</span>
                             </p>
                         @endif
-                        <div class="serv-docs-prose px-5 sm:px-8 py-6 sm:py-8">
+                        <div class="serv-docs-prose serv-docs-prose--readable px-5 sm:px-8 lg:px-10 py-6 sm:py-8">
                             {!! $htmlContent !!}
                         </div>
                     </article>
                 </div>
 
                 @if (count($headings) > 1)
-                    <aside class="hidden xl:block">
-                        <div class="serv-panel p-4 sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
+                    <aside class="hidden xl:block serv-docs-toc-column">
+                        <div class="serv-docs-toc-panel sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
                             @include('documentation.partials.toc', [
                                 'headings' => $headings,
                                 'variant' => 'sidebar',

@@ -54,15 +54,40 @@ final class DocumentationSectionVisuals
                 'tone' => 'sky',
                 'analogy' => __('Planta do sistema — camadas e decisões'),
             ],
-            'consultoria' => [
+            'modulos' => [
+                'icon' => 'squares-2x2',
+                'tone' => 'indigo',
+                'analogy' => __('Mapa modular — espelha o menu da app'),
+            ],
+            'analytics' => [
                 'icon' => 'chart-bar',
+                'tone' => 'blue',
+                'analogy' => __('Painel analítico — cinco áreas'),
+            ],
+            'horizonte' => [
+                'icon' => 'globe-alt',
+                'tone' => 'emerald',
+                'analogy' => __('Mapa GIS — oportunidade municipal'),
+            ],
+            'cadunico' => [
+                'icon' => 'users',
+                'tone' => 'violet',
+                'analogy' => __('Cadastro × CadÚnico — inclusão'),
+            ],
+            'pedagogia' => [
+                'icon' => 'academic-cap',
                 'tone' => 'sky',
-                'analogy' => __('Painel municipal — analytics e Horizonte'),
+                'analogy' => __('SAEB / IDEB — pedagogia'),
+            ],
+            'rx' => [
+                'icon' => 'clipboard-document-list',
+                'tone' => 'amber',
+                'analogy' => __('RX — Educacenso e ritmo'),
             ],
             'funding' => [
                 'icon' => 'banknotes',
                 'tone' => 'rose',
-                'analogy' => __('Fluxo FUNDEB — VAAF, repasses e extratos'),
+                'analogy' => __('Fluxo FUNDEB — VAAF e repasses'),
             ],
             'integrations' => [
                 'icon' => 'globe-alt',
@@ -101,15 +126,30 @@ final class DocumentationSectionVisuals
             return 'architecture';
         }
         if (preg_match('/^3\b/u', $title)) {
-            return 'consultoria';
+            return 'modulos';
         }
         if (preg_match('/^4\b/u', $title)) {
-            return 'funding';
+            return 'analytics';
         }
         if (preg_match('/^5\b/u', $title)) {
-            return 'integrations';
+            return 'horizonte';
         }
         if (preg_match('/^6\b/u', $title)) {
+            return 'cadunico';
+        }
+        if (preg_match('/^7\b/u', $title)) {
+            return 'pedagogia';
+        }
+        if (preg_match('/^8\b/u', $title)) {
+            return 'rx';
+        }
+        if (preg_match('/^9\b/u', $title)) {
+            return 'funding';
+        }
+        if (preg_match('/^10\b/u', $title)) {
+            return 'integrations';
+        }
+        if (preg_match('/^11\b/u', $title)) {
             return 'operations';
         }
         if (str_contains(mb_strtolower($title), 'escalonad')) {

@@ -60,8 +60,15 @@ class DocumentationCatalogTest extends TestCase
         $titles = array_column($sections, 'title');
 
         $this->assertSame(__('1 · Entrada'), $titles[0]);
+        $this->assertContains(__('5 · Horizonte'), $titles);
         $this->assertContains(__('Entregas escalonadas'), $titles);
         $this->assertContains(__('Arquivo'), $titles);
+
+        $horizonte = collect($sections)->firstWhere('key', 'horizonte');
+        $this->assertNotNull($horizonte);
+        $horizontePaths = array_column($horizonte['items'] ?? [], 'path');
+        $this->assertContains('docs/HORIZONTE.md', $horizontePaths);
+        $this->assertContains('docs/modulos/MODULO_HORIZONTE.md', $horizontePaths);
     }
 
     public function test_flat_entries_includes_powerbi_once(): void

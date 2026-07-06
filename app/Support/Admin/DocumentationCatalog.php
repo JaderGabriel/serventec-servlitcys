@@ -108,6 +108,7 @@ final class DocumentationCatalog
             'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md',
             'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md',
             'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md',
+            'docs/modulos/MODULO_DADOS_PUBLICOS.md',
         ];
     }
 
@@ -202,6 +203,19 @@ final class DocumentationCatalog
     }
 
     /**
+     * @return list<string>
+     */
+    public static function sectionPaths(array $section): array
+    {
+        return array_values(array_filter(array_column(self::sectionItemsFlat($section), 'path')));
+    }
+
+    public static function sectionContainsPath(array $section, string $path): bool
+    {
+        return in_array($path, self::sectionPaths($section), true);
+    }
+
+    /**
      * @param  array<string, mixed>  $section
      * @return list<array{label: string, path: string, hint?: string}>
      */
@@ -292,7 +306,12 @@ final class DocumentationCatalog
         foreach (self::sections() as $section) {
             foreach (self::sectionItemsFlat($section) as $item) {
                 if ($item['path'] === $normalized) {
-                    return array_merge($item, ['section_title' => $section['title']]);
+                    return array_merge($item, [
+                        'section_title' => $section['title'],
+                        'section_key' => (string) ($section['key'] ?? ''),
+                        'section_icon' => (string) ($section['icon'] ?? 'document-text'),
+                        'section_tone' => (string) ($section['tone'] ?? 'slate'),
+                    ]);
                 }
             }
         }
@@ -408,6 +427,7 @@ final class DocumentationCatalog
                     ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
                     ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Feito · em curso · planeado')],
+                    ['label' => __('Índice de módulos'), 'path' => 'docs/modulos/README.md', 'hint' => __('Consultoria · Horizonte · RX')],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
                     ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
@@ -427,34 +447,98 @@ final class DocumentationCatalog
                 ],
             ],
             [
-                'key' => 'consultoria',
-                'title' => __('3 · Consultoria municipal'),
-                'description' => __('Painel `/dashboard/analytics` — navegação, métricas e relatórios.'),
+                'key' => 'modulos',
+                'title' => __('3 · Módulos'),
+                'description' => __('Visão por módulo — alinhada ao menu Consultoria e Dados públicos.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Índice de módulos'), 'path' => 'docs/modulos/README.md', 'hint' => __('Mapa Consultoria · Horizonte · RX')],
+                    ['label' => __('Painel analítico'), 'path' => 'docs/modulos/MODULO_ANALYTICS.md'],
+                    ['label' => __('Horizonte'), 'path' => 'docs/modulos/MODULO_HORIZONTE.md'],
+                    ['label' => __('Cadastro e CadÚnico'), 'path' => 'docs/modulos/MODULO_CADUNICO.md'],
+                    ['label' => __('Pedagogia e SAEB'), 'path' => 'docs/modulos/MODULO_PEDAGOGIA_SAEB.md'],
+                    ['label' => __('RX — Censo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md'],
+                    ['label' => __('Financiamento (FUNDEB)'), 'path' => 'docs/modulos/MODULO_FUNDEB.md'],
+                    ['label' => __('Dados públicos (admin)'), 'path' => 'docs/modulos/MODULO_DADOS_PUBLICOS.md', 'audience' => self::AUDIENCE_ADMIN],
+                ],
+            ],
+            [
+                'key' => 'analytics',
+                'title' => __('4 · Painel analítico'),
+                'description' => __('`/dashboard/analytics` — navegação, métricas e relatórios.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_ANALYTICS.md', 'hint' => __('Porta de entrada')],
                     ['label' => __('Navegação (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('Resumo → Finanças')],
                     ['label' => __('Decisão de abas'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
-                    ['label' => __('Horizonte — mapa oportunidade'), 'path' => 'docs/HORIZONTE.md', 'hint' => __('Expansão · déficits públicos')],
                     ['label' => __('Métricas e Pulse'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
                     ['label' => __('Relatório PDF Serventec'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
-                    ['label' => __('Power BI — estudo de integração'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX · roadmap')],
+                    ['label' => __('Power BI — estudo'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX · roadmap')],
+                    ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
+                ],
+            ],
+            [
+                'key' => 'horizonte',
+                'title' => __('5 · Horizonte'),
+                'description' => __('`/dashboard/horizonte` — mapa GIS, scoring e abastecimento.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_HORIZONTE.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Documentação técnica'), 'path' => 'docs/HORIZONTE.md', 'hint' => __('Scoring · SICONFI · modal')],
+                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Panorama Horizonte')],
+                ],
+                'submenus' => [[
+                    'title' => __('Operação (admin)'),
+                    'items' => [
+                        ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ],
+                ]],
+            ],
+            [
+                'key' => 'cadunico',
+                'title' => __('6 · Cadastro e CadÚnico'),
+                'description' => __('Aba Cadastro — i-Educar × MDS, inclusão e plugins.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CADUNICO.md', 'hint' => __('Porta de entrada')],
                     ['label' => __('CadÚnico / Cecad'), 'path' => 'docs/CADUNICO_CECAD.md'],
                     ['label' => __('CadÚnico — faixas etárias'), 'path' => 'docs/CADUNICO_FAIXAS_ETARIAS_FUNDEB.md'],
                     ['label' => __('CadÚnico previsão territorial'), 'path' => 'docs/CADUNICO_PREVISAO_TERRITORIAL.md'],
                     ['label' => __('CadÚnico — automação'), 'path' => 'docs/CADUNICO_AUTOMACAO.md'],
                     ['label' => __('Inclusão e NEE — roadmap'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
-                    ['label' => __('SAEB / IDEB'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
-                    ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
                     ['label' => __('Plugins i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
                 ],
             ],
             [
-                'key' => 'funding',
-                'title' => __('4 · Financiamento (FUNDEB)'),
-                'description' => __('VAAF, repasses, exportações e fontes públicas.'),
+                'key' => 'pedagogia',
+                'title' => __('7 · Pedagogia e SAEB'),
+                'description' => __('Aba Pedagógico — SAEB, IDEB e inferências INEP.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_PEDAGOGIA_SAEB.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('SAEB / IDEB'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
+                    ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
+                    ['label' => __('Importação SAEB (INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md', 'audience' => self::AUDIENCE_ADMIN],
+                ],
+            ],
+            [
+                'key' => 'rx',
+                'title' => __('8 · RX — Censo'),
+                'description' => __('`/dashboard/rx` — Educacenso e ritmo de cadastro nacional.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md'],
+                ],
+            ],
+            [
+                'key' => 'funding',
+                'title' => __('9 · Financiamento (FUNDEB)'),
+                'description' => __('Aba Finanças — VAAF, repasses, exportações e fontes públicas.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_FUNDEB.md', 'hint' => __('Porta de entrada')],
                     ['label' => __('FUNDEB / VAAF / VAAR'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
                     ['label' => __('Consultas externas'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE · Tesouro · INEP')],
                     ['label' => __('Comparativo vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
@@ -465,10 +549,11 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'integrations',
-                'title' => __('5 · Integrações (admin)'),
+                'title' => __('10 · Integrações (admin)'),
                 'description' => __('Importações, APIs propostas e estudos.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
+                    ['label' => __('Visão dados públicos'), 'path' => 'docs/modulos/MODULO_DADOS_PUBLICOS.md', 'hint' => __('Hubs admin')],
                     ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'],
                     ['label' => __('Importação SAEB (INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md'],
                     ['label' => __('Catálogo API i-Educar'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
@@ -478,7 +563,7 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'operations',
-                'title' => __('6 · Operação (admin)'),
+                'title' => __('11 · Operação (admin)'),
                 'description' => __('Deploy, ambiente, performance e CLI.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
