@@ -659,6 +659,10 @@ html.serv-horizonte-muni-modal-open body {
     gap: 0.75rem;
 }
 
+.serv-horizonte-muni-tooltip__layout-full--enrichment {
+    min-width: 0;
+}
+
 .serv-horizonte-muni-tooltip__finance-row {
     display: flex;
     flex-direction: column;
@@ -2175,9 +2179,24 @@ html.serv-horizonte-muni-modal-open body {
     display: grid;
     gap: 0.65rem;
     grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    min-width: 0;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+@media (max-width: 720px) {
+    .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment {
+        grid-template-columns: 1fr;
+    }
 }
 
 .serv-horizonte-muni-tooltip__enrich-block {
+    min-width: 0;
+    overflow: hidden;
+    container-type: inline-size;
     padding: 0.55rem 0.65rem;
     border-radius: 0.55rem;
     border: 1px solid rgb(226 232 240 / 0.95);
@@ -2217,23 +2236,26 @@ html.serv-horizonte-muni-modal-open body {
 }
 
 .serv-horizonte-muni-tooltip__enrich-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto);
+    gap: 0.35rem 0.5rem;
+    align-items: baseline;
     font-size: 0.6875rem;
     line-height: 1.35;
 }
 
 .serv-horizonte-muni-tooltip__enrich-label {
     color: rgb(100 116 139);
-    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .serv-horizonte-muni-tooltip__enrich-value {
     font-weight: 600;
     color: rgb(15 23 42);
     text-align: right;
-    flex: 0 0 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .serv-horizonte-muni-tooltip__enrich-value--warn {
@@ -2258,7 +2280,9 @@ html.serv-horizonte-muni-modal-open body {
 .serv-horizonte-muni-tooltip__enrich-foot {
     margin: 0.35rem 0 0;
     font-size: 0.625rem;
+    line-height: 1.4;
     color: rgb(148 163 184);
+    overflow-wrap: anywhere;
 }
 
 /* Blocos enriquecidos: Finanças e Pedagogia */
@@ -2280,6 +2304,16 @@ html.serv-horizonte-muni-modal-open body {
 .dark .serv-horizonte-muni-tooltip__enrich-block--pedagogy {
     border-color: rgb(6 95 70 / 0.45);
     background: rgb(6 78 59 / 0.22);
+}
+
+.serv-horizonte-muni-tooltip__enrich-block--social {
+    border-color: rgb(191 219 254 / 0.85);
+    background: rgb(239 246 255 / 0.65);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--social {
+    border-color: rgb(30 64 175 / 0.45);
+    background: rgb(23 37 84 / 0.28);
 }
 
 .serv-horizonte-muni-tooltip__enrich-head {
@@ -2309,6 +2343,14 @@ html.serv-horizonte-muni-modal-open body {
 
 .dark .serv-horizonte-muni-tooltip__enrich-block--pedagogy .serv-horizonte-muni-tooltip__enrich-head {
     border-bottom-color: rgb(6 95 70 / 0.35);
+}
+
+.serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(191 219 254 / 0.65);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(30 64 175 / 0.35);
 }
 
 .serv-horizonte-muni-tooltip__enrich-icon-wrap {
@@ -2342,6 +2384,14 @@ html.serv-horizonte-muni-modal-open body {
     color: rgb(110 231 183);
 }
 
+.serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(37 99 235);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(147 197 253);
+}
+
 .serv-horizonte-muni-tooltip__enrich-icon {
     width: 1rem;
     height: 1rem;
@@ -2356,6 +2406,11 @@ html.serv-horizonte-muni-modal-open body {
     flex-wrap: wrap;
     margin: 0;
     line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.serv-horizonte-muni-tooltip__enrich-signal-row {
+    margin-top: 0.2rem;
 }
 
 .serv-horizonte-muni-tooltip__enrich-lead {
@@ -2364,6 +2419,7 @@ html.serv-horizonte-muni-modal-open body {
     line-height: 1.4;
     font-weight: 500;
     color: rgb(100 116 139);
+    overflow-wrap: anywhere;
 }
 
 .dark .serv-horizonte-muni-tooltip__enrich-lead {
@@ -2373,14 +2429,16 @@ html.serv-horizonte-muni-modal-open body {
 .serv-horizonte-muni-tooltip__enrich-signal {
     display: inline-flex;
     align-items: center;
-    margin-left: auto;
+    max-width: 100%;
     padding: 0.1rem 0.4rem;
     border-radius: 9999px;
     font-size: 0.5625rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: none;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
 }
 
 .serv-horizonte-muni-tooltip__enrich-signal--warn {
@@ -2420,13 +2478,14 @@ html.serv-horizonte-muni-modal-open body {
 
 .serv-horizonte-muni-tooltip__enrich-metric {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
     padding: 0.3rem 0.35rem;
     border-radius: 0.4rem;
     background: rgb(255 255 255 / 0.55);
     border: 1px solid rgb(226 232 240 / 0.6);
+    min-width: 0;
 }
 
 .dark .serv-horizonte-muni-tooltip__enrich-metric {
@@ -2512,21 +2571,32 @@ html.serv-horizonte-muni-modal-open body {
     font-size: 0.5625rem;
     line-height: 1.35;
     color: rgb(100 116 139);
+    overflow-wrap: anywhere;
 }
 
 .dark .serv-horizonte-muni-tooltip__enrich-metric-hint {
     color: rgb(148 163 184);
 }
 
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-metric-hint {
+    display: none;
+}
+
 .serv-horizonte-muni-tooltip__enrich-metric-value {
     flex: 0 0 auto;
-    max-width: 45%;
-    text-align: right;
+    max-width: 100%;
+    text-align: left;
     font-size: 0.6875rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     line-height: 1.35;
     color: rgb(15 23 42);
+    overflow-wrap: anywhere;
+}
+
+.serv-horizonte-muni-tooltip__enrich-metric-value .serv-horizonte-muni-tooltip__enrich-sub {
+    display: inline;
+    margin-left: 0.25rem;
 }
 
 .dark .serv-horizonte-muni-tooltip__enrich-metric-value {
@@ -2589,6 +2659,52 @@ html.serv-horizonte-muni-modal-open body {
     padding-top: 0.35rem;
     border-top: 1px dashed rgb(226 232 240 / 0.7);
     line-height: 1.4;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-head {
+    gap: 0.4rem;
+    padding-bottom: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-block {
+    padding: 0.45rem 0.5rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-block .serv-horizonte-muni-tooltip__enrich-title {
+    font-size: 0.625rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-lead {
+    font-size: 0.5625rem;
+    line-height: 1.35;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-block .serv-horizonte-muni-tooltip__enrich-foot {
+    font-size: 0.5625rem;
+    margin-top: 0.35rem;
+    padding-top: 0.3rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-metrics {
+    gap: 0.28rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-metric {
+    padding: 0.25rem 0.3rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-metric-label {
+    font-size: 0.625rem;
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment .serv-horizonte-muni-tooltip__enrich-metric-value {
+    font-size: 0.625rem;
 }
 
 .dark .serv-horizonte-muni-tooltip__enrich-block .serv-horizonte-muni-tooltip__enrich-foot {

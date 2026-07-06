@@ -1384,6 +1384,7 @@ const HORIZONTE_ENRICH_ICONS = {
     trend: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg>`,
     users: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.193M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>`,
     building: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18h10.5V3.75M6.75 9h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/></svg>`,
+    social: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>`,
 };
 
 function enrichMetricHtml({ label, hint, valueHtml, tone = "neutral", iconHtml = "" }) {
@@ -1424,7 +1425,8 @@ function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtm
         `<div class="serv-horizonte-muni-tooltip__enrich-head">` +
         `<span class="serv-horizonte-muni-tooltip__enrich-icon-wrap" aria-hidden="true">${iconHtml}</span>` +
         `<div class="serv-horizonte-muni-tooltip__enrich-head-text">` +
-        `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml(title)}${yearTag}${signalHtml}</h4>` +
+        `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml(title)}${yearTag}</h4>` +
+        (signalHtml ? `<div class="serv-horizonte-muni-tooltip__enrich-signal-row">${signalHtml}</div>` : "") +
         (lead ? `<p class="serv-horizonte-muni-tooltip__enrich-lead">${escapeHtml(lead)}</p>` : "") +
         `</div></div>` +
         `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metricsHtml}</div>` +
@@ -1542,11 +1544,11 @@ function muniFiscalEnrichmentHtml(m) {
         tone: "fiscal",
         title: "Finanças e capacidade fiscal",
         year: ano,
-        lead: "Saúde fiscal para investir em educação — indicadores RREO/SICONFI.",
+        lead: "Capacidade fiscal para investir em educação (RREO/SICONFI).",
         signal,
         iconHtml: HORIZONTE_ENRICH_ICONS.fiscal,
         metricsHtml: rows.join(""),
-        foot: "Fonte: SICONFI / RREO (Tesouro Nacional). Valores indicativos para priorização comercial.",
+        foot: "Fonte: SICONFI/RREO. Valores indicativos.",
     });
 }
 
@@ -1659,11 +1661,85 @@ function muniPedagogyEnrichmentHtml(m) {
         tone: "pedagogy",
         title: "Pedagogia e escala",
         year: "",
-        lead: "Qualidade de aprendizagem e escala da rede — SAEB e Educacenso INEP.",
+        lead: "Aprendizagem e escala da rede (SAEB e Educacenso).",
         signal,
         iconHtml: HORIZONTE_ENRICH_ICONS.pedagogy,
         metricsHtml: rows.join(""),
-        foot: "Use tendência SAEB + matrículas para calibrar proposta pedagógica e expansão.",
+        foot: "Combine tendência SAEB e matrículas na proposta.",
+    });
+}
+
+function socialEnrichmentSignal(m) {
+    if (m.cadunico_fora_escola != null && Number(m.cadunico_fora_escola) > 0) {
+        return { tone: "warn", text: "Crianças fora da escola" };
+    }
+    const neet = Number(m.pnad_pct_neet);
+    if (Number.isFinite(neet) && neet >= 20) {
+        return { tone: "warn", text: "NEET elevado" };
+    }
+    if (m.has_pnad || m.has_cadunico) {
+        return { tone: "neutral", text: "Perfil social estável" };
+    }
+    return null;
+}
+
+function muniSocialEnrichmentHtml(m) {
+    const rows = [];
+
+    if (m.pnad_escolaridade_media != null) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Escolaridade média",
+                hint: "Anos de estudo da população adulta (PNAD Contínua).",
+                valueHtml: `${escapeHtml(Number(m.pnad_escolaridade_media).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }))} ${escapeHtml("anos")}`,
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.education,
+            }),
+        );
+    }
+    if (m.pnad_pct_neet != null) {
+        const neet = Number(m.pnad_pct_neet);
+        rows.push(
+            enrichMetricHtml({
+                label: "NEET jovem",
+                hint: "Jovens 18–24 fora da escola e sem trabalho.",
+                valueHtml: escapeHtml(formatPctValue(m.pnad_pct_neet)),
+                tone: Number.isFinite(neet) && neet >= 20 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.users,
+            }),
+        );
+    }
+    if (m.cadunico_fora_escola != null && Number(m.cadunico_fora_escola) > 0) {
+        rows.push(
+            enrichMetricHtml({
+                label: "0–17 fora da escola",
+                hint: "Estimativa CadÚnico menos matrículas Censo.",
+                valueHtml:
+                    escapeHtml(nf(m.cadunico_fora_escola)) +
+                    (m.cadunico_pct_fora_escola != null
+                        ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.cadunico_pct_fora_escola))}</span>`
+                        : ""),
+                tone: "warn",
+                iconHtml: HORIZONTE_ENRICH_ICONS.users,
+            }),
+        );
+    }
+
+    if (rows.length === 0) {
+        return "";
+    }
+
+    const pnadAno = m.pnad_ano != null ? String(m.pnad_ano) : "";
+
+    return enrichBlockHtml({
+        tone: "social",
+        title: "Social e demanda",
+        year: pnadAno,
+        lead: "Contexto social e demanda educacional (PNAD e CadÚnico).",
+        signal: socialEnrichmentSignal(m),
+        iconHtml: HORIZONTE_ENRICH_ICONS.social,
+        metricsHtml: rows.join(""),
+        foot: "",
     });
 }
 
@@ -1739,30 +1815,9 @@ function muniEnrichmentHtml(m) {
         m.cadunico_fora_escola != null ||
         m.pnad_escolaridade_media != null;
     if (hasSocial) {
-        const rows = [];
-        if (m.pnad_escolaridade_media != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Escolaridade média")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(Number(m.pnad_escolaridade_media).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }))} ${escapeHtml("anos")}</span></div>`,
-            );
-        }
-        if (m.pnad_pct_neet != null) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("NEET jovem")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(formatPctValue(m.pnad_pct_neet))}</span></div>`,
-            );
-        }
-        if (m.cadunico_fora_escola != null && Number(m.cadunico_fora_escola) > 0) {
-            rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Crianças 0–17 fora da escola")}</span><span class="serv-horizonte-muni-tooltip__enrich-value serv-horizonte-muni-tooltip__enrich-value--warn">${escapeHtml(nf(m.cadunico_fora_escola))}${m.cadunico_pct_fora_escola != null ? `<span class="serv-horizonte-muni-tooltip__enrich-sub">${escapeHtml(formatPctValue(m.cadunico_pct_fora_escola))}</span>` : ""}</span></div>`,
-            );
-        }
-        if (rows.length > 0) {
-            const pnadAno = m.pnad_ano != null ? String(m.pnad_ano) : "";
-            blocks.push(
-                `<section class="serv-horizonte-muni-tooltip__enrich-block">` +
-                    `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Social e demanda")}${pnadAno ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(pnadAno)}</span>` : ""}</h4>` +
-                    `<div class="serv-horizonte-muni-tooltip__enrich-rows">${rows.join("")}</div>` +
-                `</section>`,
-            );
+        const socialBlock = muniSocialEnrichmentHtml(m);
+        if (socialBlock !== "") {
+            blocks.push(socialBlock);
         }
     }
 
