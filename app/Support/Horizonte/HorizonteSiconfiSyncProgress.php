@@ -91,9 +91,29 @@ final class HorizonteSiconfiSyncProgress
      */
     public static function remainingUfs(int $year, int $period): array
     {
-        $all = IbgeMunicipalityCatalog::brazilianUfs();
+        $done = array_fill_keys(self::doneUfs($year, $period), true);
+        $remaining = [];
+        foreach (self::allUfsInProcessingOrder() as $uf) {
+            if (! isset($done[$uf])) {
+                $remaining[] = $uf;
+            }
+        }
 
-        return array_values(array_diff($all, self::doneUfs($year, $period)));
+        return $remaining;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function allUfsInProcessingOrder(): array
+    {
+        $order = trim((string) config('horizonte.siconfi_sync.uf_order', 'municipalities_asc'));
+
+        return match ($order) {
+            'catalog' => IbgeMunicipalityCatalog::brazilianUfs(),
+            'municipalities_desc' => array_reverse(IbgeMunicipalityCatalog::brazilianUfsByMunicipalityCountAsc()),
+            default => IbgeMunicipalityCatalog::brazilianUfsByMunicipalityCountAsc(),
+        };
     }
 
     /**

@@ -56,6 +56,10 @@ return [
     /** Sincronização dedicada SICONFI (`horizonte:sync-siconfi`) — semestral recomendada. */
     'siconfi_sync' => [
         'progress_ttl' => max(3600, (int) env('HORIZONTE_SICONFI_PROGRESS_TTL', 7776000)),
+        /** Nacional: 1 UF inteira por execução (recomendado). false = lote por N municípios. */
+        'by_uf' => filter_var(env('HORIZONTE_SICONFI_BY_UF', true), FILTER_VALIDATE_BOOL),
+        /** Ordem das UFs: municipalities_asc (DF→MG), catalog, municipalities_desc. */
+        'uf_order' => env('HORIZONTE_SICONFI_UF_ORDER', 'municipalities_asc'),
         /** UFs processadas por invocação na fase `siconfi_sync` (predefinição: 1 UF inteira). */
         'ufs_per_step' => max(1, min(3, (int) env('HORIZONTE_SICONFI_UFS_PER_STEP', 1))),
         /** Tempo máximo por UF no feed (SP ~645 municípios). */

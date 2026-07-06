@@ -53,6 +53,12 @@ class HorizonteSyncSiconfiCommand extends Command
             $this->line(__('Âmbito: UF :uf', ['uf' => (string) HorizonteUfScope::normalize($ufRaw)]));
         } elseif ($nationalScope) {
             $this->renderProgressHeader($year, $period);
+            if (filter_var(config('horizonte.siconfi_sync.by_uf', true), FILTER_VALIDATE_BOOLEAN)) {
+                $next = HorizonteSiconfiSyncProgress::remainingUfs($year, $period)[0] ?? null;
+                $this->line(__('Modo: 1 UF por execução (menor → maior por nº de municípios). Próxima: :uf', [
+                    'uf' => $next ?? __('concluído'),
+                ]));
+            }
         }
 
         if ((bool) $this->option('reset')) {
@@ -87,6 +93,12 @@ class HorizonteSyncSiconfiCommand extends Command
             $options['municipios_per_step'] = (int) $this->option('limit');
         }
 
+        $byUf = filter_var(config('horizonte.siconfi_sync.by_uf', true), FILTER_VALIDATE_BOOLEAN);
+        if ($nationalScope && $byUf) {
+            $options['by_uf'] = true;
+            $options['ufs_per_step'] = max(1, (int) config('horizonte.siconfi_sync.ufs_per_step', 1));
+        }
+
         $result = $sync->syncBatch($options);
 
         if ($result['skipped'] ?? false) {
@@ -99,7 +111,12 @@ class HorizonteSyncSiconfiCommand extends Command
 
         $this->renderImportDetails($result);
 
-        if (isset($result['pending'], $result['total']) && $nationalScope) {
+        if (isset($result['siconfi_done'], $result['siconfi_total']) && ($options['by_uf'] ?? false)) {
+            $this->line(__('UFs: :done/:total', [
+                'done' => (string) $result['siconfi_done'],
+                'total' => (string) $result['siconfi_total'],
+            ]));
+        } elseif (isset($result['pending'], $result['total']) && $nationalScope) {
             $done = max(0, (int) $result['total'] - (int) $result['pending']);
             $this->line(__('Cobertura: :done/:total municípios', [
                 'done' => (string) $done,
@@ -110,7 +127,10 @@ class HorizonteSyncSiconfiCommand extends Command
         if ($result['complete'] ?? false) {
             $this->info(__('Sincronização nacional concluída.'));
         } elseif (($result['partial'] ?? false) && $nationalScope) {
-            $this->line(__('Retomar: php artisan horizonte:sync-siconfi --continue'));
+            $next = is_array($result['remaining_ufs'] ?? null) ? ($result['remaining_ufs'][0] ?? null) : null;
+            $this->line($next !== null
+                ? __('Retomar: php artisan horizonte:sync-siconfi --continue (próxima UF: :uf)', ['uf' => $next])
+                : __('Retomar: php artisan horizonte:sync-siconfi --continue'));
         } elseif (($result['partial'] ?? false) && ! $nationalScope) {
             $this->line(__('Lote parcial — execute novamente para continuar a cobertura.'));
         }
@@ -122,7 +142,7 @@ class HorizonteSyncSiconfiCommand extends Command
     {
         $state = HorizonteSiconfiSyncProgress::get($year, $period);
         if ($state === null) {
-            $this->line(__('Nenhum progresso anterior — lote incremental por municípios pendentes.'));
+            $this->line(__('Nenhum progresso anterior — fila nacional por UF (menor → maior nº municípios).'));
 
             return;
         }

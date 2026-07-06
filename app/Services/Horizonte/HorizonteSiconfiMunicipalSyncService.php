@@ -246,6 +246,7 @@ final class HorizonteSiconfiMunicipalSyncService
                 }
             } else {
                 HorizonteSiconfiSyncProgress::resetUfs($year, $period);
+                HorizonteSiconfiSyncProgress::start($year, $period);
                 if ((bool) ($options['purge_snapshots'] ?? false)) {
                     $this->handleReset($year, $period, null, true);
                 }
@@ -257,6 +258,10 @@ final class HorizonteSiconfiMunicipalSyncService
                 'mode' => 'by_uf',
                 'purge_snapshots' => (bool) ($options['purge_snapshots'] ?? false),
             ]);
+        }
+
+        if ($scopedUf === null && ! HorizonteSiconfiSyncProgress::isComplete($year, $period) && ! HorizonteSiconfiSyncProgress::isActive($year, $period)) {
+            HorizonteSiconfiSyncProgress::start($year, $period);
         }
 
         $targetUfs = $scopedUf !== null

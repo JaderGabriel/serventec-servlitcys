@@ -23,15 +23,28 @@ final class HorizonteSiconfiSyncTest extends TestCase
         $year = 2024;
         $period = 6;
 
-        $this->assertSame(27, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+        $remaining = HorizonteSiconfiSyncProgress::remainingUfs($year, $period);
+        $this->assertSame(27, count($remaining));
+        $this->assertSame('DF', $remaining[0]);
         $this->assertFalse(HorizonteSiconfiSyncProgress::isComplete($year, $period));
 
-        HorizonteSiconfiSyncProgress::markUfsDone(['AC'], $year, $period);
-        $this->assertSame(['AC'], HorizonteSiconfiSyncProgress::doneUfs($year, $period));
-        $this->assertSame(26, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+        HorizonteSiconfiSyncProgress::markUfsDone(['DF'], $year, $period);
+        $this->assertSame(['DF'], HorizonteSiconfiSyncProgress::doneUfs($year, $period));
+        $remaining = HorizonteSiconfiSyncProgress::remainingUfs($year, $period);
+        $this->assertSame(26, count($remaining));
+        $this->assertSame('RR', $remaining[0]);
 
         HorizonteSiconfiSyncProgress::reset($year, $period);
         $this->assertSame(27, count(HorizonteSiconfiSyncProgress::remainingUfs($year, $period)));
+    }
+
+    #[Test]
+    public function uf_processing_order_is_municipalities_ascending(): void
+    {
+        $ordered = HorizonteSiconfiSyncProgress::allUfsInProcessingOrder();
+
+        $this->assertSame('DF', $ordered[0]);
+        $this->assertSame('MG', $ordered[array_key_last($ordered)]);
     }
 
     #[Test]
