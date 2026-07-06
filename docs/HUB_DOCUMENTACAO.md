@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 7.0.0 · **Última revisão:** 2026-07-05
+**Versão do produto:** 7.0.1 · **Última revisão:** 2026-07-06
 
-> **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+> **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão actual **7.0.0**, linha **7.x** (Horizonte enriquecimento — SICONFI, Transparência, scoring ampliado), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão actual **7.0.1**, linha **7.x** (Horizonte enriquecimento — SICONFI, Transparência, scoring ampliado), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
 
 Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **7.0.0** |
-| **Tag de deploy** | `20260705-Ploutos` |
-| **Commit de referência** | `e3caa40` |
+| **Versão semântica** | **7.0.1** |
+| **Tag de deploy** | `20260705b-Moneta` |
+| **Commit de referência** | `04ecf63` |
 | **Data de referência** | 2026-07-05 |
-| **Release** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
-| **Marco** | **Ploutos** — Horizonte enriquecimento: SICONFI, Transparência, tendência SAEB, scoring ampliado |
+| **Release** | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
+| **Marco** | **Moneta** — tooltip FUNDEB por UF; warm-map-cache estável |
 
 ---
 
@@ -132,6 +132,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 | Documento | Caminho |
 |-----------|---------|
 | Estado do projeto | [STATUS_PROJETO.md](STATUS_PROJETO.md) |
+| Roadmaps (feito / em curso) | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) |
+| Backlog (IDs pendentes) | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 | Histórico de versões | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Ponderações técnicas | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |
 | Padrão editorial | [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) |
@@ -166,10 +168,13 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 ---
 
-## Releases recentes (6.x e 5.7+)
+## Releases recentes (7.x e 6.x)
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **7.0.1** | Moneta | 05/07 b | **506** | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) — tooltip FUNDEB UF, warm-map-cache |
+| **7.0.0** | Ploutos | 05/07 | **483** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) — SICONFI, Transparência, scoring ampliado |
+| **6.5.0** | Jord | 02/07 c | **482** | [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) — malha IBGE, Contornos, Educacenso nacional |
 | **6.1.0** | Horizonte | 24/06 | **441** | [RELEASE_20260624_HORIZONTE.md](RELEASE_20260624_HORIZONTE.md) — coroplético IBGE, mesorregiões, alertas VAAT |
 | **6.0.0** | Odin | 03/06 h | **433** | [RELEASE_20260603h_ODIN.md](RELEASE_20260603h_ODIN.md) — marca azul, barra cmd fixa, resumo UF inline, SAEB feed |
 | **5.8.0** | Thor | 03/06 g | **431** | [RELEASE_20260603g_THOR.md](RELEASE_20260603g_THOR.md) — FUNDEB estadual, pan mapa, sync repasses Tesouro |
@@ -189,6 +194,7 @@ flowchart TD
     H --> I[README.md — índice temático]
     H --> A[ARQUITETURA_E_FLUXOS.md — diagramas técnicos]
     H --> S[STATUS_PROJETO.md — o que está feito]
+    H --> R[ROADMAP_INDICE.md — feito / em curso / planeado]
     I --> P[Perfil: executivo · analista · dev · ops]
 ```
 

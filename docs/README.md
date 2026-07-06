@@ -1,10 +1,12 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 6.5.0 · tag `20260702c-Jord` · **Última revisão:** 2026-07-02
+**Versão do produto:** 7.0.1 · tag `20260705b-Moneta` · **Última revisão:** 2026-07-06
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
-**Hub visual** (timeline 4.x→6.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
+**Hub visual** (timeline 4.x→7.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
+
+**Roadmaps e panorama (feito / em curso / planeado):** [ROADMAP_INDICE.md](ROADMAP_INDICE.md).
 
 ### Leitor na aplicação (`/documentacao`)
 
@@ -42,7 +44,7 @@ flowchart TD
     Start -->|Analista| A[PERFIS_UTILIZADOR → ANALYTICS_NAVEGACAO_UI]
     Start -->|Dev| D[STATUS → PONDERACOES → README repo]
     Start -->|Ops| O[VARIAVEIS → IMPLANTACAO → SEGURANCA]
-    Start -->|Produto| P[BACKLOG_IMPLEMENTACOES]
+    Start -->|Produto| P[ROADMAP_INDICE → BACKLOG]
     G --> S[STATUS_PROJETO]
     S --> H[HISTORICO_VERSOES]
 ```
@@ -53,7 +55,7 @@ flowchart TD
 | Analista (utilizador) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
 | Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
-| Priorização de produto | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
+| Priorização de produto | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 
 ---
 
@@ -70,6 +72,7 @@ flowchart TD
 | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) | Auditoria MVC, Eloquent, testes e plano de melhoria |
 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Identidade visual e ordem das abas |
 | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) | Evoluções planeadas (único backlog) |
+| [ROADMAP_INDICE.md](ROADMAP_INDICE.md) | Mapa de roadmaps — feito, em curso e planeado |
 
 ---
 
@@ -140,6 +143,8 @@ mindmap
 
 | Documento | Versão |
 |-----------|--------|
+| [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) | **7.0.1** — Moneta (tooltip FUNDEB UF, warm-map-cache) |
+| [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) | **7.0.0** — Ploutos (SICONFI, Transparência, scoring ampliado) |
 | [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) | **6.5.0** — Jord (malha IBGE, Contornos, pílulas geo, Educacenso nacional) |
 | [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md) | **6.3.0** — Horizonte (modal refinado, cabeçalho fixo) |
 | [RELEASE_20260702_EDUCACENSO.md](RELEASE_20260702_EDUCACENSO.md) | **6.2.0** — Educacenso (contadores por etapa, filtro dependência no gráfico) |
@@ -184,6 +189,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | Documento | Conteúdo |
 |-----------|----------|
 | [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) | Índice mensal + ligação às releases |
+| [ENTREGAS_ESCALONADAS_JULHO_2026.md](ENTREGAS_ESCALONADAS_JULHO_2026.md) | Jul/2026 — 7.0.0 → 7.0.1 + patches |
 | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | Jun/2026 — 3.5.0 → 6.5.0 |
 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | Mai/2026 *(arquivo)* — 2.3.6 → 3.4.0 |
 

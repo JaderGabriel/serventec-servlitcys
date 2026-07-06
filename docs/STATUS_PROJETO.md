@@ -1,14 +1,14 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **6.5.0** · release `20260702c-Jord` · **Ramo:** `main` · **Última revisão:** 02/07/2026
+**Versão em produção:** **7.0.1** · release `20260705b-Moneta` · **Ramo:** `main` · **Última revisão:** 2026-07-06
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
-Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Índice completo:** [README.md](README.md) · **diagramas:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md). **Índice completo:** [README.md](README.md) · **diagramas:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ---
 
-## Mapa de capacidades (6.5.0)
+## Mapa de capacidades (7.0.1)
 
 ```mermaid
 flowchart TB
@@ -164,6 +164,11 @@ flowchart TB
 | Horizonte — overlay microrregiões; SAEB LP/MAT (dois últimos anos); gráfico matrículas após canvas visível | Implementado (6.5.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — Educacenso reimportação nacional 2020–2024 (`horizonte:sync-educacenso --reset --all`) | Implementado (6.5.0) — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
 | Horizonte — enriquecimento SICONFI + Transparência + scoring ampliado (`horizonte:sync-siconfi`, `horizonte:sync-transparency`) | Implementado (7.0.0) — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
+| Horizonte — tooltip FUNDEB por UF (rank, total, % federal) + `horizonte:warm-map-cache` estável | Implementado (7.0.1) — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
+| Horizonte — hub abastecimento unificado (`/admin/horizonte/abastecimento`) | Implementado (patch 07/2026) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) |
+| Horizonte — checkpoint Educacenso persistente (snapshot ficheiro + inferência BD) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §9.1 |
+| Horizonte — SICONFI 1 UF por execução (ordem DF→MG por nº municípios) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §9.2 |
+| Horizonte — modal cards Finanças / Pedagogia / Social (layout compacto, grid adaptativo) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §6 |
 | Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |

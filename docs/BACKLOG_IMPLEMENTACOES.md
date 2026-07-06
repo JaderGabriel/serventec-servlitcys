@@ -1,8 +1,8 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-05
+**Versão do produto:** 7.0.1 · **Última revisão:** 2026-07-06
 
-> **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+> **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento** | **Concluído** (mover para [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção).
 
@@ -145,24 +145,25 @@ Detalhe: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) §
 
 ## J. Horizonte — enriquecimento por bases públicas
 
-Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md) §11.2–§11.9.
+Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md) §11.2–§11.9 · panorama: [ROADMAP_INDICE.md](ROADMAP_INDICE.md#horizonte--mapa-de-oportunidade-municipal).
 
 | ID | Prioridade | Item | Estado | Janela / fase |
 |----|------------|------|--------|---------------|
 | HOR-01 | **P1** | Geo INEP escolas no mapa Horizonte (camada + cluster por UF/município) | Pendente | Onda 0 · v2.2a |
 | HOR-02 | **P1** | Momentum Educacenso — Δ matrículas 5 anos no modal e no scorer | Concluído (7.0.0) | Onda 0 · v2.2a |
 | HOR-03 | **P1** | Série IDEB/SAEB no modal + dimensão `learning_trajectory` | Concluído (7.0.0) | Onda 0 · v2.2a |
-| HOR-04 | P2 | SICONFI no modal + dimensão `fiscal_capacity` | Concluído (7.0.0) | Onda 1 · INT-06 · v2.2b |
+| HOR-04 | P2 | SICONFI no modal + dimensão `fiscal_capacity` | Concluído (7.0.0) — *cobertura nacional em curso* | Onda 1 · INT-06 · v2.2b |
 | HOR-05 | P2 | IDHM educação — coroplético mapa + pílula modal (Atlas IPEA) | Pendente | Onda 1 · v2.2b |
 | HOR-06 | P2 | SIDRA ampliado (urbanização, migração, domicílios) | Pendente | Onda 1 · INT-05 · v2.2c |
 | HOR-07 | P2 | Programas FNDE agregados (PDDE, PNAE, PNATE) por município | Pendente | Onda 1 · v2.2c |
-| HOR-08 | P2 | Portal Transparência — convénios e empenhos tech/educação | Concluído (7.0.0) | Onda 1 · v2.2c |
+| HOR-08 | P2 | Portal Transparência — convénios e empenhos tech/educação | Concluído (7.0.0) — *sync em curso* | Onda 1 · v2.2c |
 | HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
-| HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Pendente | Onda 2 |
+| HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Parcial (UI 7.0.0; importação SIDRA pendente — ver HOR-18) | Onda 2 |
 | HOR-11 | P2 | Segmentos comerciais novos (momentum, fiscal, fragmentação rede) | Pendente | v2.2 · depende HOR-01–04 |
 | HOR-12 | P2 | Corredor regional — cluster consultoria + prospectos adjacentes | Pendente | v2.2 |
 | HOR-13 | P2 | Comparativo antes/depois `compliance_score` (clientes) | Pendente | v3 |
 | HOR-14 | P2 | Versão mão — detecção automática + alternância manual | Concluído | v6.5 |
+| HOR-18 | **P1** | Importação PNAD municipal (SIDRA → `municipal_pnad_snapshots`) | Pendente | Onda 2 · desbloqueia Social no modal |
 
 ---
 
@@ -188,6 +189,12 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 
 | ID | Item | Notas |
 |----|------|-------|
+| DONE-28 | Modal Horizonte — cards Finanças / Pedagogia / Social sem overflow; grid adaptativo | patch 06/07 |
+| DONE-27 | SICONFI — 1 UF por execução, ordem DF→MG (`horizonte:sync-siconfi`) | patch 06/07 |
+| DONE-26 | Checkpoint Educacenso persistente (snapshot + inferência BD) | patch 06/07 |
+| DONE-25 | Tooltip FUNDEB por UF com % do total (7.0.1 Moneta) | 7.0.1 |
+| DONE-24 | `horizonte:warm-map-cache` sem lock HTTP (7.0.1 Moneta) | 7.0.1 |
+| DONE-23 | Horizonte 7.0.0 Ploutos — SICONFI, Transparência, scoring ampliado, modal enriquecido | 7.0.0 |
 | DONE-21 | Monitor de módulos — UI legível, filtro URL, incidentes expansíveis | 5.0.1 |
 | DONE-22 | Verificação dados públicos — painel admin + cache + CLI `--no-notify` | 5.0.1 |
 | DONE-20 | Horizonte v1 — mapa oportunidade municipal (scores, busca IBGE, rankings UF) | 5.0.0 — [HORIZONTE.md](HORIZONTE.md) |
@@ -215,4 +222,4 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 
 ---
 
-*Índice: [README.md](README.md).*
+*Índice: [README.md](README.md) · roadmaps: [ROADMAP_INDICE.md](ROADMAP_INDICE.md).*

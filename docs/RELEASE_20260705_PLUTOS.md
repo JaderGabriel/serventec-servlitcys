@@ -42,9 +42,10 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 **Pós-deploy — enriquecimento fiscal e transparência:**
 
 ```bash
-# SICONFI — lotes incrementais (~8 municípios/pass; repetir até cobertura nacional)
-php artisan horizonte:sync-siconfi --limit=8
-php artisan horizonte:sync-siconfi --uf=BA --limit=20
+# SICONFI — 1 UF por execução (ordem DF→MG); repetir até cobertura nacional
+php artisan horizonte:sync-siconfi --reset --continue   # 1ª UF = DF
+php artisan horizonte:sync-siconfi --continue           # próximas UFs
+php artisan horizonte:warm-map-cache
 
 # Portal da Transparência (definir PORTAL_TRANSPARENCIA_API_KEY no .env)
 php artisan horizonte:sync-transparency --limit=5

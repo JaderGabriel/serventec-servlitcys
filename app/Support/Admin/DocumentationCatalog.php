@@ -407,6 +407,7 @@ final class DocumentationCatalog
                     ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md', 'hint' => __('O que está em produção')],
                     ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
+                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Feito · em curso · planeado')],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
                     ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],

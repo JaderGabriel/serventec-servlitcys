@@ -613,10 +613,10 @@ Após activar Consultoria, use **Painel analítico → Diagnóstico** para indic
 | **v1.2** | Coroplético IBGE UF + mesorregiões + export CSV prospectos | Concluído |
 | **v2 (parcial)** | CadÚnico + demanda social · SIDRA pop. 4–17 · repasses Tesouro · bundle offline v2 · alertas VAAT · malha municipal · Educacenso modal | Concluído |
 | **v2.1** | Versão mão (detecção automática + alternância manual) | Concluído |
-| **v2.2** | Enriquecimento por bases públicas (§11.2–§11.6) | Planeado |
+| **v2.2** | Enriquecimento por bases públicas (§11.2–§11.6) | **Em curso** — HOR-02–04 e HOR-08 em 7.0.0; HOR-01, HOR-05–07 e HOR-18 pendentes — ver [ROADMAP_INDICE.md](ROADMAP_INDICE.md) |
 | **v3** | Comparativo antes/depois para clientes (`delta compliance_score`) | Planeado |
 
-Itens rastreáveis: secção **J** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`HOR-*`). Estudo transversal: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
+Itens rastreáveis: secção **J** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`HOR-*`). Panorama: [ROADMAP_INDICE.md](ROADMAP_INDICE.md). Estudo transversal: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
 
 ---
 
@@ -668,8 +668,8 @@ Fontes **já importáveis** no hub `/admin/dados-publicos`; falta expor no Horiz
 | ID | Fonte | Mapa | Ficha | Decisão | Entrega |
 |----|-------|------|-------|---------|---------|
 | **HOR-01** | **Geo INEP escolas** (`school_unit_geos`) | Camada de pontos/cluster ao abrir UF ou município; heatmap densidade rede | Contagem escolas mapeadas vs matrículas Censo | Segmento «fragmentação de rede»; filtro municípios com muitas unidades pequenas | v2.2a |
-| **HOR-02** | **Educacenso — momentum** (série já no modal §6.9) | Cor opcional por Δ matrículas 5 anos | Chip «tendência» (↑ estável ↓) no cabeçalho do modal | Dimensão `enrollment_momentum` no scorer; segmento «mercado em retração» | v2.2a |
-| **HOR-03** | **SAEB / IDEB — série histórica** (`saeb_indicator_points`) | — | Gráfico ou sparkline LP/MAT (últimos 3–4 ciclos) | Dimensão `learning_trajectory` (tendência, não só nível) | v2.2a |
+| **HOR-02** | **Educacenso — momentum** (série já no modal §6.9) | Cor opcional por Δ matrículas 5 anos | Chip «tendência» (↑ estável ↓) no cabeçalho do modal | Dimensão `enrollment_momentum` no scorer; segmento «mercado em retração» | v2.2a · **7.0.0** |
+| **HOR-03** | **SAEB / IDEB — série histórica** (`saeb_indicator_points`) | — | Gráfico ou sparkline LP/MAT (últimos 3–4 ciclos) | Dimensão `learning_trajectory` (tendência, não só nível) | v2.2a · **7.0.0** |
 
 **Critério de prioridade:** alto impacto comercial, **zero API nova** — derivar do que o feed bimestral já indexa.
 
@@ -679,11 +679,11 @@ Fontes **já importáveis** no hub `/admin/dados-publicos`; falta expor no Horiz
 
 | ID | Fonte | Ingestão | Mapa | Ficha | Decisão | Entrega |
 |----|-------|----------|------|-------|---------|---------|
-| **HOR-04** | **SICONFI** (API Contas Tesouro) | API REST por ente IBGE + exercício · ver INT-06 | — | Despesa educação/receita, endividamento, liquidez, restos a pagar | Dimensão `fiscal_capacity`; filtro «capacidade fiscal mínima» | v2.2b |
+| **HOR-04** | **SICONFI** (API Contas Tesouro) | API REST por ente IBGE + exercício · ver INT-06 | — | Despesa educação/receita, endividamento, liquidez, restos a pagar | Dimensão `fiscal_capacity`; filtro «capacidade fiscal mínima» | v2.2b · **7.0.0** (*cobertura nacional em curso*) |
 | **HOR-05** | **IDHM** (Atlas IPEA/PNUD) | CSV/API quinquenal por município | Coroplético «IDHM educação» (modo Contornos ou UF) | Pílula IDHM educação + ranking na UF | Refina `social_demand` e narrativa socioeconómica | v2.2b |
 | **HOR-06** | **IBGE SIDRA ampliado** | API agregados (urbanização, migração, domicílios c/ crianças) · base INT-05 parcial | Choropleth «pressão demográfica» | População 0–14, taxa urbanização, saldo migratório | Dimensão `demographic_pressure`; segmento «crescimento populacional» | v2.2c |
 | **HOR-07** | **Programas FNDE** (PDDE, PNAE, PNATE) | CKAN FNDE / CSV repasses programáticos | Intensidade por município (opcional) | Volume histórico por programa | Segmento «dependência de programas»; risco prestação de contas | v2.2c |
-| **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) | — | Convénios MEC/FNDE activos; empenhos tech/educação | Proxy «SGE/incumbent» + projecto em curso | v2.2c |
+| **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) | — | Convénios MEC/FNDE activos; empenhos tech/educação | Proxy «SGE/incumbent» + projecto em curso | v2.2c · **7.0.0** (*sync em curso*) |
 
 **Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots` — incluir no bundle offline v3 quando existir.
 
@@ -721,7 +721,7 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 | ID | Fonte | Mapa | Ficha | Notas |
 |----|-------|------|-------|-------|
 | **HOR-09** | **CNES** (DATASUS) | Camada UBS/UPA; distância média escola–UBS | Equipamentos saúde no município | Ver INT-08; agregado público |
-| **HOR-10** | **PNAD Contínua** (IBGE) | — | Escolaridade média, NEET jovem | Argumento EJA; CSV/API municipal |
+| **HOR-10** | **PNAD Contínua** (IBGE) | — | Escolaridade média, NEET jovem | Argumento EJA; importação SIDRA pendente (**HOR-18**) | UI modal **7.0.0** |
 
 ---
 
@@ -743,7 +743,7 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 |-------|-----|---------|---------|--------------|
 | 1 | HOR-01 | Baixo | Alto (visual) | `school_unit_geos` + endpoint mapa regional |
 | 2 | HOR-02, HOR-03 | Baixo | Alto (decisão) | Série Educacenso/SAEB já indexada |
-| 3 | HOR-04 | Médio | Alto (fecho comercial) | INT-06 · API SICONFI |
+| 3 | HOR-04 | Médio | Alto (fecho comercial) | INT-06 · API SICONFI · **código 7.0.0; cobertura nacional em curso** |
 | 4 | HOR-11, HOR-12 | Médio | Médio | HOR-01–04 |
 | 5 | HOR-05, HOR-06 | Médio | Médio | INT-05 ampliado |
 | 6 | HOR-07, HOR-08 | Médio–alto | Médio | CKAN FNDE · API Transparência |
@@ -778,4 +778,4 @@ Cobertura: `HorizonteOpportunityScorerTest`, `HorizonteSocialDemandScorerTest`, 
 
 ---
 
-*Última revisão: 2026-07-05 · Módulo Horizonte v6.5 — roadmap enriquecimento bases públicas (§11.2–§11.9)*
+*Última revisão: 2026-07-06 · Módulo Horizonte v7.0.1 — roadmap enriquecimento bases públicas (§11.2–§11.9); panorama: [ROADMAP_INDICE.md](ROADMAP_INDICE.md)*

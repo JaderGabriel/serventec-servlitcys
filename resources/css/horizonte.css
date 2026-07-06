@@ -2183,7 +2183,8 @@ html.serv-horizonte-muni-modal-open body {
 }
 
 .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* auto-fit: 1 card = largura total; 2 = metade cada; 3 = terços */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
     gap: 0.5rem;
 }
 

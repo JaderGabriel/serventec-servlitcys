@@ -16,6 +16,13 @@ final class DocumentationEscalonadasCatalog
     {
         return [
             [
+                'id' => '202607',
+                'label' => __('Julho/2026'),
+                'path' => 'docs/ENTREGAS_ESCALONADAS_JULHO_2026.md',
+                'version_range' => '7.0.0 → 7.0.1',
+                'hint' => '7.0.0 → 7.0.1',
+            ],
+            [
                 'id' => '202606',
                 'label' => __('Junho/2026'),
                 'path' => 'docs/ENTREGAS_ESCALONADAS_JUNHO_2026.md',
