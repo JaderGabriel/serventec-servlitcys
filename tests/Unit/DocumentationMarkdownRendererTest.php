@@ -70,4 +70,17 @@ class DocumentationMarkdownRendererTest extends TestCase
         $this->assertTrue($renderer->markdownUsesMermaid("```mermaid\ngraph TD\n```"));
         $this->assertFalse($renderer->markdownUsesMermaid('# Título'));
     }
+
+    public function test_wraps_tables_in_horizontal_scroll_region(): void
+    {
+        $renderer = new DocumentationMarkdownRenderer;
+        $html = $renderer->toHtml(
+            "| Coluna A | Coluna B |\n| --- | --- |\n| 1 | 2 |",
+            'docs/README.md',
+        );
+
+        $this->assertStringContainsString('serv-docs-table-scroll', $html);
+        $this->assertStringContainsString('<table', $html);
+        $this->assertSame(1, substr_count($html, 'serv-docs-table-scroll'));
+    }
 }

@@ -43,6 +43,7 @@ class DocumentationMarkdownRenderer
         $converter = new MarkdownConverter($environment);
         $html = $converter->convert($markdown)->getContent();
         $html = $this->transformMermaidFences($html);
+        $html = $this->wrapScrollableTables($html);
 
         return $this->rewriteInternalDocLinks(
             $html,
@@ -64,6 +65,27 @@ class DocumentationMarkdownRenderer
                 $diagram = html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5);
 
                 return '<div class="mermaid">'.trim($diagram).'</div>';
+            },
+            $html,
+        );
+    }
+
+    private function wrapScrollableTables(string $html): string
+    {
+        if (! str_contains($html, '<table')) {
+            return $html;
+        }
+
+        $label = e(__('Tabela — deslize horizontalmente para ver todas as colunas'));
+
+        return (string) preg_replace_callback(
+            '/<table(\s[^>]*)?>|<\/table>/i',
+            static function (array $matches) use ($label): string {
+                if (str_starts_with($matches[0], '</')) {
+                    return '</table></div>';
+                }
+
+                return '<div class="serv-docs-table-scroll" tabindex="0" role="region" aria-label="'.$label.'"><table'.($matches[1] ?? '').'>';
             },
             $html,
         );

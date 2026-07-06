@@ -68,12 +68,12 @@
         </div>
     </x-slot>
 
-    <div class="py-6 sm:py-8 serv-docs-page">
-        <div class="max-w-[100rem] mx-auto sm:px-6 lg:px-8">
+    <div class="py-4 sm:py-6 lg:py-8 serv-docs-page">
+        <div class="serv-docs-shell w-full max-w-none mx-auto px-3 sm:px-4 lg:px-5 xl:px-6 2xl:px-8">
             <div @class([
-                'serv-docs-layout gap-6 xl:gap-8',
-                'lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)]' => count($headings) === 0,
-                'lg:grid lg:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)] xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)_minmax(11rem,13rem)]' => count($headings) > 0,
+                'serv-docs-layout w-full min-w-0 gap-4 lg:gap-5 xl:gap-6',
+                'lg:grid lg:grid-cols-[minmax(11rem,13vw)_minmax(0,1fr)]' => count($headings) === 0,
+                'lg:grid lg:grid-cols-[minmax(11rem,13vw)_minmax(0,1fr)] xl:grid-cols-[minmax(11rem,13vw)_minmax(0,1fr)_minmax(9rem,11vw)]' => count($headings) > 0,
             ])>
                 <aside class="hidden lg:block serv-docs-sidebar-column">
                     <div class="serv-docs-sidebar-panel sticky top-[5.5rem] max-h-[calc(100vh-7rem)] overflow-y-auto">
@@ -127,7 +127,7 @@
                     </div>
                 </aside>
 
-                <div class="min-w-0 space-y-4">
+                <div class="serv-docs-main min-w-0 w-full space-y-3 sm:space-y-4">
                     <details class="lg:hidden serv-panel">
                         <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-serv-navy dark:text-slate-100">
                             {{ __('Menu da documentação') }}
@@ -189,7 +189,7 @@
 
                     <article class="serv-docs-article">
                         @if ($modifiedAt)
-                            <p class="serv-docs-article__meta px-5 sm:px-8 lg:px-10 pt-4 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <p class="serv-docs-article__meta px-4 sm:px-6 lg:px-8 pt-4 text-[11px] text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-x-3 gap-y-1">
                                 <span>
                                     {{ __('Última alteração:') }}
                                     <time datetime="{{ date('c', $modifiedAt) }}">{{ date('d/m/Y H:i', $modifiedAt) }}</time>
@@ -197,7 +197,7 @@
                                 <span class="font-mono text-slate-400 dark:text-slate-500">{{ $currentPath }}</span>
                             </p>
                         @endif
-                        <div class="serv-docs-prose serv-docs-prose--readable px-5 sm:px-8 lg:px-10 py-6 sm:py-8">
+                        <div class="serv-docs-prose serv-docs-prose--content px-4 sm:px-6 lg:px-8 py-5 sm:py-6 lg:py-8">
                             {!! $htmlContent !!}
                         </div>
                     </article>

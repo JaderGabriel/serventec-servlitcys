@@ -2597,7 +2597,24 @@
     }
 
     .serv-docs-page {
-        @apply bg-slate-50/50 dark:bg-slate-950/30;
+        @apply w-full min-w-0 overflow-x-clip bg-slate-50/50 dark:bg-slate-950/30;
+    }
+
+    .serv-docs-shell {
+        @apply min-w-0;
+    }
+
+    .serv-docs-layout {
+        @apply min-w-0;
+    }
+
+    .serv-docs-main {
+        @apply min-w-0;
+    }
+
+    .serv-docs-sidebar-column,
+    .serv-docs-toc-column {
+        @apply min-w-0;
     }
 
     .serv-docs-sidebar-panel {
@@ -2631,11 +2648,64 @@
     .serv-docs-header-badge--emerald { @apply bg-emerald-50 text-emerald-700 ring-emerald-200/80 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-800/60; }
 
     .serv-docs-article {
-        @apply rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80 overflow-hidden;
+        @apply min-w-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm dark:border-slate-700/80 dark:bg-slate-900/80;
+    }
+
+    .serv-docs-prose--content {
+        @apply w-full min-w-0 max-w-none;
     }
 
     .serv-docs-prose--readable {
-        @apply max-w-[48rem] mx-auto;
+        @apply w-full min-w-0 max-w-none;
+    }
+
+    .serv-docs-table-scroll {
+        @apply relative my-4 w-full max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-slate-200 dark:border-slate-700;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-gutter: stable;
+    }
+
+    @media (max-width: 639px) {
+        .serv-docs-table-scroll {
+            @apply -mx-4 rounded-none border-x-0;
+        }
+    }
+
+    .serv-docs-table-scroll:focus-visible {
+        @apply outline-none ring-2 ring-blue-500/40 ring-offset-2 dark:ring-offset-slate-900;
+    }
+
+    .serv-docs-table-scroll table {
+        @apply my-0 w-max min-w-full text-xs border-collapse;
+    }
+
+    .serv-docs-table-scroll thead {
+        @apply bg-slate-100 dark:bg-slate-800;
+    }
+
+    .serv-docs-table-scroll th,
+    .serv-docs-table-scroll td {
+        @apply border border-slate-200 dark:border-slate-700 px-3 py-2 text-left align-top;
+    }
+
+    .serv-docs-table-scroll th {
+        @apply whitespace-nowrap;
+    }
+
+    .serv-docs-table-scroll td {
+        @apply min-w-[5rem] max-w-[20rem] break-words;
+    }
+
+    @media (max-width: 639px) {
+        .serv-docs-table-scroll::before {
+            content: '';
+            @apply pointer-events-none sticky left-0 top-0 z-[1] block h-0;
+        }
+
+        .serv-docs-table-scroll::after {
+            content: '↔';
+            @apply pointer-events-none absolute right-2 top-1.5 z-[2] rounded bg-slate-900/75 px-1.5 py-0.5 text-[10px] font-semibold text-white dark:bg-slate-100/90 dark:text-slate-900;
+        }
     }
 
     .serv-docs-prose h1:first-child {
@@ -2802,7 +2872,7 @@
     }
 
     .serv-docs-prose pre {
-        @apply my-4 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-900 p-4 text-xs text-slate-100;
+        @apply my-4 max-w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-900 p-3 sm:p-4 text-xs text-slate-100;
     }
 
     .serv-docs-prose pre code {
@@ -2811,6 +2881,11 @@
 
     .serv-docs-prose table {
         @apply my-4 w-full text-xs border-collapse overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700;
+    }
+
+    /* Tabelas dentro de .serv-docs-table-scroll usam estilos do wrapper */
+    .serv-docs-prose > table {
+        @apply block w-full max-w-full overflow-x-auto;
     }
 
     .serv-docs-prose thead {
@@ -2835,7 +2910,13 @@
     }
 
     .serv-docs-prose .mermaid {
-        @apply my-6 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 p-4 text-center;
+        @apply my-6 max-w-full overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 p-3 sm:p-4 text-center;
+    }
+
+    @media (max-width: 639px) {
+        .serv-docs-prose .mermaid {
+            @apply -mx-4 rounded-none border-x-0;
+        }
     }
 
     .serv-docs-prose .mermaid svg {
