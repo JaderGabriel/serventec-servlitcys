@@ -399,7 +399,7 @@ final class TesouroTransferenciasCsvService
 
                 return $index;
             }
-            $this->lastIndexLoadMeta['local_error'] = __('Ficheiro local legível mas sem linhas válidas.');
+            $this->lastIndexLoadMeta['local_error'] = __('Arquivo local legível mas sem linhas válidas.');
         }
 
         $download = $this->downloadCsvToTemp($resource, $timeout);
@@ -842,7 +842,7 @@ final class TesouroTransferenciasCsvService
     }
 
     /**
-     * Lê CSV municipal linha a linha (ficheiros CKAN ~20 MB).
+     * Lê CSV municipal linha a linha (arquivos CKAN ~20 MB).
      *
      * @return array{
      *   by_nome_uf: array<string, array{cod_mun: string, nome: string, uf: string, annual: array<int, float>, months_counted: array<int, int>, mensal: array<int|string, array<int, float>>}>,
@@ -1479,7 +1479,7 @@ final class TesouroTransferenciasCsvService
                 'ano' => (string) $year,
             ]);
         } else {
-            $message = __('Repasses Tesouro: nenhuma linha FUNDEB cruzada com IBGE (anos :anos). CSV: :csv municípios · :y com valor em :ano · cruzamentos nome+UF: :cross · índice IBGE: :idx · cache COD_MUN: :cod. Apague storage/app/funding/tesouro-csv/*.json se actualizou o ServLITCYS.', [
+            $message = __('Repasses Tesouro: nenhuma linha FUNDEB cruzada com IBGE (anos :anos). CSV: :csv municípios · :y com valor em :ano · cruzamentos nome+UF: :cross · índice IBGE: :idx · cache COD_MUN: :cod. Apague storage/app/funding/tesouro-csv/*.json se atualizou o ServLITCYS.', [
                 'anos' => implode(', ', array_map('strval', array_unique([$year, $year - 1, (int) date('Y')]))),
                 'csv' => (string) count($byNomeUf),
                 'y' => (string) $yearValues,

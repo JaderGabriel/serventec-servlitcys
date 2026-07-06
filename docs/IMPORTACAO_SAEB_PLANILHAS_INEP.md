@@ -62,16 +62,16 @@ Persistência: `SaebCsvPedagogicalImportService` → `public/storage/saeb/histor
 | Opção | Efeito |
 |-------|--------|
 | `--years=2021,2023` | Anos a processar (URLs em config). Vazio sem `--url` usa todas as chaves de `planilha_resultados_urls` |
-| `--url=` | Ficheiro ou URL única (XLSX, XLSB, RAR ou caminho em `storage/app/`) |
+| `--url=` | Arquivo ou URL única (XLSX, XLSB, RAR ou caminho em `storage/app/`) |
 | `--year=` | Ano de referência com `--url` |
-| `--no-download` | Não descarrega; usa ficheiros em cache |
+| `--no-download` | Não descarrega; usa arquivos em cache |
 | `--no-merge` | Substitui pontos SAEB em vez de fundir |
 | `--no-resolve-inep` | Não mapeia INEP→`cod_escola` |
 | `--keep-cache` | Mantém pastas extraídas do RAR |
 
 ---
 
-## 5. Ficheiro local ou URL extra
+## 5. Arquivo local ou URL extra
 
 ```bash
 php artisan saeb:import-planilhas-inep \
@@ -138,7 +138,7 @@ Colunas canónicas: `municipio_ibge;ano_aplicacao;disciplina;etapa;valor;status;
 | `Nenhuma planilha XLSX/XLSB dentro do RAR` | Instalar `unrar` ou `p7zip`; ou extrair manualmente e usar `--url` no XLSX |
 | `cURL error 60` | `php artisan saeb:refresh-ca-bundle` |
 | `Nenhuma linha gerada` | Confirmar IBGE das cidades; verificar `IEDUCAR_SAEB_PLANILHA_DEPENDENCIA` (tentar `Total` se necessário) |
-| `Aba Municípios não encontrada` | Ficheiro não é planilha de resultados INEP esperada |
+| `Aba Municípios não encontrada` | Arquivo não é planilha de resultados INEP esperada |
 | Ano sem URL | Adicionar entrada em `planilha_resultados_urls` no config ou `.env` via deploy |
 
 Teste unitário: `tests/Unit/SaebPlanilhaInepConverterTest.php`.

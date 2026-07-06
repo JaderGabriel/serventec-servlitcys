@@ -1,6 +1,6 @@
 # Release `20260603f-Helios` — ServLITCYS 5.5.0
 
-> **Nota (19/06/2026):** a tag `20260603f-Helios` usava prefixo de data incorrecto. **Produção actual:** [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) · tag **`20260619c-Helios`** · versão **5.5.0** · `revision_date` **2026-06-19**.
+> **Nota (19/06/2026):** a tag `20260603f-Helios` usava prefixo de data incorreto. **Produção actual:** [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) · tag **`20260619c-Helios`** · versão **5.5.0** · `revision_date` **2026-06-19**.
 
 **Data (obsoleta):** 2026-06-03 · **Ramo:** `main` · **Marco:** **5.5** — Horizonte GIS gerencial, monitor periódico e catálogo Artisan admin.
 

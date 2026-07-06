@@ -4,12 +4,12 @@
 
 ## Resumo
 
-Patch **5.0.1** sobre **5.0.0** (Horizonte). O commit de produção foi feito em **19/06/2026**; a tag `20260603b-Horizonte` tinha prefixo de data incorrecto — usar **`20260619a-Heimdall`** para deploy.
+Patch **5.0.1** sobre **5.0.0** (Horizonte). O commit de produção foi feito em **19/06/2026**; a tag `20260603b-Horizonte` tinha prefixo de data incorreto — usar **`20260619a-Heimdall`** para deploy.
 
 ### Correcções de release
 
 - `revision_date` e selo no rodapé alinhados à data real de produção (**19/06/2026**).
-- Tag de deploy actualizada (`20260619a-Heimdall`).
+- Tag de deploy atualizada (`20260619a-Heimdall`).
 
 ### Monitor de módulos (UI)
 

@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 class HorizonteExportDataBundleCommand extends Command
 {
     protected $signature = 'horizonte:export-data-bundle
-                            {--output= : Caminho do ficheiro .zip (default storage/app/horizonte/bundles/)}
+                            {--output= : Caminho do arquivo .zip (default storage/app/horizonte/bundles/)}
                             {--skip-fundeb : Omitir FUNDEB}
                             {--skip-censo : Omitir Censo}
                             {--skip-saeb : Omitir SAEB municipal}
@@ -50,7 +50,7 @@ class HorizonteExportDataBundleCommand extends Command
         }
         $this->newLine();
         $this->line(__('Cópia rápida: storage/app/horizonte/bundles/latest.zip'));
-        $this->line(__('Produção: scp o ZIP e execute horizonte:import-data-bundle {ficheiro}'));
+        $this->line(__('Produção: scp o ZIP e execute horizonte:import-data-bundle {arquivo}'));
 
         return self::SUCCESS;
     }

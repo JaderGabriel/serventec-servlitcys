@@ -1,10 +1,10 @@
 # Padrão editorial — documentação servlitcys
 
-**Versão do produto:** 7.0.0 · **Última revisão:** 2026-07-05
+**Versão do produto:** 7.0.2 · **Última revisão:** 2026-07-06
 
 > **Índice:** [README.md](README.md) · **Estado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Este documento define o **padrão de qualidade** para todos os ficheiros em `docs/`. Use-o ao criar ou rever documentação.
+Este documento define o **padrão de qualidade** para todos os arquivos em `docs/`. Use-o ao criar ou rever documentação.
 
 ---
 
@@ -20,7 +20,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 > **Índice:** [README.md](README.md) · **Relacionado:** [outro-doc.md](outro-doc.md)
 ```
 
-**Excepções:** notas de release históricas (`RELEASE_*.md`) mantêm o cabeçalho da tag; não é necessário actualizar versões antigas.
+**Excepções:** notas de release históricas (`RELEASE_*.md`) mantêm o cabeçalho da tag; não é necessário atualizar versões antigas.
 
 ---
 
@@ -30,7 +30,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 |----------|------------------------|
 | O que está em produção? | [STATUS_PROJETO.md](STATUS_PROJETO.md) + `config/documentation.php` |
 | Qual a versão e tag? | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
-| Diagramas de arquitectura e fluxos? | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) |
+| Diagramas de arquitetura e fluxos? | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) |
 | Porquê esta decisão técnica? | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |
 | Qualidade de código / padrões Laravel? | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) |
 | Ordem das abas / UI | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) §5 + [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
@@ -45,8 +45,8 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 
 ## 3. Tom e linguagem
 
-- **Documentação técnica:** português europeu (cadastro, utilizador, secção, arquitectura).
-- **UI Horizonte / textos comerciais do mapa:** pt-BR (planejamento, município, coordenadas, tooltips) — ver [HORIZONTE.md](HORIZONTE.md) §6.
+- **Interface, menus e documentação viva:** **pt-BR** (usuário, seção, atualizar, arquivo, convênio, exato).
+- **Termos técnicos internacionais** mantêm grafia consagrada (FUNDEB, i-Educar, INEP, IBGE).
 - Frases completas; evitar telegráfico ou listas soltas sem contexto.
 - Distinguir sempre **indicativo** vs **oficial** (FUNDEB, repasses, VAAF).
 - Nomes de produto: **servlitcys** (código), **ServLitcys** (release), **Serventec** (consultoria/PDF quando aplicável).
@@ -61,7 +61,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 1. Resumo (2–3 linhas)
 2. Pré-requisitos / público
 3. Comportamento (tabelas, fluxos)
-4. Ficheiros de código
+4. Arquivos de código
 5. Problemas conhecidos (se houver)
 6. Ver também (links)
 
@@ -103,11 +103,11 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 1. [ ] [STATUS_PROJETO.md](STATUS_PROJETO.md) reflecte funcionalidades novas
 2. [ ] Release + linha em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 3. [ ] `config/documentation.php` (`product.version`, `release_tag`, `commit_short`)
-4. [ ] Bump correcto: **major** → 1.º segmento · **versão** → 2.º · **minor** → 3.º ([HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) § convenção)
+4. [ ] Bump correto: **major** → 1.º segmento · **versão** → 2.º · **minor** → 3.º ([HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) § convenção)
 5. [ ] Tag: `YYYYMMDD-Codename` mitológico (greco-romano, nórdico ou asteca; alusão às melhorias); se já existir release na mesma data, sufixo `a`, `b`, … (`ProductReleaseTag`)
 6. [ ] [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — versão, linha 4.x e mapa de docs
 7. [ ] [ROADMAP_INDICE.md](ROADMAP_INDICE.md) — panorama feito / em curso / planeado
-8. [ ] [README.md](README.md) — secção releases e abas rápidas
+8. [ ] [README.md](README.md) — seção releases e abas rápidas
 9. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
 10. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
 11. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
@@ -120,20 +120,20 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 | Perfil | Rota |
 |--------|------|
 | Admin | `/admin/documentacao` |
-| Utilizador / Municipal | `/documentacao` |
+| Usuário / Municipal | `/documentacao` |
 
 | Recurso | Comportamento |
 |---------|----------------|
-| **Menu lateral** | Secções com cor, ícone e analogia (`DocumentationSectionVisuals`) — ver legenda em [README.md](README.md) § Leitor |
-| **Pesquisa** | `GET …/documentacao/buscar?q=` — título, secção, cabeçalhos |
+| **Menu lateral** | Seções com cor, ícone e analogia (`DocumentationSectionVisuals`) — ver legenda em [README.md](README.md) § Leitor |
+| **Pesquisa** | `GET …/documentacao/buscar?q=` — título, seção, cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras em `h1`–`h4` |
-| **Idioma** | Português europeu na UI e nos docs vivos |
+| **Idioma** | **pt-BR** na UI e nos docs vivos |
 
-Ficheiros só-admin (deploy, `.env`, importações): lista em `DocumentationCatalog::adminOnlyPaths()`.
+Arquivos só-admin (deploy, `.env`, importações): lista em `DocumentationCatalog::adminOnlyPaths()`.
 
 Use cabeçalhos `##` e `###` descritivos — alimentam o sumário e a pesquisa.
 
-Ao acrescentar secção nova ao menu, definir `key`, `icon`, `tone` e `analogy` em `DocumentationCatalog` ou reutilizar chave existente em `DocumentationSectionVisuals::catalog()`.
+Ao acrescentar seção nova ao menu, definir `key`, `icon`, `tone` e `analogy` em `DocumentationCatalog` ou reutilizar chave existente em `DocumentationSectionVisuals::catalog()`.
 
 ---
 

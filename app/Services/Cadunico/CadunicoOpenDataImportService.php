@@ -139,7 +139,7 @@ final class CadunicoOpenDataImportService
     }
 
     /**
-     * Importa todas as linhas de um CSV (upload ou storage) — útil para ficheiro nacional.
+     * Importa todas as linhas de um CSV (upload ou storage) — útil para arquivo nacional.
      *
      * @return array{success: bool, message: string, imported: int, skipped: int, errors: list<string>}
      */
@@ -159,7 +159,7 @@ final class CadunicoOpenDataImportService
     }
 
     /**
-     * Varre CSV em storage para um ano (ficheiro nacional ou vários municipais).
+     * Varre CSV em storage para um ano (arquivo nacional ou vários municipais).
      *
      * @return array{success: bool, message: string, imported: int, files: list<string>}
      */
@@ -343,7 +343,7 @@ final class CadunicoOpenDataImportService
     {
         $path = CadunicoStoragePaths::apiCacheFile($ibge, $ano);
         if (! is_readable($path)) {
-            $attempts[] = __('Cache: ficheiro em falta (:path).', ['path' => $path]);
+            $attempts[] = __('Cache: arquivo em falta (:path).', ['path' => $path]);
 
             return null;
         }
@@ -380,7 +380,7 @@ final class CadunicoOpenDataImportService
     {
         $files = CadunicoStoragePaths::discoverCsvCandidates($ibge, $ano);
         if ($files === []) {
-            $attempts[] = __('CSV: nenhum ficheiro em :path.', ['path' => CadunicoStoragePaths::storageRoot()]);
+            $attempts[] = __('CSV: nenhum arquivo em :path.', ['path' => CadunicoStoragePaths::storageRoot()]);
 
             return null;
         }

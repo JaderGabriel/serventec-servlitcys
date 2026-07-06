@@ -55,7 +55,7 @@ final class SaebMicrodadosInepDownloader
     }
 
     /**
-     * Ficheiros PEM de CA a tentar (ordem: bundles completos do SO antes dos caminhos do PHP/OpenSSL).
+     * Arquivos PEM de CA a tentar (ordem: bundles completos do SO antes dos caminhos do PHP/OpenSSL).
      *
      * @return list<string>
      */
@@ -244,7 +244,7 @@ final class SaebMicrodadosInepDownloader
             $this->getWithSinkRespectingSsl($url, $tmpZip, $timeout, 'servlitcys/1.0 (SAEB microdados INEP)');
 
             if (! is_readable($tmpZip) || filesize($tmpZip) < 1000) {
-                throw new \RuntimeException(__('Ficheiro ZIP inválido ou vazio.'));
+                throw new \RuntimeException(__('Arquivo ZIP inválido ou vazio.'));
             }
 
             $zip = new ZipArchive;
@@ -265,7 +265,7 @@ final class SaebMicrodadosInepDownloader
     }
 
     /**
-     * Descarrega um ficheiro remoto para o caminho indicado (planilhas SAEB, CSV, etc.).
+     * Descarrega um arquivo remoto para o caminho indicado (planilhas SAEB, CSV, etc.).
      *
      * @throws \RuntimeException
      */
@@ -280,7 +280,7 @@ final class SaebMicrodadosInepDownloader
         $this->getWithSinkRespectingSsl($url, $absolutePath, $timeout, $userAgent);
 
         if (! is_readable($absolutePath) || filesize($absolutePath) < 100) {
-            throw new \RuntimeException(__('Ficheiro descarregado inválido ou vazio.'));
+            throw new \RuntimeException(__('Arquivo descarregado inválido ou vazio.'));
         }
     }
 

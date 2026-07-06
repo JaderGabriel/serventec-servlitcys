@@ -1,8 +1,8 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 7.0.1 · tag `20260705b-Moneta` · **Última revisão:** 2026-07-06
+**Versão do produto:** 7.0.2 · tag `20260706-Hermes` · **Última revisão:** 2026-07-06
 
-Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitectura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitetura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 **Hub visual** (timeline 4.x→7.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
 
@@ -12,19 +12,19 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Recurso | Descrição |
 |---------|-----------|
-| **Menu lateral** | Nove secções com **cor, ícone e analogia** (ver legenda abaixo) + releases descobertos |
-| **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, secção e cabeçalhos |
+| **Menu lateral** | Nove seções com **cor, ícone e analogia** (ver legenda abaixo) + releases descobertos |
+| **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, seção e cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras nos títulos `h1`–`h4` |
-| **Idioma** | Documentação técnica em **português europeu** (cadastro, utilizador, secção); **UI Horizonte** e textos comerciais do mapa em **pt-BR** (planejamento, município, coordenadas) |
+| **Idioma** | **pt-BR** em toda a UI, menus e documentação viva (usuário, seção, atualizar, convênio) |
 
 #### Legenda visual do menu lateral
 
-Cada secção do índice usa identidade própria (implementação: `DocumentationSectionVisuals` + `DocumentationCatalog`).
+Cada seção do índice usa identidade própria (implementação: `DocumentationSectionVisuals` + `DocumentationCatalog`).
 
-| Secção | Cor | Ícone | Analogia |
+| Seção | Cor | Ícone | Analogia |
 |--------|-----|-------|----------|
 | **1 · Entrada** | Blue | `home` | Porta de entrada — versão, perfis e hub |
-| **2 · Arquitectura** | Sky | `squares-2x2` | Planta do sistema — camadas e decisões |
+| **2 · Arquitetura** | Sky | `squares-2x2` | Planta do sistema — camadas e decisões |
 | **3 · Consultoria municipal** | Sky | `chart-bar` | Painel municipal — analytics e Horizonte |
 | **4 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF, repasses e extratos |
 | **5 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
@@ -52,7 +52,7 @@ flowchart TD
 | Perfil | Leia primeiro |
 |--------|----------------|
 | Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) → [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
-| Analista (utilizador) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
+| Analista (usuário) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
 | Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
@@ -234,7 +234,7 @@ Faixa de impacto (saldo indicativo): `AnalyticsTabImpactBuilder` — ver [METRIC
 | Perfil | Caminho |
 |--------|---------|
 | **Administrador** | Menu → **Documentação** (`/admin/documentacao`) |
-| **Utilizador / Municipal** | Menu → **Recursos** → **Documentação** (`/documentacao`) |
+| **Usuário / Municipal** | Menu → **Recursos** → **Documentação** (`/documentacao`) |
 | **Filas** | `/filas` ou `/admin/sync-queue` |
 
 Links internos abrem no leitor da mesma rota; «Ver no GitHub» usa `config/documentation.php` → `github.repository`.
@@ -245,11 +245,11 @@ Links internos abrem no leitor da mesma rota; «Ver no GitHub» usa `config/docu
 
 Seguir [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6. Resumo:
 
-1. Funcionalidade nova → `STATUS_PROJETO.md` + release se visível ao utilizador
+1. Funcionalidade nova → `STATUS_PROJETO.md` + release se visível ao usuário
 2. Decisão técnica → `PONDERACOES_TECNICAS.md`
 3. Planeamento → `BACKLOG_IMPLEMENTACOES.md`
 4. Versão → `HISTORICO_VERSOES.md` + `config/documentation.php`
-5. Diagrama novo de arquitectura → preferir [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md)
+5. Diagrama novo de arquitetura → preferir [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md)
 
 ---
 

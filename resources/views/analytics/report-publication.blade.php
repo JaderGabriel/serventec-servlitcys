@@ -63,7 +63,7 @@
             </div>
 
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                <p>{{ __('O PDF segue a estrutura do relatório educacional municipal (indicadores, rede, FUNDEB, programas e publicação digital). Secções sem dados no ficheiro listam lacunas técnicas no anexo — consulte a documentação SERVLITCYS ou a equipa de suporte para activar sincronizações (Censo, SAEB, repasses).') }}</p>
+                <p>{{ __('O PDF segue a estrutura do relatório educacional municipal (indicadores, rede, FUNDEB, programas e publicação digital). Secções sem dados no arquivo listam lacunas técnicas no anexo — consulte a documentação SERVLITCYS ou a equipa de suporte para activar sincronizações (Censo, SAEB, repasses).') }}</p>
             </div>
         </div>
     </div>

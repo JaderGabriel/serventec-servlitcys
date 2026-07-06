@@ -1,6 +1,6 @@
 # Entregas escalonadas
 
-> **Versão em produção:** **7.0.1** · tag **`20260705b-Moneta`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **7.0.2** · tag **`20260706-Hermes`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações desenvolvidas no ramo `main`, organizadas **por mês civil** e ligadas às **releases** (`RELEASE_*.md`). Cada documento mensal lista as tags e versões semânticas do período; o detalhe técnico de cada marco está na nota de release correspondente.
 
@@ -16,7 +16,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas **por 
 
 | Mês | Intervalo de versões | Documento | Releases |
 |-----|----------------------|-----------|----------|
-| **Julho/2026** | **7.0.0 → 7.0.1** + patches | [ENTREGAS_ESCALONADAS_JULHO_2026.md](ENTREGAS_ESCALONADAS_JULHO_2026.md) | Ploutos, Moneta |
+| **Julho/2026** | **7.0.0 → 7.0.2** + patches | [ENTREGAS_ESCALONADAS_JULHO_2026.md](ENTREGAS_ESCALONADAS_JULHO_2026.md) | Ploutos, Moneta, Hermes |
 | **Junho/2026** | 3.5.0 → **6.5.0** | [ENTREGAS_ESCALONADAS_JUNHO_2026.md](ENTREGAS_ESCALONADAS_JUNHO_2026.md) | 36+ tags |
 | **Maio/2026** *(arquivo)* | 2.3.6 → 3.4.0 | [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) | 11 tags |
 
@@ -53,4 +53,4 @@ flowchart LR
 
 ## Próximo mês
 
-Ao fechar **agosto/2026**, criar `ENTREGAS_ESCALONADAS_AGOSTO_2026.md` com tabela de releases do mês e actualizar esta página e o catálogo em `DocumentationEscalonadasCatalog.php`. Ver [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §7.
+Ao fechar **agosto/2026**, criar `ENTREGAS_ESCALONADAS_AGOSTO_2026.md` com tabela de releases do mês e atualizar esta página e o catálogo em `DocumentationEscalonadasCatalog.php`. Ver [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §7.

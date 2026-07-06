@@ -29,7 +29,7 @@ Patch **4.4.3** sobre **4.4.2** ([RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a
 ```bash
 git fetch --tags
 git checkout 20260609b-Lachesis
-# ou, se deploy a partir de main já actualizado:
+# ou, se deploy a partir de main já atualizado:
 # git pull origin main
 
 composer install --no-dev --optimize-autoloader

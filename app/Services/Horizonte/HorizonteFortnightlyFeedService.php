@@ -439,7 +439,7 @@ final class HorizonteFortnightlyFeedService
                     'done' => (string) count($phaseResults),
                     'total' => (string) count(is_array($state['phase_queue'] ?? null) ? $state['phase_queue'] : []),
                 ])
-                : (string) ($state['message'] ?? __('Pipeline Horizonte actualizado.')));
+                : (string) ($state['message'] ?? __('Pipeline Horizonte atualizado.')));
 
         return [
             'success' => $running ? (bool) ($lastPhase['success'] ?? true) : (bool) ($state['success'] ?? false),
@@ -682,7 +682,7 @@ final class HorizonteFortnightlyFeedService
 
         return [
             'success' => true,
-            'message' => __('FUNDEB: :n registo(s) municipal(is) actualizados (receita portaria FNDE).', [
+            'message' => __('FUNDEB: :n registo(s) municipal(is) atualizados (receita portaria FNDE).', [
                 'n' => (string) $imported,
             ]),
             'imported' => $imported,
@@ -1020,7 +1020,7 @@ final class HorizonteFortnightlyFeedService
      */
     private function syncTransparency(int $refYear, array $options = []): array
     {
-        $this->debugLog($options, __('Portal da Transparência — convénios e empenhos…'));
+        $this->debugLog($options, __('Portal da Transparência — convênios e empenhos…'));
         try {
             $result = $this->transparencySync->syncBatch(array_merge($options, [
                 'year' => $refYear,

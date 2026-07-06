@@ -101,7 +101,7 @@ final class SaebInepDownloadCaBundle
     public static function sslFailureHint(): string
     {
         $hints = [
-            __('O INEP (download.inep.gov.br) usa certificados RNP recentes; o pacote ca-certificates do servidor pode estar desactualizado.'),
+            __('O INEP (download.inep.gov.br) usa certificados RNP recentes; o pacote ca-certificates do servidor pode estar desatualizado.'),
             __('Soluções: (1) php artisan saeb:refresh-ca-bundle — (2) IEDUCAR_SAEB_HTTP_CA_BUNDLE=/caminho/para.pem — (3) atualizar ca-certificates no SO — (4) só em dev: IEDUCAR_SAEB_HTTP_INSECURE_FALLBACK=true.'),
         ];
 

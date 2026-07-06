@@ -12,7 +12,7 @@ final class RedisProbe
     private const PROBE_KEY = '__servlitcys_redis_probe';
 
     /**
-     * Cliente Redis efectivo após fallback (phpredis sem extensão → predis).
+     * Cliente Redis efetivo após fallback (phpredis sem extensão → predis).
      */
     public static function effectiveClient(): string
     {

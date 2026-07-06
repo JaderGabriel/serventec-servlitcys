@@ -217,7 +217,7 @@ class CadunicoSyncController extends Controller
             if ($stored === null) {
                 return redirect()
                     ->route('admin.cadunico-sync.index')
-                    ->with('cadunico_sync_error', __('Ficheiro CSV inválido.'));
+                    ->with('cadunico_sync_error', __('Arquivo CSV inválido.'));
             }
             $payload['csv_path'] = $stored['path'];
         }
@@ -256,10 +256,10 @@ class CadunicoSyncController extends Controller
         if ($stored === null) {
             return redirect()
                 ->route('admin.cadunico-sync.index')
-                ->with('cadunico_sync_error', __('Ficheiro CSV inválido ou em falta.'));
+                ->with('cadunico_sync_error', __('Arquivo CSV inválido ou em falta.'));
         }
 
-        $message = __('Ficheiro guardado em storage: :name', ['name' => $stored['filename']]);
+        $message = __('Arquivo guardado em storage: :name', ['name' => $stored['filename']]);
 
         if (! $request->boolean('auto_import')) {
             return redirect()
@@ -310,7 +310,7 @@ class CadunicoSyncController extends Controller
         if ($stored === null) {
             return redirect()
                 ->route('admin.cadunico-sync.index')
-                ->with('cadunico_sync_error', __('Ficheiro CSV territorial inválido.'));
+                ->with('cadunico_sync_error', __('Arquivo CSV territorial inválido.'));
         }
 
         $result = $this->territorioImport->importFile($stored['path'], $ano, $city);

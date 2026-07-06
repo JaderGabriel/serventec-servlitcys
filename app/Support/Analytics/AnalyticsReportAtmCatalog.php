@@ -3,7 +3,7 @@
 namespace App\Support\Analytics;
 
 /**
- * Estrutura de secções inspirada no Relatório Municipal Completo ATM (MEC/EducaDados).
+ * Estrutura de seções inspirada no Relatório Municipal Completo ATM (MEC/EducaDados).
  *
  * @phpstan-type SectionDef array{
  *   id: string,
@@ -131,7 +131,7 @@ final class AnalyticsReportAtmCatalog
                 'title' => __('Publicação digital e verificação'),
                 'group' => 'meta',
                 'scope' => 'bibliography_qr',
-                'intro' => __('Identificador bibliográfico, QR para download e painel interactivo na plataforma.'),
+                'intro' => __('Identificador bibliográfico, QR para download e painel interativo na plataforma.'),
                 'order' => 120,
             ],
         ];

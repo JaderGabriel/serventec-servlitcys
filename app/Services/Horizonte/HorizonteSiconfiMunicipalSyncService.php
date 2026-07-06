@@ -205,7 +205,7 @@ final class HorizonteSiconfiMunicipalSyncService
 
         return [
             'success' => $imported > 0 || ! $partial,
-            'message' => __('SICONFI: :n município(s) actualizados (ano :ano, período :periodo).', [
+            'message' => __('SICONFI: :n município(s) atualizados (ano :ano, período :periodo).', [
                 'n' => (string) $imported,
                 'ano' => (string) $year,
                 'periodo' => (string) $period,
@@ -314,7 +314,7 @@ final class HorizonteSiconfiMunicipalSyncService
         }
 
         $ufLabel = implode(', ', $processedUfs);
-        $message = __('SICONFI: :ufs — :n município(s) actualizados (:falhas sem dados). Progresso: :done/:total UFs.', [
+        $message = __('SICONFI: :ufs — :n município(s) atualizados (:falhas sem dados). Progresso: :done/:total UFs.', [
             'ufs' => $ufLabel,
             'n' => (string) $imported,
             'falhas' => (string) count($failedItems),

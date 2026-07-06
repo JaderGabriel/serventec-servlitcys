@@ -38,7 +38,7 @@ Todas as chamadas HTTP são **somente leitura**, filtradas por **IBGE do municí
 
 ## 3. Recursos públicos e financiamento (destaque)
 
-Esta secção concentra o que mais impacta **repasse, planeamento financeiro e conformidade** com FUNDEB, VAAR e programas complementares.
+Esta seção concentra o que mais impacta **repasse, planeamento financeiro e conformidade** com FUNDEB, VAAR e programas complementares.
 
 ### 3.1 FUNDEB — dados abertos FNDE (CKAN)
 
@@ -181,7 +181,7 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 | **Tesouro CSV** | `TesouroTransferenciasCsvService` — pacote CKAN `transferencias-obrigatorias-da-uniao-por-municipio` (ex.: `fundeb-por-municipio.csv`); mapeamento **COD_MUN → IBGE** por nome+UF; fonte `tesouro_csv` em `municipal_transfer_snapshots`. Env: `IEDUCAR_TESOURO_CSV_ENABLED` (default true). |
 | **Conciliação** | `FundebExtratoFontePriority` + `FundebTransferScope` — totais em **Finanças → Tempo Real** ignoram `tesouro_publicacao` (agregado **UF**, folha STN `M_TOTAL`); usam fontes municipais (`tesouro_csv`, `sisweb_*`, `bb_extrato`, etc.). O extrato visual lista todas as fontes gravadas, mas o saldo acumulado por município só soma snapshots municipais. |
 | **Rebuild Tempo Real** | `php artisan funding:rebuild-finance-realtime` — apaga `municipal_transfer_snapshots` do(s) ano(s) e reimporta por município (`MunicipalTransferImportService`). Slug anual por linha: `{nome}-{uf}-{ibge}-{ano}` (ex.: `salvador-ba-2927408-2025`). Em **production** exige `--confirm=rebuild-repasses-{ano}` (`IEDUCAR_FINANCE_REALTIME_REBUILD_SLUG`). Opções: `--all-cities`, `--city=`, `--cities=`, `--from`/`--to`, `--dry-run`, `--purge-only`, `--no-purge`. |
-| **UI** | Secção «Repasse observado (série histórica)» na aba Financiamentos; comparativo e extrato simulado em **Finanças → Tempo Real** (`?tab=finance_realtime`). CLI documentado: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1 |
+| **UI** | Seção «Repasse observado (série histórica)» na aba Financiamentos; comparativo e extrato simulado em **Finanças → Tempo Real** (`?tab=finance_realtime`). CLI documentado: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1 |
 | **Deduplicação na aba Financiamentos (4.1.6)** | Totais por ano e repasse por programa (PNAE, PNATE, …) usam `FundebExtratoFontePriority::pickPrimaryPerProgram` — **uma fonte por programa**, mesma regra que Tempo Real. Evita somar CKAN + SISWEB + BB no mesmo ano. A UI avisa: não somar com VAAF nem com Tempo Real. Com snapshots locais, consultas CKAN em paralelo ficam desligadas (`MunicipalFundingPublicSnapshotService`). |
 
 ### 3.5 Censo INEP × i-Educar (v2.3)

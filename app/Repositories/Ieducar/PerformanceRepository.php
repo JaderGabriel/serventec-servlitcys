@@ -379,7 +379,7 @@ class PerformanceRepository
         $alertaAno = null;
         if ($yearVal !== null && $yearVal < $currentYear && $emPct !== null && $emPct >= 30.0) {
             $alertaAno = __(
-                'O ano letivo selecionado já terminou, mas uma parte relevante das matrículas aparece como «em curso / exame / paralela» (códigos 1, 4 e 7). Isso costuma indicar que a situação final ainda não foi actualizada no i-Educar — não é uma taxa pedagógica de «andamento» do ano.'
+                'O ano letivo selecionado já terminou, mas uma parte relevante das matrículas aparece como «em curso / exame / paralela» (códigos 1, 4 e 7). Isso costuma indicar que a situação final ainda não foi atualizada no i-Educar — não é uma taxa pedagógica de «andamento» do ano.'
             );
         }
 

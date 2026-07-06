@@ -108,7 +108,7 @@
             @endforeach
 
             @if (! $available && $sid !== 'publicacao_digital' && $sid !== 'territorio_rede')
-                <p class="muted" style="font-style:italic;">{{ __('Dados insuficientes nesta secção para o recorte actual. Consulte o anexo de lacunas técnicas.') }}</p>
+                <p class="muted" style="font-style:italic;">{{ __('Dados insuficientes nesta seção para o recorte atual. Consulte o anexo de lacunas técnicas.') }}</p>
             @endif
         </div>
     </div>

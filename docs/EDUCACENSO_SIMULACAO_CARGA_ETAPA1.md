@@ -27,11 +27,11 @@ Este documento especifica um **módulo de conferência e simulação** para a **
 | | Educacenso (entrada do módulo) | i-Educar (referência de comparação) |
 |---|------------------------------|-------------------------------------|
 | **Papel** | Fonte da **declaração oficial** já no INEP | Fonte do **cadastro administrativo** local |
-| **Origem do ficheiro** | Download/exportação no **portal Educacenso** (migração, exportação de dados declarados, arquivo de conferência — conforme operação disponível no exercício) | **Não** gera o ficheiro de entrada deste módulo |
+| **Origem do arquivo** | Download/exportação no **portal Educacenso** (migração, exportação de dados declarados, arquivo de conferência — conforme operação disponível no exercício) | **Não** gera o arquivo de entrada deste módulo |
 | **Gravação** | O módulo **não escreve** no Educacenso | O módulo **não escreve** no i-Educar |
 | **Uso no servlitcys** | Parser + painel de análise do arquivo | Snapshot read-only para cruzamento |
 
-O i-Educar continua a ser usado pela rede para **cadastro e exportação interna** (quando aplicável), mas o ficheiro analisado aqui é sempre o que **veio do sistema Educacenso**.
+O i-Educar continua a ser usado pela rede para **cadastro e exportação interna** (quando aplicável), mas o arquivo analisado aqui é sempre o que **veio do sistema Educacenso**.
 
 ---
 
@@ -46,7 +46,7 @@ O i-Educar continua a ser usado pela rede para **cadastro e exportação interna
 | Comparar totais i-Educar × microdados INEP | **Sim** | `matricula_censo_vs_ieducar` |
 | Checks cadastrais (NEE, raça, INEP, duplicidade…) | **Sim** | `DiscrepanciesCheckRunner` |
 
-**Implicação:** o módulo reutiliza `City`, `CityDataConnection`, `IeducarSchema`, catálogos Educacenso e rotinas de discrepâncias, mas a **entrada** é sempre ficheiro **Educacenso**.
+**Implicação:** o módulo reutiliza `City`, `CityDataConnection`, `IeducarSchema`, catálogos Educacenso e rotinas de discrepâncias, mas a **entrada** é sempre arquivo **Educacenso**.
 
 ---
 
@@ -62,7 +62,7 @@ O i-Educar continua a ser usado pela rede para **cadastro e exportação interna
 | **Profissionais** | 40, 50, 51 | Docentes, gestores, demais |
 | **Matrículas** | 60 | Vínculo aluno × turma |
 
-A **2ª etapa** (situação do aluno) usa ficheiro e calendário distintos — **fora** deste módulo.
+A **2ª etapa** (situação do aluno) usa arquivo e calendário distintos — **fora** deste módulo.
 
 ### 4.2 Características técnicas
 
@@ -102,7 +102,7 @@ Responde à pergunta: *«O que está declarado no Educacenso bate com o cadastro
 
 | Princípio | Implementação |
 |-----------|---------------|
-| **Entrada = Educacenso** | Upload do ficheiro baixado do portal INEP |
+| **Entrada = Educacenso** | Upload do arquivo baixado do portal INEP |
 | **Referência = i-Educar** | Leitura read-only da base municipal |
 | **Zero escrita** | Sem `INSERT`/`UPDATE`/`DELETE`; sem API de envio ao INEP |
 | **Análise em duas camadas** | (A) integridade do **arquivo**; (B) **cruzamento** arquivo × i-Educar |
@@ -127,7 +127,7 @@ flowchart TD
 | Parâmetro | Obrigatório | Descrição |
 |-----------|-------------|-----------|
 | `city_id` | Sim | Município em `cities` |
-| `arquivo` | Sim | Ficheiro Educacenso (upload ou caminho) |
+| `arquivo` | Sim | Arquivo Educacenso (upload ou caminho) |
 | `ano_letivo` | Sim* | Ano Censo (* inferir do reg. 00 quando possível) |
 | `origem` | Não | `educacenso_export` \| `educacenso_migracao` (metadado) |
 | `escola_inep` | Não | Filtrar uma escola |
@@ -137,18 +137,18 @@ flowchart TD
 
 ## 6. Painel de análise completa
 
-Secção central do módulo — rota proposta: `/consultoria/censo/educacenso-analise` ou bloco dedicado na aba **Censo** (`work_done`).
+Seção central do módulo — rota proposta: `/consultoria/censo/educacenso-analise` ou bloco dedicado na aba **Censo** (`work_done`).
 
 ### 6.1 Cabeçalho e contexto
 
 | Elemento | Conteúdo |
 |----------|----------|
 | Município / ano letivo | Nome, IBGE, ano Censo |
-| Ficheiro | Nome, tamanho, hash SHA-256, data upload |
+| Arquivo | Nome, tamanho, hash SHA-256, data upload |
 | Origem | «Arquivo Educacenso (portal INEP)» |
 | Data-base detectada | Do reg. 00 vs calendário RX |
 | Estado geral | Semáforo: OK / Atenção / Crítico |
-| Última análise | Timestamp + utilizador |
+| Última análise | Timestamp + usuário |
 
 ### 6.2 Contadores globais (KPIs)
 
@@ -187,7 +187,7 @@ Secção central do módulo — rota proposta: `/consultoria/censo/educacenso-an
 
 ### 6.5 Acções do painel
 
-- Reprocessar (mesmo ficheiro, base actualizada)
+- Reprocessar (mesmo arquivo, base atualizada)
 - Exportar relatório (CSV / XLSX / JSON)
 - Abrir **Discrepâncias** / **Censo** com filtros pré-aplicados
 - (Admin) Enfileirar análise em background para redes grandes
@@ -238,7 +238,7 @@ Tabelas via `IeducarSchema`: escola, `educacenso_cod_escola`, turma, matricula, 
 
 ## 8. Catálogo de verificações
 
-(Mantém códigos `EDU-CEN-*` — ver secção anterior do documento.)
+(Mantém códigos `EDU-CEN-*` — ver seção anterior do documento.)
 
 | Grupo | Exemplos |
 |-------|----------|
@@ -253,7 +253,7 @@ Cada achado alimenta o painel (contadores + tabela) e, quando aplicável, liga a
 
 ---
 
-## 9. Arquitectura técnica
+## 9. Arquitetura técnica
 
 ```
 app/
@@ -317,7 +317,7 @@ Checklist para iniciar implementação (**CEN-01**). Marcar na ordem indicada.
 - [x] **CEN-01b** — Obter layout INEP 2026 (XLS oficial) e documentar versão em `config/educacenso.php`
 - [x] **CEN-01c** — `EducacensoFileReader`: leitura streaming, encoding, split pipe
 - [x] **CEN-01d** — `EducacensoParsedFile` + tipagem por registro (00–60)
-- [x] **CEN-01e** — `EducacensoFileStatistics`: totais por registro, escolas, hash ficheiro
+- [x] **CEN-01e** — `EducacensoFileStatistics`: totais por registro, escolas, hash arquivo
 - [x] **CEN-01f** — Testes unitários + fixture `tests/fixtures/educacenso/stage1_2026_minimal.txt`
 
 ### 12.2 Cruzamento i-Educar
@@ -334,7 +334,7 @@ Checklist para iniciar implementação (**CEN-01**). Marcar na ordem indicada.
 - [x] **CEN-01m** — View `educacenso-analysis.blade.php`: KPIs, gráficos, tabela achados
 - [x] **CEN-01n** — Integrar na aba Censo (`work_done`) e atalho toolkit RX
 - [x] **CEN-01o** — Comando `censo:analyze-educacenso-file` + entrada em `COMANDOS_ARTISAN.md`
-- [x] **CEN-01p** — Variáveis `.env` + secção em `VARIAVEIS_AMBIENTE.md`
+- [x] **CEN-01p** — Variáveis `.env` + seção em `VARIAVEIS_AMBIENTE.md`
 
 ### 12.4 Critério de aceite (MVP)
 
@@ -342,7 +342,7 @@ Checklist para iniciar implementação (**CEN-01**). Marcar na ordem indicada.
 - [x] Painel exibe contadores por registro e totais de divergência
 - [x] Lista de achados filtrável por escola e severidade
 - [x] Nenhuma escrita na base i-Educar confirmada (teste ou transacção read-only)
-- [ ] Documentação de operação actualizada
+- [ ] Documentação de operação atualizada
 
 ---
 
@@ -362,7 +362,7 @@ Checklist para iniciar implementação (**CEN-01**). Marcar na ordem indicada.
 | Pergunta | Resposta |
 |----------|----------|
 | De onde vem o arquivo? | **Sistema Educacenso (INEP)** — upload manual |
-| O i-Educar gera este ficheiro? | **Não** — é referência de comparação |
+| O i-Educar gera este arquivo? | **Não** — é referência de comparação |
 | Grava algo? | **Não** — read-only no i-Educar; opcional histórico local da análise |
 | Entrega principal? | **Painel** com análise completa e contadores |
 | Valor | Conferir declaração oficial × cadastro local; orientar correcções no i-Educar |

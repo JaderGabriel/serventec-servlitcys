@@ -60,7 +60,7 @@ class HorizonteImportController extends Controller
 
         if ($selectedPhases === []) {
             return $this->redirectToHub()
-                ->with('public_data_error', __('Seleccione pelo menos uma fase para executar.'));
+                ->with('public_data_error', __('Selecione pelo menos uma fase para executar.'));
         }
 
         $invalid = array_diff($selectedPhases, HorizonteFeedPhaseOptions::defaultSelectedPhaseKeys());
@@ -269,7 +269,7 @@ class HorizonteImportController extends Controller
         $file = $request->file('bundle');
         if ($file === null) {
             return $this->redirectToHub('horizonte-offline-bundle')
-                ->with('public_data_error', __('Ficheiro ZIP em falta.'));
+                ->with('public_data_error', __('Arquivo ZIP em falta.'));
         }
 
         $dir = storage_path('app/horizonte/bundles/uploads');

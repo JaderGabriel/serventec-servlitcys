@@ -10,7 +10,7 @@ Minor **5.2.0** sobre **5.1.0** (Prospeccao):
 
 1. **Hub Horizonte** — painel `#horizonte-hub` em Dados públicos (`?hub=horizonte`), cobertura nacional, botão «Abastecer Horizonte» (POST `admin.public-data.horizonte-feed`).
 2. **Monitor de módulos** — comando `module-monitor:collect` (agendamento diário 07:30), sondas estruturais, estados «Em repouso» / «Por avaliar».
-3. **Horizonte — acesso** — `canViewHorizonte()`: administrador e utilizador; perfil municipal recebe 403.
+3. **Horizonte — acesso** — `canViewHorizonte()`: administrador e usuário; perfil municipal recebe 403.
 4. **Mapa Horizonte** — tooltip e botão fechar alinhados ao dashboard analítico.
 
 ---

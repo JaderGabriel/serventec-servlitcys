@@ -9,7 +9,7 @@ use App\Support\Horizonte\HorizonteUfScope;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/** Cache municipal de convénios e empenhos do Portal da Transparência. */
+/** Cache municipal de convênios e empenhos do Portal da Transparência. */
 final class HorizonteMunicipalTransparencySyncService
 {
     public function __construct(
@@ -89,7 +89,7 @@ final class HorizonteMunicipalTransparencySyncService
 
         return [
             'success' => $imported > 0 || ! $pendingAfter,
-            'message' => __('Transparência: :n município(s) actualizados.', ['n' => (string) $imported]),
+            'message' => __('Transparência: :n município(s) atualizados.', ['n' => (string) $imported]),
             'imported' => $imported,
             'partial' => $pendingAfter > 0,
         ];

@@ -17,7 +17,7 @@ final class EducacensoAnalyzeStage1Command extends Command
     {
         $path = $this->resolvePath((string) $this->argument('file'));
         if ($path === null) {
-            $this->error(__('Ficheiro não encontrado.'));
+            $this->error(__('Arquivo não encontrado.'));
 
             return self::FAILURE;
         }

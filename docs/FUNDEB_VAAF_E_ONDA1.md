@@ -28,7 +28,7 @@ Até maio/2026 o VAAF vinha só de `IEDUCAR_DISC_VAA_REFERENCIA` (default 4500).
 
 ---
 
-## 2. Arquitectura do VAAF
+## 2. Arquitetura do VAAF
 
 ```
 City (ibge_municipio) + ano letivo
@@ -127,7 +127,7 @@ php artisan fundeb:import-api 0 --all --ano=2024 --nearest
 | `FundebMatriculasByYearService` | Matrículas i-Educar e fallback Censo INEP por ano |
 | `FundebFndePublicationAlerts` | Alertas (receita repetida, sem matrículas, placeholder, ano futuro, etc.) |
 | `FundebCkanVaafDiscovery` | Descobre recurso CKAN FNDE com VAAF (cache 24h) |
-| Aba FUNDEB | Secção «Perfil FUNDEB — receitas, VAAF e planejamento» |
+| Aba FUNDEB | Seção «Perfil FUNDEB — receitas, VAAF e planejamento» |
 
 **CLI:** `php artisan fundeb:diagnose-matriculas` · **Env:** `IEDUCAR_FUNDEB_PLANNING_YEARS_AHEAD`, `IEDUCAR_FUNDEB_VAAF_CENSO_FALLBACK`
 
@@ -236,7 +236,7 @@ php artisan fundeb:diagnose-matriculas --anos=2025,2026
 php artisan fundeb:import-api 0 --all --from=2025 --to=2025 --nearest
 ```
 
-Confirme na saída do diagnóstico `Censo>0` e `[censo_inep]` (ou matrículas i-Educar) antes do import. Na consultoria, a fonte `fnde_portaria_receita_ieducar` com VAAF numérico indica receita ÷ matrículas correctas.
+Confirme na saída do diagnóstico `Censo>0` e `[censo_inep]` (ou matrículas i-Educar) antes do import. Na consultoria, a fonte `fnde_portaria_receita_ieducar` com VAAF numérico indica receita ÷ matrículas corretas.
 
 **VAAT** não depende de matrículas — vem do CSV «VAAT, VAAT-MIN e complementação-VAAT por ente federado» (`FundebFndeVaatCsvService`).
 
@@ -268,7 +268,7 @@ Confirme na saída do diagnóstico `Censo>0` e `[censo_inep]` (ou matrículas i-
 
 - **Builder:** `app/Support/Ieducar/FundebComplementacaoInformeBuilder.php`
 - **Payload:** `fundebData['complementacao_informe']` com `blocos[]` (vaaf, vaat, vaar, outras)
-- **UI:** secção «Informes VAAF, VAAT e complementação VAAR» entre previsão de recursos e módulos VAAR temáticos
+- **UI:** seção «Informes VAAF, VAAT e complementação VAAR» entre previsão de recursos e módulos VAAR temáticos
 - Cruza VAAF resolvido, VAAT/complementação importados, pilares `funding_pillars` das Discrepâncias e recurso de prova sem NEE
 
 ---

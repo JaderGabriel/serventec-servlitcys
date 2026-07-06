@@ -215,7 +215,7 @@ final class InclusionDashboardQueries
     }
 
     /**
-     * Matrículas NEE no recorte com cadastro de deficiência (intersecção total NEE × cadastro).
+     * Matrículas NEE no recorte com cadastro de deficiência (interseção total NEE × cadastro).
      */
     public static function countMatriculasNeeComCadastroDeficiencia(Connection $db, City $city, IeducarFilterState $filters): int
     {
@@ -772,7 +772,7 @@ final class InclusionDashboardQueries
         $neeDataset = InclusionNeeDesignacaoDataset::build($db, $city, $filters);
         $hasCatalogoNee = false;
         if ($neeDataset !== null) {
-            // Gráfico por grupo omitido: mesmos dados nos medidores e cartões da secção «Indicadores NEE».
+            // Gráfico por grupo omitido: mesmos dados nos medidores e cartões da seção «Indicadores NEE».
             // Catálogo completo (inclui opções com zero) — cores INEP / complementar / só i-Educar.
             $catalogoCompleto = InclusionNeeDesignacaoDataset::chartCatalogo($neeDataset, $den, true);
             if ($catalogoCompleto !== null) {

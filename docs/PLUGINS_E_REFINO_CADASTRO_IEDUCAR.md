@@ -126,7 +126,7 @@ Recomendações por **área funcional** do Portabilis / i-Educar 2.x. Nem todos 
 
 ## 5. O que «plugar» ou ampliar na aplicação ServLitcys
 
-Integrações **já previstas** no produto; esta secção indica **prioridade de activação** e **melhorias** para relatórios mais ricos.
+Integrações **já previstas** no produto; esta seção indica **prioridade de activação** e **melhorias** para relatórios mais ricos.
 
 ### 5.1 Fontes externas (dados federais)
 
@@ -232,14 +232,14 @@ Quando relatórios ficam «cinza» ou vazios:
 | **P2** | Frequência, contactos, programas locais, gráficos históricos (backlog PLG) |
 | **P3** | Módulos opcionais (biblioteca, patrimônio) para expansão do PDF |
 
-Novas implementações de produto devem ser registadas em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **F. Plugins e cadastro i-Educar**).
+Novas implementações de produto devem ser registadas em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **F. Plugins e cadastro i-Educar**).
 
 ---
 
 ## 11. Manutenção deste documento
 
-- Alteração de **checks de discrepância** ou tabelas i-Educar → atualizar secções 3 e 6.
-- Nova **integração externa** → secção 5.1 + [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
-- Item de produto aceite no backlog → secção 5.3 e backlog §F.
+- Alteração de **checks de discrepância** ou tabelas i-Educar → atualizar seções 3 e 6.
+- Nova **integração externa** → seção 5.1 + [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+- Item de produto aceite no backlog → seção 5.3 e backlog §F.
 
 *Índice geral: [README.md](README.md).*

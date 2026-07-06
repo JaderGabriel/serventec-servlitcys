@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 
 /**
- * Extrai RAR de planilhas INEP e localiza ficheiros XLSX/XLSB.
+ * Extrai RAR de planilhas INEP e localiza arquivos XLSX/XLSB.
  */
 final class SaebPlanilhaInepArchive
 {
@@ -16,7 +16,7 @@ final class SaebPlanilhaInepArchive
     public function extractRarAndFindSpreadsheets(string $rarPath, string $extractDir): array
     {
         if (! is_file($rarPath)) {
-            throw new \RuntimeException(__('Ficheiro RAR inexistente: :path', ['path' => $rarPath]));
+            throw new \RuntimeException(__('Arquivo RAR inexistente: :path', ['path' => $rarPath]));
         }
 
         if (is_dir($extractDir)) {

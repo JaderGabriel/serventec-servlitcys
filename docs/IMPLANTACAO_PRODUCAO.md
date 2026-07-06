@@ -83,7 +83,7 @@ composer install --no-dev --optimize-autoloader
 
 Em produção existe **apenas** o arquivo `.env` no servidor. O repositório traz `.env.example` só para instalação nova ou desenvolvimento — **não** o use como referência no deploy de um servidor já em funcionamento.
 
-**Referência canónica:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) — compare secção a secção com o `.env` actual e acrescente o que faltar.
+**Referência canónica:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) — compare seção a seção com o `.env` actual e acrescente o que faltar.
 
 ```bash
 # Instalação nova (clone no servidor pela primeira vez):
@@ -231,7 +231,7 @@ Confirme que o cron do sistema executa o scheduler Laravel:
 * * * * * cd /caminho/para/servlitcys && /usr/bin/php artisan schedule:run >> /caminho/para/servlitcys/storage/logs/scheduler.log 2>&1
 ```
 
-Use o **mesmo utilizador** do PHP-FPM/deploy (ex.: `www-data`), caminho absoluto ao `php` e ao projeto. **Evite** `>> /dev/null` enquanto diagnosticar Pulse offline.
+Use o **mesmo usuário** do PHP-FPM/deploy (ex.: `www-data`), caminho absoluto ao `php` e ao projeto. **Evite** `>> /dev/null` enquanto diagnosticar Pulse offline.
 
 Alternativa (menos fiável): `*/3 * * * *` — só funciona se o minuto do cron coincidir com tarefas `everyThreeMinutes` (0, 3, 6…); se o servidor ficar «offline» no Pulse mas `schedule:run` manual funciona, mude para `* * * * *` e rode `php artisan schedule:pulse-diagnose`.
 
@@ -259,7 +259,7 @@ php artisan up
 | 4 | Aba **Censo** | Sem erro SQL; banner de ano letivo quando aplicável |
 | 5 | Aba **Serventec** | Conteúdo visível (não fica em branco após lazy load) |
 | 6 | Sino de notificações | Ícone ao lado do usuário; lista após PDF/sync (com worker ativo) |
-| 7 | `/pulse` (admin) | Painel executivo no topo, secção municípios, gráficos de servidor |
+| 7 | `/pulse` (admin) | Painel executivo no topo, seção municípios, gráficos de servidor |
 | 8 | `php artisan schedule:list` | Tarefas `pulse-scheduled-*` e `admin-sync-scheduled-work` |
 | 9 | Consola do browser | Sem pedidos a `localhost:5173` / `[::1]:5173` |
 
@@ -298,7 +298,7 @@ Altere a senha do admin após o primeiro login.
 | CSS/JS quebrados; pedidos a porta 5173 | `public/hot` presente ou falta `public/build` | `rm -f public/hot`; confirmar `manifest.json` |
 | Aba Serventec em branco | Cache de views antiga | `php artisan view:clear && php artisan view:cache` |
 | Notificações/PDF não aparecem | Fila sem worker | Supervisor `queue:work` com `default,admin-sync` |
-| Pulse «Servers offline» no cron, OK no SSH | Cron com utilizador/permissões diferentes, `>> /dev/null`, ou cron `*/3` desalinhado | Cron `* * * * *` como utilizador da app; log em `storage/logs/scheduler.log`; `SCHEDULE_LOG_TO_FILE=true`; `php artisan schedule:pulse-diagnose`; `schedule:clear-cache` |
+| Pulse «Servers offline» no cron, OK no SSH | Cron com usuário/permissões diferentes, `>> /dev/null`, ou cron `*/3` desalinhado | Cron `* * * * *` como usuário da app; log em `storage/logs/scheduler.log`; `SCHEDULE_LOG_TO_FILE=true`; `php artisan schedule:pulse-diagnose`; `schedule:clear-cache` |
 | Pulse «Servers offline» | Cron inactivo ou `PULSE_SCHEDULE_ENABLED=false` | Ativar cron; `PULSE_SCHEDULE_ENABLED=true` |
 | Financiamentos sem Transparência | API key vazia | `PORTAL_TRANSPARENCIA_API_KEY` no `.env` + `config:cache` |
 | Erro ao ligar Redis | Extensão ausente | `REDIS_CLIENT=predis` ou instalar `phpredis`; cache/fila podem ficar em `database` |
@@ -333,7 +333,7 @@ A migração `notifications` pode ser revertida apenas com `php artisan migrate:
 cd /caminho/para/servlitcys
 git pull
 composer install --no-dev --optimize-autoloader
-# atualizar .env (ver secção 4.3)
+# atualizar .env (ver seção 4.3)
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache

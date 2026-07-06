@@ -19,7 +19,7 @@ class FundebImportReferencesCommand extends Command
     {
         $path = (string) $this->argument('path');
         if (! is_readable($path)) {
-            $this->error(__('Ficheiro não encontrado: :path', ['path' => $path]));
+            $this->error(__('Arquivo não encontrado: :path', ['path' => $path]));
 
             return self::FAILURE;
         }

@@ -133,7 +133,7 @@ final class ChartExportMeta
                 'turno' => __('Turno'),
                 'todas' => __('Todas'),
                 'todos' => __('Todos'),
-                'naoSelecionado' => __('Não seleccionado'),
+                'naoSelecionado' => __('Não selecionado'),
             ],
         ];
     }
@@ -163,7 +163,7 @@ final class ChartExportMeta
         } else {
             $parts[] = [
                 'label' => __('Ano letivo'),
-                'value' => __('Não seleccionado'),
+                'value' => __('Não selecionado'),
                 'muted' => true,
             ];
         }

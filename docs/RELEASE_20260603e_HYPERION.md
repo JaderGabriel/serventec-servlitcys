@@ -12,7 +12,7 @@ Minor **5.4.0** sobre **5.3.0** (Prometheus):
 2. **Feed bimestral (9 fases)** — ordem: FUNDEB → Censo → **CadÚnico** → **SIDRA** → **Repasses Tesouro** → SAEB → IBGE → SGE → Verificação; migração `municipal_demography_snapshots`.
 3. **Correcção feed** — callback `debug` da CLI não entra no cache (fix `Serialization of 'Closure' is not allowed` em `--all --uf=XX`).
 4. **Mapa performante** — bases >800 municípios: vista inicial na UF prioritária + prospectos; limite de **400** pontos no render; avisos na UI; `preferCanvas`.
-5. **SGE concorrência (admin)** — registo no mapa sem criar cidade Consultoria; bloqueio se IBGE já está no catálogo; segmento «Sem SGE (concorrência)»; actualização local do marcador após save.
+5. **SGE concorrência (admin)** — registo no mapa sem criar cidade Consultoria; bloqueio se IBGE já está no catálogo; segmento «Sem SGE (concorrência)»; atualização local do marcador após save.
 6. **Hub Dados públicos** — cobertura CadÚnico/SIDRA/repasses no painel Horizonte; upload de bundle consolidado (local → prod).
 7. **Início** — cabeçalho do bloco Acesso rápido alinhado ao padrão visual (eyebrow + título «Operação diária»).
 

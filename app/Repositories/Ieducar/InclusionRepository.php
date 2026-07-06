@@ -393,7 +393,7 @@ class InclusionRepository
     }
 
     /**
-     * Textos da aba para o cartão introdutório e notas de cálculo por secção.
+     * Textos da aba para o cartão introdutório e notas de cálculo por seção.
      *
      * @return array{
      *   intro: string,
@@ -435,7 +435,7 @@ class InclusionRepository
             ],
             'nee_indicators' => [
                 'formula' => __('Cartões, medidores e catálogo partilham a mesma classificação por designação em cadastro.deficiencia.'),
-                'note' => __('Gráfico de barras por grupo foi unificado nesta secção para evitar repetição.'),
+                'note' => __('Gráfico de barras por grupo foi unificado nesta seção para evitar repetição.'),
             ],
             'nee_escola' => [
                 'formula' => __('Por escola: COUNT(DISTINCT matrícula) no recorte NEE (cadastro e/ou turma AEE).'),

@@ -19,7 +19,7 @@ Entrega **2.3.7** no ramo `main`: refinamento da consultoria (saldo por aba, FUN
 ### Overlay de carregamento
 
 - Store Alpine `dataLoading` + componente `data-loading-overlay` (bloqueio de cliques, mensagem, barra de progresso).
-- Inferência automática em formulários de consultoria, admin (`geo-sync`, `pedagogical-sync`, `dados-publicos`, fila, FUNDEB), cidades, utilizadores e auth.
+- Inferência automática em formulários de consultoria, admin (`geo-sync`, `pedagogical-sync`, `dados-publicos`, fila, FUNDEB), cidades, usuárioes e auth.
 - Lazy load de abas analytics e preparação de filtros com feedback visual.
 
 ### Inclusão e repasses

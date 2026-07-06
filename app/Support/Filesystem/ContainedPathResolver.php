@@ -3,7 +3,7 @@
 namespace App\Support\Filesystem;
 
 /**
- * Resolve ficheiros legíveis apenas dentro de pastas permitidas (evita path traversal em CLI/admin).
+ * Resolve arquivos legíveis apenas dentro de pastas permitidas (evita path traversal em CLI/admin).
  */
 final class ContainedPathResolver
 {

@@ -13,7 +13,7 @@ Patch **3.3.1** sobre **3.3.0** ([RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.
 - **Carregamento progressivo:** 1.º pedido = *shell* (prioridades, índice, mapa de rotinas); blocos **FUNDEB**, **programas** e **leitura temática** em AJAX (`?health_section=`).
 - **Cache** do snapshot (`ANALYTICS_MUNICIPALITY_HEALTH_CACHE`, padrão 300 s).
 - **Sessão libertada** antes das consultas longas — outras abas e os blocos AJAX deixam de ficar bloqueados.
-- **Correção:** secções já não ficam eternamente em «A carregar…» (overlay não bloqueia; pedidos em sequência com timeout).
+- **Correção:** seções já não ficam eternamente em «A carregar…» (overlay não bloqueia; pedidos em sequência com timeout).
 
 ### Abas Finanças
 
@@ -48,5 +48,5 @@ Ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7 — em especial:
 
 ## Documentação
 
-- [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) — secção Diagnóstico progressivo
+- [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) — seção Diagnóstico progressivo
 - [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.3.1

@@ -19,16 +19,16 @@ return [
     |--------------------------------------------------------------------------
     | Formato MAJOR.VERSÃO.MINOR — ver docs/HISTORICO_VERSOES.md § convenção:
     |   major → 1.º segmento · versão (marco) → 2.º · minor → 3.º
-    | Actualizar junto com docs/HISTORICO_VERSOES.md ao fechar uma release.
+    | Atualizar junto com docs/HISTORICO_VERSOES.md ao fechar uma release.
     | `in_production` + selo na UI = referência oficial do que está em main/produção.
     */
 
     'product' => [
-        'version' => '7.0.1',
-        'release_tag' => '20260705b-Moneta',
-        'commit_short' => '04ecf63',
-        'commit_number' => 506,
-        'revision_date' => '2026-07-05',
+        'version' => '7.0.2',
+        'release_tag' => '20260706-Hermes',
+        'commit_short' => '9ad2421',
+        'commit_number' => 513,
+        'revision_date' => '2026-07-06',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

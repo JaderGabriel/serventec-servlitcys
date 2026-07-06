@@ -382,6 +382,6 @@
                 </div>
             </div>
         </form>
-        <p class="text-[10px] text-slate-500" x-show="!sgeFormReadOnly">{{ __('Gravado em storage/app/horizonte/sge_registry.json — actualiza o mapa de imediato.') }}</p>
+        <p class="text-[10px] text-slate-500" x-show="!sgeFormReadOnly">{{ __('Gravado em storage/app/horizonte/sge_registry.json — atualiza o mapa de imediato.') }}</p>
     </div>
 </div>

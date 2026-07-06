@@ -17,9 +17,9 @@ O painel tem **16 sub-abas** em **4 áreas temáticas** (menu nível 1 → níve
 - o que o menu sugere (ordem de leitura),
 - o que o **Diagnóstico** recomenda como prioridade (Discrepâncias antes de FUNDEB),
 - o que o **Início** e **Acesso rápido** privilegiam (Diagnóstico, Discrepâncias, Tempo Real),
-- e documentação desactualizada (ex.: `DESIGN_SYSTEM.md` ainda descreve 3 áreas e aba inicial «Diagnóstico» que **não coincide** com `resolveInitialTab()` → sempre **`overview`** quando `?tab=` é inválido ou ausente).
+- e documentação desatualizada (ex.: `DESIGN_SYSTEM.md` ainda descreve 3 áreas e aba inicial «Diagnóstico» que **não coincide** com `resolveInitialTab()` → sempre **`overview`** quando `?tab=` é inválido ou ausente).
 
-**Recomendação de decisão (para debate):** manter as 4 áreas, mas **reordenar Finanças**, **fundir ou reclassificar Censo**, e **alinhar aba inicial + documentação** ao perfil do utilizador (secretaria vs. cadastro).
+**Recomendação de decisão (para debate):** manter as 4 áreas, mas **reordenar Finanças**, **fundir ou reclassificar Censo**, e **alinhar aba inicial + documentação** ao perfil do usuário (secretaria vs. cadastro).
 
 ---
 
@@ -53,7 +53,7 @@ Catálogo: `App\Support\Dashboard\AnalyticsTabCatalog::groups()`.
 |------:|-----|--------|-------|-------|
 | 1 | `work_done` | Censo | Ritmo cadastro Educacenso, meta vs ano anterior, export | i-Educar + regras Censo |
 
-**Nota:** área com **uma única sub-aba** — o utilizador escolhe sempre dois cliques (área Censo → Censo) para o mesmo conteúdo.
+**Nota:** área com **uma única sub-aba** — o usuário escolhe sempre dois cliques (área Censo → Censo) para o mesmo conteúdo.
 
 ### 2.4 Área 4 — Finanças e repasses (`consultoria`*, tom teal, passo «4»)
 
@@ -88,7 +88,7 @@ Variáveis que afectam carga/percepção: `ANALYTICS_MUNICIPALITY_HEALTH_MODE` (
 
 ---
 
-## 4. Jornadas de utilizador (como está hoje)
+## 4. Jornadas de usuário (como está hoje)
 
 ### 4.1 Secretaria / gestão FUNDEB
 
@@ -140,9 +140,9 @@ Fluxo desejado (implícito no Início 4.0 e `HomeQuickActionsCatalog`):
 | T2 | **Diagnóstico dentro de Finanças** | Conteúdo **transversal** (cadastro + FUNDEB + programas + pedagógico via Explorar); rótulo de área «Finanças» subvaloriza cadastro e Censo. |
 | T3 | **Ordem em Finanças** | Menu: Diagnóstico → Comparativo → Discrepâncias → FUNDEB. Lógica de **acção**: Discrepâncias (corrigir) → FUNDEB (validar) → Comparativo (tendência) → Diagnóstico (síntese no fim ou no início?). |
 | T4 | **Comparativo antes de Discrepâncias** | Comparativo é analítico/histórico; Discrepâncias é operacional — ordem actual pode confundir prioridade. |
-| T5 | **CadÚnico em Cadastro** | Forte componente financeiro e social; utilizador pode procurar em Finanças. |
+| T5 | **CadÚnico em Cadastro** | Forte componente financeiro e social; usuário pode procurar em Finanças. |
 | T6 | **Aba inicial vs docs** | `DESIGN_SYSTEM.md` §5: Diagnóstico para user/municipal; código: `overview`. |
-| T7 | **Documentação ANALYTICS_NAVEGACAO_UI** | Lista Finanças **sem** `finance_realtime` e `comparativo` na tabela (desactualizada). |
+| T7 | **Documentação ANALYTICS_NAVEGACAO_UI** | Lista Finanças **sem** `finance_realtime` e `comparativo` na tabela (desatualizada). |
 | T8 | **ID `consultoria` vs label Finanças** | Confusão em código/logs (`GROUP_FINANCE = 'consultoria'`). |
 | T9 | **Financiamentos vs FUNDEB** | «Financiamentos» = programas complementares; nome próximo de «FUNDEB» na mesma área. |
 | T10 | **Explorar vs menu** | Diagnóstico prioriza Discrepâncias (ordem 1); menu Finanças coloca Discrepâncias em 3.º lugar. |
@@ -188,7 +188,7 @@ Fluxo desejado (implícito no Início 4.0 e `HomeQuickActionsCatalog`):
 - Finanças fica só com abas «numéricas»: Discrepâncias, FUNDEB, Tempo Real, Comparativo, Financiamentos.
 - `resolveInitialTab` → `municipality_health` quando ano aplicado.
 
-**Prós:** espelha jornada executiva e Início. **Contras:** refactor navegação Alpine, PDF, permissões, formação utilizadores.
+**Prós:** espelha jornada executiva e Início. **Contras:** refactor navegação Alpine, PDF, permissões, formação usuárioes.
 
 ### Cenário D — CadÚnico e Finanças (médio risco)
 
@@ -225,9 +225,9 @@ Fluxo desejado (implícito no Início 4.0 e `HomeQuickActionsCatalog`):
 
 ## 8. Impacto técnico se houver mudança
 
-Ficheiros tocados tipicamente:
+Arquivos tocados tipicamente:
 
-| Alteração | Ficheiros / sistemas |
+| Alteração | Arquivos / sistemas |
 |-----------|---------------------|
 | Ordem/agrupamento abas | `AnalyticsTabCatalog.php`, `analytics-tabs-nav.blade.php`, `analytics.blade.php` |
 | Aba inicial | `AnalyticsTabCatalog::resolveInitialTab`, `AnalyticsTabCatalogTest`, `HomeQuickActionsCatalog` |
@@ -259,9 +259,9 @@ Ficheiros tocados tipicamente:
 - [x] `analytics-tabs-nav` — grelha 5 áreas; nível 2 omitido com 1 sub-aba  
 - [x] `ANALYTICS_NAVEGACAO_UI.md`, `DESIGN_SYSTEM.md` §5, `METRICAS_QUERIES_ANALYTICS.md`  
 - [ ] `DiagnosisExploreCards` ordem vs menu Finanças (já alinhada: Discrepâncias primeiro em Finanças)  
-- [ ] PDF / export: ordem das secções (inalterado — PDF mantém grupo diagnóstico)  
+- [ ] PDF / export: ordem das seções (inalterado — PDF mantém grupo diagnóstico)  
 - [ ] `npm run build` em deploy (sem alteração JS obrigatória nesta mudança)  
-- [x] Comunicação utilizadores: Diagnóstico passou para área **Resumo** (1.º segmento) — ver [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
+- [x] Comunicação usuárioes: Diagnóstico passou para área **Resumo** (1.º segmento) — ver [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 
 ---
 

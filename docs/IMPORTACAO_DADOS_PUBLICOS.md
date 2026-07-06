@@ -91,7 +91,7 @@ Detalhe: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md), [CONSULTAS_EXTERNAS.md]
 7. **SAEB complementar** — microdados ZIP ou CSV (`saeb:sync-microdados`) quando precisar de agregação escola/rede.
 8. Opcional: **sincronização massiva semanal** para repetir com checkpoint.
 
-Depois: gerar relatório PDF na consultoria — secções ATM consomem as tabelas acima; lacunas restantes aparecem em `data_gaps` (ver [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md)).
+Depois: gerar relatório PDF na consultoria — seções ATM consomem as tabelas acima; lacunas restantes aparecem em `data_gaps` (ver [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md)).
 
 ---
 
@@ -138,9 +138,9 @@ Ao acrescentar uma nova fonte, registe o item em `AdminImportHubCatalog::navItem
 
 ---
 
-## 9. Ficheiros de código
+## 9. Arquivos de código
 
-| Ficheiro | Função |
+| Arquivo | Função |
 |----------|--------|
 | `app/Support/Admin/PublicDataImportCatalog.php` | Catálogo fontes + gaps PDF |
 | `app/Support/Admin/AdminImportHubCatalog.php` | Navegação do hub |
@@ -183,7 +183,7 @@ O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** 
 | Onde ver | Rota / artefacto |
 |----------|------------------|
 | Hub | `/admin/horizonte/abastecimento` · hub dedicado Horizonte (`#horizonte-hub`) |
-| Abastecimento manual | Seleccionar fases + «Executar fases seleccionadas» (POST `admin.horizonte-import.feed`) |
+| Abastecimento manual | Seleccionar fases + «Executar fases selecionadas» (POST `admin.horizonte-import.feed`) |
 | Mapa | `/dashboard/horizonte` |
 | Rotina bimestral | `php artisan horizonte:fortnightly-feed` (dia 1 nos meses 1, 3, 5, 7, 9, 11) |
 | Documentação | [HORIZONTE.md](HORIZONTE.md) §9 |
@@ -209,7 +209,7 @@ O **mapa Horizonte** (`/dashboard/horizonte`) usa dados públicos **nacionais** 
 php artisan horizonte:verify-educacenso-coverage --sample=50
 ```
 
-| Ficheiro | Função |
+| Arquivo | Função |
 |----------|--------|
 | `app/Services/Admin/HorizonteImportHubStatusService.php` | Métricas nacionais + fases |
 | `resources/views/admin/public-data/partials/horizonte-hub-panel.blade.php` | Painel no hub |

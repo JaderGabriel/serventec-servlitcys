@@ -18,7 +18,7 @@ final class CadunicoTerritorioCsvImportService
     public function importFile(string $path, int $ano, ?City $city = null): array
     {
         if (! is_readable($path)) {
-            return ['success' => false, 'imported' => 0, 'message' => __('Ficheiro não encontrado.')];
+            return ['success' => false, 'imported' => 0, 'message' => __('Arquivo não encontrado.')];
         }
 
         $delimiter = (string) config('ieducar.cadunico.territorio.delimiter', ';');

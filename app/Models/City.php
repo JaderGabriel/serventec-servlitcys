@@ -71,7 +71,7 @@ class City extends Model
     }
 
     /**
-     * Motor efectivo para iEducar: corrige cadastro em que a porta é 5432 mas o campo ainda diz "mysql".
+     * Motor efetivo para iEducar: corrige cadastro em que a porta é 5432 mas o campo ainda diz "mysql".
      */
     public function effectiveIeducarDriver(): string
     {

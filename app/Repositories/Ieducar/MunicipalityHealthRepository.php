@@ -117,14 +117,14 @@ class MunicipalityHealthRepository
     }
 
     /**
-     * HTML/JSON de uma secção diferida do Diagnóstico.
+     * HTML/JSON de uma seção diferida do Diagnóstico.
      *
      * @return array<string, mixed>
      */
     public function section(string $section, ?City $city, IeducarFilterState $filters): array
     {
         if ($city === null || ! MunicipalityHealthSections::isValid($section)) {
-            return ['error' => __('Secção inválida.')];
+            return ['error' => __('Seção inválida.')];
         }
 
         $empty = ['error' => null];
@@ -134,7 +134,7 @@ class MunicipalityHealthRepository
                 MunicipalityHealthSections::FUNDEB => $this->loadSectionFundeb($city, $filters),
                 MunicipalityHealthSections::PROGRAMAS => $this->loadSectionProgramas($city, $filters),
                 MunicipalityHealthSections::TEMATICO => $this->loadSectionTematico($city, $filters),
-                default => ['error' => __('Secção inválida.')],
+                default => ['error' => __('Seção inválida.')],
             };
         });
     }

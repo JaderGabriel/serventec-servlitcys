@@ -4,7 +4,7 @@
 
 **Implementação:** `resources/css/app.css` (classes `serv-*`), componentes Blade `x-dashboard.*`, `x-status-pill`, `x-consultoria-tab-link`.
 
-> **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) · **Ponderações UX:** secção 14 em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
+> **Índice:** [README.md](README.md) · **Padrão doc:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) · **Ponderações UX:** seção 14 em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
 ---
 
@@ -37,13 +37,13 @@ O produto comunica **consultoria profissional** com foco em **finanças educacio
 
 | Componente | Quando usar |
 |------------|-------------|
-| `x-dashboard.consultoria-municipality-strip` | Painel analytics com cidade seleccionada |
+| `x-dashboard.consultoria-municipality-strip` | Painel analytics com cidade selecionada |
 | `x-dashboard.analytics-tabs-nav` | Navegação em 2 níveis: área temática (5 segmentos) → sub-abas da área activa |
 | `x-dashboard.analytics-tab-impact-header` | Topo das abas até Censo (saldo + status) |
 | `x-consultoria-tab-link` | Links internos «ir para aba X» (Alpine `set-analytics-tab`) |
 | `x-status-pill` | Estados success / warning / danger uniformes |
 | `serv-panel` | Cartões de conteúdo e formulários |
-| `serv-eyebrow` | Rótulo de secção (uppercase, azul) |
+| `serv-eyebrow` | Rótulo de seção (uppercase, azul) |
 
 ---
 
@@ -118,7 +118,7 @@ Duas famílias de layout partilham gradiente, tabs com ícone e corpo `rounded-2
 
 **Acções no hub:** `action-card` com variantes `primary` (importar), `warning` (rebuild), botão submit na cor do domínio; `link-chip` com prop `tone`.
 
-**Menu utilizador (admin):** grupo «Dados públicos» (Visão geral → Repasses → Geo → SAEB → CadÚnico → Filas); «Operação» (Monitor de módulos, Monitorização Pulse); «Utilizadores»; VAAF em «Municípios».
+**Menu usuário (admin):** grupo «Dados públicos» (Visão geral → Repasses → Geo → SAEB → CadÚnico → Filas); «Operação» (Monitor de módulos, Monitorização Pulse); «Usuárioes»; VAAF em «Municípios».
 
 Ver [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §8 e [RELEASE_20260606_ALETHEIA.md](RELEASE_20260606_ALETHEIA.md).
 

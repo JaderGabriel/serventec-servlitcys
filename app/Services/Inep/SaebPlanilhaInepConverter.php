@@ -60,7 +60,7 @@ final class SaebPlanilhaInepConverter
                 $reader->setLoadSheetsOnly($target);
             }
         } catch (\Throwable) {
-            // Sem lista de abas: segue carregando o ficheiro inteiro.
+            // Sem lista de abas: segue carregando o arquivo inteiro.
         }
         $spreadsheet = $reader->load($spreadsheetPath);
         $sheet = $this->resolveMunicipiosSheet($spreadsheet, $warnings);

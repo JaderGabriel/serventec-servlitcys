@@ -12,7 +12,7 @@
 2. **Mesorregiões** — cores alternadas entre vizinhos; botão «Regiões»; «Resumo UF» centra estado ou mesorregião activa.
 3. **Modal municipal** — layout horizontal; timeline FUNDEB em 3 colunas; glossário **Detecta / Indica** por dimensão; meta numa linha.
 4. **Alertas MEC/FNDE** — importação CSV VAAT inabilitados (`horizonte:sync-municipal-alerts`); chip no modal municipal.
-5. **Ajuda in-app** — tour, demonstração animada e documentação actualizados (`HorizonteMapPresenter::map_guide`).
+5. **Ajuda in-app** — tour, demonstração animada e documentação atualizados (`HorizonteMapPresenter::map_guide`).
 
 ---
 
@@ -32,7 +32,7 @@ php artisan cache:clear
 php artisan horizonte:sync-municipal-alerts   # só se ainda não existir snapshot em storage/app/horizonte/
 ```
 
-Após `cache:clear`, o mapa **reidrata** alertas a partir de `storage/app/horizonte/municipal_alerts_snapshot.json` quando o ficheiro existe (gerado num sync anterior). Corra `horizonte:sync-municipal-alerts` na primeira instalação ou para actualizar listas FNDE.
+Após `cache:clear`, o mapa **reidrata** alertas a partir de `storage/app/horizonte/municipal_alerts_snapshot.json` quando o arquivo existe (gerado num sync anterior). Corra `horizonte:sync-municipal-alerts` na primeira instalação ou para atualizar listas FNDE.
 
 ---
 

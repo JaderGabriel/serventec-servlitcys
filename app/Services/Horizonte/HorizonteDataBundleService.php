@@ -37,7 +37,7 @@ final class HorizonteDataBundleService
         if ($enabled === []) {
             return [
                 'success' => false,
-                'message' => __('Nenhuma secção seleccionada para exportar.'),
+                'message' => __('Nenhuma seção selecionada para exportar.'),
                 'path' => '',
                 'manifest' => [],
             ];
@@ -99,7 +99,7 @@ final class HorizonteDataBundleService
 
             return [
                 'success' => false,
-                'message' => __('Não foi possível criar ficheiro ZIP.'),
+                'message' => __('Não foi possível criar arquivo ZIP.'),
                 'path' => '',
                 'manifest' => $manifest,
             ];
@@ -132,7 +132,7 @@ final class HorizonteDataBundleService
         if (! is_readable($zipPath)) {
             return [
                 'success' => false,
-                'message' => __('Ficheiro não encontrado ou ilegível: :path', ['path' => $zipPath]),
+                'message' => __('Arquivo não encontrado ou ilegível: :path', ['path' => $zipPath]),
                 'imported' => [],
                 'manifest' => [],
             ];
@@ -227,7 +227,7 @@ final class HorizonteDataBundleService
 
         return [
             'success' => $total > 0 || $imported !== [],
-            'message' => $prefix.__('Importação Horizonte concluída — :n registo(s)/secção(ões).', ['n' => (string) $total]),
+            'message' => $prefix.__('Importação Horizonte concluída — :n registo(s)/seção(ões).', ['n' => (string) $total]),
             'imported' => $imported,
             'manifest' => $manifest,
         ];

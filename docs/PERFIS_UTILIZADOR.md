@@ -1,4 +1,4 @@
-# Perfis de utilizador — servlitcys
+# Perfis de usuário — servlitcys
 
 **Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
@@ -50,11 +50,11 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Editar o próprio perfil
 
 **Não pode:**
-- Aceder ao **Painel** administrativo (`/dashboard` redirecciona para Análise)
+- Aceder ao **Painel** administrativo (`/dashboard` redireciona para Análise)
 - Importar dados, sincronizar, configurar cidades ou SMTP
 - Criar administradores ou municipais
 - Ver Pulse, sessões globais ou histórico de logins de outros
-- Ver tarefas de sincronização de outros utilizadores ou documentação de deploy/integração admin
+- Ver tarefas de sincronização de outros usuárioes ou documentação de deploy/integração admin
 
 ---
 
@@ -66,7 +66,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Ver **Análise educacional** **somente** nos municípios associados na tabela `city_user`
 - Exportar discrepâncias desses municípios
 - **Exportar base NEE detalhada** nos municípios vinculados (aba Inclusão)
-- Consultar **documentação** e **filas** (`/documentacao`, `/filas`) — mesmo âmbito que o utilizador rede
+- Consultar **documentação** e **filas** (`/documentacao`, `/filas`) — mesmo âmbito que o usuário rede
 - **Gerir usuários** do perfil **Municipal**, desde que os municípios atribuídos sejam **subconjunto** dos seus
 - Editar o próprio perfil
 

@@ -128,9 +128,9 @@ Implementação futura: nova faixa em `faixas_etarias`, KPI separado, documenta�
 
 ---
 
-## 6. Ficheiros de código
+## 6. Arquivos de código
 
-| Ficheiro | Função |
+| Arquivo | Função |
 |----------|--------|
 | `app/Services/Cadunico/CadunicoRedeGapAnalyzer.php` | Lacuna, faixas, cobertura |
 | `app/Services/Cadunico/CadunicoEscolarizacaoDecisionCardBuilder.php` | Card escolarização (na escola / fora / Censo / EJA) |

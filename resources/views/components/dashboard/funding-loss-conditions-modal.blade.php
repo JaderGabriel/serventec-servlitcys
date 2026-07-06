@@ -66,7 +66,7 @@
                         {{ __('Programas complementares (:n)', ['n' => count($programs)]) }}
                     </h3>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mb-3 leading-relaxed">
-                        {{ __('Repasses FNDE além do FUNDEB base. O painel mede cobertura de cadastro no i-Educar; valores de repasse exactos estão na aba Financiamentos e em fontes oficiais.') }}
+                        {{ __('Repasses FNDE além do FUNDEB base. O painel mede cobertura de cadastro no i-Educar; valores de repasse exatos estão na aba Financiamentos e em fontes oficiais.') }}
                     </p>
                     <div class="space-y-3">
                         @foreach ($programs as $prog)

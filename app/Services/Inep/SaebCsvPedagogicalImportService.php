@@ -66,7 +66,7 @@ final class SaebCsvPedagogicalImportService
         if (! is_readable($absolutePath)) {
             return [
                 'ok' => false,
-                'message' => __('Ficheiro inexistente ou ilegível: :path', ['path' => $absolutePath]),
+                'message' => __('Arquivo inexistente ou ilegível: :path', ['path' => $absolutePath]),
                 'fonte_efetiva' => null,
                 'path' => $rel,
             ];
@@ -76,7 +76,7 @@ final class SaebCsvPedagogicalImportService
         if ($raw === false || $raw === '') {
             return [
                 'ok' => false,
-                'message' => __('Ficheiro vazio.'),
+                'message' => __('Arquivo vazio.'),
                 'fonte_efetiva' => null,
                 'path' => $rel,
             ];

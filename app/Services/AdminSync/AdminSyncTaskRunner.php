@@ -499,7 +499,7 @@ final class AdminSyncTaskRunner
         $payload = $task->payload ?? [];
         $path = (string) ($payload['csv_path'] ?? '');
         if ($path === '' || ! is_readable($path)) {
-            throw new InvalidArgumentException(__('Ficheiro CSV não encontrado para importação.'));
+            throw new InvalidArgumentException(__('Arquivo CSV não encontrado para importação.'));
         }
 
         $progress->step(1, 3, __('A ler CSV :file…', ['file' => basename($path)]));
@@ -598,7 +598,7 @@ final class AdminSyncTaskRunner
         $result = $this->inclusionNeeExport->generate($city, $filters, $format);
 
         $progress->step(2, 3, __(':n linhas exportadas.', ['n' => number_format((int) ($result['row_count'] ?? 0))]));
-        $progress->step(3, 3, __('Ficheiro: :file', ['file' => (string) ($result['export_filename'] ?? '')]));
+        $progress->step(3, 3, __('Arquivo: :file', ['file' => (string) ($result['export_filename'] ?? '')]));
 
         return array_merge($result, [
             'output' => (string) ($task->output_log ?? ''),
@@ -841,7 +841,7 @@ final class AdminSyncTaskRunner
         if ($path === null || ! is_readable($path)) {
             return [
                 'success' => false,
-                'message' => __('Ficheiro de microdados INEP não encontrado para indexar matrículas municipais.'),
+                'message' => __('Arquivo de microdados INEP não encontrado para indexar matrículas municipais.'),
             ];
         }
 
@@ -960,7 +960,7 @@ final class AdminSyncTaskRunner
         if ($path === '' || ! is_readable($path)) {
             return [
                 'success' => false,
-                'message' => __('Ficheiro CSV não encontrado no payload da tarefa.'),
+                'message' => __('Arquivo CSV não encontrado no payload da tarefa.'),
             ];
         }
 

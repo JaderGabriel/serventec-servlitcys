@@ -8,7 +8,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 
 ---
 
-## 1. Arquitectura multi-município
+## 1. Arquitetura multi-município
 
 | Tema | Decisão | Implicação |
 |------|---------|------------|
@@ -44,7 +44,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Ano encerrado | Alerta quando muitas matrículas em códigos 1/4/7 após fecho | **Não** é taxa pedagógica — sinal de **atraso de fechamento** |
 | Discrepância | Check «fora de em curso» para matrículas contadas como ativas | Impacto Censo / consistência exportação |
 
-**Config:** `config/ieducar.php` (secção matrícula). **Código:** `MatriculaAtivoFilter`, `MatriculaSituacaoResolver`, `PerformanceRepository` (alerta ano).
+**Config:** `config/ieducar.php` (seção matrícula). **Código:** `MatriculaAtivoFilter`, `MatriculaSituacaoResolver`, `PerformanceRepository` (alerta ano).
 
 ---
 

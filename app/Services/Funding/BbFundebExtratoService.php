@@ -7,7 +7,7 @@ use App\Repositories\MunicipalTransferSnapshotRepository;
 use Illuminate\Support\Str;
 
 /**
- * Créditos FUNDEB/FNDE a partir de extrato BB (download automático de CSV, ficheiro em storage ou Open Finance futuro).
+ * Créditos FUNDEB/FNDE a partir de extrato BB (download automático de CSV, arquivo em storage ou Open Finance futuro).
  *
  * @see https://demonstrativos.apps.bb.com.br/extrato
  * @see docs/BB_EXTRATO_OPEN_FINANCE.md
@@ -48,7 +48,7 @@ final class BbFundebExtratoService
         if (! is_string($body) || strlen($body) < 32) {
             return [
                 'rows' => [],
-                'attempt' => $this->attempt('failed', __('Ficheiro de extrato BB ilegível.')),
+                'attempt' => $this->attempt('failed', __('Arquivo de extrato BB ilegível.')),
             ];
         }
 

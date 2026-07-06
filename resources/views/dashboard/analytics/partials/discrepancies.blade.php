@@ -237,7 +237,7 @@
                 :step="$discStep['disc-detalhe'] ?? null"
                 anchor="disc-detalhe"
                 :title="__('Detalhe, correção e unidades afetadas')"
-                :subtitle="__('Agrupado por módulo — problema, impacto financeiro, onde corrigir e lista por escola na mesma secção.')"
+                :subtitle="__('Agrupado por módulo — problema, impacto financeiro, onde corrigir e lista por escola na mesma seção.')"
             >
                 @if ($chartFinanceiro !== null || $chartResumo !== null)
                     <div class="disc-charts-overview grid grid-cols-1 lg:grid-cols-2 gap-3 mb-5">

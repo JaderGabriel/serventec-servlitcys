@@ -67,14 +67,14 @@ class ImportInepMicrodadosCadastroEscolasGeo extends Command
 
         if ($path === null || ! is_readable($path)) {
             if ((string) $this->option('skip-if-missing') === '1') {
-                $this->warn('Ficheiro de microdados não encontrado; import omitido.');
+                $this->warn('Arquivo de microdados não encontrado; import omitido.');
                 $this->line('Valor configurado: '.$rel);
                 $this->line('Ative --fetch=1 (e IEDUCAR_INEP_MICRODADOS_FETCH) ou coloque o CSV em storage/app/public/inep/.');
 
                 return self::SUCCESS;
             }
 
-            $this->error('Ficheiro não encontrado ou ilegível.');
+            $this->error('Arquivo não encontrado ou ilegível.');
             $this->line('Valor resolvido: '.$rel);
 
             return self::FAILURE;

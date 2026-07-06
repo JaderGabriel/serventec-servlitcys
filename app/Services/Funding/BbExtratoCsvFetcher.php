@@ -9,7 +9,7 @@ use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Garante CSV de extrato BB em storage (descarrega de URL configurada ou usa ficheiro já enviado).
+ * Garante CSV de extrato BB em storage (descarrega de URL configurada ou usa arquivo já enviado).
  */
 final class BbExtratoCsvFetcher
 {
@@ -50,7 +50,7 @@ final class BbExtratoCsvFetcher
                 'ok' => true,
                 'path' => $path,
                 'downloaded' => false,
-                'message' => __('A usar ficheiro manual em storage (:file).', ['file' => basename($path)]),
+                'message' => __('A usar arquivo manual em storage (:file).', ['file' => basename($path)]),
                 'source_url' => null,
             ];
         }

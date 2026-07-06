@@ -2,11 +2,11 @@
 
 **Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
-> **Índice:** [README.md](README.md) · **Arquitectura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
+> **Índice:** [README.md](README.md) · **Arquitetura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
 
 ## 1. Resumo executivo
 
-O **servlitcys** hoje implementa **BI embutido** em Laravel: painéis interactivos em `/dashboard/analytics`, exportações CSV/XLSX/PDF e agregações SQL sobre bases i-Educar municipais. **Não existe integração com Microsoft Power BI** no código, nas rotas nem na infraestrutura documentada.
+O **servlitcys** hoje implementa **BI embutido** em Laravel: painéis interativos em `/dashboard/analytics`, exportações CSV/XLSX/PDF e agregações SQL sobre bases i-Educar municipais. **Não existe integração com Microsoft Power BI** no código, nas rotas nem na infraestrutura documentada.
 
 Este documento descreve:
 
@@ -22,7 +22,7 @@ Este documento descreve:
 
 ## 2. Estado actual — BI no servlitcys
 
-### 2.1 Arquitectura de dados
+### 2.1 Arquitetura de dados
 
 ```mermaid
 flowchart TB
@@ -143,7 +143,7 @@ cidade;ano_letivo;check_id;check_titulo;escola_id;escola;total;tipos_recurso;per
 
 **Recomendação para o servlitcys:** iniciar por **B + D** (data mart + API agregada), evoluir para **E** (Embedded) quando houver relatórios estáveis. **Evitar C** em produção — replica o risco já documentado em [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) §2.1.
 
-### 3.2 Cenário recomendado — arquitectura alvo
+### 3.2 Cenário recomendado — arquitetura alvo
 
 ```mermaid
 flowchart LR
@@ -165,7 +165,7 @@ flowchart LR
         Emb[Power BI Embedded]
     end
 
-    subgraph Users["Utilizadores"]
+    subgraph Users["Usuárioes"]
         Admin[Admin multi-município]
         Municipal[Perfil municipal]
     end
@@ -315,7 +315,7 @@ Configuração do **On-premises Data Gateway**:
 | Parâmetro | Valor típico |
 |-----------|--------------|
 | Máquina | Mesmo VPC que MySQL Laravel (ou réplica read-only) |
-| Conta de serviço | Utilizador MySQL só-leitura (`bi_reader`) |
+| Conta de serviço | Usuário MySQL só-leitura (`bi_reader`) |
 | Porta | 3306 (TLS recomendado) |
 | Firewall | Só IPs Microsoft Power BI + app Laravel |
 
@@ -387,7 +387,7 @@ Na app Laravel, `CityPolicy::viewAnalytics` já restringe municípios via `city_
 
 ```mermaid
 sequenceDiagram
-    participant U as Utilizador
+    participant U as Usuário
     participant L as Laravel
     participant A as Azure AD
     participant P as Power BI API
@@ -474,8 +474,8 @@ Variáveis `.env` futuras sugeridas:
 | Opção | Público | Custo indicativo | Adequação |
 |-------|---------|------------------|-----------|
 | **Power BI Desktop** | Developers | Gratuito | Protótipos, validação |
-| **Power BI Pro** | Publicadores | ~US$ 10/utilizador/mês | Equipa pequena Serventec |
-| **Premium Per User (PPU)** | Embedded leve | ~US$ 20/utilizador/mês | Relatórios paginados, AI |
+| **Power BI Pro** | Publicadores | ~US$ 10/usuário/mês | Equipa pequena Serventec |
+| **Premium Per User (PPU)** | Embedded leve | ~US$ 20/usuário/mês | Relatórios paginados, AI |
 | **Premium capacidade** | Embedded produção | ~US$ 4.995+/mês (P1) | Muitos municípios embutidos na app |
 | **Fabric F2** | Lakehouse | Variável | Longo prazo, >50 municípios |
 
@@ -560,7 +560,7 @@ Inserir em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) quando o produ
 
 1. Relatório **Discrepâncias** no Power BI com totais **idênticos** ao export CSV (tolerância R$ 0,01).
 2. Medida **VAAF × matrículas** igual a `FundebResourceProjection` para 3 municípios teste.
-3. Utilizador **municipal** vê só o seu IBGE (RLS validado).
+3. Usuário **municipal** vê só o seu IBGE (RLS validado).
 4. Refresh nocturno < 30 min para 10 municípios em staging.
 5. Nenhum campo PII no dataset publicado (revisão LGPD).
 

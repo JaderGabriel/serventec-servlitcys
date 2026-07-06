@@ -39,7 +39,7 @@ final class AnalyticsReportExportService
 
         return [
             'export' => $export,
-            'message' => __('Relatório PDF #:id enfileirado (fila :queue · conexão :connection). Acompanhe na fila de processamento ou actualize o Diagnóstico.', [
+            'message' => __('Relatório PDF #:id enfileirado (fila :queue · conexão :connection). Acompanhe na fila de processamento ou atualize o Diagnóstico.', [
                 'id' => (string) $export->id,
                 'queue' => $queue,
                 'connection' => (string) $connection,

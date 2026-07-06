@@ -8,7 +8,7 @@
 
 ## Resumo
 
-1. **FUNDEB estadual no cabeçalho** — ao seleccionar UF, bloco destacado com receita portaria, complementação, avanço YTD, portaria vigente, actualizações e comparativo nacional (`HorizonteUfFundebInsights`).
+1. **FUNDEB estadual no cabeçalho** — ao selecionar UF, bloco destacado com receita portaria, complementação, avanço YTD, portaria vigente, atualizações e comparativo nacional (`HorizonteUfFundebInsights`).
 2. **Mapa GIS** — pan horizontal/vertical com rato; bounds alargados; vista preservada após arrastar; botão **«Resumo UF»** centra o estado e abre modal compacto (mesmo estilo do tooltip municipal).
 3. **Tela inteira e filtros** — fullscreen no mapa, dock de filtros com transição suave, correcções de performance no carregamento regional.
 4. **Repasses Tesouro** — importação multi-ano (referência + ano vigente); comando `horizonte:sync-repasses-tesouro` com `--year`, `--with-ref`, `--uf`, `--continue`, `--dry-run`.

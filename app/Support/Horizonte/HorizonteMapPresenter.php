@@ -79,7 +79,7 @@ final class HorizonteMapPresenter
                 ],
                 [
                     'label' => __('Portal da Transparência'),
-                    'feeds' => __('Convénios MEC/FNDE, empenhos educação/tecnologia e contratos software (proxy SGE concorrente).'),
+                    'feeds' => __('Convênios MEC/FNDE, empenhos educação/tecnologia e contratos software (proxy SGE concorrente).'),
                 ],
                 [
                     'label' => __('IBGE PNAD Contínua'),

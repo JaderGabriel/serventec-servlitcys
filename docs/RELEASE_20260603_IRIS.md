@@ -8,7 +8,7 @@ Marco **3.6.0** sobre **3.5.1** ([RELEASE_20260602_HERMES.md](RELEASE_20260602_H
 
 - **CadÚnico — SAGI/Misocial (MDS):** cliente Solr, importação nacional por ano, histórico multi-ano (`cadunico:import-misocial`), normalização IBGE 6/7 dígitos, mês de referência inteligente (evita projeções vazias tipo `202612`).
 - **Analytics — Finanças «Tempo Real»:** repasses vs expectativa FUNDEB, alertas e guia para gestores (`finance_realtime`).
-- **FUNDEB — metodologia e fontes oficiais:** painel de impacto nas abas, portarias/fontes no admin, verificação de actualizações.
+- **FUNDEB — metodologia e fontes oficiais:** painel de impacto nas abas, portarias/fontes no admin, verificação de atualizações.
 
 ## Destaques
 

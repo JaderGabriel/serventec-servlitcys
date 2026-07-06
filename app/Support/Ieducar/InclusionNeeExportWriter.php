@@ -19,7 +19,7 @@ final class InclusionNeeExportWriter
 
         $out = fopen($absolutePath, 'w');
         if ($out === false) {
-            throw new \RuntimeException(__('Não foi possível criar o ficheiro CSV.'));
+            throw new \RuntimeException(__('Não foi possível criar o arquivo CSV.'));
         }
 
         fprintf($out, chr(0xEF).chr(0xBB).chr(0xBF));

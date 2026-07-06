@@ -116,7 +116,7 @@ class InepMicrodadosCadastroEscolasDownloader
             }
 
             if (! is_readable($tmpZip) || filesize($tmpZip) < 1000) {
-                throw new \RuntimeException('Ficheiro ZIP INEP inválido ou vazio.');
+                throw new \RuntimeException('Arquivo ZIP INEP inválido ou vazio.');
             }
 
             $zip = new ZipArchive;

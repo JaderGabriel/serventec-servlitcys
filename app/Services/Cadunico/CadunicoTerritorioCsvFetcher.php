@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Http;
 final class CadunicoTerritorioCsvFetcher
 {
     /**
-     * Garante CSV territorial em storage (descarrega se URL configurada e ficheiro ausente/antigo).
+     * Garante CSV territorial em storage (descarrega se URL configurada e arquivo ausente/antigo).
      *
      * @return array{ok: bool, path: ?string, downloaded: bool, message: string, url: ?string}
      */

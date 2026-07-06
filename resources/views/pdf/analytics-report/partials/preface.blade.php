@@ -8,6 +8,6 @@
         <p style="font-size:10pt;line-height:1.55;margin:0 0 10px;text-align:justify;">{{ $para }}</p>
     @endforeach
     <p style="font-size:9pt;color:#475569;margin-top:14px;line-height:1.45;">
-        {{ __('Este documento foi gerado pela plataforma SERVLITCYS (Serventec Assessoria). Para análise interactiva, filtros adicionais e exportações, utilize o painel Analytics ou o código QR na secção final.') }}
+        {{ __('Este documento foi gerado pela plataforma SERVLITCYS (Serventec Assessoria). Para análise interativa, filtros adicionais e exportações, utilize o painel Analytics ou o código QR na seção final.') }}
     </p>
 </div>

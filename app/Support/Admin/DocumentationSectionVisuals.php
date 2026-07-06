@@ -3,7 +3,7 @@
 namespace App\Support\Admin;
 
 /**
- * Identidade visual das secções do menu lateral da documentação (ícone, cor, analogia).
+ * Identidade visual das seções do menu lateral da documentação (ícone, cor, analogia).
  */
 final class DocumentationSectionVisuals
 {

@@ -29,7 +29,7 @@ final class AnalyticsReportPdfCopy
                 'O presente material consolida dados do i-Educar municipal, indicadores calculados pela SERVLITCYS, referências FUNDEB/VAAR e, quando disponíveis, microdados do Censo Escolar e SAEB. Secções sem dados exibem explicitamente a limitação técnica, para que a Secretaria saiba o que já pode decidir com evidência e o que exige nova fonte ou sincronização.'
             ),
             __(
-                'No contexto do Sistema Nacional de Educação e do Plano Nacional de Educação, relatórios orientados por evidências fortalecem o regime de colaboração entre entes federativos. Ao final deste documento, um identificador bibliográfico e um código QR permitem verificar a versão emitida e aceder ao painel interactivo para download e análise detalhada.'
+                'No contexto do Sistema Nacional de Educação e do Plano Nacional de Educação, relatórios orientados por evidências fortalecem o regime de colaboração entre entes federativos. Ao final deste documento, um identificador bibliográfico e um código QR permitem verificar a versão emitida e aceder ao painel interativo para download e análise detalhada.'
             ),
         ];
     }

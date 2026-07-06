@@ -1,4 +1,4 @@
-> **Nota (19/06/2026):** a tag `20260603b-Horizonte` usava prefixo de data incorrecto. **Produção actual:** [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) · tag **`20260619a-Heimdall`** · versão **5.0.1**.
+> **Nota (19/06/2026):** a tag `20260603b-Horizonte` usava prefixo de data incorreto. **Produção actual:** [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md) · tag **`20260619a-Heimdall`** · versão **5.0.1**.
 
 # Release `20260603b-Horizonte` — ServLitcys 5.0.0
 

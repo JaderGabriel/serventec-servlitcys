@@ -34,8 +34,8 @@ Cronologia de **junho/2026**: de **3.5.0** (CadÚnico e comparativo) a **6.5.0**
 | 19 | **4.2.0** | `20260610-Clio` | [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md) | FUNDEB VAAT/VAAR portaria; gráfico RX complementações |
 | 20 | **4.3.0** | `20260611-Harmonia` | [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md) | Discrepâncias×Unidades geo; RX portaria; gráfico home |
 | 21 | **4.4.5** | `20260609a-Themis` | [RELEASE_20260609a_THEMIS.md](RELEASE_20260609a_THEMIS.md) | **Produção:** índice qualidade no dock, FUNDEB gerencial, fix município/ano, pt-BR |
-| 22 | **5.0.0** | `20260603b-Horizonte`* | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) | Horizonte — mapa oportunidade (*tag data incorrecta) |
-| 25 | **5.2.0** | `20260603c-Argus` | [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md) | Hub Horizonte, monitor sondas, acesso admin/utilizador |
+| 22 | **5.0.0** | `20260603b-Horizonte`* | [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md) | Horizonte — mapa oportunidade (*tag data incorreta) |
+| 25 | **5.2.0** | `20260603c-Argus` | [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md) | Hub Horizonte, monitor sondas, acesso admin/usuário |
 | 28 | **5.5.0** | `20260619c-Helios` | [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md) | Horizonte GIS gerencial, monitor 10 min, catálogo Artisan admin |
 | 27 | **5.4.0** | `20260603e-Hyperion` | [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) | Horizonte v2 — CadÚnico/SIDRA/repasses, mapa performante, SGE concorrência |
 | 26 | **5.3.0** | `20260603d-Prometheus` | [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md) | Feed bimestral/UF, SGE no mapa, fix IBGE |

@@ -1047,7 +1047,7 @@ document.addEventListener("alpine:init", () => {
             legendModalOpen: false,
             /** Rosca/pizza: legenda visual = plugin radialCallouts (não o legend do Chart.js). */
             _legendUsesRadialCallouts: false,
-            /** Classes do contentor / canvas (actualizadas por syncLayoutClasses; Alpine 3.4 não rastreia bem métodos em :class). */
+            /** Classes do contentor / canvas (atualizadas por syncLayoutClasses; Alpine 3.4 não rastreia bem métodos em :class). */
             panelBodyClass: "",
             canvasExtraClass: "",
             /** Gráficos cartesianos: controlos de zoom + pinça/arrastar. */
@@ -1055,7 +1055,7 @@ document.addEventListener("alpine:init", () => {
             /** Mostrar filtro por categoria (1 série) ou por série (>1 série). */
             filterUi: false,
             filterModalOpen: false,
-            /** Incrementado ao alternar visibilidade (modal/legenda) para o Alpine actualizar os checkboxes. */
+            /** Incrementado ao alternar visibilidade (modal/legenda) para o Alpine atualizar os checkboxes. */
             _filterNonce: 0,
             /** Cópia profunda do payload para filtros (recortar dados em vez de meta.hidden). */
             _sourcePayload: null,

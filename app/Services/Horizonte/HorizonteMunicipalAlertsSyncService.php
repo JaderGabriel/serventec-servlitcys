@@ -362,7 +362,7 @@ final class HorizonteMunicipalAlertsSyncService
 
             $parsed = FndeVaatInabilitadosCsvParser::parse($body, $exerciseYear, $detailUrl);
             if ($parsed === []) {
-                $warnings[] = __('FNDE VAAT inabilitados (CSV): nenhum município inabilitado encontrado no ficheiro.');
+                $warnings[] = __('FNDE VAAT inabilitados (CSV): nenhum município inabilitado encontrado no arquivo.');
 
                 return ['entries' => [], 'source' => ''];
             }

@@ -29,7 +29,7 @@ flowchart LR
     Analytics --> Pub
 ```
 
-Arquitectura detalhada: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+Arquitetura detalhada: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ## Público-alvo
 
@@ -70,7 +70,7 @@ Não existe auto-registro: reduz superfície de ataque e permite controlo explí
 
 ## Próximos passos (produto)
 
-Itens priorizados em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **A. Produto e infraestrutura**): CI/CD, monitorização de erros, backup.
+Itens priorizados em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **A. Produto e infraestrutura**): CI/CD, monitorização de erros, backup.
 
 ---
 

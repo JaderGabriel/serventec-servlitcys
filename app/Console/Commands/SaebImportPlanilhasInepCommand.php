@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
     {--years= : Anos separados por vírgula (ex.: 2021,2023); vazio = todos em config/ieducar.php}
     {--url= : URL ou caminho local de uma planilha (XLSX/XLSB ou RAR INEP)}
     {--year= : Ano de referência quando usar --url}
-    {--no-download : Usar ficheiros já em storage (não voltar a descarregar)}
+    {--no-download : Usar arquivos já em storage (não voltar a descarregar)}
     {--no-merge : Substituir pontos SAEB em vez de fundir}
     {--no-resolve-inep : Não mapear INEP→cod_escola}
     {--keep-cache : Manter pastas extraídas de RAR em storage}')]

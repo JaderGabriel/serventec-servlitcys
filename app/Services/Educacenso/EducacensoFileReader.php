@@ -30,7 +30,7 @@ final class EducacensoFileReader
         $storeRecordsMax = max(0, (int) config('educacenso.store_records_max', 50_000));
 
         if (! is_readable($absolutePath)) {
-            return $this->fail(__('Ficheiro não legível.'), $displayName, 0);
+            return $this->fail(__('Arquivo não legível.'), $displayName, 0);
         }
 
         $size = filesize($absolutePath);

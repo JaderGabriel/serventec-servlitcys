@@ -69,7 +69,7 @@ class AnalyticsReportPublicationController extends Controller
 
         $disk = Storage::disk($export->file_disk);
         if (! $disk->exists((string) $export->file_path)) {
-            abort(404, __('Ficheiro PDF não encontrado.'));
+            abort(404, __('Arquivo PDF não encontrado.'));
         }
 
         $cityName = $export->city?->name ?? 'municipio';

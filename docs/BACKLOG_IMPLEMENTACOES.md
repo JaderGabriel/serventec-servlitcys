@@ -1,8 +1,8 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 7.0.1 · **Última revisão:** 2026-07-06
+**Versão do produto:** 7.0.2 · **Última revisão:** 2026-07-06
 
-> **Índice:** [README.md](README.md) · **Estado actual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
+> **Índice:** [README.md](README.md) · **Estado atual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
 Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento** | **Concluído** (mover para [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção).
 
@@ -78,7 +78,7 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 ---
 
-## E. Arquitectura e refactor técnico
+## E. Arquitetura e refactor técnico
 
 | ID | Prioridade | Item | Estado | Referência |
 |----|------------|------|--------|------------|
@@ -215,7 +215,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | NOVO-XX | P? | Descrição curta | Pendente | Origem (issue, reunião, doc) |
 ```
 
-1. Inserir na secção correcta (A–J).
+1. Inserir na seção correta (A–J).
 2. Se for decisão de desenho, documentar em [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 3. Ao concluir, mover linha para **G** e atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
 4. Sugestão de cadastro/integração → [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §F.

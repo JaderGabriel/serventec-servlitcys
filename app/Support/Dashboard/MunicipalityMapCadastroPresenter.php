@@ -194,7 +194,7 @@ final class MunicipalityMapCadastroPresenter
         $definitions = [
             'cadastro_pending' => [
                 'label' => __('Carregando'),
-                'description' => __('Aguardando leitura RX do i-Educar — cor temporária até actualizar o mapa.'),
+                'description' => __('Aguardando leitura RX do i-Educar — cor temporária até atualizar o mapa.'),
             ],
             'cadastro_green' => [
                 'label' => __('Meta OK'),

@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 class HorizonteImportDataBundleCommand extends Command
 {
     protected $signature = 'horizonte:import-data-bundle
-                            {path : Caminho do ficheiro .zip exportado}
+                            {path : Caminho do arquivo .zip exportado}
                             {--dry-run : Contar registos sem gravar}
                             {--only= : Secções separadas por vírgula (fundeb,censo,saeb,cadunico,demography,transfers,ibge_cache,sge_registry)}';
 

@@ -6,7 +6,7 @@
     <p class="section-purpose">{{ __('Registo explícito de indicadores do modelo ATM/MEC que a plataforma ainda não consegue calcular automaticamente para este município e recorte.') }}</p>
     <table class="data">
         <tr>
-            <th>{{ __('Secção') }}</th>
+            <th>{{ __('Seção') }}</th>
             <th>{{ __('Código') }}</th>
             <th>{{ __('Detalhe técnico') }}</th>
         </tr>

@@ -350,7 +350,7 @@ Rotinas mapeadas em `DiscrepanciesCheckRunner::queryMap()` + `nee_subnotificacao
 }
 ```
 
-**Output (exemplo `sem_raca`)** — ver secção 3.4.
+**Output (exemplo `sem_raca`)** — ver seção 3.4.
 
 **Input (snapshot completo — substitui `DiscrepanciesRepository::snapshot`)**
 
@@ -541,7 +541,7 @@ Implementação sugerida no backlog: [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEME
 
 ---
 
-## 7. Mapa código → ficheiros
+## 7. Mapa código → arquivos
 
 | Domínio | Repositórios / queries |
 |---------|-------------------------|
@@ -575,8 +575,8 @@ Configuração central: `config/ieducar.php` (tabelas, colunas, SQL custom `iedu
 
 ## 9. Manutenção deste catálogo
 
-- Novo **check** em `DiscrepanciesCheckRunner` → adicionar linha na secção 4.5 com JSON exemplo.
-- Novo **gráfico** com SQL directo → secção do domínio + prioridade.
-- API i-Educar publicada → marcar endpoint como **Entregue** e actualizar fase da secção 6.
+- Novo **check** em `DiscrepanciesCheckRunner` → adicionar linha na seção 4.5 com JSON exemplo.
+- Novo **gráfico** com SQL directo → seção do domínio + prioridade.
+- API i-Educar publicada → marcar endpoint como **Entregue** e atualizar fase da seção 6.
 
 *Relacionado: [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) §8 (config por município).*

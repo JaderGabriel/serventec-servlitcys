@@ -23,7 +23,7 @@ class IndexInepCensoGeoAgg extends Command
         $path = InepMicrodadosCadastroEscolasPath::resolve($rel);
 
         if ($path === null || ! is_readable($path)) {
-            $this->error('Ficheiro de microdados não encontrado ou ilegível.');
+            $this->error('Arquivo de microdados não encontrado ou ilegível.');
             $this->line('Valor resolvido: '.$rel);
 
             return self::FAILURE;

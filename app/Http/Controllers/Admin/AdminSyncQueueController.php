@@ -185,7 +185,7 @@ class AdminSyncQueueController extends Controller
 
         $path = (string) ($task->result['export_path'] ?? '');
         if ($path === '' || ! is_readable($path)) {
-            abort(Response::HTTP_NOT_FOUND, __('Ficheiro de exportação não disponível.'));
+            abort(Response::HTTP_NOT_FOUND, __('Arquivo de exportação não disponível.'));
         }
 
         $filename = (string) ($task->result['export_filename'] ?? basename($path));

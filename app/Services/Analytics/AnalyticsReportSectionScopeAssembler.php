@@ -11,7 +11,7 @@ use App\Support\Analytics\AnalyticsReportQrCodeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 
 /**
- * Monta secções do relatório ATM com dados disponíveis e registo técnico de lacunas.
+ * Monta seções do relatório ATM com dados disponíveis e registo técnico de lacunas.
  */
 final class AnalyticsReportSectionScopeAssembler
 {
@@ -123,7 +123,7 @@ final class AnalyticsReportSectionScopeAssembler
 
         if ($kpis === [] && $tables === [] && $id !== 'publicacao_digital') {
             $available = false;
-            $this->gap($gaps, $id, 'no_data', __('Nenhum indicador calculável no recorte actual (verifique ano letivo, ligação i-Educar e sincronizações).'));
+            $this->gap($gaps, $id, 'no_data', __('Nenhum indicador calculável no recorte atual (verifique ano letivo, ligação i-Educar e sincronizações).'));
         }
 
         return [
@@ -484,7 +484,7 @@ final class AnalyticsReportSectionScopeAssembler
             $this->gap($gaps, 'inclusao_equidade', 'nee_data_missing', __('Bloco NEE/recurso em prova indisponível no recorte.'));
         }
 
-        $this->gap($gaps, 'inclusao_equidade', 'pneei_pnee', __('PNEEI e políticas MEC específicas sem API — VAAR coberto na secção FUNDEB quando houver complementação.'));
+        $this->gap($gaps, 'inclusao_equidade', 'pneei_pnee', __('PNEEI e políticas MEC específicas sem API — VAAR coberto na seção FUNDEB quando houver complementação.'));
     }
 
     /**

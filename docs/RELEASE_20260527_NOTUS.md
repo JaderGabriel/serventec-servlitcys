@@ -11,7 +11,7 @@ Marco **3.2.0** sobre **3.1.0** ([RELEASE_20260526_BOREAS.md](RELEASE_20260526_B
 ### Inclusão — exportação NEE (admin)
 
 - Query de exportação alinhada a `fetchNeeMatriculasComTurmaCurso` (mesmo total do painel).
-- Joins de escola e nome do aluno opcionais (LEFT JOIN) — não abortam nem esvaziam o ficheiro.
+- Joins de escola e nome do aluno opcionais (LEFT JOIN) — não abortam nem esvaziam o arquivo.
 
 ### Inclusão — indicadores e FUNDEB
 
@@ -40,5 +40,5 @@ Sem novas migrações obrigatórias nesta release.
 ## Documentação
 
 - [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.2.0
-- [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — secção 44
+- [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — seção 44
 - [STATUS_PROJETO.md](STATUS_PROJETO.md)

@@ -275,7 +275,7 @@ final class ModuleMonitorProbeService
         if ($checkedAt === null || $checkedAt->lt(now()->subHours($staleHours))) {
             return $this->probeResult(
                 'degraded',
-                __('Verificação de fontes desactualizada — executar public-data:check-official.'),
+                __('Verificação de fontes desatualizada — executar public-data:check-official.'),
                 tags: $checkedAt ? [__('há :when', ['when' => $checkedAt->diffForHumans()])] : [],
             );
         }

@@ -18,7 +18,7 @@
     <div class="sync-queue-panel__body">
         @if (count($incidents) === 0)
             <p class="py-10 text-sm text-center text-slate-500 dark:text-slate-400">
-                {{ __('Nenhum incidente no período seleccionado.') }}
+                {{ __('Nenhum incidente no período selecionado.') }}
             </p>
         @else
             <div class="space-y-2">

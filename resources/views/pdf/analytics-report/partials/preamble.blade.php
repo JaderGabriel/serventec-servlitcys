@@ -6,7 +6,7 @@
     <p class="action-lead">{{ AnalyticsReportPdfCopy::preamble() }}</p>
     <table class="data">
         <tr>
-            <th>{{ __('Secção') }}</th>
+            <th>{{ __('Seção') }}</th>
             <th>{{ __('Conteúdo e uso na gestão') }}</th>
         </tr>
         <tr>

@@ -15,7 +15,7 @@ Patch **4.4.4** sobre **4.4.3** ([RELEASE_20260609b_LACHESIS.md](RELEASE_2026060
 
 - `DiagnosisExploreCards` reescrito: 13 módulos alinhados ao catálogo de abas (sem Discrepâncias).
 - Indicadores de saúde por módulo via `AnalyticsTabImpactBuilder` e `MunicipalityHealthRepository`.
-- Grelha e ícones actualizados em `municipality-health-explore`.
+- Grelha e ícones atualizados em `municipality-health-explore`.
 
 ### Início — mapa «Municípios implementados»
 

@@ -3,7 +3,7 @@
 **Data de referência:** maio de 2026  
 **Âmbito:** planeamento de evolução do painel servlitcys (i-Educar municipal) para capturar inconsistências pedagógicas e de Censo, com foco em educação especial e falhas de dados semelhantes às já identificadas em produção.
 
-**Documentos relacionados:** [README.md](README.md) (índice) · [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) (roteiro ampliado cadastro + integrações) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **D** e **F**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8 e §15.
+**Documentos relacionados:** [README.md](README.md) (índice) · [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) (roteiro ampliado cadastro + integrações) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **D** e **F**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8 e §15.
 
 > **Nota:** grande parte do roadmap abaixo está **concluída** (MVP recurso×NEE, geo, VAAF). Manter o arquivo como histórico e especificação; novos itens vão para o backlog central.
 
@@ -122,7 +122,7 @@ Responsabilidades:
 
 ### 4.5 Fase 2 — Aba Inclusão (UI + filtros)
 
-| Secção | Conteúdo |
+| Seção | Conteúdo |
 |--------|----------|
 | **NEE — cadastro** | Mantém gráficos actuais (sem mudança de denominador) |
 | **Recursos de prova (Censo)** | Novo: gráfico por tipo de recurso; tabela por escola; nota metodológica |
@@ -158,10 +158,10 @@ Responsabilidades:
 
 | Aba | Ajuste |
 |-----|--------|
-| **Inclusão** | Secção recursos de prova; filtro «só inconsistências»; metodologia atualizada |
+| **Inclusão** | Seção recursos de prova; filtro «só inconsistências»; metodologia atualizada |
 | **Discrepâncias** | Novos checks; agrupamento no mapa de rotinas sob dimensão «Educação especial / Censo» |
 | **Diagnóstico Geral** | KPI opcional «Matrículas com recurso sem NEE»; bloco temático expandido |
-| **Unidades escolares** | (Item relacionado) Alinhar `escola_sem_geo` com posição utilizável no mapa — ver secção 6 |
+| **Unidades escolares** | (Item relacionado) Alinhar `escola_sem_geo` com posição utilizável no mapa — ver seção 6 |
 | **FUNDEB** | Manter separação conceptual: recursos de **financiamento** ≠ recursos de **prova** (evitar ambiguidade de tradução na UI) |
 
 **Filtros globais do painel:** não é necessário novo filtro de ano (usa o existente). Opcional: filtro «Qualidade cadastro Censo» com multi-select de tipos de pendência (inclui recurso × NEE).
@@ -224,7 +224,7 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 
 ---
 
-## 7. Arquitectura técnica (resumo)
+## 7. Arquitetura técnica (resumo)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -280,7 +280,7 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 
 ## 10. Critérios de aceitação (MVP recurso × NEE)
 
-1. Com ano letivo e cidade seleccionados, a aba **Inclusão** mostra contagem de matrículas com **pelo menos um recurso de prova** registado.
+1. Com ano letivo e cidade selecionados, a aba **Inclusão** mostra contagem de matrículas com **pelo menos um recurso de prova** registado.
 2. A rotina **«Recurso de prova sem NEE»** lista escolas com total > 0 quando existir tabela detectada.
 3. Com tabela indisponível, rotina aparece **cinza (indisponível)** com hint, não verde enganador.
 4. **Diagnóstico Geral** menciona o tema no bloco inclusão quando houver pendência.
@@ -293,12 +293,12 @@ Ver documentação técnica: [`docs/FUNDEB_VAAF_E_ONDA1.md`](FUNDEB_VAAF_E_ONDA1
 1. **Validar** em uma cidade piloto os nomes das tabelas de recursos de prova (query `information_schema` ou comando probe).
 2. **Aprovar** lista de checks MVP (`recurso_prova_sem_nee` + opcional `nee_sem_recurso_prova`).
 3. **Implementar** fase 0–1 em branch dedicada; medir tempo de query em staging (`docs/METRICAS_QUERIES_ANALYTICS.md`).
-4. ~~**Paralelizar** item A2 (geo)~~ — **concluído** (ver secção 6.1).
+4. ~~**Paralelizar** item A2 (geo)~~ — **concluído** (ver seção 6.1).
 
 ---
 
 ## 12. Conclusão
 
-Ampliar a educação especial no painel não é apenas «mais gráficos de deficiência», mas **cruzar fontes de cadastro** que o i-Educar já separa (NEE vs recursos de prova INEP) e **alinhar alertas** com o que o usuário vê no mapa e nas abas de consultoria. O MVP proposto fecha a lacuna mais pedida (**apoio na prova sem deficiência**); o roadmap da secção 6 trata **falhas semelhantes** de forma sistemática, evitando novas divergências entre indicadores visuais e rotinas de discrepância.
+Ampliar a educação especial no painel não é apenas «mais gráficos de deficiência», mas **cruzar fontes de cadastro** que o i-Educar já separa (NEE vs recursos de prova INEP) e **alinhar alertas** com o que o usuário vê no mapa e nas abas de consultoria. O MVP proposto fecha a lacuna mais pedida (**apoio na prova sem deficiência**); o roadmap da seção 6 trata **falhas semelhantes** de forma sistemática, evitando novas divergências entre indicadores visuais e rotinas de discrepância.
 
 Este documento pode ser usado para **priorização de sprint**, **alinhamento com secretarias** e **estimativa de orçamento** sem substituir especificação técnica detalhada por issue/ticket.

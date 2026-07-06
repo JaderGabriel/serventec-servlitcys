@@ -1,6 +1,6 @@
 # Release `20260525-Apollo` — ServLitcys 3.0.0
 
-**Data:** 2026-05-25 · **Ramo:** `main` · **Figura:** *Apollo* (clareza, transparência e serviço público — adequado ao marco de **conformidade LGPD**, comunicação com o utilizador e consolidação da experiência de consultoria).
+**Data:** 2026-05-25 · **Ramo:** `main` · **Figura:** *Apollo* (clareza, transparência e serviço público — adequado ao marco de **conformidade LGPD**, comunicação com o usuário e consolidação da experiência de consultoria).
 
 ## Resumo
 
@@ -53,7 +53,7 @@ php artisan config:clear
 npm run build
 ```
 
-Utilizadores existentes sem versão de PP/cookies aceite são redirecionados para `/consentimento` na primeira visita autenticada (quando `LEGAL_REQUIRE_AUTHENTICATED_CONSENT=true`).
+Usuárioes existentes sem versão de PP/cookies aceite são redirecionados para `/consentimento` na primeira visita autenticada (quando `LEGAL_REQUIRE_AUTHENTICATED_CONSENT=true`).
 
 ## Variáveis novas / relevantes
 

@@ -55,7 +55,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-semibold text-slate-900 dark:text-slate-100">{{ __('Ciclo completo de busca de dados') }}</p>
                         <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                            {{ __('Primeira vez: execute os passos 1 → 2 → 3, ou use o passo 4 (pipeline) para correr a sequência. O passo 5 testa a cadeia INEP sem gravar. A saída de cada comando aparece abaixo. Passe o rato sobre o título de cada cartão para mais detalhe.') }}
+                            {{ __('Primeira vez: execute os passos 1 → 2 → 3, ou use o passo 4 (pipeline) para executar a sequência. O passo 5 testa a cadeia INEP sem gravar. A saída de cada comando aparece abaixo. Passe o mouse sobre o título de cada cartão para mais detalhe.') }}
                         </p>
                     </div>
                 </div>

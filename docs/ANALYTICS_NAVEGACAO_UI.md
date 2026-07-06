@@ -68,7 +68,7 @@ Ordem na UI (alinhada ao roteiro sticky no topo):
 1. **Decisão** — `#diag-decisao` (KPIs, índice geral `#diag-qualidade-sistema` e eixos na mesma linha)
 2. **Prioridades** — `#diag-prioridades` (se houver rotinas)
 3. **Explorar** — `#diag-explorar`
-4. **Consolidado** — `#diag-consolidado` (fontes públicas + mapa de rotinas; subsecções sem número próprio)
+4. **Consolidado** — `#diag-consolidado` (fontes públicas + mapa de rotinas; subseções sem número próprio)
 
 Secções AJAX legadas (VAAF/programas/temático embutidos) e skeletons «A carregar…» foram removidos da view — detalhe nas abas via Explorar.
 
@@ -126,7 +126,7 @@ Classe central: `App\Support\Ieducar\MatriculaVolumeCounts`.
 
 Transferências não encerradas geram **mais matrículas que alunos** — o hint aponta para Discrepâncias → `matricula_duplicada`. A previsão VAAF×volume usa **alunos** para não duplicar repasse indicativo.
 
-## Ficheiros principais
+## Arquivos principais
 
 - `app/Support/Dashboard/AnalyticsTabCatalog.php`
 - `app/Support/Dashboard/DiagnosisExploreCards.php`

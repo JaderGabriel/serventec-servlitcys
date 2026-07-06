@@ -121,7 +121,7 @@ Diagnóstico: `php artisan performance:check`
 | `SCHEDULE_LOG_TO_FILE` | | `true` — anexa saída de `pulse:check` / `pulse:work` a `storage/logs/scheduler.log` |
 | `SCHEDULE_LOG_PATH` | | Caminho do log (opcional) |
 
-**Cron obrigatório em produção** (recomendado: **cada minuto**, mesmo utilizador do PHP):
+**Cron obrigatório em produção** (recomendado: **cada minuto**, mesmo usuário do PHP):
 
 ```cron
 * * * * * cd /caminho/servlitcys && /usr/bin/php artisan schedule:run >> /caminho/servlitcys/storage/logs/scheduler.log 2>&1
@@ -341,7 +341,7 @@ Rota: `/admin/monitor-modulos` · Documentação: [COMANDOS_ARTISAN.md](COMANDOS
 | `MODULE_MONITOR_COLLECT_INTERVAL_MINUTES` | `10` | Intervalo da recolha (`module-monitor:collect`) via schedule:run |
 | `MODULE_MONITOR_COLLECT_OVERLAP_MINUTES` | `8` | Mutex withoutOverlapping (minutos) |
 | `MODULE_MONITOR_SNAPSHOT_CACHE_TTL` | `172800` | TTL do cache de sondas (segundos) |
-| `MODULE_MONITOR_SNAPSHOT_STALE_HOURS` | `36` | Idade máxima considerada «actualizada» |
+| `MODULE_MONITOR_SNAPSHOT_STALE_HOURS` | `36` | Idade máxima considerada «atualizada» |
 | `MODULE_MONITOR_SYNC_STALE_DAYS` | `14` | Limiar «sync antigo» para módulos de fila |
 | `MODULE_MONITOR_SYNC_FAILURE_WINDOW_DAYS` | `7` | Janela de falha recente em sync |
 | `MODULE_MONITOR_PUBLIC_DATA_STALE_HOURS` | `48` | Idade máxima do cache de fontes oficiais |
@@ -432,7 +432,7 @@ Requer `unrar` ou `p7zip` no servidor para o RAR de 2023. URLs em `saeb.planilha
 | `IEDUCAR_CADUNICO_API_URL_TEMPLATE` | — | Lacuna por município: `{ibge}`, `{ano}` |
 | `IEDUCAR_CADUNICO_MUNICIPAL_CSV_URL` | — | CSV municipal alternativo |
 | `IEDUCAR_CADUNICO_TERRITORIO_CSV_URL` | — | CSV bairro/setor/CRAS: `{ibge}`, `{ano}`, `{city_id}` — `cadunico:pull-territorio` |
-| `IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS` | `7` | Reutilizar ficheiro em `storage/app/cadunico/territorio/` sem novo HTTP |
+| `IEDUCAR_CADUNICO_TERRITORIO_CSV_CACHE_DAYS` | `7` | Reutilizar arquivo em `storage/app/cadunico/territorio/` sem novo HTTP |
 | `IEDUCAR_CADUNICO_TERRITORIO_CSV_TIMEOUT` | `120` | Timeout do download territorial (segundos) |
 | `IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_ENABLED` | `true` | Cron `cadunico:sync-territorio --all --queue` |
 | `IEDUCAR_CADUNICO_TERRITORIO_SCHEDULE_DAY` | `1` | Dia da semana (0=dom … 1=seg) |
@@ -455,7 +455,7 @@ Detalhe: [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md), [CADUNICO_CECAD.md](CAD
 |----------|---------|-----------|
 | `EDUCACENSO_DRY_RUN_ENABLED` | `true` | Activa o módulo de análise |
 | `EDUCACENSO_DRY_RUN_MAX_MB` | `64` | Tamanho máximo do upload |
-| `EDUCACENSO_DRY_RUN_RETENTION_DAYS` | `7` | Retenção de ficheiros temporários |
+| `EDUCACENSO_DRY_RUN_RETENTION_DAYS` | `7` | Retenção de arquivos temporários |
 | `EDUCACENSO_ANALYSIS_CACHE_HOURS` | `24` | TTL do resultado em cache |
 | `EDUCACENSO_LAYOUT_YEAR_DEFAULT` | `2026` | Exercício de referência do layout |
 | `IEDUCAR_DISC_CENSO_MAT_TOLERANCE_PCT` | `5` | Tolerância % matrículas arquivo vs i-Educar |

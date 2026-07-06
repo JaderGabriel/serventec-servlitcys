@@ -3,7 +3,7 @@
 namespace App\Support\Ieducar;
 
 /**
- * Secção única de indicadores NEE: KPIs, medidores (%), legenda do catálogo e gráfico de detalhe.
+ * Seção única de indicadores NEE: KPIs, medidores (%), legenda do catálogo e gráfico de detalhe.
  */
 final class InclusionNeeIndicatorsPanel
 {

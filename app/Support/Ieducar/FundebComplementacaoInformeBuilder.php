@@ -197,7 +197,7 @@ final class FundebComplementacaoInformeBuilder
             'paragrafos' => $paragrafos,
             'indicadores' => $indicadores,
             'acoes' => $oficial
-                ? [__('Manter cadastro de referências actualizado quando o FNDE publicar novo ano.')]
+                ? [__('Manter cadastro de referências atualizado quando o FNDE publicar novo ano.')]
                 : [
                     __('Importar CSV FNDE: php artisan fundeb:import-references …'),
                     __('Ou definir fundeb.vaaf_por_ibge no config/ieducar.php para o código IBGE da cidade.'),
@@ -217,7 +217,7 @@ final class FundebComplementacaoInformeBuilder
 
         $paragrafos = [
             __(
-                'O VAAT (Valor Aluno Ano Total) é o patamar mínimo de receita por aluno para efeito da complementação da União (esforço fiscal e matrículas no Censo). A habilitação e o valor exacto dependem de regras do FNDE, Siope/Siconfi e publicações anuais — não são calculados automaticamente aqui.'
+                'O VAAT (Valor Aluno Ano Total) é o patamar mínimo de receita por aluno para efeito da complementação da União (esforço fiscal e matrículas no Censo). A habilitação e o valor exato dependem de regras do FNDE, Siope/Siconfi e publicações anuais — não são calculados automaticamente aqui.'
             ),
         ];
 

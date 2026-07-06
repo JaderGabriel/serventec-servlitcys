@@ -274,7 +274,7 @@ final class HorizonteMapService
             is_array($payload['meta'] ?? null) ? $payload['meta'] : [],
             [
                 'cache_stale' => true,
-                'stale_notice' => __('A mostrar dados em cache enquanto o servidor actualiza o mapa.'),
+                'stale_notice' => __('A mostrar dados em cache enquanto o servidor atualiza o mapa.'),
             ],
         );
 

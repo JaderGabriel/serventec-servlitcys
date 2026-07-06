@@ -106,7 +106,7 @@ final class FinanceComparativoInformeBuilder
             'status_label' => $statusLabel,
             'paragrafos' => [
                 __(
-                    'O comparativo mede o volume cadastral entre dois exercícios letivos na mesma rede filtrada (escola, curso e turno quando seleccionados).'
+                    'O comparativo mede o volume cadastral entre dois exercícios letivos na mesma rede filtrada (escola, curso e turno quando selecionados).'
                 ),
             ],
             'indicadores' => $indicadores,
@@ -162,7 +162,7 @@ final class FinanceComparativoInformeBuilder
         }
 
         $acoes = [
-            __('Importar ou actualizar VAAF municipal em Admin → Compatibilidade → FUNDEB.'),
+            __('Importar ou atualizar VAAF municipal em Admin → Compatibilidade → FUNDEB.'),
             __('Cruzar com Discrepâncias para estimar perdas por pendências de cadastro.'),
         ];
 
@@ -179,7 +179,7 @@ final class FinanceComparativoInformeBuilder
             },
             'paragrafos' => [
                 __(
-                    'A mudança de recursos reflecte simultaneamente o volume de matrículas e o VAAF aplicável em cada ano. Variações fortes com matrículas estáveis sugerem actualização de portaria ou troca de fonte de referência.'
+                    'A mudança de recursos reflecte simultaneamente o volume de matrículas e o VAAF aplicável em cada ano. Variações fortes com matrículas estáveis sugerem atualização de portaria ou troca de fonte de referência.'
                 ),
             ],
             'indicadores' => $indicadores,

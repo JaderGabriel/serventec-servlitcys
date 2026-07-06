@@ -162,7 +162,7 @@
 
         <div class="sticky top-0 z-10 -mx-1 px-1 py-1 rounded-lg bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/60">
             <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 px-1 mb-1.5">
-                {{ __('Ir para a secção') }}
+                {{ __('Ir para a seção') }}
             </p>
             <x-dashboard.consultoria-flow-nav :steps="$flowSteps" tone="blue" />
         </div>

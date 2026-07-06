@@ -280,7 +280,7 @@ final class NotificationDispatcher
 
         if ($profileChanged) {
             $this->notifyUser($user, [
-                'title' => __('Perfil actualizado'),
+                'title' => __('Perfil atualizado'),
                 'body' => __('Os seus dados de acesso ou municípios associados foram alterados. Verifique o perfil e as permissões.'),
                 'icon' => 'info',
                 'priority' => NotificationPriority::High->value,

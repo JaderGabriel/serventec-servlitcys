@@ -13,7 +13,7 @@
 
 Este estudo avalia **como agentes de IA e modelos de linguagem (LLM)** podem enriquecer o SERVLITCYS — hoje centrado em **dados estruturados** (i-Educar, FNDE, INEP, CadÚnico, repasses) e **painéis determinísticos** (Discrepâncias, FUNDEB, Diagnóstico, PDF ATM).
 
-Não propõe «IA no lugar do FUNDEB» nem respostas sem rastreio. Define **cenários**, **caminhos técnicos em Laravel**, **vantagens e contras** e **fases de adoção** compatíveis com LGPD, RBAC e a arquitectura existente (filas `admin-sync`, cache, `PublicDataImportCatalog`, consultoria lazy-load).
+Não propõe «IA no lugar do FUNDEB» nem respostas sem rastreio. Define **cenários**, **caminhos técnicos em Laravel**, **vantagens e contras** e **fases de adoção** compatíveis com LGPD, RBAC e a arquitetura existente (filas `admin-sync`, cache, `PublicDataImportCatalog`, consultoria lazy-load).
 
 ---
 
@@ -47,7 +47,7 @@ Não propõe «IA no lugar do FUNDEB» nem respostas sem rastreio. Define **cen�
 
 ## 4. Cenários de valor (por área do produto)
 
-### 4.1 Consultoria municipal (utilizador `municipal` / `user`)
+### 4.1 Consultoria municipal (usuário `municipal` / `user`)
 
 | Cenário | Abordagem sugerida | Enriquecimento |
 |---------|-------------------|----------------|
@@ -64,7 +64,7 @@ Não propõe «IA no lugar do FUNDEB» nem respostas sem rastreio. Define **cen�
 | Triagem falha `fundeb:import-api` | D + F | Agente lê log, sugere matrículas/URL/portaria |
 | Verificação portaria HTTP 403 vs GET | F | Já resolvido deterministicamente; IA só documenta runbook |
 | Hub dados públicos — «qual importação falta?» | D | Consulta `PublicDataImportCatalog`, gaps PDF ATM |
-| Documentação interna | B | Chat sobre `docs/` com citação de ficheiro |
+| Documentação interna | B | Chat sobre `docs/` com citação de arquivo |
 | Monitor filas `admin-sync` | D | «Por que a fila FUNDEB está parada?» |
 
 ### 4.3 Dados e qualidade (transversal)
@@ -95,7 +95,7 @@ Não propõe «IA no lugar do FUNDEB» nem respostas sem rastreio. Define **cen�
 
 | Vantagens | Contras |
 |-----------|---------|
-| Respostas alinhadas ao que está em `docs/` | Índice desactualizado → respostas erradas |
+| Respostas alinhadas ao que está em `docs/` | Índice desatualizado → respostas erradas |
 | Baixo risco financeiro (sem números de repasse) | Embeddings + vector store = nova infra |
 | Útil para admin e municipal (perguntas «como») | Markdown grande (releases) precisa chunking |
 
@@ -133,7 +133,7 @@ Tools candidatas (escrita — fase tardia):
 |-----------|---------|
 | Reproduz análises como portaria × matriz × matrículas | Custo e tempo maiores |
 | Saída estruturada (relatório JSON + markdown) | Ainda precisa validação humana |
-| Diferencial comercial forte | Depende de matrículas e portarias actualizadas |
+| Diferencial comercial forte | Depende de matrículas e portarias atualizadas |
 
 **Caminho técnico:** job na fila `system` ou comando `fundeb:audit-ai` que: (1) carrega CSV portaria cache; (2) carrega BD; (3) LLM só **redige** conclusões a partir de diff calculado em PHP — **não** deixa o modelo calcular VAAF.
 
@@ -143,7 +143,7 @@ Tools candidatas (escrita — fase tardia):
 
 | Vantagens | Contras |
 |-----------|---------|
-| Sem exposição a utilizadores finais | Valor indirecto |
+| Sem exposição a usuárioes finais | Valor indirecto |
 | Resumos de falha de teste/import | Pode vazar logs se mal configurado |
 
 **Caminho técnico:** hook pós-falha em `admin-sync` → envia trecho de log para LLM → grava sugestão em `meta` da tarefa (não auto-executa).
@@ -162,7 +162,7 @@ Tools candidatas (escrita — fase tardia):
 
 ---
 
-## 6. Arquitectura técnica recomendada (Laravel)
+## 6. Arquitetura técnica recomendada (Laravel)
 
 ```mermaid
 flowchart TB
@@ -289,4 +289,4 @@ Cálculos financeiros e importações críticas devem permanecer em **PHP testá
 
 ---
 
-*Manutenção:* ao implementar fase ≥ 1, actualizar [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) com IDs dedicados e [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção.
+*Manutenção:* ao implementar fase ≥ 1, atualizar [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) com IDs dedicados e [STATUS_PROJETO.md](STATUS_PROJETO.md) quando entrar em produção.

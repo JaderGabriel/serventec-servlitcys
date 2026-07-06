@@ -42,7 +42,7 @@ class ImportInepGeoFallbackCsv extends Command
                 return self::SUCCESS;
             }
 
-            $this->error('Ficheiro não encontrado ou ilegível: '.$path);
+            $this->error('Arquivo não encontrado ou ilegível: '.$path);
             $this->newLine();
             $this->line('O CSV de fallback é opcional (enriquecimento offline). Para corrigir:');
             $this->line('  • Colocar o CSV em storage/app/public/ (disco public) ou ajustar IEDUCAR_INEP_GEO_FALLBACK_CSV.');

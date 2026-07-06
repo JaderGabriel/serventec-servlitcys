@@ -109,7 +109,7 @@
                                     {{ \Illuminate\Support\Carbon::parse($report['snapshot_collected_at'])->format('d/m/Y H:i') }}
                                 </time>
                                 @if (! ($report['snapshot_fresh'] ?? false))
-                                    <span class="text-amber-700 dark:text-amber-300">({{ __('desactualizada') }})</span>
+                                    <span class="text-amber-700 dark:text-amber-300">({{ __('desatualizada') }})</span>
                                 @endif
                             @else
                                 · <span class="text-amber-700 dark:text-amber-300">{{ __('Recolha agendada pendente') }}</span>

@@ -39,7 +39,7 @@
         @csrf
         <input type="hidden" name="action" value="import_csv" />
         <div>
-            <label for="csv_file" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Ficheiro .csv ou .txt') }}</label>
+            <label for="csv_file" class="block text-xs font-medium text-gray-700 dark:text-gray-300">{{ __('Arquivo .csv ou .txt') }}</label>
             <input id="csv_file" name="csv_file" type="file" accept=".csv,.txt,text/csv,text/plain" required class="mt-1 block w-full text-sm text-gray-700 dark:text-gray-200 file:mr-3 file:rounded-md file:border-0 file:bg-sky-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-sky-500" />
         </div>
         <div class="flex flex-wrap gap-4">
@@ -64,7 +64,7 @@
         :step="__('Passo 3')"
         :tags="[__('Requer cidades + IBGE'), __('Leve')]"
         :title="__('Sincronizar dados oficiais por município (IBGE)')"
-        :hint="filled($effectiveOfficialTemplate ?? '') ? __('Atualiza por IBGE. Modelo efectivo: :url', ['url' => $effectiveOfficialTemplate]) : __('Atualiza por IBGE. Se a base estiver vazia, pode descarregar microdados INEP antes da API interna.')"
+        :hint="filled($effectiveOfficialTemplate ?? '') ? __('Atualiza por IBGE. Modelo efetivo: :url', ['url' => $effectiveOfficialTemplate]) : __('Atualiza por IBGE. Se a base estiver vazia, pode descarregar microdados INEP antes da API interna.')"
         :submit-label="__('Enfileirar por IBGE')"
         :submit-disabled="$cityCount === 0"
     >

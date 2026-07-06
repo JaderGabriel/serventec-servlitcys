@@ -29,7 +29,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-sidra : Ignorar população IBGE SIDRA 4–17}
                             {--skip-repasses : Ignorar repasses Tesouro CKAN}
                             {--skip-siconfi : Ignorar indicadores fiscais SICONFI (RREO)}
-                            {--skip-transparency : Ignorar Portal da Transparência (convénios/empenhos)}
+                            {--skip-transparency : Ignorar Portal da Transparência (convênios/empenhos)}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-ibge-municipal-geo : Ignorar malha municipal IBGE e área territorial}

@@ -44,7 +44,7 @@
                             {{ __('Slugs de confirmação (production)') }}
                         </h3>
                         <p class="text-sm text-amber-900/80 dark:text-amber-200/80 mt-1">
-                            {{ __('Comandos destrutivos exigem --confirm= com o slug exacto quando APP_ENV=production. Valores efectivos da configuração actual:') }}
+                            {{ __('Comandos destrutivos exigem --confirm= com o slug exato quando APP_ENV=production. Valores efetivos da configuração atual:') }}
                         </p>
                     </header>
                     <div class="overflow-x-auto">

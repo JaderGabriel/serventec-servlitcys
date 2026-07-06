@@ -224,7 +224,7 @@ final class HorizonteIbgeCentroidSyncService
         }
 
         if ($complete) {
-            return __('Sincronização IBGE concluída — centroides reais em cache e mapa Horizonte actualizado.');
+            return __('Sincronização IBGE concluída — centroides reais em cache e mapa Horizonte atualizado.');
         }
 
         if ($remainingUfs !== []) {

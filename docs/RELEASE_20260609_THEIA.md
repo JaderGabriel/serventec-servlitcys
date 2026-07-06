@@ -20,7 +20,7 @@ Patch **4.1.9** sobre **4.1.8** (Sophia — FUNDEB Censo lookback e admin i-Educ
 - Rótulos de distância ancorados à linha (`bindTooltip` no centro da polyline) — estáveis com zoom e pan.
 - Escala de lacuna/pressão em três faixas: amarelo → laranja → vermelho.
 - Escolas quase lotadas (≥90%) em **violeta**, distintas da pressão territorial.
-- Legenda da sidebar actualizada.
+- Legenda da sidebar atualizada.
 
 ## Deploy
 

@@ -45,7 +45,7 @@ class EducacensoAnalysisController extends Controller
         }
 
         if (! $filters->hasYearSelected()) {
-            return back()->with('educacenso_error', __('Seleccione o ano letivo antes de analisar o arquivo Educacenso.'));
+            return back()->with('educacenso_error', __('Selecione o ano letivo antes de analisar o arquivo Educacenso.'));
         }
 
         $upload = $request->file('educacenso_file');

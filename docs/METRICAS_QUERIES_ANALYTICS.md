@@ -44,7 +44,7 @@ Os cartões do Diagnóstico **não** repetem o índice global de conformidade. C
 Com **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=strategic`** (defeito desde 3.3.2):
 
 - **Um único pedido** na aba Diagnóstico: Discrepâncias em modo diagnóstico (dimensões + resumo financeiro, **sem** checks por escola nem sinais operacionais pesados), fatia FUNDEB (`buildDiagnosisSlice` — projeção VAAF + roteiro VAAR, **sem** perfil VAAF multi-ano FNDE), leitura temática estratégica (`buildStrategicBlocks`).
-- **Reutilização:** se o utilizador já abriu Discrepâncias, FUNDEB, Financiamentos, Censo ou Inclusão no mesmo filtro, o payload fica em cache (`AnalyticsTabPayloadCache`, TTL = `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`) e o Diagnóstico **não repete** essas consultas.
+- **Reutilização:** se o usuário já abriu Discrepâncias, FUNDEB, Financiamentos, Censo ou Inclusão no mesmo filtro, o payload fica em cache (`AnalyticsTabPayloadCache`, TTL = `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`) e o Diagnóstico **não repete** essas consultas.
 - Programas/Censo sem cache: resumo mínimo + links para as abas de detalhe.
 
 Modo **`full`**: snapshot completo (pedagógico + INEP + Censo), como antes do progressivo.
@@ -56,13 +56,13 @@ Com **`ANALYTICS_MUNICIPALITY_HEALTH_PROGRESSIVE=true`** e **`mode=progressive`*
 | Fase | Pedido | Conteúdo |
 |------|--------|----------|
 | Shell | `tab=municipality_health` | Visão geral + **Discrepâncias** (índice, KPIs, prioridades, mapa de rotinas, fontes públicas) |
-| Blocos | `tab=municipality_health&health_section=fundeb` | VAAF, previsão, roteiro FUNDEB (actualiza índice com módulos VAAR) |
+| Blocos | `tab=municipality_health&health_section=fundeb` | VAAF, previsão, roteiro FUNDEB (atualiza índice com módulos VAAR) |
 | Blocos | `…&health_section=programas` | PNAE, PNATE, PDDE (cobertura cadastro) |
 | Blocos | `…&health_section=tematico` | Leitura temática (desempenho, frequência, inclusão, rede, Censo) |
 
 No **Pulse → Operações**, filtre `analytics:tab:municipality_health` e `analytics:tab:municipality_health:section:*` para comparar tempos shell vs. blocos.
 
-**Cache:** `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` (ex. 300 s) aplica-se ao shell e a cada secção (`section:fundeb`, etc.). Revisitas com os mesmos filtros reutilizam cache.
+**Cache:** `ANALYTICS_MUNICIPALITY_HEALTH_CACHE` (ex. 300 s) aplica-se ao shell e a cada seção (`section:fundeb`, etc.). Revisitas com os mesmos filtros reutilizam cache.
 
 **Contexto municipal (faixa de impacto):** com **`ANALYTICS_FINANCE_TABS_REUSE_CONTEXT`**, as abas **Discrepâncias** e **FUNDEB** não voltam a executar `overview` + `fundingImpactSnapshot` depois do relatório da aba. **Financiamentos** e **Censo** usam só o resumo financeiro em cache para a faixa (`ANALYTICS_FINANCE_TABS_STRIP_CONTEXT`).
 
@@ -76,7 +76,7 @@ Snapshot completo explícito: **`ANALYTICS_MUNICIPALITY_HEALTH_MODE=full`**. Pro
 | Todos os cartões Explorar com o mesmo número (ex. 41) | Badge reutilizava `compliance_score` global (corrigido pós-3.4.0) | `git pull`, `npm run build`; confirmar métricas distintas por área |
 | Abas Finanças em branco após deploy | Views/CSS antigos | `npm run build`, `view:clear`, hard refresh |
 | Skeletons «A carregar VAAF/programas/temático» sem fim | Bundle JS antigo ou sessão bloqueada (corrigido em `83ff2b1`) | `npm run build`, `config:clear`, hard refresh; confirmar pedidos `health_section=` na rede do browser |
-| Outras abas lentas enquanto Diagnóstico abre | Pedido shell ainda a correr na BD i-Educar | Normal em bases grandes; secções passam a correr após libertar sessão |
+| Outras abas lentas enquanto Diagnóstico abre | Pedido shell ainda a correr na BD i-Educar | Normal em bases grandes; seções passam a correr após libertar sessão |
 | PDF diferente do ecrã | PDF usa `snapshotFull` | Esperado — exportação ignora modo progressivo |
 
 ## Inclusão — educação especial (NEE)
@@ -98,7 +98,7 @@ Consultas do painel mapeadas para endpoints `v1` (filtros, matrículas, inclusã
 
 - **Editor:** `/admin/documentos-legais` — política de privacidade e cookies em Markdown (`legal_document_versions`), publicação com versão e hash SHA-256.
 - **Reconsentimento:** ao publicar com «Forçar novo consentimento», limpa aceites em `users` e regista `revoked_*` em `legal_consent_logs`.
-- **Revogação manual:** `/admin/consentimentos-legais` — revogar por utilizador ou em massa (PP e/ou cookies).
+- **Revogação manual:** `/admin/consentimentos-legais` — revogar por usuário ou em massa (PP e/ou cookies).
 - **Página pública:** `/privacidade` lê a versão `is_current` da PP; sem publicação na base, mantém o texto estático da view.
 - Versões em runtime: `LegalConsentService::currentPrivacyVersion()` / `currentCookiesVersion()` leem a base; fallback `LEGAL_*` no `.env`.
 

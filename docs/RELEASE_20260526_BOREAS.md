@@ -21,15 +21,15 @@ Marco **3.1.0** sobre **3.0.0** ([RELEASE_20260525_APOLLO.md](RELEASE_20260525_A
 
 ### Inclusão — Recursos de prova INEP (Censo)
 
-- Secção ampliada **«revisão cadastral»** com tabela por aluno:
+- Seção ampliada **«revisão cadastral»** com tabela por aluno:
   - **Turma AEE sem deficiência no cadastro** (`fisica_deficiencia` / `aluno_deficiencia`).
   - **Recurso SAEB/INEP sem deficiência no cadastro** (apoios declarados para provas).
 - Colunas: aluno, escola, tipo, detalhe (turmas AEE ou recursos concretos).
 
 ### Admin — documentação
 
-- Leitor `/admin/documentacao` abre **qualquer** ficheiro `.md` em `docs/` + `README.md` na raiz (sem lista fechada que gerava 404).
-- Menu com releases, entregas, catálogo API, variáveis `.env`, etc.; secção «Outros documentos» para ficheiros novos.
+- Leitor `/admin/documentacao` abre **qualquer** arquivo `.md` em `docs/` + `README.md` na raiz (sem lista fechada que gerava 404).
+- Menu com releases, entregas, catálogo API, variáveis `.env`, etc.; seção «Outros documentos» para arquivos novos.
 - Links relativos no Markdown convertidos para o leitor interno (`../README.md`, `ENTREGAS_….md`).
 
 ## Deploy
@@ -48,7 +48,7 @@ Sem novas migrações obrigatórias nesta release.
 ## Documentação
 
 - [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) — linha 3.1.0
-- [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — secção 43
+- [ENTREGAS_ESCALONADAS_MAIO_2026.md](ENTREGAS_ESCALONADAS_MAIO_2026.md) — seção 43
 - [STATUS_PROJETO.md](STATUS_PROJETO.md)
 
 ## Testes (referência)

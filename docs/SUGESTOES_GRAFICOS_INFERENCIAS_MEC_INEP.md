@@ -70,7 +70,7 @@ Fonte primária de conceitos: portal do **INEP** e notas técnicas do IDEB/SAEB.
 - ~~**Ano letivo encerrado** com muitas matrículas “em curso”: possível **falta de fechamento** no sistema.~~ *(Desempenho + discrepâncias de situação.)*
 - ~~**Distorção idade-série** concentrada em poucas séries: pode apontar **problema de oferta** ou **acumulação** de reprovações.~~ *(Matrículas por turno/curso e escola.)*
 - ~~**Escolas pequenas** com taxas extremas: **instabilidade estatística** — mostrar também o **numerador** absoluto.~~ *(KPIs com contagens; tabelas SAEB/NEE por escola.)*
-- ~~**Comparações entre municípios** diferentes: padronizar regras de “matrícula ativa” e ano letivo.~~ *(painel por cidade seleccionada + `IeducarFilterState`.)*
+- ~~**Comparações entre municípios** diferentes: padronizar regras de “matrícula ativa” e ano letivo.~~ *(painel por cidade selecionada + `IeducarFilterState`.)*
 
 ---
 
@@ -96,7 +96,7 @@ Fonte primária de conceitos: portal do **INEP** e notas técnicas do IDEB/SAEB.
 
 ## 9. Pendências sugeridas (backlog analítico)
 
-**Consolidado em** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **B. Painel — gráficos**): IDs `GRA-01` a `GRA-07`.
+**Consolidado em** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **B. Painel — gráficos**): IDs `GRA-01` a `GRA-07`.
 
 Este documento mantém o **contexto pedagógico** (tabelas §2–§5); o backlog único evita duplicar prioridades.
 

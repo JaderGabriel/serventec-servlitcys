@@ -1,12 +1,12 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 7.0.1 · **Última revisão:** 2026-07-06
+**Versão do produto:** 7.0.2 · **Última revisão:** 2026-07-06
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão actual **7.0.1**, linha **7.x** (Horizonte enriquecimento — SICONFI, Transparência, scoring ampliado), navegação da consultoria e convenção de tags. Este ficheiro está versionado no GitHub e no leitor **Documentação** (`/admin/documentacao` e `/documentacao`).
+Mapa visual da documentação em produção: versão atual **7.0.2**, linha **7.x** (Horizonte enriquecimento — SICONFI, Transparência, scoring ampliado), navegação da consultoria e convenção de tags.
 
-Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e secções expansíveis).
+Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
 ---
 
@@ -14,12 +14,12 @@ Versão interactiva para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **7.0.1** |
-| **Tag de deploy** | `20260705b-Moneta` |
-| **Commit de referência** | `04ecf63` |
-| **Data de referência** | 2026-07-05 |
-| **Release** | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
-| **Marco** | **Moneta** — tooltip FUNDEB por UF; warm-map-cache estável |
+| **Versão semântica** | **7.0.2** |
+| **Tag de deploy** | `20260706-Hermes` |
+| **Commit de referência** | `9ad2421` |
+| **Data de referência** | 2026-07-06 |
+| **Release** | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
+| **Marco** | **Hermes** — pt-BR unificado (UI, menus, documentação) |
 
 ---
 
@@ -51,7 +51,7 @@ O codename deve **aludir** ao conteúdo da release. Tag: `YYYYMMDD[-letra]-Coden
 
 > Segunda release (ou seguinte) no mesmo dia civil: sufixo alfabético `a`, `b`, `c`… após `YYYYMMDD`, antes do codename. Implementação: `ProductReleaseTag`.
 
-| Ordem no dia | Exemplo de tag | Ficheiro RELEASE |
+| Ordem no dia | Exemplo de tag | Arquivo RELEASE |
 |--------------|----------------|------------------|
 | 1ª | `20260607-Phronesis` | [RELEASE_20260607_PHRONESIS.md](RELEASE_20260607_PHRONESIS.md) |
 | 2ª | `20260607a-Ananke` | [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md) |
@@ -172,6 +172,7 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **7.0.2** | Hermes | 06/07 | — | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) — pt-BR unificado |
 | **7.0.1** | Moneta | 05/07 b | **506** | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) — tooltip FUNDEB UF, warm-map-cache |
 | **7.0.0** | Ploutos | 05/07 | **483** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) — SICONFI, Transparência, scoring ampliado |
 | **6.5.0** | Jord | 02/07 c | **482** | [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) — malha IBGE, Contornos, Educacenso nacional |
@@ -200,4 +201,4 @@ flowchart TD
 
 ---
 
-*Manutenção: actualizar tabelas e versão ao fechar release — [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6.*
+*Manutenção: atualizar tabelas e versão ao fechar release — [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6.*

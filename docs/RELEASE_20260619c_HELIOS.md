@@ -2,7 +2,7 @@
 
 **Data:** 2026-06-19 · **Ramo:** `main` · **Marco:** **5.5** — Horizonte GIS gerencial, monitor periódico e catálogo Artisan admin.
 
-> A tag `20260603f-Helios` usava prefixo de data incorrecto. **Produção actual:** este ficheiro · tag **`20260619c-Helios`** · `revision_date` **2026-06-19**.
+> A tag `20260603f-Helios` usava prefixo de data incorreto. **Produção actual:** este arquivo · tag **`20260619c-Helios`** · `revision_date` **2026-06-19**.
 
 ---
 
@@ -13,7 +13,7 @@ Minor **5.5.0** sobre **5.4.0** (Hyperion):
 1. **Horizonte — UI gerencial** — painel de filtros colapsável com chips activos; layout alargado e mapa mais alto; paleta GIS refinada; KPIs com tooltips; painel lateral **Metodologia e fórmulas** (pesos, dimensões, limiares); tooltip municipal com breakdown das 6 dimensões; cadastro SGE no mapa.
 2. **Monitor de módulos** — `module-monitor:collect` agendado a cada **10 minutos** (`MODULE_MONITOR_COLLECT_INTERVAL_MINUTES`) em vez de recolha diária única.
 3. **Comandos Artisan (admin)** — catálogo expandido (Horizonte, Educacenso, SAEB planilhas, CadÚnico Cecad, slugs de confirmação); tabela de **slugs production** resolvidos da config; detalhes, agendamento e badges por comando.
-4. **Login e home** — fundo e tipografia do login alinhados à landing; página inicial actualizada com Horizonte e conceitos da linha 5.5.
+4. **Login e home** — fundo e tipografia do login alinhados à landing; página inicial atualizada com Horizonte e conceitos da linha 5.5.
 
 ---
 

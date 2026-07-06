@@ -75,7 +75,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | 42 | `7ea0158` | **Pós-3.0.0 (sem bump):** inclusão — total NEE alinhado a AEE, grupos com 0, textos NEE vs cadastro |
 | 43 | `20260526-Boreas` | **3.1.0** — Inclusão (FUNDEB indicativo, inconsistências cadastro), leitor documentação admin |
 | 44 | `20260527-Notus` | **3.2.0** — export NEE (dados no Excel), medidores/risco AEE, fila admin cards temáticos |
-| 45 | `20260528-Eos` | **3.3.0** — monitor de módulos admin; doc/filas/export NEE para utilizador |
+| 45 | `20260528-Eos` | **3.3.0** — monitor de módulos admin; doc/filas/export NEE para usuário |
 | 46 | `504d2f9` | **Pós-3.3.0 (sem bump):** monitor módulos — UI `serv-*` |
 | 47 | `d6a1785` | **Pós-3.3.0 (sem bump):** monitor — cartões só saúde |
 | 48 | `f29b30b` | **Pós-3.3.0 (sem bump):** RX — legendas unificadas, KPIs, tons sky/teal |
@@ -95,7 +95,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Todos os municípios cadastrados aparecem no mapa do dashboard (`/dashboard`), com posição geográfica credível e sem sobreposição visual.
 
-| Área | Ficheiros principais |
+| Área | Arquivos principais |
 |------|----------------------|
 | Coordenadas | `MunicipalityMapCoordinates.php`, `BrazilUfCentroids.php` |
 | Anti-sobreposição | `MunicipalityMapOverlapResolver.php` (novo) |
@@ -117,7 +117,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Na tooltip do mapa, botão **i-Educar** (50% da linha com **Consultoria**) abre o portal do município em nova aba.
 
-| Área | Ficheiros principais |
+| Área | Arquivos principais |
 |------|----------------------|
 | BD | `database/migrations/2026_05_22_160000_add_ieducar_app_url_to_cities_table.php` |
 | Resolução URL | `CityIeducarAppUrlResolver.php` |
@@ -138,7 +138,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Percentual **dentro** do anel; card mais compacto (menos linhas).
 
-| Ficheiros | `analytics-tab-status-inline.blade.php`, `resources/css/app.css`, `public/build/*` |
+| Arquivos | `analytics-tab-status-inline.blade.php`, `resources/css/app.css`, `public/build/*` |
 
 **Pós-deploy:** `npm run build` (ou commit do `public/build` já gerado).
 
@@ -146,9 +146,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ## 4. Aba Cadastro → Matrículas (status e saldo)
 
-**Objetivo:** O status da faixa superior resume **toda a aba**; a **distorção idade-série** permanece só na secção da página.
+**Objetivo:** O status da faixa superior resume **toda a aba**; a **distorção idade-série** permanece só na seção da página.
 
-| Área | Ficheiro |
+| Área | Arquivo |
 |------|----------|
 | Lógica | `AnalyticsTabImpactBuilder.php` |
 | Vista | `enrollment.blade.php`, `analytics.blade.php` |
@@ -167,7 +167,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Visão operacional cadastro + Censo (sem financeiro), com escopo por perfil.
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Rota | `GET /dashboard/rx` → `dashboard.rx` |
 | Backend | `RxDashboardController`, `RxOverviewService`, `RxCityMetricsCollector`, `RxCensoDeadline` |
@@ -183,7 +183,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Commit:** `17d3d6e`
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Meta retroativa | `RxBaselineResolver.php` — `RX_META_LOOKBACK_YEARS`, `RX_META_PCT_PER_SALTO` |
 | Semáforo | `RxSemaphore.php`, `semaphore-badge.blade.php` |
@@ -199,7 +199,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Commit:** `0dbf65e`
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Cálculos | `RxCadastroGap.php`, `RxCityMetricsCollector.php` — progresso pelo gargalo turmas/mat.; em falta separado (não soma enturmação) |
 | Cores | `RxColumnTone.php`, `data-tone-legend.blade.php`, `legend-panel.blade.php`, `rx.blade.php`, `app.css` — vigente (teal), comparativo (sky), meta (violeta), anterior (cinza na sublinha) |
@@ -219,7 +219,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Melhorar leitura do painel `/dashboard/rx` sem alterar versão semântica.
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Legendas | `components/rx/legend-panel.blade.php`, `column-legend.blade.php`, `data-tone-legend.blade.php` |
 | KPIs / tabela | `dashboard/rx.blade.php`, `semaphore-badge.blade.php` (`x-status-pill`) |
@@ -235,7 +235,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** VAAF por UF (PDF Consultas FNDE), CSV receita 2026, import melhorado; comando de diagnóstico de faltas.
 
-| Tema | Ficheiros |
+| Tema | Arquivos |
 |------|-----------|
 | VAAF estado (PDF) | `FundebFndeEstadoVaafService.php`, testes |
 | CSV receita 2026 | `FundebFndeReceitaCsvService.php`, `config/ieducar.php` |
@@ -252,7 +252,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ## 8. Documentação e índices
 
-- Este ficheiro (`ENTREGAS_ESCALONADAS_MAIO_2026.md`)
+- Este arquivo (`ENTREGAS_ESCALONADAS_MAIO_2026.md`)
 - Atualização de `HISTORICO_VERSOES.md`, `VARIAVEIS_AMBIENTE.md`, `docs/README.md`
 
 ---
@@ -261,7 +261,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Objetivo:** Gráficos NEE e raça/cor mostram **todas** as opções MEC e i-Educar (valor 0 quando não há matrículas); KPIs que contam alunos exibem total no painel e na legenda.
 
-| Área | Ficheiros principais |
+| Área | Arquivos principais |
 |------|----------------------|
 | Catálogos | `InclusionEducacensoCatalog.php`, `config/ieducar.php` → `inclusion.raca_mec_catalog`, `inclusion.deficiencia_mec_catalog` |
 | Gráficos | `InclusionDashboardQueries.php` (`chartNeeCatalogoCompletoMecIeducar`), `InclusionRepository.php` (`raceDistributionChart`) |
@@ -284,7 +284,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Commit:** `3c935ca`
 
-| Área | Ficheiros principais |
+| Área | Arquivos principais |
 |------|----------------------|
 | VAAF | `FundebMunicipalReferenceResolver.php`, `DiscrepanciesFundingImpact.php`, `AnalyticsTabImpactBuilder.php`, `IeducarCompatibilityProbe.php` |
 | Contatos cidade | migração `2026_05_21_120000_*`, `CityReferenceContact.php`, `cities/_form.blade.php`, `reference-contact.blade.php`, `consultoria-municipality-strip.blade.php` |
@@ -301,7 +301,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Escopo:** apenas UI/CSS — sem migrações nem alteração de regras de negócio.
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Perfil | `profile/edit.blade.php`, partials, `app.css` (`.serv-profile-*`) |
 | Usuários | `contact/icon-row.blade.php` (`variant="table"`), `users/index.blade.php` |
@@ -315,7 +315,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Escopo:** login e caches — ver [PERFORMANCE.md](PERFORMANCE.md).
 
-| Área | Ficheiros / comandos |
+| Área | Arquivos / comandos |
 |------|----------------------|
 | Login | `LogSuccessfulUserLogin.php`, `AuthenticatedSessionController.php`, `config/performance.php` |
 | Pulse | `RecordPulseInstitutionContext.php` |
@@ -331,7 +331,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Escopo:** mapa de unidades, aba Matrículas, Inclusão e textos VAAF (prévia federal R$ 4.500).
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Mapa | `MatriculaChartQueries.php`, `SchoolUnitsRepository.php`, `schoolUnitsMap.js`, `school-units.blade.php` |
 | Saldo / VAAF | `AnalyticsTabImpactBuilder.php`, `FundebReferenceDisplay.php`, `FundebMunicipalReferenceResolver.php`, `analytics-tab-impact-header.blade.php` |
@@ -346,7 +346,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Versão semântica:** `2.3.8.5` · **tag deploy:** `20260521-Mercury` (inalterada) · **commit:** `a2566aa` (#195)
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Mapa capacidade/vagas | `MatriculaChartQueries.php`, `SchoolUnitsRepository.php` |
 | Matrículas saldo/VAAF | `AnalyticsTabImpactBuilder.php`, `FundebReferenceDisplay.php`, `analytics-tab-impact-header.blade.php` |
@@ -361,7 +361,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 **Versão semântica:** `2.3.8.6` · **tag deploy:** `20260521-Mercury` (inalterada)
 
-| Área | Ficheiros |
+| Área | Arquivos |
 |------|-----------|
 | Snapshot RX | `AdminHomeMapCadastroSnapshot.php`, `MunicipalityMapCadastroPresenter.php` |
 | Mapa | `AdminHomeMunicipalityMap.php`, `DashboardMunicipalityMapController.php`, `brazilMunicipalitiesMap.js`, `municipalities-map.blade.php` |
@@ -382,7 +382,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | Config | `config/pulse_diagnostics.php`, `PULSE_DB_DIAGNOSTICS_ENABLED`, `PULSE_DB_DIAGNOSTICS_SLOW_MS`, `PULSE_DB_DIAGNOSTICS_SLOW_RUN_MS` |
 | Ingestão | `RecordPulseDatabaseQueries` (`QueryExecuted`), `PulseDatabaseRecorder`, `MunicipalDatabaseContext` em `CityDataConnection::run`, `RequestDbTimingAccumulator` (flush no `terminating`) |
 | Métricas | `db_slow_scope`, `db_slow_fp`, `db_muni_run`, `db_muni_run_slow`, `db_request_total` |
-| UI | `DatabaseDiagnosticsCard`, `MunicipalDatabaseDiagnosticsCard`, secção na aba **Desempenho** de `/pulse` |
+| UI | `DatabaseDiagnosticsCard`, `MunicipalDatabaseDiagnosticsCard`, seção na aba **Desempenho** de `/pulse` |
 
 ### Pulse — operações da aplicação
 
@@ -400,9 +400,9 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 |------|---------|
 | Saldo | Ganho estimado = matrículas × VAAF do contexto; **perda = 0**; modo `gain_only` no cartão de impacto |
 | VAAF | `funding_reference` via `DiscrepanciesFundingImpact::fundingReferencePayload` no lazy-load; correções usam o mesmo VAAF (não piso 4.500 isolado) |
-| Ficheiros | `AnalyticsTabImpactBuilder.php`, `AnalyticsDashboardController.php`, `analytics-tab-impact-header.blade.php` |
+| Arquivos | `AnalyticsTabImpactBuilder.php`, `AnalyticsDashboardController.php`, `analytics-tab-impact-header.blade.php` |
 
-| Área | Ficheiros (resumo) |
+| Área | Arquivos (resumo) |
 |------|-------------------|
 | Pulse core | `app/Support/Pulse/*`, `app/Listeners/RecordPulseDatabaseQueries.php`, `app/Http/Middleware/RecordPulseOperations.php` |
 | Pulse UI | `app/Livewire/Pulse/*DiagnosticsCard.php`, `resources/views/livewire/pulse/*`, `resources/views/vendor/pulse/dashboard.blade.php` |
@@ -427,7 +427,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Inclusão** | SQL unificado NEE (`fisica_deficiencia` ou `aluno_deficiencia` + turma AEE); remoção do bloco duplicado «catálogo completo»; `IEDUCAR_INCLUSION_NEE_INCLUIR_TURMA_AEE` |
 | **Desempenho** | Gráficos SAEB em grelha `xl:grid-cols-4`, modo compacto, `.perf-saeb-charts` |
 
-| Ficheiros (resumo) | |
+| Arquivos (resumo) | |
 |--------------------|--|
 | Inclusão | `InclusionDashboardQueries.php`, `InclusionSpecialEducationGauges.php`, `DiscrepanciesQueries.php`, `InclusionRepository.php` |
 | SAEB UI | `performance.blade.php`, `ChartPayload.php`, `PerformanceSaebSeries.php`, `app.css` |
@@ -450,14 +450,14 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Rodapé** | `<x-product-version-badge />` — versão, tag Ceres, data de lançamento (teal em produção) |
 | **Inclusão** | `chartCatalogo(..., includeZeros: true)` — todas as opções do catálogo; legenda INEP na view |
 
-| Ficheiros (resumo) | |
+| Arquivos (resumo) | |
 |--------------------|--|
 | Legal | `LegalConsentController`, `LegalConsentService`, `EnsureLegalConsentAccepted`, `LegalConsentReportController` |
 | Notificações | `NotificationController.php`, `resources/views/notifications/index.blade.php` |
 | Inclusão | `InclusionDashboardQueries.php`, `inclusion.blade.php`, `InclusionNeeDesignacaoDataset.php` |
 | Testes | `LegalConsentTest.php`, `ProductVersionTest.php`, `NotificationControllerTest.php` |
 
-**Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · utilizadores existentes passam por `/consentimento` na primeira visita (ou preencher versão nas colunas `users`).
+**Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · usuárioes existentes passam por `/consentimento` na primeira visita (ou preencher versão nas colunas `users`).
 
 ---
 
@@ -485,7 +485,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Gráficos** | Removido `nee_por_designacao` quando `nee_catalogo` existe; fallback `chartNeeCatalogoCompletoMecIeducar` delega ao dataset |
 | **UI** | `inclusion.blade.php`: legenda única, `suppressTitle`; listas `nee_detalhe_catalogo` só sem gráfico de catálogo |
 
-| Ficheiros | `InclusionEducacensoCatalog.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, testes unitários |
+| Arquivos | `InclusionEducacensoCatalog.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, testes unitários |
 
 **Pós-deploy:** `npm run build` · validar **Pedagógico → Inclusão** (barras > 0 ou barra âmbar coerente com 716 NEE / 315 AEE).
 
@@ -493,17 +493,17 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 
 ## 39. Admin — documentos legais e revogação de consentimentos (pós-3.0.0, sem nova versão)
 
-**Objetivo:** Permitir ao admin editar política de privacidade e cookies em Markdown, publicar versões nomeadas, detetar alterações por hash e forçar novo aceite; revogar consentimentos por utilizador ou em massa.
+**Objetivo:** Permitir ao admin editar política de privacidade e cookies em Markdown, publicar versões nomeadas, detetar alterações por hash e forçar novo aceite; revogar consentimentos por usuário ou em massa.
 
 | Área | Alteração |
 |------|-----------|
 | **Base** | Tabela `legal_document_versions` (`document_type`, `version`, `body_markdown`, `content_hash`, `is_current`) |
 | **Editor** | `/admin/documentos-legais` — publicar com versão sugerida (`AAAA-MM-DD` / `.N`) e opção «Forçar novo consentimento» |
-| **Revogação** | `/admin/consentimentos-legais` — revogar todos ou por utilizador; logs `revoked_*` em `legal_consent_logs` |
+| **Revogação** | `/admin/consentimentos-legais` — revogar todos ou por usuário; logs `revoked_*` em `legal_consent_logs` |
 | **Pública** | `/privacidade` renderiza Markdown da versão vigente; fallback texto estático na view |
 | **Runtime** | `LegalConsentService` lê versões da base; fallback `LEGAL_*` no `.env` |
 
-| Ficheiros | `LegalDocumentService`, `LegalDocumentAdminController`, `LegalConsentRevocationController`, migração, views admin, testes |
+| Arquivos | `LegalDocumentService`, `LegalDocumentAdminController`, `LegalConsentRevocationController`, migração, views admin, testes |
 
 **Pós-deploy:** `php artisan migrate` · `php artisan route:clear` · publicar PP em staging antes de forçar reconsentimento em produção.
 
@@ -519,7 +519,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Dataset** | Barra «sem designação» conta no grupo Deficiências; `chartGrupo` quando só AEE |
 | **Contagem** | `countMatriculasComNee` em AEE cross, KPI `matriculas_nee`, medidores via `InclusionNeeDesignacaoDataset` |
 
-| Ficheiros | `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
+| Arquivos | `InclusionNeeDesignacaoDataset.php`, `InclusionDashboardQueries.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
 
 **Pós-deploy:** `npm run build` · validar **Pedagógico → Inclusão** (grupo + catálogo uma vez; 716 NEE coerente).
 
@@ -546,10 +546,10 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 |------|-----------|
 | **Contagem** | `countMatriculasComNee` usa `fetchNeeMatriculasComTurmaCurso` (mesmo predicado que AEE); `countMatriculasComCadastroNee` só cadastro; `applyRecorteMatriculasNeeWhere` partilhado |
 | **Filtro «Só NEE»** | `InclusionMatriculaScope` aplica o recorte completo (cadastro ou turma AEE) |
-| **Dataset / UI** | `chartGrupo` com três barras sempre; secção NEE visível com AEE ou `nee_grupo_resumo`; KPIs AEE «com cadastro» e «só turma AEE (est.)» |
+| **Dataset / UI** | `chartGrupo` com três barras sempre; seção NEE visível com AEE ou `nee_grupo_resumo`; KPIs AEE «com cadastro» e «só turma AEE (est.)» |
 | **Textos** | Metodologia e parágrafos na aba explicam total NEE vs vínculos no catálogo vs barra «sem designação» |
 
-| Ficheiros | `InclusionDashboardQueries.php`, `InclusionMatriculaScope.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
+| Arquivos | `InclusionDashboardQueries.php`, `InclusionMatriculaScope.php`, `InclusionNeeDesignacaoDataset.php`, `InclusionRepository.php`, `inclusion.blade.php`, testes |
 
 **Pós-deploy:** `npm run build` · **Pedagógico → Inclusão**: total NEE ≈ matrículas AEE quando só há turma AEE; grupos 0/0/0 visíveis; catálogo com barra âmbar se aplicável.
 
@@ -566,7 +566,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Recursos de prova** | `InclusionCadastroInconsistenciasQueries` — tabela com nome do aluno, escola, tipo e detalhe (AEE sem NEE; recurso sem cadastro) |
 | **Documentação admin** | `DocumentationCatalog` — todos os `.md` em `docs/`; links Markdown para o leitor; menu releases e integrações |
 
-| Ficheiros principais | `InclusionFundebImpact.php`, `InclusionCadastroInconsistenciasQueries.php`, `DocumentationCatalog.php`, `AnalyticsTabImpactBuilder.php`, `inclusion.blade.php` |
+| Arquivos principais | `InclusionFundebImpact.php`, `InclusionCadastroInconsistenciasQueries.php`, `DocumentationCatalog.php`, `AnalyticsTabImpactBuilder.php`, `inclusion.blade.php` |
 
 **Pós-deploy:** `npm run build` · `git tag 20260526-Boreas` · validar selo **3.1.0** no rodapé e `/admin/documentacao`.
 
@@ -582,7 +582,7 @@ Documentação das alterações desenvolvidas no ramo `main`, organizadas para *
 | **Inclusão** | Medidores com barra sem designação; risco AEE sem cadastro (`InclusionFundebImpact`) |
 | **Fila admin** | Cards temáticos, filtros por domínio, download com ícone (`AdminSyncQueueIndexPresenter`) |
 
-| Ficheiros principais | `InclusionNeeExportQuery.php`, `InclusionNeeDesignacaoDataset.php`, `AdminSyncQueueIndexPresenter.php`, `admin/sync-queue/` |
+| Arquivos principais | `InclusionNeeExportQuery.php`, `InclusionNeeDesignacaoDataset.php`, `AdminSyncQueueIndexPresenter.php`, `admin/sync-queue/` |
 
 **Pós-deploy:** `npm run build` · `git tag 20260527-Notus` · validar export NEE e `/admin/sync-queue`.
 

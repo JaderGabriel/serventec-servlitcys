@@ -314,7 +314,7 @@ Variáveis existentes: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md). Hub opera
 | **Diário** | i-Educar (operacional escolas) |
 | **Semanal** | `weekly-mass-sync:run` (FUNDEB, Censo, repasses, geo) |
 | **Mensal** | Revisão discrepâncias P0; conferência capacidade/vagas |
-| **Anual** | Pós-Censo: SAEB, IDEB, actualização projeção demanda (Onda 1+) |
+| **Anual** | Pós-Censo: SAEB, IDEB, atualização projeção demanda (Onda 1+) |
 | **Por release** | Actualizar este estudo e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) |
 
 ### 11.3 Riscos e mitigação
@@ -345,7 +345,7 @@ Variáveis existentes: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md). Hub opera
 
 ## 13. Manutenção deste estudo
 
-1. Nova integração implementada → actualizar matriz §4, janela e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+1. Nova integração implementada → atualizar matriz §4, janela e [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
 2. Novo item de produto → linha em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §H (IDs INT-xx) ou §J (IDs HOR-xx, Horizonte).
 3. Integração com impacto no mapa comercial → [HORIZONTE.md](HORIZONTE.md) §11.2–§11.9.
 4. Alteração de lacuna PDF → [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) e hub dados públicos.

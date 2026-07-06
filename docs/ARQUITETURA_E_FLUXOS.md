@@ -1,4 +1,4 @@
-# Arquitectura e fluxos — servlitcys
+# Arquitetura e fluxos — servlitcys
 
 **Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
@@ -8,7 +8,7 @@ Documento de referência visual para **como o sistema se organiza**, **de onde v
 
 ---
 
-## 1. Arquitectura em camadas
+## 1. Arquitetura em camadas
 
 ```mermaid
 flowchart TB
@@ -336,4 +336,4 @@ mindmap
 
 ---
 
-*Diagramas mantidos neste ficheiro; evite duplicar listas longas noutros documentos — use link.*
+*Diagramas mantidos neste arquivo; evite duplicar listas longas noutros documentos — use link.*

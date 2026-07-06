@@ -12,7 +12,7 @@
 
 1. **Horizonte — tour e demonstração** — último passo do tour sem corte no rodapé; demo animada com mapa SVG do Brasil (4 cenas).
 2. **Modal municipal — repasses** — ano de referência, destaque FUNDEB e verbas educação (R$ e %).
-3. **Importação repasses Tesouro** — índice IBGE nacional, diagnóstico de falhas, mapa `cod_mun→IBGE` em ficheiro.
+3. **Importação repasses Tesouro** — índice IBGE nacional, diagnóstico de falhas, mapa `cod_mun→IBGE` em arquivo.
 4. **Vista calor** — pressão FUNDEB com gradiente por recorte visível.
 
 ---

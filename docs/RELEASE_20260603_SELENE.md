@@ -9,7 +9,7 @@ Marco **3.7.0** sobre **3.6.0** ([RELEASE_20260603_IRIS.md](RELEASE_20260603_IRI
 - **Analytics — Finanças mais rápidas:** bundle FUNDEB leve (sem Visão geral + amostra Matrículas na 1ª carga), perfil VAAF multi-ano opcional, Comparativo com preload só shell, memoização de `fundingImpactSnapshot` por pedido.
 - **FUNDEB na consultoria:** bloco «Base FUNDEB indicativa (VAAF × matrículas)» com ponderações e rodapé de base legal (Lei 14.113/2020, portarias FNDE) em Matrículas, Rede, Tempo Real e FUNDEB.
 - **Admin — hub de importação unificado:** `import-hub` (shell, action-card, callout) em CadÚnico, Geo, SAEB, Fila, FUNDEB e Dados públicos.
-- **Segurança:** `SafeOutboundUrl` e `ContainedPathResolver` em fetchers CSV/CadÚnico e paths de ficheiros.
+- **Segurança:** `SafeOutboundUrl` e `ContainedPathResolver` em fetchers CSV/CadÚnico e paths de arquivos.
 
 ## Destaques
 

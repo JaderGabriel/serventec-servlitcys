@@ -326,7 +326,7 @@ final class HorizonteImportHubStatusService
             [
                 'key' => 'transparency_sync',
                 'label' => __('Portal da Transparência'),
-                'description' => __('Convénios MEC/FNDE e empenhos educação/tecnologia — requer PORTAL_TRANSPARENCIA_API_KEY.'),
+                'description' => __('Convênios MEC/FNDE e empenhos educação/tecnologia — requer PORTAL_TRANSPARENCIA_API_KEY.'),
                 'source_id' => null,
                 'hub_anchor' => '#horizonte-hub',
                 'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',

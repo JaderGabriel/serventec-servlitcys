@@ -87,7 +87,7 @@ final class ExternalImportImpact
             ],
             default => [
                 'title' => __('Importação administrativa'),
-                'intro' => __('Tarefa enfileirada que actualiza dados usados pelos painéis municipais.'),
+                'intro' => __('Tarefa enfileirada que atualiza dados usados pelos painéis municipais.'),
                 'improves' => [],
                 'consumers' => [],
             ],
@@ -156,7 +156,7 @@ final class ExternalImportImpact
             ],
             'pedagogical' => [
                 __('1. Primeira carga: passo 4 (microdados) ou 2 (CSV)'),
-                __('2. Passo 3 (HTTP/IBGE) para actualizações posteriores'),
+                __('2. Passo 3 (HTTP/IBGE) para atualizações posteriores'),
                 __('3. Confirme pontos > 0 antes de abrir Desempenho'),
             ],
             'funding' => [

@@ -3,7 +3,7 @@
 **Data:** maio de 2026  
 **Foco:** recursos públicos da educação (FUNDEB, VAAR, programas FNDE, repasses União)
 
-> **Backlog priorizado:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **C. Financiamento** — IDs `FIN-01`…`FIN-06`).  
+> **Backlog priorizado:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **C. Financiamento** — IDs `FIN-01`…`FIN-06`).  
 > **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6.
 
 **Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md), [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)
@@ -124,7 +124,7 @@ Prioridade sugerida para secretarias que querem visão financeira integrada.
 | P3 | **Repasse estimado PNAE** | P1 × valor refeição × dias letivos (config) | R$ indicativo anual |
 | P4 | **Perda por cadastro incompleto** | (Matrículas sem campo) × valor ref. programa | Ligação a discrepâncias |
 
-**Impacto:** `OtherFundingRepository` ganha secção «Valor indicativo»; novos pesos em `peso_por_check` para `sem_transporte`, `sem_alimentacao` (se checks forem criados).
+**Impacto:** `OtherFundingRepository` ganha seção «Valor indicativo»; novos pesos em `peso_por_check` para `sem_transporte`, `sem_alimentacao` (se checks forem criados).
 
 ### 4.4 Censo e esforço (já iniciado — evolução financeira)
 
@@ -183,7 +183,7 @@ fundeb_municipio_references     (existente)
 | **Discrepâncias** | Coluna «impacto R$» já existe — alimentar com R3/P4 |
 | **Censo** | Custo financeiro do esforço restante |
 | **Diagnóstico Geral (Serventec)** | KPI «recursos em risco» consolidado |
-| **PDF** | Secção financiamentos com gráficos R4 |
+| **PDF** | Seção financiamentos com gráficos R4 |
 
 ### 5.4 Configuração e governança
 

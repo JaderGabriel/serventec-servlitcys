@@ -98,7 +98,7 @@ class CadunicoPullTerritorioCommand extends Command
             }
 
             $path = $fetch['path'];
-            $this->comment('      '.__('Ficheiro: :p', ['p' => $path]));
+            $this->comment('      '.__('Arquivo: :p', ['p' => $path]));
 
             if ($downloadOnly) {
                 $this->line('  ✓ '.__('Download concluído (import omitido).'));

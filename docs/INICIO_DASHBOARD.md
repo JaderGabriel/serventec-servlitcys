@@ -4,7 +4,7 @@
 
 > **Release:** [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) (5.4.0) · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) · **Índice:** [README.md](README.md)
 
-Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Utilizadores sem essa permissão são redireccionados para a consultoria municipal.
+Painel operacional após login (usuárioes com `canViewAdminDashboard()`). Usuárioes sem essa permissão são redirecionados para a consultoria municipal.
 
 ## Ordem dos blocos (4.0)
 
@@ -12,11 +12,11 @@ Painel operacional após login (utilizadores com `canViewAdminDashboard()`). Uti
 2. **KPIs** — bases i-Educar prontas, RX/FUNDEB, consultoria (municípios activos), filas de processamento.  
 3. **Mapa de municípios** — pins com semáforo RX e ligação a Cidades.  
 4. **Acesso rápido** — atalhos curados (`HomeQuickActionsCatalog`).  
-5. **Fluxo de dados · Mapa Mental** — arquitectura de integrações (`AdminSystemFlowStatus`).
+5. **Fluxo de dados · Mapa Mental** — arquitetura de integrações (`AdminSystemFlowStatus`).
 
 ## Acesso rápido
 
-Cabeçalho do painel (desde **5.4.0**): eyebrow **«Acesso rápido»** + título **«Operação diária»** — alinhado ao padrão visual das restantes secções do Início.
+Cabeçalho do painel (desde **5.4.0**): eyebrow **«Acesso rápido»** + título **«Operação diária»** — alinhado ao padrão visual das restantes seções do Início.
 
 Quatro zonas operacionais — **sem** atalhos para abas da consultoria analítica (exigem escolher município/ano). Destinos directos:
 
@@ -25,7 +25,7 @@ Quatro zonas operacionais — **sem** atalhos para abas da consultoria analític
 | Filas e monitorização | Filas de processamento, Dados públicos, Monitor de módulos |
 | Rede municipal | Conexões i-Educar, Municípios, Matriz FUNDEB (compatibilidade) |
 | Visão multi-município | RX, Horizonte (`canViewHorizonte`) |
-| Gestão | Utilizadores (`canManageUsers`) |
+| Gestão | Usuárioes (`canManageUsers`) |
 
 Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos na RX.
 

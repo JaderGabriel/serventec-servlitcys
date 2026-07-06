@@ -34,7 +34,7 @@ Refinamento **visual e de leitura** do **modal municipal Horizonte** — cabeça
 ### Backend (regiões IBGE)
 
 - `IbgeMunicipalityCatalog` expõe `micro_name` e `regiao_imediata_name` nos marcadores Horizonte.
-- Após deploy, **actualizar catálogo da UF** (ou limpar cache `ibge_municipality_catalog_uf:v2:*`) para preencher microrregião/região imediata em municípios já cacheados.
+- Após deploy, **atualizar catálogo da UF** (ou limpar cache `ibge_municipality_catalog_uf:v2:*`) para preencher microrregião/região imediata em municípios já cacheados.
 
 ---
 

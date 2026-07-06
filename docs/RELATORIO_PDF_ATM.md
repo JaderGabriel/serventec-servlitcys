@@ -4,7 +4,7 @@ Referência visual: relatório municipal Typst «Relatório Municipal Completo A
 
 ## Estrutura na SERVLITCYS
 
-| Secção ATM | Scope (`AnalyticsReportSectionScopeAssembler`) | Fonte de dados |
+| Seção ATM | Scope (`AnalyticsReportSectionScopeAssembler`) | Fonte de dados |
 |------------|-----------------------------------------------|----------------|
 | Indicadores Educacionais | `socioeconomic_and_network_volume` | i-Educar (overview), Censo municipal indexado, comparativo UF |
 | Rede Municipal | `municipal_network_ieducar` | Matrículas, distorção, fluxo INEP, rede |
@@ -19,7 +19,7 @@ Referência visual: relatório municipal Typst «Relatório Municipal Completo A
 | Território | `school_map_geo` | Mapa unidades escolares |
 | Publicação digital | `bibliography_qr` | `public_id`, QR, citação |
 
-Ficheiros principais:
+Arquivos principais:
 
 - `app/Support/Analytics/AnalyticsReportAtmCatalog.php` — catálogo e sumário
 - `app/Services/Analytics/AnalyticsReportSectionScopeAssembler.php` — consultas + `gaps[]`
@@ -37,7 +37,7 @@ Ficheiros principais:
 
 Códigos registados no anexo do PDF (`data_gaps`):
 
-| Código | Secção | Motivo |
+| Código | Seção | Motivo |
 |--------|--------|--------|
 | `ibge_socio_missing` | Indicadores | PIB/IDH/Gini comparativos — sem API IBGE/IPEA no produto |
 | `censo_municipio_missing` | Indicadores | Microdados Censo não indexados (`inep_censo_municipio_matriculas`) |
@@ -57,7 +57,7 @@ Códigos registados no anexo do PDF (`data_gaps`):
 
 - **Capa:** faixa institucional, métricas, mapa opcional e síntese executiva (`cover.blade.php` + `partials/pdf-styles.blade.php`).
 - **Rodapé:** barra de cor, marca SERVLITCYS, município/ano, referência bibliográfica e aviso legal (`footer.blade.php`).
-- **Secções ATM:** cabeçalho colorido por grupo (diagnóstico, financiamento, programas, gestão, publicação) e `page-break-before` entre secções.
+- **Secções ATM:** cabeçalho colorido por grupo (diagnóstico, financiamento, programas, gestão, publicação) e `page-break-before` entre seções.
 - **Território:** mapa composto em **PNG** (GD + fundo OSM) via `AnalyticsReportSchoolMapImageComposer` — evita SVG com pontos soltos no DomPDF; tabela das escolas no recorte.
 
 ## Apêndice Serventec

@@ -15,7 +15,7 @@ class SaebImportCsvCommand extends Command
     {
         $path = $this->resolvePath((string) $this->argument('file'));
         if ($path === null) {
-            $this->error(__('Ficheiro não encontrado. Tente caminho absoluto ou relativo ao projecto.'));
+            $this->error(__('Arquivo não encontrado. Tente caminho absoluto ou relativo ao projecto.'));
 
             return self::FAILURE;
         }

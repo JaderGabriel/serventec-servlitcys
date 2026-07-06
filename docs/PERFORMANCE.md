@@ -82,7 +82,7 @@ php artisan queue:work redis --queue=default,admin-sync --sleep=3 --tries=3
 | `PERFORMANCE_DEFER_LOGIN_AUDIT=true` | Auditoria de login não bloqueia o redirect |
 | `PERFORMANCE_SKIP_MAIL_ON_AUTH=true` | Sem bootstrap SMTP nas rotas de autenticação |
 | `PERFORMANCE_PULSE_SKIP_AUTH=true` | Sem gravação Pulse em login/logout/recuperação de senha |
-| `PERFORMANCE_USER_CITY_IDS_CACHE` | Cache dos municípios do utilizador municipal |
+| `PERFORMANCE_USER_CITY_IDS_CACHE` | Cache dos municípios do usuário municipal |
 | `PERFORMANCE_MAIL_SETTINGS_CACHE` | Uma leitura de `mail_settings` por hora (pedidos autenticados) |
 | `PERFORMANCE_HOME_DEFER_MAP_RX=true` | Início **não** consulta i-Educar por município no servidor; mapa RX via AJAX |
 | `PERFORMANCE_DEFER_OPS_ALERTS_HOME=true` | Alertas operacionais no Início após enviar a resposta |
@@ -99,7 +99,7 @@ O **POST `/login`** em si é leve (uma query + `Hash::check` + redirect). A sens
 
 Com `PERFORMANCE_HOME_DEFER_MAP_RX=true` (default), a página abre só com conexão/cores básicas; o browser chama `GET /dashboard/municipality-map/cadastro-snapshot` em paralelo (endpoint já existia).
 
-**Utilizadores municipais** vão para `/dashboard/analytics` — aí o atraso típico é **uma** ligação i-Educar para anos letivo (`ANALYTICS_INDEX_LIGHT_FILTERS=true` evita escolas/cursos no index).
+**Usuárioes municipais** vão para `/dashboard/analytics` — aí o atraso típico é **uma** ligação i-Educar para anos letivo (`ANALYTICS_INDEX_LIGHT_FILTERS=true` evita escolas/cursos no index).
 
 ## Painel analítico
 

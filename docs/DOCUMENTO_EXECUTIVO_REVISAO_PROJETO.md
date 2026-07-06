@@ -3,7 +3,7 @@
 **Data de referência:** 16 de abril de 2026 (atualizado maio/2026)  
 **Âmbito:** revisão de arquitetura, gargalos, padrão Laravel, dívida técnica e recomendações priorizadas.
 
-> **Backlog técnico:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (secção **E**).  
+> **Backlog técnico:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **E**).  
 > **Decisões vivas:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). **Índice:** [README.md](README.md).
 
 ---
@@ -78,7 +78,7 @@ Arquivos como `MatriculaChartQueries.php` concentram **milhares de linhas** de S
 
 **A melhorar:**
 
-- **Único ponto de verdade** para “payload vazio” do painel: hoje os arrays default no controlador devem espelhar os repositórios (foi **corrigido** para inclusão — ver secção 8).
+- **Único ponto de verdade** para “payload vazio” do painel: hoje os arrays default no controlador devem espelhar os repositórios (foi **corrigido** para inclusão — ver seção 8).
 - **API JSON** sem autenticação para arquivos SAEB: adequado se o conteúdo for público; garantir **rate limit** (já existe throttle), **CORS** se consumido por browsers externos, e monitorização de abuso.
 - **Comandos Artisan** longos: garantir **timeouts**, **memory limits** e idempotência nas importações (SAEB, geo, etc.).
 

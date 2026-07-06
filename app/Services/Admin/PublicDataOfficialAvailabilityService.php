@@ -270,8 +270,8 @@ final class PublicDataOfficialAvailabilityService
                 $localMax === 0 ? 'attention' : 'new_available',
                 $localMax === 0
                     ? __('Microdados INEP presentes — indexação Censo ainda não executada.')
-                    : __('Microdados INEP actualizados após a última indexação local.'),
-                __('Ficheiro: :path', ['path' => basename((string) $mdPath)]),
+                    : __('Microdados INEP atualizados após a última indexação local.'),
+                __('Arquivo: :path', ['path' => basename((string) $mdPath)]),
                 $routine,
                 'php artisan inep:index-censo-geo-agg (ou pipeline geo passo 3)',
             );

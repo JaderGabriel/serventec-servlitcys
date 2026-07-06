@@ -4,7 +4,7 @@
 
 ## Resumo
 
-> **Nota:** esta release foi documentada com data `20260611` (incorrecta). O conteúdo está consolidado em **4.4.0** · `20260607a-Ananke` — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md).
+> **Nota:** esta release foi documentada com data `20260611` (incorreta). O conteúdo está consolidado em **4.4.0** · `20260607a-Ananke` — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md).
 
 Minor **4.3.0** sobre **4.2.0** (Clio — portaria VAAT/VAAR e gráfico RX inicial):
 
@@ -16,7 +16,7 @@ Minor **4.3.0** sobre **4.2.0** (Clio — portaria VAAT/VAAR e gráfico RX inici
 
 ### Painel RX — portaria FUNDEB completa
 
-- Secção dedicada: KPIs nacionais, tabela IBGE, VAAT portaria × DB, lacunas por município, gráfico empilhado.
+- Seção dedicada: KPIs nacionais, tabela IBGE, VAAT portaria × DB, lacunas por município, gráfico empilhado.
 - Rodapé **Fonte** do gráfico simplificado (`Fonte: CSV receita FNDE — :portaria.`).
 
 ### Início — gráfico complementações FUNDEB

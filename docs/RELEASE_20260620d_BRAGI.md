@@ -12,7 +12,7 @@
 
 1. **Horizonte — mapa e recorte** — cliques em bolhas UF e UFs prioritárias; selector «Recorte» com 27 estados; filtros só no dock lateral; tour in-app na 1.ª visita; demonstração animada «Como usar»; KPIs sem vazamento entre cargas; formatação financeira (FUNDEB em R$).
 2. **Sync BR em screen** — runner com `setsid`, `SCREENDIR` em `storage/screen/`, reinício após falha, detecção de sessão corrigida e aviso `loginctl enable-linger`.
-3. **UI pt-BR** — menu «Usuários» (antes «Utilizadores»), login, LGPD, início e telas admin alinhados a `/users`.
+3. **UI pt-BR** — menu «Usuários» (antes «Usuárioes»), login, LGPD, início e telas admin alinhados a `/users`.
 
 ---
 

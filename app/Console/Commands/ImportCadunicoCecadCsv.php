@@ -26,7 +26,7 @@ class ImportCadunicoCecadCsv extends Command
         );
 
         if ($path === null) {
-            $this->error(__('Ficheiro inválido ou fora de storage/app e cadunico/cecad.'));
+            $this->error(__('Arquivo inválido ou fora de storage/app e cadunico/cecad.'));
 
             return self::FAILURE;
         }

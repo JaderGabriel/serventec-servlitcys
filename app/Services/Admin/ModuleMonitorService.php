@@ -468,7 +468,7 @@ final class ModuleMonitorService
                 return __('Recolha agendada pendente — execute module-monitor:collect ou aguarde o agendamento.');
             }
 
-            return __('Sem telemetria Pulse/sync no período seleccionado.');
+            return __('Sem telemetria Pulse/sync no período selecionado.');
         }
 
         return __('Estado indeterminado — execute module-monitor:collect.');
@@ -774,7 +774,7 @@ final class ModuleMonitorService
             return __('Sem falhas no período. Atenção: fila em modo sync (jobs na requisição HTTP).');
         }
 
-        return __('Operação estável no período seleccionado.');
+        return __('Operação estável no período selecionado.');
     }
 
  

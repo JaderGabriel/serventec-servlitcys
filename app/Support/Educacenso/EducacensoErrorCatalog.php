@@ -68,7 +68,7 @@ final class EducacensoErrorCatalog
                 'code' => 'EDU-CEN-103',
                 'severity' => 'warning',
                 'message' => __('Escola declarada no Educacenso sem matrículas activas no i-Educar.'),
-                'suggestion' => __('Confira situação da escola e matrículas no ano letivo seleccionado.'),
+                'suggestion' => __('Confira situação da escola e matrículas no ano letivo selecionado.'),
             ],
             'EDU-CEN-501' => [
                 'code' => 'EDU-CEN-501',

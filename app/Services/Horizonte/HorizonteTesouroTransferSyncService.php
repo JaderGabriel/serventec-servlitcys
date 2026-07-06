@@ -138,7 +138,7 @@ final class HorizonteTesouroTransferSyncService
 
         return [
             'success' => true,
-            'message' => __('Repasses Tesouro: :total município(s) actualizados — :detalhe.', [
+            'message' => __('Repasses Tesouro: :total município(s) atualizados — :detalhe.', [
                 'total' => (string) $totalImported,
                 'detalhe' => implode(' · ', $yearLabels),
             ]),

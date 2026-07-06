@@ -85,7 +85,7 @@ final class HorizonteFortnightlyFeedPipeline
             'phases' => $phases,
             'success' => $queue === [] ? true : null,
             'message' => $queue === []
-                ? __('Nenhuma fase seleccionada — ajuste os skips.')
+                ? __('Nenhuma fase selecionada — ajuste os skips.')
                 : null,
             'staged' => true,
         ];

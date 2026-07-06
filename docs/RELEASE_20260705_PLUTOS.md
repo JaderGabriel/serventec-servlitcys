@@ -17,7 +17,7 @@ Codename **Ploutos** (mitologia grega — abundância e finanças públicas): en
 ### Scoring e mapa
 
 - Dimensões novas: `fiscal_capacity`, `learning_trajectory`, `enrollment_momentum`, `inclusion_gap`.
-- Pesos actualizados em `config/horizonte.php`.
+- Pesos atualizados em `config/horizonte.php`.
 - SAEB: série até **4 ciclos** com tendência ↑↓ no cabeçalho do modal.
 
 ### Modal municipal

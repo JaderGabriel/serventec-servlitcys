@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **7.0.1** · tag **`20260705b-Moneta`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **7.0.2** · tag **`20260706-Hermes`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -13,11 +13,13 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 1 | **7.0.0** | `20260705-Ploutos` | 05/07 | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) | SICONFI, Transparência, tendência SAEB, modal enriquecido, scoring ampliado |
 | 2 | **7.0.1** | `20260705b-Moneta` | 05/07 | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) | Tooltip FUNDEB por UF; `horizonte:warm-map-cache` estável |
 
+| 3 | **7.0.2** | `20260706-Hermes` | 06/07 | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) | pt-BR unificado (UI, menus, documentação) |
+
 ---
 
-## Patches em `main` (sem bump de versão)
+## Patches em `main` integrados em 7.0.2
 
-Commits após **7.0.1** — integrar na próxima release ou documentar aqui até haver tag.
+Commits entre **7.0.1** e **7.0.2** (sem bump intermédio):
 
 | Commit (ref.) | Data (ref.) | Entrega |
 |---------------|-------------|---------|

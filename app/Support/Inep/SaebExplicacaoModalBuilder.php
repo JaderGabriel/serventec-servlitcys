@@ -153,7 +153,7 @@ final class SaebExplicacaoModalBuilder
         $secoes[] = [
             'titulo' => __('Fonte desta sincronização'),
             'paragrafos' => [
-                __('Fonte efectiva gravada no JSON: :f.', ['f' => $fonteEfetiva]),
+                __('Fonte efetiva gravada no JSON: :f.', ['f' => $fonteEfetiva]),
                 __('URLs tentadas nesta ordem (APIs públicas ou arquivos remotos configurados): :t', ['t' => $tentativasTxt]),
                 __('Este texto é gerado automaticamente após cada importação e só é reescrito quando o conjunto de pontos altera (hash de conteúdo).'),
             ],

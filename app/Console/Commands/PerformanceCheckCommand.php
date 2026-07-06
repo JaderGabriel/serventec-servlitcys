@@ -25,7 +25,7 @@ class PerformanceCheckCommand extends Command
                 ['PULSE_CACHE_DRIVER', (string) (config('pulse.cache') ?: '(default cache)')],
                 ['PULSE_INGEST_DRIVER', (string) config('pulse.ingest.driver')],
                 ['REDIS_CLIENT (.env)', $diag['client_env']],
-                ['REDIS_CLIENT (efectivo)', $diag['client_effective']],
+                ['REDIS_CLIENT (efetivo)', $diag['client_effective']],
                 ['REDIS_HOST:PORT', $diag['host'].':'.$diag['port']],
                 ['Ext. phpredis', RedisProbe::phpredisExtensionAvailable() ? 'sim' : 'não'],
                 ['Pacote predis', RedisProbe::predisPackageAvailable() ? 'sim' : 'não'],

@@ -334,7 +334,7 @@ final class SaebPlanilhaInepImportService
     {
         $tmp = tempnam(sys_get_temp_dir(), 'saeb_planilha_'.$year.'_');
         if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar ficheiro temporário.'));
+            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
         }
         $path = $tmp.'.csv';
         @unlink($tmp);
@@ -346,7 +346,7 @@ final class SaebPlanilhaInepImportService
     {
         $tmp = tempnam(sys_get_temp_dir(), 'saeb_planilhas_merge_');
         if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar ficheiro temporário.'));
+            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
         }
         $path = $tmp.'.csv';
         @unlink($tmp);
@@ -399,7 +399,7 @@ final class SaebPlanilhaInepImportService
             return realpath($base) ?: $base;
         }
 
-        throw new \RuntimeException(__('Ficheiro local não encontrado: :p', ['p' => $urlOrPath]));
+        throw new \RuntimeException(__('Arquivo local não encontrado: :p', ['p' => $urlOrPath]));
     }
 
     /**

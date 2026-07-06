@@ -127,7 +127,7 @@ final class ComparativoExportRowsBuilder
     public static function columnLabels(): array
     {
         return [
-            __('Secção'),
+            __('Seção'),
             __('Cidade'),
             __('Ano base'),
             __('Ano anterior'),

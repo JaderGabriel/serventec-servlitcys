@@ -8,7 +8,7 @@ use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Support\Facades\Http;
 
 /**
- * Portarias, fontes oficiais e verificação de actualizações FNDE/Tesouro.
+ * Portarias, fontes oficiais e verificação de atualizações FNDE/Tesouro.
  */
 final class FundebOfficialSourcesService
 {
@@ -109,7 +109,7 @@ final class FundebOfficialSourcesService
             'source' => 'CKAN FNDE',
             'status' => $reachable ? 'ok' : 'warning',
             'message' => $reachable
-                ? __('API acessível. Recurso efectivo: :id', ['id' => ($diag['effective_resource_id'] ?? '') ?: __('descoberta automática')])
+                ? __('API acessível. Recurso efetivo: :id', ['id' => ($diag['effective_resource_id'] ?? '') ?: __('descoberta automática')])
                 : __('CKAN inacessível — verifique rede ou configure IEDUCAR_FUNDEB_CKAN_RESOURCE_ID.'),
             'action' => $reachable ? null : __('Testar importação FUNDEB na fila'),
         ];

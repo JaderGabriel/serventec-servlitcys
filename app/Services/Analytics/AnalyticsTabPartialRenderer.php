@@ -382,7 +382,7 @@ final class AnalyticsTabPartialRenderer
     ): Response {
         $sectionData = $this->safeLoader->load(
             fn () => $municipalityHealthRepository->section($section, $city, $filters),
-            ['error' => __('Secção indisponível.')],
+            ['error' => __('Seção indisponível.')],
             match ($section) {
                 MunicipalityHealthSections::FUNDEB => __('VAAF e FUNDEB'),
                 MunicipalityHealthSections::PROGRAMAS => __('Programas'),

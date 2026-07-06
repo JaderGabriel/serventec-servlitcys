@@ -334,7 +334,7 @@
                         {{ __('A carregar cores de cadastro RX (:ano)…', ['ano' => $vigenteAno]) }}
                     </p>
                     <p class="serv-map-rx-status__detail">
-                        {{ __('Marcadores azul-claro serão actualizados conforme a meta. Tempo:') }}
+                        {{ __('Marcadores azul-claro serão atualizados conforme a meta. Tempo:') }}
                         <span class="tabular-nums font-semibold" x-text="cadastroElapsedSeconds + ' s'"></span>
                     </p>
                 </div>
@@ -346,7 +346,7 @@
                 </span>
                 <div class="min-w-0">
                     <p class="serv-map-rx-status__title">
-                        {{ __('Mapa actualizado — cores RX (:ano) aplicadas.', ['ano' => $vigenteAno]) }}
+                        {{ __('Mapa atualizado — cores RX (:ano) aplicadas.', ['ano' => $vigenteAno]) }}
                     </p>
                     <p class="serv-map-rx-status__detail">
                         <span x-show="cadastroSnapshotCount > 0">
@@ -368,7 +368,7 @@
                     <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
                 </span>
                 <div class="min-w-0 flex-1">
-                    <p class="serv-map-rx-status__title">{{ __('Não foi possível actualizar as cores RX') }}</p>
+                    <p class="serv-map-rx-status__title">{{ __('Não foi possível atualizar as cores RX') }}</p>
                     <p class="serv-map-rx-status__detail" x-text="cadastroError"></p>
                 </div>
                 <button

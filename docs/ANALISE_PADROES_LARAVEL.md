@@ -2,7 +2,7 @@
 
 **Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
-> **Índice:** [README.md](README.md) · **Arquitectura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Decisões técnicas:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · **Segurança:** [SEGURANCA.md](SEGURANCA.md) · **Testes:** [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md)
+> **Índice:** [README.md](README.md) · **Arquitetura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Decisões técnicas:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · **Segurança:** [SEGURANCA.md](SEGURANCA.md) · **Testes:** [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md)
 
 Auditoria estática do código em `app/`, `resources/` e `tests/`, comparada com as convenções oficiais do [Laravel](https://laravel.com/docs) e boas práticas de MVC em aplicações de médio/grande porte. Não substitui revisão de segurança dedicada nem análise de performance em produção.
 
@@ -20,7 +20,7 @@ em vez do MVC “de livro” (Controller fino + Model gordo).
 
 | Indicador | Valor aproximado | Avaliação |
 |-----------|------------------|-----------|
-| Ficheiros PHP em `app/` | ~528 | Codebase substancial |
+| Arquivos PHP em `app/` | ~528 | Codebase substancial |
 | Controllers | 48 | Vários monolíticos |
 | Form Requests | 18 | Cobertura parcial (~38% dos controllers) |
 | Policies | 6 | `PlatformFeaturePolicy` + gates; hubs admin com policy |
@@ -91,7 +91,7 @@ flowchart LR
 | **Policy** | Autorização por recurso | 6 policies + gates `PlatformFeaturePolicy`; `User::canX()` delega à policy |
 | **Service** | Caso de uso / orquestração | 118 services — padrão dominante para importações e sync |
 | **Repository** | Abstracção de persistência | 19 repos; i-Educar + snapshots; **sem interfaces** |
-| **Support** | — (não é camada Laravel) | 225 ficheiros: queries SQL, builders PDF, presenters |
+| **Support** | — (não é camada Laravel) | 225 arquivos: queries SQL, builders PDF, presenters |
 | **Job** | Trabalho assíncrono | PDF analytics, sync admin, importações |
 | **View / Blade** | Apresentação | Components `<x-*>` bons; alguns `@php` pesados |
 | **Livewire** | UI reactiva | 13 cards Pulse |
@@ -111,7 +111,7 @@ flowchart LR
 
 ### 4.2 Anti-padrão: Controller gordo
 
-| Severidade | Ficheiro | Linhas | Problema |
+| Severidade | Arquivo | Linhas | Problema |
 |------------|----------|--------|----------|
 | **Crítico** | `app/Http/Controllers/AnalyticsDashboardController.php` | **~276** (era ~2086) | P0 concluído — `AnalyticsIndexAssembler` + `AnalyticsTabPartialDispatcher`; restam export, diagnóstico, filter options |
 | **Alto** | `app/Http/Controllers/Admin/PublicDataImportController.php` | 527 | Hub de importações, validação inline, dispatch de jobs |
@@ -122,7 +122,7 @@ flowchart LR
 
 ### 4.3 Anti-padrão: lógica fora do “M” e do “C”
 
-| Severidade | Ficheiro | Linhas | Problema |
+| Severidade | Arquivo | Linhas | Problema |
 |------------|----------|--------|----------|
 | **Crítico** | `app/Support/Ieducar/MatriculaChartQueries.php` | **~1 046** (era 4 153) | Facade + volume/base; delega distorção, vagas e distribuição |
 | **Alto** | `app/Support/Ieducar/MatriculaDistorcaoChartQueries.php` | ~1 171 | Gráficos e KPIs de distorção idade/série |
@@ -269,7 +269,7 @@ Substitui o dispatcher `run()` com `match ($action)`.
 ### 8.1 Convenção actual
 
 ```text
-Service     → orquestra IO, jobs, cache, ficheiros
+Service     → orquestra IO, jobs, cache, arquivos
 Repository  → queries Eloquent / i-Educar por cidade
 Support     → SQL bruto, builders, normalizers, catálogos
 ```
@@ -433,7 +433,7 @@ Use antes de merge em áreas sensíveis:
 - [ ] Query repetida → scope no Model ou método no Repository?
 - [ ] Sem `env()` — só `config()`?
 - [ ] Teste unitário para lógica nova pura; feature test se altera fluxo HTTP?
-- [ ] Ficheiro novo < 400 linhas (ou justificação de catálogo)?
+- [ ] Arquivo novo < 400 linhas (ou justificação de catálogo)?
 
 ---
 

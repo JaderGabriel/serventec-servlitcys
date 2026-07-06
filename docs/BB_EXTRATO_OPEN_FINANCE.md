@@ -6,7 +6,7 @@ Integração do extrato do [Banco do Brasil](https://demonstrativos.apps.bb.com.
 
 ## 1. Download automático do CSV (implementado)
 
-O serviço `BbExtratoCsvFetcher` grava o ficheiro em:
+O serviço `BbExtratoCsvFetcher` grava o arquivo em:
 
 ```text
 storage/app/funding/bb_extrato/{IBGE}_{ANO}.csv
@@ -16,9 +16,9 @@ storage/app/funding/bb_extrato/{IBGE}_{ANO}.csv
 
 ### Ordem de resolução
 
-1. **Cache local** — se o ficheiro existe e tem menos de `IEDUCAR_BB_EXTRATO_REFRESH_DAYS` dias, reutiliza.
+1. **Cache local** — se o arquivo existe e tem menos de `IEDUCAR_BB_EXTRATO_REFRESH_DAYS` dias, reutiliza.
 2. **Download HTTP** — URL de `IEDUCAR_BB_EXTRATO_URL_TEMPLATE` (prioridade) ou `IEDUCAR_BB_EXTRATO_EXPORT_URL`.
-3. **Upload manual** — se não há URL, mas o ficheiro já foi copiado para o caminho acima (SFTP, volume, etc.).
+3. **Upload manual** — se não há URL, mas o arquivo já foi copiado para o caminho acima (SFTP, volume, etc.).
 
 ### Variáveis `.env`
 
@@ -40,7 +40,7 @@ storage/app/funding/bb_extrato/{IBGE}_{ANO}.csv
 IEDUCAR_BB_EXTRATO_URL_TEMPLATE=https://intranet.prefeitura.example/export/bb/{ibge}_{ano}.csv
 ```
 
-**Um ficheiro global** (uma conta, um CSV para todos — menos comum):
+**Um arquivo global** (uma conta, um CSV para todos — menos comum):
 
 ```env
 IEDUCAR_BB_EXTRATO_EXPORT_URL=https://storage.example.com/extrato-fundeb-atual.csv
@@ -62,7 +62,7 @@ Depois: **Admin → Dados públicos → Repasses** (município + ano).
 - Ano visível na linha (`2025` ou data `dd/mm/2025`).
 - Valores em formato brasileiro (`1.234,56`).
 
-O portal [demonstrativos.apps.bb.com.br/extrato](https://demonstrativos.apps.bb.com.br/extrato) não expõe URL pública permanente: em geral a prefeitura exporta o CSV e publica numa URL interna (template) ou envia o ficheiro para `storage/`.
+O portal [demonstrativos.apps.bb.com.br/extrato](https://demonstrativos.apps.bb.com.br/extrato) não expõe URL pública permanente: em geral a prefeitura exporta o CSV e publica numa URL interna (template) ou envia o arquivo para `storage/`.
 
 ### Segurança
 
@@ -91,7 +91,7 @@ Hoje o Open Finance **não** busca lançamentos. Serve para indicar na UI (**Fin
 4. Chamadas às APIs de **contas** e **transações** (escopos `accounts`, `transactions`, etc.).
 5. Filtro de créditos FUNDEB/FNDE (mesmas keywords do CSV) e gravação em `municipal_transfer_snapshots` com `fonte = bb_open_finance` (ou reutilizar `bb_extrato`).
 
-Enquanto isso, use **download automático** ou **upload** na secção 1.
+Enquanto isso, use **download automático** ou **upload** na seção 1.
 
 ### Referências externas
 

@@ -4,7 +4,7 @@
 
 ## Resumo
 
-Marco **3.3.0** sobre **3.2.0** ([RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md)): **monitor de módulos** admin (saúde por área, falhas e lentidões via Pulse + filas) e **acesso operacional** para perfil Utilizador/Municipal (documentação, filas próprias e exportação NEE).
+Marco **3.3.0** sobre **3.2.0** ([RELEASE_20260527_NOTUS.md](RELEASE_20260527_NOTUS.md)): **monitor de módulos** admin (saúde por área, falhas e lentidões via Pulse + filas) e **acesso operacional** para perfil Usuário/Municipal (documentação, filas próprias e exportação NEE).
 
 ## Destaques
 
@@ -14,16 +14,16 @@ Marco **3.3.0** sobre **3.2.0** ([RELEASE_20260527_NOTUS.md](RELEASE_20260527_NO
 - Cartões por módulo (consultoria, sincronização, infra) com semáforo e métricas Pulse.
 - Histórico unificado de falhas e lentidões (24 h / 7 dias).
 
-### Acesso — utilizador e municipal
+### Acesso — usuário e municipal
 
 - Leitor de documentação em `/documentacao` (índice temático, sem docs de deploy admin).
-- Filas em `/filas` (apenas tarefas do próprio utilizador).
+- Filas em `/filas` (apenas tarefas do próprio usuário).
 - Exportação NEE detalhada na aba Inclusão (CSV/Excel imediato ou fila).
 
 ### Documentação
 
 - Índice `docs/README.md` reorganizado por percurso lógico do sistema.
-- `PERFIS_UTILIZADOR.md` actualizado com novas permissões.
+- `PERFIS_UTILIZADOR.md` atualizado com novas permissões.
 
 ## Deploy
 

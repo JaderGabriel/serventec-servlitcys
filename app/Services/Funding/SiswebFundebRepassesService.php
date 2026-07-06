@@ -11,7 +11,7 @@ use Illuminate\Support\Str;
 /**
  * Repasses FUNDEB via SISWEB (Transferências Constitucionais) ou export configurável.
  *
- * O portal APEX é interactivo; por omissão usa o espelho CKAN municipal (mesma base STN).
+ * O portal APEX é interativo; por omissão usa o espelho CKAN municipal (mesma base STN).
  *
  * @see https://sisweb.tesouro.gov.br/apex/f?p=2600:1
  */

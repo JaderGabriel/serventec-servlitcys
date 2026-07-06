@@ -99,7 +99,7 @@ return [
         'last_import' => 'Última gravação local (quando os dados foram importados para esta instalação):',
         'portarias' => 'Portarias / planilhas CSV — receita total e VAAT por município, usadas na importação.',
         'fontes' => 'Outras fontes — API de dados abertos, PDFs de referência estadual e páginas do FNDE.',
-        'updates' => 'Verificação de actualizações — compara a data do ficheiro remoto com a última importação local e sugere reimportar se houver versão mais recente.',
+        'updates' => 'Verificação de atualizações — compara a data do arquivo remoto com a última importação local e sugere reimportar se houver versão mais recente.',
     ],
 
     'matrix' => [

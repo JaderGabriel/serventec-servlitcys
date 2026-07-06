@@ -11,9 +11,9 @@
 1. **Modal financeiro** — timeline FNDE (referência) → Tesouro CKAN (repasses) → exercício em curso (realizado × previsão); notas de consultoria; centavos; oculta verbas educação redundantes.
 2. **SIDRA** — importa `populacao_total` além de 4–17; `--phase=sidra_demography --reset` para reprocessar UFs.
 3. **Repasses nacional** — upsert em chunks (evita limite MySQL de placeholders); índice IBGE do catálogo mais rápido.
-4. **Feed Horizonte** — `--reset` em fases isoladas SAEB/IBGE/SIDRA; hub CLI actualizado.
+4. **Feed Horizonte** — `--reset` em fases isoladas SAEB/IBGE/SIDRA; hub CLI atualizado.
 5. **Analytics** — controller fino (~276 linhas); `AnalyticsIndexAssembler`, `AnalyticsTabPartialDispatcher`, policies e chart queries partidas.
-6. **Documentação** — hub visual com secções/ícones; [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) actualizado.
+6. **Documentação** — hub visual com seções/ícones; [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) atualizado.
 
 ---
 

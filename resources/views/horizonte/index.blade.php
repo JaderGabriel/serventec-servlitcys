@@ -480,7 +480,7 @@
                     <div class="serv-horizonte-rail__card">
                         <h3 class="text-xs font-bold uppercase tracking-wide text-slate-500">{{ __('Abordar primeiro') }}</h3>
                         <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ __('Clique para centrar no mapa.') }}</p>
-                        <p x-show="!pageLoading && topProspects.length === 0" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Seleccione uma UF ou aguarde dados.') }}</p>
+                        <p x-show="!pageLoading && topProspects.length === 0" x-cloak class="mt-3 text-sm text-slate-500">{{ __('Selecione uma UF ou aguarde dados.') }}</p>
                         <ol x-show="topProspects.length > 0" class="mt-2 space-y-1.5">
                             <template x-for="(p, idx) in topProspects.slice(0, 8)" :key="p.ibge">
                                 <li>
@@ -569,7 +569,7 @@
                                 </label>
                             </div>
                         </div>
-                        <p x-show="!pageLoading && isOverviewMode" x-cloak class="text-sm text-slate-500">{{ __('Seleccione uma UF para ver a lista filtrada.') }}</p>
+                        <p x-show="!pageLoading && isOverviewMode" x-cloak class="text-sm text-slate-500">{{ __('Selecione uma UF para ver a lista filtrada.') }}</p>
                         <p x-show="!pageLoading && isRegionalMode && sortedProspects.length === 0" x-cloak class="text-sm text-slate-500">{{ __('Nenhum município no recorte.') }}</p>
                         <div x-show="sortedProspects.length > 0 && isRegionalMode" class="overflow-x-auto">
                             <table class="min-w-full text-xs">
@@ -624,7 +624,7 @@
                                 <div class="flex justify-between gap-2"><dt class="text-slate-500">{{ __('Triad completa') }}</dt><dd class="font-medium tabular-nums" x-text="pageLoading ? '…' : Number(coverage.with_full_triad ?? 0).toLocaleString('pt-BR')"></dd></div>
                             </dl>
                             <div x-show="!pageLoading && (meta.needs_refresh || totalMarkers === 0)" x-cloak class="mt-4 rounded-lg bg-slate-900 dark:bg-slate-950 px-4 py-3">
-                                <p class="text-xs text-slate-400 mb-2">{{ __('Actualizar dados') }}</p>
+                                <p class="text-xs text-slate-400 mb-2">{{ __('Atualizar dados') }}</p>
                                 <code class="block text-xs text-emerald-300 font-mono break-all" x-text="meta.refresh_command || 'php artisan horizonte:fortnightly-feed'"></code>
                                 @if ($canRefreshData)
                                     <a :href="meta.hub_url || @js(route('admin.horizonte-import.index'))" class="mt-2 inline-block text-xs font-medium text-sky-300 hover:underline">{{ __('Hub Horizonte') }} →</a>

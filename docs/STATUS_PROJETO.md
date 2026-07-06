@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **7.0.1** · release `20260705b-Moneta` · **Ramo:** `main` · **Última revisão:** 2026-07-06
+**Versão em produção:** **7.0.2** · release `20260706-Hermes` · **Ramo:** `main` · **Última revisão:** 2026-07-06
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (7.0.1)
+## Mapa de capacidades (7.0.2)
 
 ```mermaid
 flowchart TB
@@ -103,8 +103,8 @@ flowchart TB
 | Inclusão — risco financeiro turma AEE sem cadastro deficiência | Implementado (3.2.0) |
 | Admin — fila processamento (cards temáticos, download com ícone) | Implementado (3.2.0) |
 | Admin — monitor de módulos (`/admin/monitor-modulos`, saúde + histórico incidentes) | Implementado (3.3.0) |
-| Utilizador/Municipal — documentação (`/documentacao`) e filas (`/filas`) | Implementado (3.3.0) |
-| Inclusão — exportação NEE para utilizador/municipal (não só admin) | Implementado (3.3.0) |
+| Usuário/Municipal — documentação (`/documentacao`) e filas (`/filas`) | Implementado (3.3.0) |
+| Inclusão — exportação NEE para usuário/municipal (não só admin) | Implementado (3.3.0) |
 | Painel RX (`/dashboard/rx`) — legendas unificadas, KPIs `serv-home-kpi`, tons sky/teal | Implementado (patch pós-3.3.0) |
 | Painel RX — gráfico complementações FUNDEB (portaria consolidada vs cadastro em andamento) | Implementado (4.2.0; painel completo 4.3.0) |
 | Início — gráfico complementações FUNDEB após mapa municipal | Implementado (4.3.0) |
@@ -147,7 +147,7 @@ flowchart TB
 | Identidade visual — paleta base azul (`blue` + `sky` secundário) | Implementado (6.0.0) — [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) |
 | Monitor de módulos — recolha diária (`module-monitor:collect`) + sondas estruturais | Implementado (5.2.0) — substituído por intervalo 10 min (5.5.0) |
 | Horizonte — hub abastecimento em Dados públicos (`#horizonte-hub`) | Implementado (5.2.0) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 |
-| Horizonte — acesso admin e utilizador (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |
+| Horizonte — acesso admin e usuário (`canViewHorizonte`; municipal 403) | Implementado (5.2.0) |
 | Horizonte — scoring v2 (demanda social CadÚnico, SIDRA 4–17, repasses Tesouro) | Implementado (5.4.0) — [HORIZONTE.md](HORIZONTE.md) §5 |
 | Horizonte — feed 9 fases (CadÚnico, SIDRA, Repasses) + fix cache Closure | Implementado (5.4.0) — evoluído para 11 fases incl. Educacenso e alertas MEC/FNDE |
 | Horizonte — mapa performante (UF prioritária, cap 400 pontos, avisos UI) | Implementado (5.4.0) |
@@ -164,15 +164,16 @@ flowchart TB
 | Horizonte — overlay microrregiões; SAEB LP/MAT (dois últimos anos); gráfico matrículas após canvas visível | Implementado (6.5.0) — [HORIZONTE.md](HORIZONTE.md) |
 | Horizonte — Educacenso reimportação nacional 2020–2024 (`horizonte:sync-educacenso --reset --all`) | Implementado (6.5.0) — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md) |
 | Horizonte — enriquecimento SICONFI + Transparência + scoring ampliado (`horizonte:sync-siconfi`, `horizonte:sync-transparency`) | Implementado (7.0.0) — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) |
-| Horizonte — tooltip FUNDEB por UF (rank, total, % federal) + `horizonte:warm-map-cache` estável | Implementado (7.0.1) — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
+| Idioma pt-BR unificado (UI, menus, documentação viva, `PADRAO_DOCUMENTACAO`) | Implementado (7.0.2) — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
+| Horizonte — índice de roadmaps (`ROADMAP_INDICE.md`) e entregas julho/2026 | Implementado (7.0.2) |
 | Horizonte — hub abastecimento unificado (`/admin/horizonte/abastecimento`) | Implementado (patch 07/2026) — [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) |
-| Horizonte — checkpoint Educacenso persistente (snapshot ficheiro + inferência BD) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §9.1 |
+| Horizonte — checkpoint Educacenso persistente (snapshot arquivo + inferência BD) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §9.1 |
 | Horizonte — SICONFI 1 UF por execução (ordem DF→MG por nº municípios) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §9.2 |
 | Horizonte — modal cards Finanças / Pedagogia / Social (layout compacto, grid adaptativo) | Implementado (patch 07/2026) — [HORIZONTE.md](HORIZONTE.md) §6 |
 | Início — cabeçalho Acesso rápido (eyebrow + «Operação diária») | Implementado (5.4.0) |
 | Verificação diária dados públicos (`public-data:check-official`, notificação admins) | Implementado (5.0.0) |
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
-| Notificações — feed completo só no sino (sem duplicar menu utilizador) | Implementado (5.0.0) |
+| Notificações — feed completo só no sino (sem duplicar menu usuário) | Implementado (5.0.0) |
 | Educacenso — conferência 1ª etapa (upload, cruzamento i-Educar, painel Censo) | Implementado (4.4.8) |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |

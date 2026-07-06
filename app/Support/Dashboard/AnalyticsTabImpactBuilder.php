@@ -12,7 +12,7 @@ use App\Support\Ieducar\FundebReferenceDisplay;
  */
 final class AnalyticsTabImpactBuilder
 {
-    /** Abas sem status na faixa (Visão geral; Diagnóstico usa só o velocímetro na secção Qualidade). */
+    /** Abas sem status na faixa (Visão geral; Diagnóstico usa só o velocímetro na seção Qualidade). */
     public const TABS_WITHOUT_STATUS = ['overview', 'municipality_health'];
 
     /** Abas sem bloco «Impacto no saldo» na faixa (conteúdo financeiro na própria aba). */
@@ -228,7 +228,7 @@ final class AnalyticsTabImpactBuilder
             ],
             'enrollment' => [
                 'title' => __('Matrículas'),
-                'purpose' => __('Matrículas ativas, turmas, ocupação e secção de distorção idade-série (critério INEP) no mesmo recorte.'),
+                'purpose' => __('Matrículas ativas, turmas, ocupação e seção de distorção idade-série (critério INEP) no mesmo recorte.'),
                 'impact_note' => __('O ganho estimado usa o VAAF municipal (ou prévia federal configurada) × matrículas já realizadas no filtro. Não há perda nesta aba — as matrículas existem; eventual ganho adicional ao corrigir cadastro aparece só como potencial.'),
             ],
             'cadunico_previsao' => [
@@ -2103,7 +2103,7 @@ final class AnalyticsTabImpactBuilder
             }
             $pct = $snap['distorcao_pct'];
             if ($pct !== null && $pct >= 15) {
-                $issues[] = ['type' => 'pending', 'label' => __('Distorção idade-série elevada (secção da aba)'), 'count' => (int) round($pct)];
+                $issues[] = ['type' => 'pending', 'label' => __('Distorção idade-série elevada (seção da aba)'), 'count' => (int) round($pct)];
             }
             $ocup = $snap['ocupacao'];
             if ($ocup !== null && $ocup < 20.0) {
@@ -2138,7 +2138,7 @@ final class AnalyticsTabImpactBuilder
             $parts[] = __('Sem falta_aluno ou sem lançamentos no filtro, o status fica em alerta (não neutro) e o saldo estima matrículas sem trilha de frequência (PNAE/transporte).');
         }
         if ($tab === 'enrollment') {
-            $parts[] = __('O medidor resume matrículas, turmas, ocupação, pendências de cadastro e distorção (secção própria abaixo) — não usa só a distorção.');
+            $parts[] = __('O medidor resume matrículas, turmas, ocupação, pendências de cadastro e distorção (seção própria abaixo) — não usa só a distorção.');
         }
         if (($def['impact_note'] ?? '') !== '') {
             $parts[] = (string) $def['impact_note'];
@@ -2277,7 +2277,7 @@ final class AnalyticsTabImpactBuilder
         $d = is_array($data['distorcao'] ?? null) ? $data['distorcao'] : [];
         if (isset($d['pct'])) {
             $out[] = [
-                'label' => __('Distorção (secção)'),
+                'label' => __('Distorção (seção)'),
                 'value' => number_format((float) $d['pct'], 1, ',', '.').'%',
                 'tone' => ((float) $d['pct']) >= 15 ? 'danger' : 'warning',
             ];

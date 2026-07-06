@@ -3,7 +3,7 @@
 namespace App\Support\Analytics;
 
 /**
- * Secção CadÚnico no PDF da consultoria — tabelas apenas (sem mapa territorial).
+ * Seção CadÚnico no PDF da consultoria — tabelas apenas (sem mapa territorial).
  */
 final class AnalyticsReportCadunicoSection
 {

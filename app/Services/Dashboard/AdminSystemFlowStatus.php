@@ -331,7 +331,7 @@ final class AdminSystemFlowStatus
             [
                 'status' => 'ok',
                 'label' => __('Operacional'),
-                'description' => __('Integração activa; dados ou conexão disponíveis para o recorte actual.'),
+                'description' => __('Integração activa; dados ou conexão disponíveis para o recorte atual.'),
                 'count' => (int) ($counts['ok'] ?? 0),
             ],
             [

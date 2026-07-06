@@ -128,7 +128,7 @@ final class CadunicoEscolarizacaoFeedPipeline
             'success' => $done ? $usable : null,
             'message' => $done
                 ? ($usable
-                    ? __('Abastecimento escolarização concluído — card CadÚnico actualizado.')
+                    ? __('Abastecimento escolarização concluído — card CadÚnico atualizado.')
                     : __('Abastecimento escolarização concluído sem dados novos — reveja os logs.'))
                 : null,
         ]);

@@ -35,7 +35,7 @@ final class SaebPlanilhaInepSpreadsheetResolver
         }
 
         throw new \RuntimeException(__(
-            'Ficheiro XLSB (SAEB 2023): instale LibreOffice (libreoffice) no servidor ou Python com pyxlsb+openpyxl para conversão automática.'
+            'Arquivo XLSB (SAEB 2023): instale LibreOffice (libreoffice) no servidor ou Python com pyxlsb+openpyxl para conversão automática.'
         ));
     }
 

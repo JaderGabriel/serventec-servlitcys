@@ -202,7 +202,7 @@ final class CadunicoPrevisaoExportRowsBuilder
     public static function columnLabels(): array
     {
         return [
-            __('Secção'),
+            __('Seção'),
             __('Cidade'),
             __('Ano'),
             __('Indicador'),

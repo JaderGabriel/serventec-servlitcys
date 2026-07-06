@@ -244,7 +244,7 @@
 
         @if ($fundebRefPdf !== [])
             <h3>{{ __('Quadros de referência — receita, complementação e planejamento') }}</h3>
-            <p class="muted">{{ __('Consolidado = portaria FNDE publicada por exercício. Em formação = cadastro em curso. Projeção = matrículas vigentes × índice (planejamento). Detalhe na secção 2 — Comparativos.') }}</p>
+            <p class="muted">{{ __('Consolidado = portaria FNDE publicada por exercício. Em formação = cadastro em curso. Projeção = matrículas vigentes × índice (planejamento). Detalhe na seção 2 — Comparativos.') }}</p>
             @include('pdf.analytics-report.partials.fundeb-reference-tables', ['tables' => $fundebRefPdf])
         @endif
 

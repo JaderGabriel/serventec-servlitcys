@@ -81,7 +81,7 @@
                             <p class="text-sm text-emerald-900/90 dark:text-emerald-100/90">{{ __('Isto é o que o painel Desempenho lê depois de cada importação.') }}</p>
                             <div class="grid grid-cols-2 gap-3 sm:gap-4">
                                 <div class="rounded-xl border border-gray-200 bg-gray-50/80 px-3 py-3 dark:border-gray-600 dark:bg-gray-900/40">
-                                    <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Ficheiro') }}</p>
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ __('Arquivo') }}</p>
                                     <p class="mt-1 text-lg font-semibold tabular-nums text-gray-900 dark:text-gray-100">
                                         @if ($fileExists)
                                             {{ __('Sim') }}
@@ -205,7 +205,7 @@
                     <div class="rounded-xl border border-blue-200/80 bg-blue-50/70 dark:border-blue-900/50 dark:bg-blue-950/25 p-4 sm:p-5">
                         <p class="text-sm font-semibold text-blue-950 dark:text-blue-100">{{ __('URLs e modelos definidos no projeto (.env / config)') }}</p>
                         <p class="mt-1 text-sm text-blue-900/90 dark:text-blue-200/90 leading-relaxed">
-                            {{ __('Valores efectivos usados quando não sobrescreve no passo 3. Confirme APP_URL=https://… em produção.') }}
+                            {{ __('Valores efetivos usados quando não sobrescreve no passo 3. Confirme APP_URL=https://… em produção.') }}
                         </p>
                         <dl class="mt-4 space-y-3 text-xs font-mono break-all text-blue-950 dark:text-blue-100/95">
                             <div>
@@ -213,7 +213,7 @@
                                 <dd class="mt-0.5">{{ $appUrl !== '' ? $appUrl : '—' }}</dd>
                             </div>
                             <div>
-                                <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('Template oficial IBGE (efectivo)') }}</dt>
+                                <dt class="text-[10px] font-sans font-semibold uppercase tracking-wide text-blue-800/90 dark:text-blue-300/90">{{ __('Template oficial IBGE (efetivo)') }}</dt>
                                 <dd class="mt-0.5">{{ $effectiveOfficialTemplate !== '' ? $effectiveOfficialTemplate : __('(não resolvido — defina APP_URL ou IEDUCAR_SAEB_OFFICIAL_URL_TEMPLATE)') }}</dd>
                             </div>
                             <div>

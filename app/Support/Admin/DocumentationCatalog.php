@@ -9,9 +9,9 @@ use Illuminate\Support\Str;
 /**
  * Entradas de documentação interna (menu) e validação de caminhos legíveis.
  *
- * Qualquer ficheiro .md em docs/ (ou README.md na raiz) pode ser aberto no leitor;
+ * Qualquer arquivo .md em docs/ (ou README.md na raiz) pode ser aberto no leitor;
  * o menu lista entradas curadas por percurso lógico do sistema; utilizadores não-admin
- * não veem secções de operação/integração administrativa.
+ * não veem seções de operação/integração administrativa.
  */
 final class DocumentationCatalog
 {
@@ -415,11 +415,11 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'architecture',
-                'title' => __('2 · Arquitectura'),
+                'title' => __('2 · Arquitetura'),
                 'description' => __('Diagramas, decisões técnicas e normas editoriais.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
-                    ['label' => __('Arquitectura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Camadas · FUNDEB · deploy')],
+                    ['label' => __('Arquitetura e fluxos'), 'path' => 'docs/ARQUITETURA_E_FLUXOS.md', 'hint' => __('Camadas · FUNDEB · deploy')],
                     ['label' => __('Ponderações técnicas'), 'path' => 'docs/PONDERACOES_TECNICAS.md', 'hint' => __('Decisões e limites')],
                     ['label' => __('Análise padrões Laravel'), 'path' => 'docs/ANALISE_PADROES_LARAVEL.md', 'hint' => __('MVC · Eloquent · plano P0–P3')],
                     ['label' => __('Padrão editorial'), 'path' => 'docs/PADRAO_DOCUMENTACAO.md'],
@@ -628,7 +628,7 @@ final class DocumentationCatalog
         $outros = [
             'key' => 'outros',
             'title' => __('Outros documentos'),
-            'description' => __('Releases recentes e ficheiros adicionais — histórico mensal em «Entregas escalonadas».'),
+            'description' => __('Releases recentes e arquivos adicionais — histórico mensal em «Entregas escalonadas».'),
             'audience' => self::AUDIENCE_ALL,
             'items' => $featured,
         ];

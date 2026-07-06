@@ -1,7 +1,7 @@
 # Exportação de dados — planilha de referência Serventec / FUNDEB
 
 **Data:** maio de 2026 (revisão v2)  
-**Ficheiro de referência:** [Planilha Google Drive (XLSX)](https://docs.google.com/spreadsheets/d/1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl/edit?usp=sharing&ouid=110269466823609824454&rtpof=true&sd=true)  
+**Arquivo de referência:** [Planilha Google Drive (XLSX)](https://docs.google.com/spreadsheets/d/1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl/edit?usp=sharing&ouid=110269466823609824454&rtpof=true&sd=true)  
 **ID Drive:** `1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl` · formato **Microsoft Excel 2007+** (~15 MB, **50 abas**)
 
 **Relacionado:** [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) (hub admin) · [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) · [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md)
@@ -18,9 +18,9 @@ Especificar o que a **SERVLITCYS** precisa para emitir um **export** (XLSX/CSV) 
 
 ---
 
-## 2. Estudo da planilha (v2 — ficheiro acessível)
+## 2. Estudo da planilha (v2 — arquivo acessível)
 
-O ficheiro foi obtido via `https://drive.google.com/uc?export=download&id=1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl`. É um **modelo operacional da Serventec** (não só VAAF): agrega Censo, Fundeb, ponderações, indicadores VAAT/INSE, Salário-Educação e relatórios por cliente.
+O arquivo foi obtido via `https://drive.google.com/uc?export=download&id=1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl`. É um **modelo operacional da Serventec** (não só VAAF): agrega Censo, Fundeb, ponderações, indicadores VAAT/INSE, Salário-Educação e relatórios por cliente.
 
 ### 2.1 Inventário de abas (50)
 
@@ -61,7 +61,7 @@ Formatação observada: títulos de portaria em texto livre; valores monetários
 | Elemento | Detalhe |
 |----------|---------|
 | Fonte citada | **PORTARIA MEC Nº 844, DE 22 DE DEZEMBRO DE 2025** (resultados finais Censo) |
-| Estrutura | Por município (cód., UF, nome); secções: Educação infantil, Fundamental, Médio, EJA… |
+| Estrutura | Por município (cód., UF, nome); seções: Educação infantil, Fundamental, Médio, EJA… |
 | Colunas | Ano × tipo matrícula (Regular/Especial) × etapa × rede (Municipal Urbana/Rural) × modalidade (Parcial/Integral) |
 | Linha extra | **Diferença** entre 2024 e 2025 |
 
@@ -254,11 +254,11 @@ php artisan fundeb:import-api 0 --all --ano=2025 --nearest
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Este ficheiro (v2) |
+| [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Este arquivo (v2) |
 | [COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md](COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md) | VAAF placeholder vs FNDE |
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | Automações HTTP/CKAN |
 
-**Planilha anterior (inacessível):** `194yuz2bw13xRyh6VI4hyNYn3Jr5X8a6TDIWPIN8MuCY` — substituída por este estudo com o ficheiro `1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl`.
+**Planilha anterior (inacessível):** `194yuz2bw13xRyh6VI4hyNYn3Jr5X8a6TDIWPIN8MuCY` — substituída por este estudo com o arquivo `1aX4dGnvzlcA0CSKL0NYMIs3M3ukYj-nl`.
 
 ---
 

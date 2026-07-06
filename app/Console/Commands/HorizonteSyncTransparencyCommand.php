@@ -15,7 +15,7 @@ class HorizonteSyncTransparencyCommand extends Command
                             {--ibge=* : IBGE(s) específicos}
                             {--dry-run : Simular sem gravar}';
 
-    protected $description = 'Importa convénios MEC/FNDE e empenhos educacionais do Portal da Transparência para o Horizonte';
+    protected $description = 'Importa convênios MEC/FNDE e empenhos educacionais do Portal da Transparência para o Horizonte';
 
     public function handle(HorizonteMunicipalTransparencySyncService $sync): int
     {
@@ -34,7 +34,7 @@ class HorizonteSyncTransparencyCommand extends Command
         $year = (int) ($this->option('year') ?: config('horizonte.reference_year', (int) date('Y') - 1));
         $ibgeCodes = array_values(array_filter(array_map('strval', (array) $this->option('ibge'))));
 
-        $this->info(__('Horizonte — Portal da Transparência (convénios / empenhos educação)'));
+        $this->info(__('Horizonte — Portal da Transparência (convênios / empenhos educação)'));
         if ($ufRaw !== '') {
             $this->line(__('Âmbito: UF :uf', ['uf' => (string) HorizonteUfScope::normalize($ufRaw)]));
         }

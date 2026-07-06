@@ -15,7 +15,7 @@ final class ArtisanCommandsCatalog
     }
 
     /**
-     * Slugs de confirmação efectivos (production) — valores resolvidos a partir de config/.env.
+     * Slugs de confirmação efetivos (production) — valores resolvidos a partir de config/.env.
      *
      * @return list<array{
      *   command: string,
@@ -614,7 +614,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'horizonte:sync-transparency',
-                        'summary' => __('Convénios MEC/FNDE e empenhos educação/tecnologia — Portal da Transparência.'),
+                        'summary' => __('Convênios MEC/FNDE e empenhos educação/tecnologia — Portal da Transparência.'),
                         'signature' => 'horizonte:sync-transparency {--uf=} {--year=} {--limit=} {--ibge=*} {--dry-run}',
                         'examples' => [
                             'php artisan horizonte:sync-transparency --limit=5',

@@ -45,7 +45,7 @@ final class TesouroFundebPublicacaoService
         if ($downloadUrl === null) {
             return [
                 'rows' => [],
-                'attempt' => $this->attempt('failed', __('Não foi possível resolver o ficheiro da publicação FUNDEB :ano.', ['ano' => $year])),
+                'attempt' => $this->attempt('failed', __('Não foi possível resolver o arquivo da publicação FUNDEB :ano.', ['ano' => $year])),
             ];
         }
 

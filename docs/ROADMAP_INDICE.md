@@ -1,10 +1,10 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **7.0.1** · tag `20260705b-Moneta` · **Última revisão:** 2026-07-06
+**Versão em produção:** **7.0.2** · tag `20260706-Hermes` · **Última revisão:** 2026-07-06
 
 > **Índice:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
-Mapa único do que está **feito**, **em andamento** e **planeado**, com ligações aos roadmaps temáticos. Use este ficheiro antes de abrir estudos longos ou o backlog completo.
+Mapa único do que está **feito**, **em andamento** e **planeado**, com ligações aos roadmaps temáticos. Use este arquivo antes de abrir estudos longos ou o backlog completo.
 
 ---
 
@@ -46,7 +46,7 @@ flowchart TD
 | Entrega | Estado | Referência |
 |---------|--------|------------|
 | Hub Horizonte unificado (`/admin/horizonte/abastecimento`) | Concluído | Hub consultoria simplificado |
-| Checkpoint Educacenso persistente (ficheiro + inferência BD) | Concluído | `HorizonteEducacensoImportProgressSnapshot` |
+| Checkpoint Educacenso persistente (arquivo + inferência BD) | Concluído | `HorizonteEducacensoImportProgressSnapshot` |
 | SICONFI — 1 UF por execução, ordem DF→MG por nº municípios | Concluído | `horizonte:sync-siconfi --continue` |
 | Modal — cards Finanças / Pedagogia / Social (layout e overflow) | Concluído | `horizonteMap.js`, `horizonte.css` |
 
@@ -60,7 +60,7 @@ flowchart TD
 | **Horizonte — v2.2** | Geo INEP escolas, IDHM, SIDRA ampliado, programas FNDE | [HORIZONTE.md](HORIZONTE.md) §11.3–§11.6 · `HOR-01`, `HOR-05`–`HOR-07` | — |
 | **Consultoria — SAEB** | Metas PNE / semáforo no quadro | [GRA-07](BACKLOG_IMPLEMENTACOES.md#b-painel--gráficos-e-inferências-mec--inep) · [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | Em andamento |
 | **Infra — CI** | `pdo_sqlite` / MySQL de testes no pipeline | [INF-04](BACKLOG_IMPLEMENTACOES.md#a-produto-e-infraestrutura) | Em andamento |
-| **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitectura-e-refactor-técnico) | Em andamento |
+| **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitetura-e-refactor-técnico) | Em andamento |
 
 ### Planeado (próximas ondas)
 
@@ -178,8 +178,8 @@ flowchart TD
 Ao fechar entrega relevante:
 
 1. Actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) e linha em [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
-2. Mover ID no [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) para **Concluído** ou secção **G**.
-3. Actualizar tabelas **Panorama actual** e **Estado HOR-*** neste ficheiro.
+2. Mover ID no [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) para **Concluído** ou seção **G**.
+3. Actualizar tabelas **Panorama actual** e **Estado HOR-*** neste arquivo.
 4. Se for marco semântico: nota `RELEASE_*.md` + [ENTREGAS_ESCALONADAS_JULHO_2026.md](ENTREGAS_ESCALONADAS_JULHO_2026.md).
 
 Checklist completo: [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6.

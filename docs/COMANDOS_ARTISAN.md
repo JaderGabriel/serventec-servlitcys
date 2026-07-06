@@ -102,7 +102,7 @@ php artisan cadunico:sync-territorio --all --queue --ano=2025
 |---------|-----------|
 | `censo:analyze-educacenso-file` | Analisa arquivo `.txt` do portal INEP cruzando com i-Educar read-only (`--city=`, `--ano=`, `--output=json\|table`) |
 
-**Interface web:** Analytics → aba **Censo** → secção **Conferência Educacenso**
+**Interface web:** Analytics → aba **Censo** → seção **Conferência Educacenso**
 
 **Fixtures:** `tests/fixtures/educacenso/stage1_2026_minimal.txt` · `stage1_2026_load_test.txt` (~15 MB)
 
@@ -186,7 +186,7 @@ php artisan schedule:list | grep horizonte
 
 Documentação: [HORIZONTE.md](HORIZONTE.md) §9.1 · [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 · variáveis §11b em [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md)
 
-| **Hub admin:** `/admin/horizonte/abastecimento` · seleccionar fases e executar (POST `admin.horizonte-import.feed`)
+| **Hub admin:** `/admin/horizonte/abastecimento` · selecionar fases e executar (POST `admin.horizonte-import.feed`)
 
 ---
 
@@ -202,7 +202,7 @@ Painel de saúde por módulo (consultoria, sincronizações, infra). Combina **i
 
 **Agendamento:** a cada `MODULE_MONITOR_COLLECT_INTERVAL_MINUTES` (default **10 min**) via `schedule:run` + cron.
 
-**Estados na UI:** módulos **em repouso** (sem uso Pulse/sync no período) permanecem **saudáveis** quando a sonda diária está actualizada; **Por avaliar** só quando a recolha está pendente ou desactualizada.
+**Estados na UI:** módulos **em repouso** (sem uso Pulse/sync no período) permanecem **saudáveis** quando a sonda diária está atualizada; **Por avaliar** só quando a recolha está pendente ou desatualizada.
 
 ```bash
 php artisan module-monitor:collect
@@ -224,7 +224,7 @@ Referências gravadas em **`fundeb_municipio_references`** (`city_id`, `ibge_mun
 | `fundeb:import-references` | CSV `;` (ibge;ano;vaaf;…) |
 | `fundeb:diagnose-matriculas` | Diagnóstico i-Educar vs Censo INEP por município/ano (base do VAAF estimado) |
 
-**Interface web:** `/admin/ieducar-compatibility` (secção FUNDEB + probe)
+**Interface web:** `/admin/ieducar-compatibility` (seção FUNDEB + probe)
 
 **Variáveis:** `IEDUCAR_FUNDEB_CKAN_URL`, `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID`, `IEDUCAR_FUNDEB_JSON_URL`, `IEDUCAR_DISC_VAA_REFERENCIA`
 

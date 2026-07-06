@@ -88,7 +88,7 @@ final class HorizonteFortnightlyFeedPhaseCatalog
                 'icon' => 'building-office-2',
                 'tone' => 'indigo',
                 'group' => 'financeiro',
-                'description' => __('Convénios e empenhos (Portal da Transparência) — contexto de execução.'),
+                'description' => __('Convênios e empenhos (Portal da Transparência) — contexto de execução.'),
                 'incremental' => false,
             ],
             [

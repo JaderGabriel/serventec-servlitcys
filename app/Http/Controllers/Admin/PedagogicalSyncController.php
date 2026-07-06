@@ -102,7 +102,7 @@ class PedagogicalSyncController extends Controller
             if ($upload === null || ! $upload->isValid()) {
                 return redirect()
                     ->route('admin.pedagogical-sync.index')
-                    ->with('pedagogical_sync_error', __('Ficheiro CSV inválido ou em falta.'));
+                    ->with('pedagogical_sync_error', __('Arquivo CSV inválido ou em falta.'));
             }
 
             $ext = strtolower((string) $upload->getClientOriginalExtension());

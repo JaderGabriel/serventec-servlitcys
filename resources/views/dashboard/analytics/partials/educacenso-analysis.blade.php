@@ -49,7 +49,7 @@
     @if (! $enabled)
         <p class="text-sm text-slate-500">{{ __('Módulo desactivado (EDUCACENSO_DRY_RUN_ENABLED=false).') }}</p>
     @elseif (! $yearFilterReady || $cityId === null)
-        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Seleccione município e ano letivo para analisar o arquivo.') }}</p>
+        <p class="text-sm text-amber-800 dark:text-amber-200">{{ __('Selecione município e ano letivo para analisar o arquivo.') }}</p>
     @else
         <form
             method="post"

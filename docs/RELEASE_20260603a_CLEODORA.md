@@ -11,7 +11,7 @@ Patch **4.4.8** sobre **4.4.7** ([RELEASE_20260615a_MNEMOSYNE.md](RELEASE_202606
 - **Upload** do arquivo `.txt` do portal INEP na aba **Censo** (`work_done`).
 - **Parser** pipe-delimited (registos 00–60), estatísticas e achados estruturais (`EDU-CEN-001…005`).
 - **Cruzamento read-only** com i-Educar: INEP, matrículas por escola e rede (`EDU-CEN-101…502`).
-- **Painel** com KPIs, gráficos, tabela por escola, export CSV e cache por utilizador/município.
+- **Painel** com KPIs, gráficos, tabela por escola, export CSV e cache por usuário/município.
 - **CLI** `censo:analyze-educacenso-file` e fixture de carga `tests/fixtures/educacenso/stage1_2026_load_test.txt` (~15 MB, 486k linhas).
 
 ## Deploy em produção
@@ -38,8 +38,8 @@ php artisan censo:analyze-educacenso-file tests/fixtures/educacenso/stage1_2026_
 
 Na UI:
 
-1. **Analytics → Censo** — secção **Conferência Educacenso**.
-2. Upload do arquivo Educacenso com município e ano letivo seleccionados.
+1. **Analytics → Censo** — seção **Conferência Educacenso**.
+2. Upload do arquivo Educacenso com município e ano letivo selecionados.
 3. Confirmar KPIs, gráficos e export CSV de achados.
 
 ### Teste de carga local

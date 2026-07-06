@@ -1,18 +1,18 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.1`** · tag de deploy **`20260705b-Moneta`** · ver [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.2`** · tag de deploy **`20260706-Hermes`** · ver [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md)
 
-| Indicador | Valor actual |
+| Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **7.0.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **7.0.2** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260705b-Moneta` |
-| **Data de referência** | **05/07/2026** |
-| **Último marco documentado** | **Horizonte FUNDEB UF + warm-map-cache (Moneta)** — tooltip estadual e aquecimento sem lock — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) |
+| **Tag de deploy (servidor)** | `20260706-Hermes` |
+| **Data de referência** | **06/07/2026** |
+| **Último marco documentado** | **pt-BR unificado (Hermes)** — UI, menus e documentação viva — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `d07f58a` (#**482**) |
+| **Commit de release** | `9ad2421` (#**513**) |
 
-> **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a secção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
+> **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
 > **Entregas em série:** índice [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) — [junho/2026](ENTREGAS_ESCALONADAS_JUNHO_2026.md) · [maio/2026 (arquivo)](ENTREGAS_ESCALONADAS_MAIO_2026.md).
 
@@ -47,6 +47,7 @@ timeline
     2026-07-02 : 6.2.0 Educacenso — contadores por etapa, filtro dependência
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
+    2026-07-06 : 7.0.2 Hermes — pt-BR unificado (UI, menus, documentação)
     2026-07-05 : 7.0.1 Moneta — tooltip FUNDEB por UF, warm-map-cache sem lock
     2026-07-05 : 7.0.0 Ploutos — SICONFI, Transparência, tendência SAEB, scoring ampliado
 ```
@@ -59,7 +60,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 7.0.1** | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | **Produção:** Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
+| **▶ 7.0.2** | `9ad2421` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | **Produção:** pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
+| 7.0.1 | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
 | 7.0.0 | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
 | 6.5.0 | `d07f58a` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |
 | 6.3.0 | `c8e2315` / `20260702b-Horizonte` → `main` | — | 02/07/2026 | Modal Horizonte — cabeçalho fixo, finanças portaria/Tesouro em colunas, roda de propensão, regiões IBGE, SAEB e textos pt-BR — [RELEASE_20260702b_HORIZONTE.md](RELEASE_20260702b_HORIZONTE.md). Entregas pós-tag integradas em **6.5.0**. |
@@ -79,10 +81,10 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 | 5.5.0 | `317705d` / `20260619c-Helios` → `main` | **395** | 19/06/2026 | Horizonte GIS gerencial (filtros, metodologia, tooltip dimensões), monitor 10 min, catálogo Artisan admin, login/home — [RELEASE_20260619c_HELIOS.md](RELEASE_20260619c_HELIOS.md). *Tag `20260603f-Helios` obsoleta.* |
 | 5.4.0 | `ccbce57` / `20260603e-Hyperion` → `main` | **392** | 03/06/2026 | Horizonte v2 — CadÚnico/SIDRA/repasses no score e feed, mapa performante, SGE concorrência, fix Closure no cache — [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md). |
 | 5.3.0 | `a33ec4e` / `20260603d-Prometheus` → `main` | **391** | 03/06/2026 | Feed Horizonte bimestral, escopo UF, cadastro SGE no mapa, fix catálogo IBGE — [RELEASE_20260603d_PROMETHEUS.md](RELEASE_20260603d_PROMETHEUS.md). |
-| 5.2.0 | `97e5960` / `20260603c-Argus` → `main` | **384** | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/utilizador — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |
+| 5.2.0 | `97e5960` / `20260603c-Argus` → `main` | **384** | 03/06/2026 | Hub Horizonte em Dados públicos, `module-monitor:collect`, acesso admin/usuário — [RELEASE_20260603c_ARGUS.md](RELEASE_20260603c_ARGUS.md). |
 | 5.1.0 | `c6a98df` / `20260619b-Prospeccao` → `main` | **383** | 19/06/2026 | Horizonte comercial (calor, gestores, prospecção) + rotina quinzenal `horizonte:fortnightly-feed` — [RELEASE_20260619b_PROSPECCAO.md](RELEASE_20260619b_PROSPECCAO.md). |
 | 5.0.1 | `c4f34d9` / `20260619a-Heimdall` → `main` | **381** | 19/06/2026 | Data de release corrigida; monitor de módulos; painel verificação dados públicos no hub — [RELEASE_20260619a_HEIMDALL.md](RELEASE_20260619a_HEIMDALL.md). |
-| 5.0.0 | `f3d19b8` / `20260603b-Horizonte`* → `main` | **380** | 19/06/2026 | **Horizonte** — mapa oportunidade; KPIs Início; check dados públicos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). *Tag com prefixo de data incorrecto; usar `20260619a-Heimdall`. |
+| 5.0.0 | `f3d19b8` / `20260603b-Horizonte`* → `main` | **380** | 19/06/2026 | **Horizonte** — mapa oportunidade; KPIs Início; check dados públicos — [RELEASE_20260603b_HORIZONTE.md](RELEASE_20260603b_HORIZONTE.md). *Tag com prefixo de data incorreto; usar `20260619a-Heimdall`. |
 | 4.4.8 | — / `20260603a-Cleodora` → `main` | — | 03/06/2026 | Conferência Educacenso 1ª etapa — upload, parser, cruzamento i-Educar read-only, painel na aba Censo — [RELEASE_20260603a_CLEODORA.md](RELEASE_20260603a_CLEODORA.md). |
 | 4.4.7 | `66bc396` / `20260615a-Mnemosyne` → `main` | **369** | 15/06/2026 | Toolkit Educacenso 2026, calendário INEP e banner de prazo por fase no RX — [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md). |
 | 4.4.6 | `5225496` / `20260609d-Themis` → `main` | **367** | 09/06/2026 | Ano letivo automático ao trocar município, abas lazy com `ano_letivo`, índice qualidade no dock — [RELEASE_20260609d_THEMIS.md](RELEASE_20260609d_THEMIS.md). |
@@ -92,7 +94,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 | 4.4.2 | `9e728a5` / `20260608a-Pythia` → `main` | **352** | 08/06/2026 | Estudo Power BI, pesquisa no leitor, backlog PBI-01…10 — [RELEASE_20260608a_PYTHIA.md](RELEASE_20260608a_PYTHIA.md). |
 | 4.4.1 | `e50ecca` / `20260607b-Peitho` → `main` | **340** | 07/06/2026 | Hub docs no GitHub/leitor, Mermaid, rodapé desenvolvedor+GitHub — [RELEASE_20260607b_PEITHO.md](RELEASE_20260607b_PEITHO.md). |
 | 4.4.0 | `eee339e` / `20260607a-Ananke` → `main` | **336** | 07/06/2026 | Sufixo alfabético em tags do mesmo dia, paridade Discrepâncias, VAAR/CadÚnico admin — [RELEASE_20260607a_ANANKE.md](RELEASE_20260607a_ANANKE.md). |
-| 4.3.0 | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | *(doc. data incorrecta)* Discrepâncias×Unidades geo, RX portaria, gráfico home, CLI `--replace` — conteúdo em 4.4.0 — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
+| 4.3.0 | `a308c0d` / `20260611-Harmonia` → `main` | **321** | 11/06/2026 | *(doc. data incorreta)* Discrepâncias×Unidades geo, RX portaria, gráfico home, CLI `--replace` — conteúdo em 4.4.0 — [RELEASE_20260611_HARMONIA.md](RELEASE_20260611_HARMONIA.md). |
 | 4.2.0 | `b0cd61f` / `20260610-Clio` → `main` | **319** | 10/06/2026 | FUNDEB VAAT/VAAR portaria, gráfico RX complementações, hub Discrepâncias — [RELEASE_20260610_CLIO.md](RELEASE_20260610_CLIO.md). |
 | 4.1.9 | `e473c26` / `20260609-Theia` → `main` | **317** | 09/06/2026 | Outlook Finanças até dezembro, diagrama ERP, mapa CadÚnico (zoom + cores) — [RELEASE_20260609_THEIA.md](RELEASE_20260609_THEIA.md). |
 | 4.1.8 | `d1c01ed` / `20260608-Sophia` → `main` | **313** | 08/06/2026 | VAAT portaria + lookback Censo, diagnose matrículas, admin i-Educar leigos, diagrama ERP — [RELEASE_20260608_SOPHIA.md](RELEASE_20260608_SOPHIA.md). |
@@ -114,7 +116,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 | 3.5.0 | `20260601-Atlas` → `main` | — | 01/06/2026 | Comparativo Finanças; CadÚnico previsão + pipeline automático + export — [RELEASE_20260601_ATLAS.md](RELEASE_20260601_ATLAS.md). |
 | 3.4.0 | `20260531-Nemesis` → `main` | — | 31/05/2026 | Área Censo; UI Finanças/Censo; Diagnóstico qualidade + explorar; cache v2 — [RELEASE_20260531_NEMESIS.md](RELEASE_20260531_NEMESIS.md). |
 | *(patch pós-3.4.0)* | `4b976f2` | — | 26/05/2026 | Diagnóstico: um velocímetro geral; consolidado operacional colapsável; roteiro no topo. |
-| *(patch pós-3.4.0)* | `e423808` | — | 26/05/2026 | Explorar em detalhe: métrica por área (`DiagnosisExploreCards`); UI com ícones; painel PDF; modo estratégico sem secções AJAX duplicadas. |
+| *(patch pós-3.4.0)* | `e423808` | — | 26/05/2026 | Explorar em detalhe: métrica por área (`DiagnosisExploreCards`); UI com ícones; painel PDF; modo estratégico sem seções AJAX duplicadas. |
 | 3.3.2 | `20260530-Metis` → `main` | — | 30/05/2026 | Diagnóstico estratégico (um pedido leve, reutiliza cache de abas) — [RELEASE_20260530_METIS.md](RELEASE_20260530_METIS.md). |
 | 3.3.1 | `20260529-Helios` → `main` | — | 29/05/2026 | Otimização Analytics — Diagnóstico progressivo, cache, Finanças sem queries duplicadas — [RELEASE_20260529_HELIOS.md](RELEASE_20260529_HELIOS.md). |
 | 3.3.0 | `20260528-Eos` → `main` | — | 28/05/2026 | Monitor de módulos admin; doc/filas/export NEE — [RELEASE_20260528_EOS.md](RELEASE_20260528_EOS.md). |
@@ -332,7 +334,7 @@ Entrega focada em **bases financeiras públicas**, **sincronização semanal** e
 | **FUNDEB / VAAF** | Perfil municipal (ano civil + próximo); matrículas por ano (i-Educar + fallback Censo INEP); alertas de publicação FNDE; metadados de receita, complementação e portaria; `fundeb:diagnose-matriculas`. |
 | **Repasses** | Import **CSV Tesouro** (FUNDEB por município, `COD_MUN`); snapshots na aba Financiamentos e na sync `funding`. |
 | **Financiamentos** | Consultas públicas estáveis (`transferSnapshots` injetado); aviso de programas vazio só sem erro de API. |
-| **PDF analítico** | Quadros objetivos FUNDEB (portaria, complementação, cenários, distribuição legal); mapa territorial composto; tema visual por secção. |
+| **PDF analítico** | Quadros objetivos FUNDEB (portaria, complementação, cenários, distribuição legal); mapa territorial composto; tema visual por seção. |
 | **Testes** | Tesouro CSV, import repasses, tabelas FUNDEB no PDF, alertas FNDE, anos de planejamento. |
 
 Documentação: [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md), [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
@@ -430,7 +432,7 @@ Formato **`X.Y.Z`** (três segmentos). A nomenclatura do produto **não** segue 
 - **Codename:** entidade mitológica — **greco-romana** (padrão histórico do projecto), **nórdica** ou **asteca**; o nome deve **aludir** às melhorias da release (ex.: *Heimdall* — vigilância; *Sleipnir* — percurso até concluir). **Único por tag**; não repetir no mesmo dia sem nova letra.
 - **Tradições já usadas:** greco-romana (Athena, Metis, Urania…), nórdica (`Heimdall`, `Sleipnir`, **`Forseti`**). Asteca — disponível para releases futuras (ex.: *Quetzalcoatl*, *Tlaloc*).
 - **Data na tag:** sempre o dia civil da release (`YYYYMMDD`), alinhado a `revision_date` em `config/documentation.php`.
-- Ao publicar: actualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
+- Ao publicar: atualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
 git tag -a 20260521-Mercury 3c935ca -m "2.3.8 — VAAF municipal, contatos, perfil e RX (Mercury)"
@@ -447,6 +449,6 @@ Seguir checklist em [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6. Resumo
 1. Cada entrega visível → linha na tabela **Linha do tempo** (versão, hash, #, resumo).
 2. Actualizar `config/documentation.php` (`product.version`, `release_tag`, `commit_short`).
 3. Obter `#` local: `git rev-list --count HEAD`.
-4. Não duplicar listas longas noutros ficheiros — linkar para este documento ou [STATUS_PROJETO.md](STATUS_PROJETO.md).
+4. Não duplicar listas longas noutros arquivos — linkar para este documento ou [STATUS_PROJETO.md](STATUS_PROJETO.md).
 
 *Índice: [README.md](README.md) · Padrão editorial: [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)*

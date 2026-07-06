@@ -11,7 +11,7 @@ class ModuleMonitorCollectCommand extends Command
     protected $signature = 'module-monitor:collect
                             {--dry-run : Lista módulos sem gravar cache}';
 
-    protected $description = 'Recolhe sinais de saúde por módulo e actualiza o cache do monitor admin';
+    protected $description = 'Recolhe sinais de saúde por módulo e atualiza o cache do monitor admin';
 
     public function handle(ModuleMonitorProbeService $probes): int
     {

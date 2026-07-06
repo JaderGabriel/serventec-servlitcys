@@ -247,7 +247,7 @@
                         variant="accent"
                         :title="__('Upload manual Cecad (opcional)')"
                         :hint="__('CSV nacional ou municipal; escolha o ano de referência.')"
-                        :submit-label="__('Enviar ficheiro')"
+                        :submit-label="__('Enviar arquivo')"
                     >
                         @csrf
                         <input type="hidden" name="action" value="upload_cecad">

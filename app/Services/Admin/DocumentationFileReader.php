@@ -20,7 +20,7 @@ class DocumentationFileReader
 
         $absolute = base_path($resolved);
         if (! is_readable($absolute)) {
-            throw new RuntimeException(__('Ficheiro não encontrado no servidor.'));
+            throw new RuntimeException(__('Arquivo não encontrado no servidor.'));
         }
 
         $markdown = File::get($absolute);

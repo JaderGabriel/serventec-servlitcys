@@ -14,7 +14,7 @@ Patch **4.4.1** sobre **4.4.0** ([RELEASE_20260607a_ANANKE.md](RELEASE_20260607a
 
 ### Rodapé — área autenticada
 
-- Substitui «Uso restrito a utilizadores autenticados.» por **Desenvolvimento** (perfil GitHub) e link **GitHub** (repositório `config/documentation.php`).
+- Substitui «Uso restrito a usuárioes autenticados.» por **Desenvolvimento** (perfil GitHub) e link **GitHub** (repositório `config/documentation.php`).
 - Mesma linha de créditos na variante **Pulse**.
 
 ## Deploy

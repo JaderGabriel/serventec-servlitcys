@@ -243,7 +243,7 @@ final class PublicDataImportStatusService
             return [
                 'level' => 'warn',
                 'label' => __('Microdados em falta'),
-                'detail' => __('CSV INEP não encontrado — execute pipeline geo ou coloque ficheiro em storage/app/inep/.'),
+                'detail' => __('CSV INEP não encontrado — execute pipeline geo ou coloque arquivo em storage/app/inep/.'),
             ];
         }
         $mun = (int) ($ctx['censo_municipios'] ?? 0);
@@ -252,7 +252,7 @@ final class PublicDataImportStatusService
             return [
                 'level' => 'warn',
                 'label' => __('Não indexado'),
-                'detail' => __('Ficheiro existe mas inep_censo_municipio_matriculas está vazio — execute indexação.'),
+                'detail' => __('Arquivo existe mas inep_censo_municipio_matriculas está vazio — execute indexação.'),
             ];
         }
         if ($ibge > 0 && $mun < $ibge) {

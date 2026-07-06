@@ -27,7 +27,7 @@ O **Horizonte** é o módulo de **inteligência territorial** do SERVLITCYS. Res
 | Perfil | Acesso |
 |--------|--------|
 | Admin | Sim |
-| Utilizador da plataforma | Sim |
+| Usuário da plataforma | Sim |
 | Municipal (só «Meu município») | Não (403) |
 | Inactivo / convidado | Não (403) |
 
@@ -113,7 +113,7 @@ Calculados **na mesma geração do mapa** (amostra actual):
 - **Modo Contornos:** polígonos municipais IBGE (qualidade intermediária) dos municípios visíveis no recorte; clique abre a ficha; destaque ao passar o mouse e no município selecionado.
 - **Modo Calor:** círculos por pressão FUNDEB com **borda preta** (legibilidade mesmo em baixa pressão); intensidade normalizada no recorte visível.
 - **Carregamento UF:** overlay «Carregando UF {sigla}» ao abrir um estado.
-- **UF pequena** ou mesorregião seleccionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
+- **UF pequena** ou mesorregião selecionada: detalhe municipal com limite adaptativo (120–400 pontos) — coord. aproximadas ficam na lista.
 - **Bases nacionais grandes** (>800 municípios): overview nacional restringe vista inicial (UF prioritária + alta pressão).
 - **Buscador** por nome, UF ou código IBGE (sugestões + `flyTo`).
 - Filtros comerciais: **camada «Alta pressão FUNDEB»** (default), propensão/benefício mínimos, matrículas, pressão FUNDEB, FUNDEB/Censo/SAEB/CadÚnico, **demanda social mínima**, UF, segmentos «Onde buscar clientes».
@@ -137,7 +137,7 @@ Modal **centrado** (`x-teleport`), altura limitada (~**88dvh** / **45rem**), **c
 
 **Corpo:** alertas VAAT → card municipal (pendências + pipeline) → gráfico Educacenso (§6.9) → **finanças em duas linhas** (ano anterior e ano vigente, cada uma com colunas *Previsto na portaria* | *Pago pelo Tesouro*) → **enriquecimento público** (§6.11) → pílulas Fontes/SGE → dimensões com glossário **Detecta / Indica**.
 
-**Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (sync nunca executado). Após `cache:clear` no deploy, o mapa **reidrata** o snapshot `storage/app/horizonte/municipal_alerts_snapshot.json` automaticamente. Comando para primeira importação ou actualização FNDE: `horizonte:sync-municipal-alerts`.
+**Alertas MEC/FNDE (VAAT):** chip no topo do modal com três estados — pendência encontrada (link Siconfi/FNDE), sem pendências na última importação, ou «não verificado» (sync nunca executado). Após `cache:clear` no deploy, o mapa **reidrata** o snapshot `storage/app/horizonte/municipal_alerts_snapshot.json` automaticamente. Comando para primeira importação ou atualização FNDE: `horizonte:sync-municipal-alerts`.
 
 Três leituras **complementares** por exercício (não somar entre blocos nem entre anos):
 
@@ -171,7 +171,7 @@ Comandos dedicados: §9.2 · dimensões de score: §7 · metodologia UI: `Horizo
 
 ### 6.9 Gráfico de matrículas — prospectos (Censo INEP)
 
-Secção no modal municipal **apenas para municípios sem Consultoria activa** (`consultoria_active === false`). Municípios com base i-Educar configurada no catálogo **não** mostram o gráfico (dados em tempo real ficam no Painel analítico).
+Seção no modal municipal **apenas para municípios sem Consultoria activa** (`consultoria_active === false`). Municípios com base i-Educar configurada no catálogo **não** mostram o gráfico (dados em tempo real ficam no Painel analítico).
 
 | Aspecto | Detalhe |
 |---------|---------|
@@ -208,7 +208,7 @@ Importação **nacional por UF** (27 passos): polígonos municipais para contorn
 | **Comando** | `php artisan horizonte:import-municipal-geo --all` (nacional) · `--uf=BA` (uma UF) · `--force` (rebuscar malha) |
 | **Feed bimestral** | Fase `ibge_municipal_geo` (após `ibge_catalog`); `--skip-ibge-municipal-geo` para ignorar |
 | **Integração IBGE** | Com `HORIZONTE_MUNICIPAL_GEO_WITH_IBGE_CATALOG=true`, aquece malha+área da mesma UF do catálogo |
-| **Progresso** | Persistido pelos ficheiros `municipal-{UF}.json`; hub `#horizonte-municipal-geo-sync` |
+| **Progresso** | Persistido pelos arquivos `municipal-{UF}.json`; hub `#horizonte-municipal-geo-sync` |
 | **API malha** | IBGE v3 `malhas/estados/{id}?intrarregiao=municipio&qualidade=intermediaria` |
 | **Área fallback** | IBGE v4 metadados por município quando a geometria não permite cálculo direto |
 | **Mapa (modo Contornos)** | `GET /dashboard/horizonte/map-geo?scope=municipal&uf=…` — polígonos dos municípios do recorte; cache invalidado quando `municipal_area_snapshots` muda |
@@ -225,7 +225,7 @@ Serviço: `HorizonteIbgeMunicipalGeoImportService` · progresso: `HorizonteIbgeM
 
 ### 6.6 Painel FUNDEB estadual (recorte UF)
 
-No cabeçalho de decisão, com UF seleccionada, bloco **âmbar** com agregados municipais:
+No cabeçalho de decisão, com UF selecionada, bloco **âmbar** com agregados municipais:
 
 | Indicador | Origem |
 |-----------|--------|
@@ -248,7 +248,7 @@ Payload: `uf_fundeb_insights` · serviço `HorizonteUfFundebInsights`.
 |---------|----------|
 | **Como usar** | Tour guiado (7 passos) — KPIs, recorte, mapa, filtros, rail, área de trabalho |
 | **Demonstração** | Animação SVG do fluxo Brasil → mesorregiões → municípios → filtros → ficha |
-| **Documentação** | Ligação a este ficheiro (`docs/HORIZONTE.md`) |
+| **Documentação** | Ligação a este arquivo (`docs/HORIZONTE.md`) |
 | **Metodologia** (aba) | Fórmulas, tiers, dimensões com **Detecta / Indica**, discrepâncias i-Educar |
 
 Textos partilhados via `HorizonteMapPresenter::methodologyUi()` — passos «Como usar» também na aba **Resumo** da área de trabalho.
@@ -283,7 +283,7 @@ Quando nenhuma fonte identifica o sistema, o município aparece como **SGE não 
 
 ### Formato do registo externo
 
-Ficheiro default: `storage/app/horizonte/sge_registry.json` (configurável via `HORIZONTE_SGE_REGISTRY_PATH`).
+Arquivo default: `storage/app/horizonte/sge_registry.json` (configurável via `HORIZONTE_SGE_REGISTRY_PATH`).
 
 ```json
 {
@@ -311,7 +311,7 @@ A fase **SGE** do feed bimestral (`horizonte:fortnightly-feed`) sincroniza o reg
 php artisan horizonte:fortnightly-feed --skip-sge   # ignorar registo SGE
 ```
 
-## 7. Arquitectura técnica
+## 7. Arquitetura técnica
 
 ```
 HorizonteController
@@ -325,7 +325,7 @@ HorizonteController
         └── HorizonteOpportunityScorer
 ```
 
-| Ficheiro | Função |
+| Arquivo | Função |
 |----------|--------|
 | `app/Http/Controllers/HorizonteController.php` | Entrada HTTP + malha `map-geo` + série matrículas |
 | `app/Services/Horizonte/HorizonteMunicipioEnrollmentSeriesService.php` | Série Censo (prospectos) |
@@ -470,7 +470,7 @@ Para completar **todas** as fases/UFs/anos pendentes em loop (até 200 rondas), 
 ```bash
 cd /caminho/do/servlitcys
 
-# Uma vez por utilizador (evita systemd matar processos ao logout SSH):
+# Uma vez por usuário (evita systemd matar processos ao logout SSH):
 sudo loginctl enable-linger serventec   # ou $(whoami)
 
 # Iniciar (detached — pode fechar o terminal de imediato)
@@ -502,20 +502,20 @@ O script `horizonte-sync-br-continue.sh` executa `horizonte:fortnightly-feed --a
 
 **Importante:**
 
-- Corra **sempre como o mesmo utilizador** (não use `sudo` no `start` — senão o `status` noutro user mostra «não activo»).
+- Corra **sempre como o mesmo usuário** (não use `sudo` no `start` — senão o `status` noutro user mostra «não activo»).
 - Use `start` e saia do SSH **sem** `attach`, ou desanexe com **Ctrl+A, D** antes de fechar o terminal.
 - Se ao logout o sync morrer: `loginctl enable-linger $(whoami)` (requer sudo, uma vez).
 - Sockets screen ficam em `storage/screen/` (por defeito).
 
 O script interno `horizonte-sync-br-continue.sh` usa **flock** (uma instância), detecta OOM/parcial e exporta `HORIZONTE_SAEB_MEMORY_LIMIT=2048M` por defeito. **Não** corra em paralelo com `php artisan horizonte:fortnightly-feed` manual.
 
-**Hub admin:** `/admin/horizonte/abastecimento` · seleccionar fases e executar (POST `admin.horizonte-import.feed`)
+**Hub admin:** `/admin/horizonte/abastecimento` · selecionar fases e executar (POST `admin.horizonte-import.feed`)
 
 O cache do mapa invalida-se automaticamente quando `imported_at` / contagens nas tabelas fonte mudam (fingerprint em `HorizonteMapService`).
 
 ### 9.1c Alertas MEC/FNDE (VAAT inabilitados)
 
-Comando: **`horizonte:sync-municipal-alerts`** — importa lista oficial FNDE de municípios **inabilitados ao VAAT** (CSV primário; PDF fallback) + registo JSON manual opcional. Grava cache Laravel e snapshot em `storage/app/horizonte/municipal_alerts_snapshot.json`; após `php artisan cache:clear`, o mapa repõe o cache a partir desse ficheiro.
+Comando: **`horizonte:sync-municipal-alerts`** — importa lista oficial FNDE de municípios **inabilitados ao VAAT** (CSV primário; PDF fallback) + registo JSON manual opcional. Grava cache Laravel e snapshot em `storage/app/horizonte/municipal_alerts_snapshot.json`; após `php artisan cache:clear`, o mapa repõe o cache a partir desse arquivo.
 
 ```bash
 php artisan horizonte:sync-municipal-alerts
@@ -537,7 +537,7 @@ php artisan horizonte:sync-siconfi --uf=BA --limit=20
 php artisan horizonte:sync-siconfi --year=2024 --period=6
 php artisan horizonte:sync-siconfi --reset --continue    # inicia ciclo nacional
 php artisan horizonte:sync-siconfi --continue              # retoma lote pendente
-php artisan horizonte:sync-siconfi --refresh --limit=20    # actualiza período RREO inferior
+php artisan horizonte:sync-siconfi --refresh --limit=20    # atualiza período RREO inferior
 php artisan horizonte:fortnightly-feed --phase=siconfi_sync --reset   # reinicia fila por UF
 php artisan horizonte:fortnightly-feed --phase=siconfi_sync             # 1 UF inteira por execução (repetir ~27×)
 php artisan horizonte:fortnightly-feed --skip-siconfi   # ignorar no feed
@@ -572,9 +572,9 @@ Quando o feed em produção morre com `Killed` (OOM), processe os dados **localm
 php artisan horizonte:fortnightly-feed --all
 # ou fases individuais com RAM suficiente
 
-# Exportar pacote (CLI ou hub admin — secções seleccionáveis)
+# Exportar pacote (CLI ou hub admin — seções seleccionáveis)
 php artisan horizonte:export-data-bundle
-# Ficheiro: storage/app/horizonte/bundles/horizonte-YYYYMMDD-HHMMSS.zip
+# Arquivo: storage/app/horizonte/bundles/horizonte-YYYYMMDD-HHMMSS.zip
 # Cópia: storage/app/horizonte/bundles/latest.zip
 
 # Enviar para produção (exemplo)
@@ -586,7 +586,7 @@ php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zi
 php artisan horizonte:import-data-bundle storage/app/horizonte/bundles/latest.zip --only=fundeb,censo,cadunico,demography,transfers
 ```
 
-O pacote v2 inclui: `fundeb_municipio_references`, `inep_censo_municipio_matriculas`, `saeb_indicator_points` (municipal), **`cadunico_municipio_snapshots`**, **`municipal_demography_snapshots`**, repasses Tesouro, cache IBGE (centroides) e registo SGE. No hub admin, use os checkboxes de secção para export/import parcial.
+O pacote v2 inclui: `fundeb_municipio_references`, `inep_censo_municipio_matriculas`, `saeb_indicator_points` (municipal), **`cadunico_municipio_snapshots`**, **`municipal_demography_snapshots`**, repasses Tesouro, cache IBGE (centroides) e registo SGE. No hub admin, use os checkboxes de seção para export/import parcial.
 
 ---
 
@@ -616,7 +616,7 @@ Após activar Consultoria, use **Painel analítico → Diagnóstico** para indic
 | **v2.2** | Enriquecimento por bases públicas (§11.2–§11.6) | **Em curso** — HOR-02–04 e HOR-08 em 7.0.0; HOR-01, HOR-05–07 e HOR-18 pendentes — ver [ROADMAP_INDICE.md](ROADMAP_INDICE.md) |
 | **v3** | Comparativo antes/depois para clientes (`delta compliance_score`) | Planeado |
 
-Itens rastreáveis: secção **J** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`HOR-*`). Panorama: [ROADMAP_INDICE.md](ROADMAP_INDICE.md). Estudo transversal: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
+Itens rastreáveis: seção **J** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`HOR-*`). Panorama: [ROADMAP_INDICE.md](ROADMAP_INDICE.md). Estudo transversal: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md).
 
 ---
 
@@ -763,7 +763,7 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 | HOR-09 | INT-08 | DATASUS / CNES |
 | HOR-01 | — | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · `geo_inep` |
 
-Ao concluir cada item: mover para **G** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) e actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
+Ao concluir cada item: mover para **G** em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) e atualizar [STATUS_PROJETO.md](STATUS_PROJETO.md).
 
 ---
 

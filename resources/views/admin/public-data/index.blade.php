@@ -132,7 +132,7 @@
                         <thead>
                             <tr class="text-slate-500 dark:text-slate-400">
                                 <th class="py-2 pe-4">{{ __('Código') }}</th>
-                                <th class="py-2 pe-4">{{ __('Secção PDF') }}</th>
+                                <th class="py-2 pe-4">{{ __('Seção PDF') }}</th>
                                 <th class="py-2">{{ __('Fonte sugerida') }}</th>
                             </tr>
                         </thead>

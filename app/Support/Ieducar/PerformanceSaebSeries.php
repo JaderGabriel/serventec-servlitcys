@@ -579,7 +579,7 @@ final class PerformanceSaebSeries
         if ($relPath === SaebHistoricoDatabase::STORAGE_LABEL) {
             $bits[] = __('Armazenamento: tabela PostgreSQL (:table).', ['table' => 'saeb_indicator_points']);
         } else {
-            $bits[] = __('Ficheiro: :path', ['path' => 'storage/app/public/'.$relPath]);
+            $bits[] = __('Arquivo: :path', ['path' => 'storage/app/public/'.$relPath]);
         }
 
         if ($meta !== null) {

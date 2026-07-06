@@ -20,7 +20,7 @@ final class CadunicoCecadCsvImportService
     public function importFile(string $absolutePath, ?int $defaultYear = null, ?string $filterIbge = null): array
     {
         if (! is_readable($absolutePath)) {
-            return ['imported' => 0, 'skipped' => 0, 'errors' => [__('Ficheiro não encontrado: :path', ['path' => $absolutePath])]];
+            return ['imported' => 0, 'skipped' => 0, 'errors' => [__('Arquivo não encontrado: :path', ['path' => $absolutePath])]];
         }
 
         $handle = fopen($absolutePath, 'r');

@@ -8,7 +8,7 @@
 
 ## Resumo
 
-1. **Nova marca** — logótipo e favicon com gráfico de barras (consultoria), livro (formação) e linha do horizonte com pin territorial (Horizonte GIS); tagline actualizada em auth, PDF e landing.
+1. **Nova marca** — logótipo e favicon com gráfico de barras (consultoria), livro (formação) e linha do horizonte com pin territorial (Horizonte GIS); tagline atualizada em auth, PDF e landing.
 2. **Horizonte — barra de comando fixa** — recorte UF/município em destaque no topo do mapa; KPIs compactos colapsados; «Ver indicadores» expande hero, FUNDEB e segmentos.
 3. **Horizonte — resumo UF inline** — botão `UF — Resumo` no cabeçalho do mapa; painel no fluxo (sem modal); funciona em tela inteira.
 4. **Horizonte — desenhar todos** — quando há truncagem regional, botão «Desenhar todos» repõe o limite de renderização e desenha todos os municípios do recorte.

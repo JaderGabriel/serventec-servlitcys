@@ -3,7 +3,7 @@
 namespace App\Support\Analytics;
 
 /**
- * Cores e metadados visuais das secções ATM no PDF.
+ * Cores e metadados visuais das seções ATM no PDF.
  */
 final class AnalyticsReportPdfSectionTheme
 {

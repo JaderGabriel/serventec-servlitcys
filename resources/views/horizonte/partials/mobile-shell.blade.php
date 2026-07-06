@@ -104,7 +104,7 @@
             </label>
         </div>
 
-        <p x-show="!pageLoading && isOverviewMode" x-cloak class="text-sm text-slate-500 px-1">{{ __('Seleccione uma UF para ver municípios.') }}</p>
+        <p x-show="!pageLoading && isOverviewMode" x-cloak class="text-sm text-slate-500 px-1">{{ __('Selecione uma UF para ver municípios.') }}</p>
         <p x-show="!pageLoading && isRegionalMode && sortedProspects.length === 0" x-cloak class="text-sm text-slate-500 px-1">{{ __('Nenhum município no recorte.') }}</p>
 
         <ul x-show="sortedProspects.length > 0 && isRegionalMode" class="serv-horizonte-mobile__prospect-list">

@@ -103,7 +103,7 @@ final class DiagnosisExploreCards
     }
 
     /**
-     * Agrupa cartões por fase gerencial (para secções na UI).
+     * Agrupa cartões por fase gerencial (para seções na UI).
      *
      * @return list<array{id: string, step: string, label: string, cards: list<array<string, mixed>>}>
      */

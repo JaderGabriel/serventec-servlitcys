@@ -40,7 +40,7 @@ export function analyticsPageHeader(initial) {
                     label: labels.ano ?? "Ano letivo",
                     value: hasYear
                         ? (ano.selectedOptions?.[0]?.textContent?.trim() ?? "")
-                        : (labels.naoSelecionado ?? "Não seleccionado"),
+                        : (labels.naoSelecionado ?? "Não selecionado"),
                     muted: !hasYear,
                 });
             }

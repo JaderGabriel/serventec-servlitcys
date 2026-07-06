@@ -111,9 +111,9 @@ Distribuir tráfego por mais de um recurso. Duas frentes: **app** (horizontal) e
 ### 4.1 Balanceador HTTP (Nginx upstream / HAProxy / LB de nuvem)
 
 - **Especificação:** distribui pedidos HTTP por vários nós de aplicação (round-robin / least-conn), com *health checks* e terminação TLS.
-- **Como usar no sistema:** ≥ 2 nós PHP-FPM (ou Octane) atrás do balanceador. Pré-requisito **obrigatório**: estado fora do processo — `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, ficheiros partilhados/objeto (ver §6). Os PDFs e *assets* (`public/build`, já no Git) servem de qualquer nó.
+- **Como usar no sistema:** ≥ 2 nós PHP-FPM (ou Octane) atrás do balanceador. Pré-requisito **obrigatório**: estado fora do processo — `SESSION_DRIVER=redis`, `CACHE_STORE=redis`, arquivos partilhados/objeto (ver §6). Os PDFs e *assets* (`public/build`, já no Git) servem de qualquer nó.
 - **Prós:** escala horizontal e tolerância a falhas (um nó cai, o tráfego continua); permite *deploy* sem *downtime* (drenar nó).
-- **Contras:** exige *statelessness* real; sessões em base/ficheiro local quebram com vários nós; mais infraestrutura e observabilidade.
+- **Contras:** exige *statelessness* real; sessões em base/arquivo local quebram com vários nós; mais infraestrutura e observabilidade.
 
 ### 4.2 Réplicas de leitura MySQL (read/write split)
 
@@ -143,7 +143,7 @@ Distribuir tráfego por mais de um recurso. Duas frentes: **app** (horizontal) e
 
 - **Especificação/uso:** `RateLimiter`/middleware `throttle` por perfil e rota; *cache* de respostas idempotentes (ETag/`Cache-Control`); CDN à frente de `public/` e *assets* versionados.
 - **Prós:** protege contra picos e abuso; descarrega estáticos.
-- **Contras:** *throttle* mal calibrado bloqueia uso legítimo; *cache* de resposta arrisca servir dado de outro contexto/município se a chave ignorar o utilizador.
+- **Contras:** *throttle* mal calibrado bloqueia uso legítimo; *cache* de resposta arrisca servir dado de outro contexto/município se a chave ignorar o usuário.
 
 ### 5.3 Requisições HTTP de saída (pool, *backoff*, circuit breaker)
 
@@ -171,7 +171,7 @@ QUEUE_CONNECTION=redis
 PULSE_INGEST_DRIVER=redis   # tirar telemetria da MySQL
 ```
 
-Ficheiros de utilizador (PDFs, *uploads*) devem ir para armazenamento partilhado/objeto se houver vários nós. Sem isto, balancear só introduz *bugs* intermitentes.
+Arquivos de usuário (PDFs, *uploads*) devem ir para armazenamento partilhado/objeto se houver vários nós. Sem isto, balancear só introduz *bugs* intermitentes.
 
 ---
 
@@ -234,7 +234,7 @@ Ordenado por **relação ganho/risco** (mais seguro primeiro). Cada etapa é ind
 
 ### Etapa 7 — Escala horizontal da app (LB + ≥2 nós) `[ ]`
 
-- [ ] Balanceador (Nginx/HAProxy/LB de nuvem) + *health checks*; *assets*/ficheiros partilhados.
+- [ ] Balanceador (Nginx/HAProxy/LB de nuvem) + *health checks*; *assets*/arquivos partilhados.
 - **Ganho:** escala de tráfego web e tolerância a falhas; *deploy* sem *downtime*.
 - **Riscos:** qualquer estado local restante vira *bug* intermitente.
 - **Evitar:** balancear antes de concluir a Etapa 2 (stateless).
@@ -281,7 +281,7 @@ flowchart LR
 | **Latência por pedido na base remota** | Etapa 3 (PDO persistente) e, depois, Etapa 6 (pooling externo) |
 | **Coletas externas lentas/instáveis** | Etapa 4 (pool HTTP + *backoff*) |
 | **Importações a competir com a web** | Etapa 5 (Horizon) + Etapa 8 (réplica de leitura) |
-| **Crescimento de utilizadores simultâneos** | Etapa 7 (LB) e, se justificar, Etapa 9 (Octane) |
+| **Crescimento de usuárioes simultâneos** | Etapa 7 (LB) e, se justificar, Etapa 9 (Octane) |
 
 **Regra de ouro:** medir antes/depois (Etapa 0), resolver a **raiz** na base (Etapa 1) e só então escalar app/filas. Pooling e balanceamento amplificam o sistema — incluindo os seus defeitos — por isso vêm **depois** de corrigir contenção e tornar a app *stateless*.
 

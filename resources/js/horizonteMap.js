@@ -1769,7 +1769,7 @@ function muniEnrichmentHtml(m) {
         const rows = [];
         if (m.transparency_convenios != null) {
             rows.push(
-                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Convénios MEC/FNDE")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(nf(m.transparency_convenios))}</span></div>`,
+                `<div class="serv-horizonte-muni-tooltip__enrich-row"><span class="serv-horizonte-muni-tooltip__enrich-label">${escapeHtml("Convênios MEC/FNDE")}</span><span class="serv-horizonte-muni-tooltip__enrich-value">${escapeHtml(nf(m.transparency_convenios))}</span></div>`,
             );
         }
         if (m.transparency_empenhos_educacao != null && Number(m.transparency_empenhos_educacao) > 0) {
@@ -3124,7 +3124,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 {
                     target: '[data-horizonte-tour="kpi"]',
                     title: "Prioridade comercial",
-                    text: "Indicadores do recorte actual — alta pressão FUNDEB, prospectos, consultoria activa e matrículas em prospecto.",
+                    text: "Indicadores do recorte atual — alta pressão FUNDEB, prospectos, consultoria activa e matrículas em prospecto.",
                 },
                 {
                     target: '[data-horizonte-tour="recorte"]',
@@ -4054,7 +4054,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 `${total.toLocaleString("pt-BR")} municípios com dados`,
             ];
             if (filtered !== total) {
-                parts.push(`${filtered.toLocaleString("pt-BR")} no recorte actual`);
+                parts.push(`${filtered.toLocaleString("pt-BR")} no recorte atual`);
             }
             return parts.join(" · ");
         },
@@ -8474,7 +8474,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         sgeRegistryActionLabel(m) {
-            return this.sgeHasRegistry(m) ? "Actualizar" : "Cadastrar";
+            return this.sgeHasRegistry(m) ? "Atualizar" : "Cadastrar";
         },
 
         sgeShowUrlFor(ibge) {

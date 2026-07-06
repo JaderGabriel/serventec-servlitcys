@@ -103,7 +103,7 @@ class SchedulePulseDiagnoseCommand extends Command
         $cacheDir = storage_path('framework/cache/data');
         $writable = is_dir($cacheDir) && is_writable($cacheDir);
         $this->line(__('  storage/framework/cache gravável: :w', ['w' => $writable ? 'sim' : 'não']));
-        $this->line(__('  Se pulse:check não corre no cron mas corre no SSH: mesmo utilizador no crontab,'));
+        $this->line(__('  Se pulse:check não corre no cron mas corre no SSH: mesmo usuário no crontab,'));
         $this->line(__('  evite >> /dev/null, rode php artisan schedule:clear-cache e confira storage/logs/scheduler.log'));
         $this->newLine();
     }
@@ -113,7 +113,7 @@ class SchedulePulseDiagnoseCommand extends Command
         $base = base_path();
         $php = PHP_BINARY;
 
-        $this->comment(__('Crontab recomendado (mesmo utilizador do PHP-FPM / deploy):'));
+        $this->comment(__('Crontab recomendado (mesmo usuário do PHP-FPM / deploy):'));
         $this->newLine();
         $this->line(__('  # Invocar o scheduler a cada minuto (Laravel decide o que está due):'));
         $this->line("  * * * * * cd {$base} && {$php} artisan schedule:run >> {$base}/storage/logs/scheduler.log 2>&1");
