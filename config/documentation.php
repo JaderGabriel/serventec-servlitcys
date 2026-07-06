@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '7.0.2',
         'release_tag' => '20260706-Hermes',
-        'commit_short' => '9ad2421',
+        'commit_short' => '41344e9',
         'commit_number' => 513,
         'revision_date' => '2026-07-06',
         'in_production' => true,

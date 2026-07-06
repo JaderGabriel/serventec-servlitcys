@@ -10,7 +10,7 @@
 | **Data de referência** | **06/07/2026** |
 | **Último marco documentado** | **pt-BR unificado (Hermes)** — UI, menus e documentação viva — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `9ad2421` (#**513**) |
+| **Commit de release** | `41344e9` (#**513**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -60,7 +60,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 7.0.2** | `9ad2421` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | **Produção:** pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
+| **▶ 7.0.2** | `41344e9` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | **Produção:** pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
 | 7.0.1 | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
 | 7.0.0 | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
 | 6.5.0 | `d07f58a` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |

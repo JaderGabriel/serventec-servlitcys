@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **7.0.2** |
 | **Tag de deploy** | `20260706-Hermes` |
-| **Commit de referência** | `9ad2421` |
+| **Commit de referência** | `41344e9` |
 | **Data de referência** | 2026-07-06 |
 | **Release** | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
 | **Marco** | **Hermes** — pt-BR unificado (UI, menus, documentação) |
