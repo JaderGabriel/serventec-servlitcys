@@ -9,11 +9,10 @@
         @php
             $tone = (string) ($section['tone'] ?? 'slate');
             $sectionOpen = $currentPath !== null && DocumentationCatalog::sectionContainsPath($section, $currentPath);
-            $isEntry = ($section['key'] ?? '') === 'entry';
         @endphp
         <details
             class="serv-docs-nav-group serv-docs-nav-group--{{ $tone }}"
-            @if ($sectionOpen || $isEntry) open @endif
+            @if ($sectionOpen) open @endif
         >
             <summary class="serv-docs-nav-group__summary">
                 <span @class([
