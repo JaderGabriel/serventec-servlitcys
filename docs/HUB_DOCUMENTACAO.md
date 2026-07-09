@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **7.0.3** |
 | **Tag de deploy** | `20260709-Calliope` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `98bfeee` |
 | **Data de referência** | 2026-07-09 |
 | **Release** | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) |
 | **Marco** | **Calliope** — leitor documentação modular; tag + GitHub Release alinhados |

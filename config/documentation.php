@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '7.0.3',
         'release_tag' => '20260709-Calliope',
-        'commit_short' => 'pending',
+        'commit_short' => '98bfeee',
         'commit_number' => 518,
         'revision_date' => '2026-07-09',
         'in_production' => true,
