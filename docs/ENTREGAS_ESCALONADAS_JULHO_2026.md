@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **7.0.2** · tag **`20260706-Hermes`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **7.0.3** · tag **`20260709-Calliope`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -14,6 +14,20 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 2 | **7.0.1** | `20260705b-Moneta` | 05/07 | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) | Tooltip FUNDEB por UF; `horizonte:warm-map-cache` estável |
 
 | 3 | **7.0.2** | `20260706-Hermes` | 06/07 | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) | pt-BR unificado (UI, menus, documentação) |
+| 4 | **7.0.3** | `20260709-Calliope` | 09/07 | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) | Leitor docs modular; tag + GitHub Release |
+
+---
+
+## Patches em `main` integrados em 7.0.3
+
+Commits entre **7.0.2** e **7.0.3**:
+
+| Commit (ref.) | Data (ref.) | Entrega |
+|---------------|-------------|---------|
+| `f698fb1` | 06–09/07 | Documentação modular + landings `docs/modulos/` |
+| `f34c875` | 06–09/07 | Layout amplo; scroll em tabelas |
+| `d55ba70` | 09/07 | Menu Entrada colapsável |
+| README | 09/07 | Revisão 7.x, Horizonte, pt-BR |
 
 ---
 

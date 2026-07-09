@@ -774,6 +774,28 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'operacao',
                         'confirm_slugs' => ['zerar-fila-processamento'],
                     ],
+                    [
+                        'name' => 'product:release-status',
+                        'summary' => __('Verifica alinhamento entre RELEASE, config, tag Git e GitHub Release.'),
+                        'signature' => 'product:release-status {tag} {--version=}',
+                        'examples' => [
+                            'php artisan product:release-status 20260709-Calliope --version=7.0.3',
+                        ],
+                        'env' => [],
+                        'doc_anchor' => 'operacao',
+                        'details' => __('Ver [RELEASE_PUBLICACAO.md](docs/RELEASE_PUBLICACAO.md).'),
+                    ],
+                    [
+                        'name' => 'product:release-publish',
+                        'summary' => __('Cria tag anotada, push e GitHub Release a partir do RELEASE_*.md.'),
+                        'signature' => 'product:release-publish {tag} {--version=} {--title=} {--dry-run}',
+                        'examples' => [
+                            'php artisan product:release-publish 20260709-Calliope --version=7.0.3',
+                        ],
+                        'env' => [],
+                        'doc_anchor' => 'operacao',
+                        'details' => __('Exige commit_short ≠ pending em config/documentation.php.'),
+                    ],
                 ],
             ],
         ];

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **7.0.2** · release `20260706-Hermes` · **Ramo:** `main` · **Última revisão:** 2026-07-06
+**Versão em produção:** **7.0.3** · release `20260709-Calliope` · **Ramo:** `main` · **Última revisão:** 2026-07-09
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (7.0.2)
+## Mapa de capacidades (7.0.3)
 
 ```mermaid
 flowchart TB

@@ -568,6 +568,7 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
                     ['label' => __('Implantação em produção'), 'path' => 'docs/IMPLANTACAO_PRODUCAO.md'],
+                    ['label' => __('Publicação de releases'), 'path' => 'docs/RELEASE_PUBLICACAO.md', 'hint' => __('Tag Git + GitHub Release')],
                     ['label' => __('Variáveis de ambiente'), 'path' => 'docs/VARIAVEIS_AMBIENTE.md'],
                     ['label' => __('Performance e Redis'), 'path' => 'docs/PERFORMANCE.md'],
                     ['label' => __('Escalabilidade e infraestrutura'), 'path' => 'docs/ESCALABILIDADE_INFRAESTRUTURA.md', 'hint' => __('Pool · balanceamento · alto volume')],

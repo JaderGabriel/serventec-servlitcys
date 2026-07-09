@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '7.0.2',
-        'release_tag' => '20260706-Hermes',
-        'commit_short' => '41344e9',
-        'commit_number' => 513,
-        'revision_date' => '2026-07-06',
+        'version' => '7.0.3',
+        'release_tag' => '20260709-Calliope',
+        'commit_short' => 'pending',
+        'commit_number' => 518,
+        'revision_date' => '2026-07-09',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

@@ -380,7 +380,23 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 
 ---
 
-## 9. Relação comando ↔ interface
+## 9. Publicação de releases (tag + GitHub)
+
+| Comando | Descrição |
+|---------|-----------|
+| `product:release-status` | Verifica RELEASE, `config/documentation.php`, tag local/remota e GitHub Release |
+| `product:release-publish` | Tag anotada + push + `gh release create` com notas do `RELEASE_*.md` |
+
+```bash
+php artisan product:release-status 20260709-Calliope --version=7.0.3
+php artisan product:release-publish 20260709-Calliope --version=7.0.3
+```
+
+Procedimento completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md).
+
+---
+
+## 10. Relação comando ↔ interface
 
 | Área | CLI principal | Admin |
 |------|----------------|-------|
@@ -393,6 +409,7 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | **Verificação diária** | `public-data:check-official` | notificação sino + hub |
 | **Educacenso 1ª etapa** | `censo:analyze-educacenso-file` | Analytics → Censo |
 | **Monitor de módulos** | `module-monitor:collect` | `/admin/monitor-modulos` |
+| **Release do produto** | `product:release-publish` | — (CLI; ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md)) |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
 | Frequência | `ieducar:probe-falta` | — (CLI; aba Analytics Frequência) |
 | **Massiva semanal** | `weekly-mass-sync:run` | sync-queue (retomar) |

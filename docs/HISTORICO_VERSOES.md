@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.2`** · tag de deploy **`20260706-Hermes`** · ver [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`7.0.3`** · tag de deploy **`20260709-Calliope`** · ver [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **7.0.2** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **7.0.3** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260706-Hermes` |
-| **Data de referência** | **06/07/2026** |
-| **Último marco documentado** | **pt-BR unificado (Hermes)** — UI, menus e documentação viva — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) |
+| **Tag de deploy (servidor)** | `20260709-Calliope` |
+| **Data de referência** | **09/07/2026** |
+| **Último marco documentado** | **Leitor documentação (Calliope)** — menu modular, layout e tag+GitHub alinhados — [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `41344e9` (#**513**) |
+| **Commit de release** | `pending` (#**518**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -47,6 +47,7 @@ timeline
     2026-07-02 : 6.2.0 Educacenso — contadores por etapa, filtro dependência
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
+    2026-07-09 : 7.0.3 Calliope — leitor documentação modular e publicação tag+GitHub
     2026-07-06 : 7.0.2 Hermes — pt-BR unificado (UI, menus, documentação)
     2026-07-05 : 7.0.1 Moneta — tooltip FUNDEB por UF, warm-map-cache sem lock
     2026-07-05 : 7.0.0 Ploutos — SICONFI, Transparência, tendência SAEB, scoring ampliado
@@ -60,7 +61,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 7.0.2** | `41344e9` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | **Produção:** pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
+| **▶ 7.0.3** | `pending` / `20260709-Calliope` → `main` | **518** | 09/07/2026 | **Produção:** leitor documentação modular, layout amplo, tabelas com scroll; README 7.x; `product:release-publish` — [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md). |
+| 7.0.2 | `41344e9` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
 | 7.0.1 | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
 | 7.0.0 | `e3caa40` / `20260705-Ploutos` → `main` | **483** | 05/07/2026 | Horizonte enriquecimento — SICONFI/RREO, Portal Transparência, tendência SAEB 4 ciclos, Educacenso modal, CadÚnico fora da escola, dimensões fiscal/trajectória/momentum/inclusão — [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md). |
 | 6.5.0 | `d07f58a` / `20260702c-Jord` → `main` | **482** | 02/07/2026 | Horizonte territorial — malha municipal IBGE + área km², modo **Contornos**, pílulas geo (posição/distância/área), copiar coordenadas decimal, SAEB/microrregiões, Educacenso nacional, docs alinhadas — [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md). |
@@ -433,6 +435,13 @@ Formato **`X.Y.Z`** (três segmentos). A nomenclatura do produto **não** segue 
 - **Tradições já usadas:** greco-romana (Athena, Metis, Urania…), nórdica (`Heimdall`, `Sleipnir`, **`Forseti`**). Asteca — disponível para releases futuras (ex.: *Quetzalcoatl*, *Tlaloc*).
 - **Data na tag:** sempre o dia civil da release (`YYYYMMDD`), alinhado a `revision_date` em `config/documentation.php`.
 - Ao publicar: atualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
+
+```bash
+php artisan product:release-status 20260709-Calliope --version=7.0.3
+php artisan product:release-publish 20260709-Calliope --version=7.0.3
+```
+
+Fluxo completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md). Exemplo legado:
 
 ```bash
 git tag -a 20260521-Mercury 3c935ca -m "2.3.8 — VAAF municipal, contatos, perfil e RX (Mercury)"
