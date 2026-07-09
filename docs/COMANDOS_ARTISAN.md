@@ -388,8 +388,8 @@ Sem `--password`, o comando pede a senha de forma oculta no terminal ou lê `CIT
 | `product:release-publish` | Tag anotada + push + `gh release create` com notas do `RELEASE_*.md` |
 
 ```bash
-php artisan product:release-status 20260709-Calliope --version=7.0.3
-php artisan product:release-publish 20260709-Calliope --version=7.0.3
+php artisan product:release-status 20260709-Calliope --product-version=7.0.3
+php artisan product:release-publish 20260709-Calliope --product-version=7.0.3
 ```
 
 Procedimento completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md).

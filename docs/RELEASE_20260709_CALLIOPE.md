@@ -28,8 +28,8 @@ php artisan config:cache && php artisan route:cache && php artisan view:cache
 ## Publicação (tag + GitHub Release)
 
 ```bash
-php artisan product:release-status 20260709-Calliope --version=7.0.3
-php artisan product:release-publish 20260709-Calliope --version=7.0.3
+php artisan product:release-status 20260709-Calliope --product-version=7.0.3
+php artisan product:release-publish 20260709-Calliope --product-version=7.0.3
 ```
 
 Ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md).

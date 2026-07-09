@@ -9,7 +9,7 @@ class ProductReleasePublishCommand extends Command
 {
     protected $signature = 'product:release-publish
                             {tag : Tag YYYYMMDD[-letra]-Codename}
-                            {--version= : Versão MAJOR.VERSÃO.MINOR (default: config/documentation.php)}
+                            {--product-version= : Versão MAJOR.VERSÃO.MINOR (default: config/documentation.php)}
                             {--title= : Título do GitHub Release}
                             {--dry-run : Simula sem criar tag nem GitHub Release}
                             {--no-push : Não executa git push origin TAG}
@@ -20,10 +20,10 @@ class ProductReleasePublishCommand extends Command
     public function handle(ProductReleasePublisher $publisher): int
     {
         $tag = trim((string) $this->argument('tag'));
-        $version = trim((string) ($this->option('version') ?: config('documentation.product.version', '')));
+        $version = trim((string) ($this->option('product-version') ?: config('documentation.product.version', '')));
 
         if ($version === '') {
-            $this->error('Informe --version= ou defina documentation.product.version.');
+            $this->error('Informe --product-version= ou defina documentation.product.version.');
 
             return self::FAILURE;
         }

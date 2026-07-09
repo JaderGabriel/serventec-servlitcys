@@ -44,15 +44,17 @@ Implementação: `App\Support\Product\ProductReleaseTag`.
 ### 1. Verificar alinhamento
 
 ```bash
-php artisan product:release-status 20260709-Calliope --version=7.0.3
+php artisan product:release-status 20260709-Calliope --product-version=7.0.3
 ```
 
 Mostra: nota RELEASE, config, tag local/remota, GitHub Release.
 
+> Use `--product-version=` (não `--version=`, reservado pelo Artisan para exibir a versão do framework).
+
 ### 2. Publicar tag + GitHub Release
 
 ```bash
-php artisan product:release-publish 20260709-Calliope --version=7.0.3
+php artisan product:release-publish 20260709-Calliope --product-version=7.0.3
 ```
 
 - Cria **tag anotada** em `HEAD`
@@ -85,7 +87,7 @@ Prefira `product:release-publish` para evitar drift entre tag e GitHub.
 ## Após publicar
 
 ```bash
-php artisan product:release-status 20260709-Calliope --version=7.0.3
+php artisan product:release-status 20260709-Calliope --product-version=7.0.3
 gh release view 20260709-Calliope
 ```
 

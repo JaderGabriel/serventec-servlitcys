@@ -777,9 +777,9 @@ final class ArtisanCommandsCatalog
                     [
                         'name' => 'product:release-status',
                         'summary' => __('Verifica alinhamento entre RELEASE, config, tag Git e GitHub Release.'),
-                        'signature' => 'product:release-status {tag} {--version=}',
+                        'signature' => 'product:release-status {tag} {--product-version=}',
                         'examples' => [
-                            'php artisan product:release-status 20260709-Calliope --version=7.0.3',
+                            'php artisan product:release-status 20260709-Calliope --product-version=7.0.3',
                         ],
                         'env' => [],
                         'doc_anchor' => 'operacao',
@@ -788,9 +788,9 @@ final class ArtisanCommandsCatalog
                     [
                         'name' => 'product:release-publish',
                         'summary' => __('Cria tag anotada, push e GitHub Release a partir do RELEASE_*.md.'),
-                        'signature' => 'product:release-publish {tag} {--version=} {--title=} {--dry-run}',
+                        'signature' => 'product:release-publish {tag} {--product-version=} {--title=} {--dry-run}',
                         'examples' => [
-                            'php artisan product:release-publish 20260709-Calliope --version=7.0.3',
+                            'php artisan product:release-publish 20260709-Calliope --product-version=7.0.3',
                         ],
                         'env' => [],
                         'doc_anchor' => 'operacao',

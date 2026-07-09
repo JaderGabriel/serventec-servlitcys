@@ -107,8 +107,8 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 5. [ ] Tag: `YYYYMMDD-Codename` mitológico (greco-romano, nórdico ou asteca; alusão às melhorias); se já existir release na mesma data, sufixo `a`, `b`, … (`ProductReleaseTag`)
 6. [ ] [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — versão, linha 4.x e mapa de docs
 7. [ ] `git commit` com mensagem de release
-8. [ ] `php artisan product:release-status TAG --version=X.Y.Z`
-9. [ ] `php artisan product:release-publish TAG --version=X.Y.Z` — ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md)
+8. [ ] `php artisan product:release-status TAG --product-version=X.Y.Z`
+9. [ ] `php artisan product:release-publish TAG --product-version=X.Y.Z` — ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md)
 10. [ ] [README.md](README.md) — seção releases e abas rápidas
 11. [ ] [ROADMAP_INDICE.md](ROADMAP_INDICE.md) — panorama feito / em curso / planeado
 12. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente

@@ -437,8 +437,8 @@ Formato **`X.Y.Z`** (três segmentos). A nomenclatura do produto **não** segue 
 - Ao publicar: atualizar tabela **Linha do tempo**, **Tags Git**, `README.md`, `STATUS_PROJETO.md` e `product.version`.
 
 ```bash
-php artisan product:release-status 20260709-Calliope --version=7.0.3
-php artisan product:release-publish 20260709-Calliope --version=7.0.3
+php artisan product:release-status 20260709-Calliope --product-version=7.0.3
+php artisan product:release-publish 20260709-Calliope --product-version=7.0.3
 ```
 
 Fluxo completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md). Exemplo legado:

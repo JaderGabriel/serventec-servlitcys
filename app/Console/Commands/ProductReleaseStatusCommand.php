@@ -9,14 +9,14 @@ class ProductReleaseStatusCommand extends Command
 {
     protected $signature = 'product:release-status
                             {tag? : Tag a verificar (default: config/documentation.php)}
-                            {--version= : Versão esperada (default: config)}';
+                            {--product-version= : Versão esperada (default: config)}';
 
     protected $description = 'Verifica alinhamento entre config, RELEASE_*.md, tag Git e GitHub Release';
 
     public function handle(ProductReleasePublisher $publisher): int
     {
         $tag = trim((string) ($this->argument('tag') ?: config('documentation.product.release_tag', '')));
-        $version = trim((string) ($this->option('version') ?: config('documentation.product.version', '')));
+        $version = trim((string) ($this->option('product-version') ?: config('documentation.product.version', '')));
 
         if ($tag === '' || $version === '') {
             $this->error('Tag ou versão indefinidas.');
@@ -57,7 +57,7 @@ class ProductReleaseStatusCommand extends Command
 
         if ($ready) {
             $this->newLine();
-            $this->info('Pronto para: php artisan product:release-publish '.$tag.' --version='.$version);
+            $this->info('Pronto para: php artisan product:release-publish '.$tag.' --product-version='.$version);
         }
 
         return self::SUCCESS;
