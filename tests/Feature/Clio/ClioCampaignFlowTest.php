@@ -22,7 +22,10 @@ final class ClioCampaignFlowTest extends TestCase
         }
 
         parent::setUp();
-        config(['clio.enabled' => true]);
+        config([
+            'clio.enabled' => true,
+            'legal.require_authenticated_consent' => false,
+        ]);
     }
 
     #[Test]

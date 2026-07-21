@@ -38,6 +38,9 @@ docker-compose.override.yml
 /storage/screen
 /vendor
 
+# Extensões PHP locais (pdo_sqlite) usadas pelos testes Clio sem apt root
+/tools/php-ext/*.so
+
 # SAEB / exemplos JSON (evitar dados de teste em produção)
 /database/data/*.example.json
 /public/saeb/*.example.json

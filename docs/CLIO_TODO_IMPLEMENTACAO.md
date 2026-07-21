@@ -200,7 +200,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 - [ ] Não versionar CSV reais do Drive
 
 ### Qualidade
-- [ ] PHPUnit Unit + Feature por sprint
+- [x] PHPUnit Unit + Feature Clio (`composer test:clio` / `scripts/run-clio-tests.sh`)
 - [ ] Pint / estilo do repo
 - [ ] Sem regressão CEN-01 (conferência TXT)
 

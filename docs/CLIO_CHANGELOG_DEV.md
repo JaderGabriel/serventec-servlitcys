@@ -24,6 +24,15 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — Suíte de testes Clio
+
+**Entregue**
+
+- Feature: fluxo HTTP + pipeline ingest/parse/analyze/export + RX + flag off
+- Unit: policies, CSV PII, RX block, parsers/classifier existentes
+- `composer test:clio` + `scripts/php-with-sqlite.sh` (pdo_sqlite sem apt root)
+- `phpunit.xml`: força SQLite/Pulse em testing
+
 ### 2026-07-21 — Alinhamento documental (pós-S6)
 
 **Entregue**

@@ -59,6 +59,8 @@
 
 Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 
+**Testes:** `composer test:clio` (ou `./scripts/run-clio-tests.sh`) — Unit + Feature do módulo.
+
 ---
 
 ## Jornada rápida (cenário A — sem i-Educar)
