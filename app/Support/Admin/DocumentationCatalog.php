@@ -458,6 +458,7 @@ final class DocumentationCatalog
                     ['label' => __('Cadastro e CadÚnico'), 'path' => 'docs/modulos/MODULO_CADUNICO.md'],
                     ['label' => __('Pedagogia e SAEB'), 'path' => 'docs/modulos/MODULO_PEDAGOGIA_SAEB.md'],
                     ['label' => __('RX — Censo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md'],
+                    ['label' => __('Clio — campanhas Educacenso'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('1ª etapa · relatórios CSV')],
                     ['label' => __('Financiamento (FUNDEB)'), 'path' => 'docs/modulos/MODULO_FUNDEB.md'],
                     ['label' => __('Dados públicos (admin)'), 'path' => 'docs/modulos/MODULO_DADOS_PUBLICOS.md', 'audience' => self::AUDIENCE_ADMIN],
                 ],
@@ -529,6 +530,10 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Clio — campanhas 1ª etapa'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Novo módulo')],
+                    ['label' => __('Roadmap Clio'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('TODO implementação Clio'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Clio — rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md'],
                 ],
             ],

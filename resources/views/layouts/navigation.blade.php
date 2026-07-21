@@ -49,6 +49,11 @@
                             {{ __('Horizonte') }}
                         </x-nav-link>
                     @endif
+                    @if (Auth::user()->canViewClio())
+                        <x-nav-link :href="route('clio.campaigns.index')" :active="request()->routeIs('clio.*')" icon="academic-cap">
+                            {{ __('Clio') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -100,6 +105,11 @@
             @if (Auth::user()->canViewHorizonte())
                 <x-responsive-nav-link :href="route('dashboard.horizonte')" :active="request()->routeIs('dashboard.horizonte')" icon="globe-alt">
                     {{ __('Horizonte') }}
+                </x-responsive-nav-link>
+            @endif
+            @if (Auth::user()->canViewClio())
+                <x-responsive-nav-link :href="route('clio.campaigns.index')" :active="request()->routeIs('clio.*')" icon="academic-cap">
+                    {{ __('Clio') }}
                 </x-responsive-nav-link>
             @endif
             <p class="px-4 pt-3 pb-1 text-[10px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">

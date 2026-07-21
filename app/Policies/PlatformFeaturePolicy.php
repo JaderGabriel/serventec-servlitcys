@@ -40,6 +40,14 @@ final class PlatformFeaturePolicy
         return $user->is_active && ($user->isAdmin() || $user->isUsuário());
     }
 
+    /** Clio — campanhas Educacenso 1ª etapa (mesmo público que Horizonte). */
+    public function viewClio(User $user): bool
+    {
+        return $user->is_active
+            && (bool) config('clio.enabled', true)
+            && ($user->isAdmin() || $user->isUsuário());
+    }
+
     public function exportAnalyticsPdf(User $user): bool
     {
         return $user->is_active && ($user->isAdmin() || $user->isUsuário());

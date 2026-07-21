@@ -77,6 +77,18 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/horizonte/map-data', [HorizonteController::class, 'mapData'])->name('dashboard.horizonte.map-data');
         Route::get('/dashboard/horizonte/map-geo', [HorizonteController::class, 'mapGeo'])->name('dashboard.horizonte.map-geo');
         Route::get('/dashboard/horizonte/municipality/{ibge}/enrollment-series', [HorizonteController::class, 'enrollmentSeries'])->name('dashboard.horizonte.enrollment-series');
+
+        Route::prefix('clio')->name('clio.')->group(function () {
+            Route::get('/campanhas', [\App\Http\Controllers\Clio\CampaignController::class, 'index'])->name('campaigns.index');
+            Route::get('/campanhas/nova', [\App\Http\Controllers\Clio\CampaignController::class, 'create'])->name('campaigns.create');
+            Route::post('/campanhas', [\App\Http\Controllers\Clio\CampaignController::class, 'store'])->name('campaigns.store');
+            Route::get('/campanhas/{campaign}', [\App\Http\Controllers\Clio\CampaignController::class, 'show'])->name('campaigns.show');
+            Route::get('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
+            Route::post('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
+            Route::get('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
+            Route::post('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'store'])->name('cities.store');
+        });
+
         Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');
         Route::get('/dashboard/analytics/filter-options', [AnalyticsDashboardController::class, 'filterOptions'])->name('dashboard.analytics.filter-options');
         Route::get('/dashboard/analytics/filter-options-bootstrap', [AnalyticsDashboardController::class, 'filterOptionsBootstrap'])->name('dashboard.analytics.filter-options-bootstrap');

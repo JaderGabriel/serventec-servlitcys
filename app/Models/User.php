@@ -142,6 +142,12 @@ class User extends Authenticatable
         return app(PlatformFeaturePolicy::class)->viewHorizonte($this);
     }
 
+    /** Clio — campanhas e relatórios Educacenso 1ª etapa. */
+    public function canViewClio(): bool
+    {
+        return app(PlatformFeaturePolicy::class)->viewClio($this);
+    }
+
     /** Relatório PDF completo (aba Serventec): administrador e usuário da plataforma. */
     public function canExportAnalyticsPdf(): bool
     {

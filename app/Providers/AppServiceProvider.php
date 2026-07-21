@@ -21,6 +21,7 @@ use App\Livewire\Pulse\SyncAdminPulseCard;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
+use App\Models\Clio\ClioCampaign;
 use App\Models\User;
 use App\Authorization\PublicDataHub;
 use App\Policies\PublicDataAdminPolicy;
@@ -30,6 +31,7 @@ use App\Observers\CityFundebSyncObserver;
 use App\Policies\AdminSyncTaskPolicy;
 use App\Policies\AnalyticsReportExportPolicy;
 use App\Policies\CityPolicy;
+use App\Policies\Clio\ClioCampaignPolicy;
 use App\Policies\UserPolicy;
 use App\Services\CityDataConnection;
 use App\Services\Ieducar\IeducarCityDataService;
@@ -86,10 +88,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(AnalyticsReportExport::class, AnalyticsReportExportPolicy::class);
         Gate::policy(AdminSyncTask::class, AdminSyncTaskPolicy::class);
         Gate::policy(PublicDataHub::class, PublicDataAdminPolicy::class);
+        Gate::policy(ClioCampaign::class, ClioCampaignPolicy::class);
 
         $platform = PlatformFeaturePolicy::class;
         Gate::define('importOrConfigure', [$platform, 'importOrConfigure']);
         Gate::define('viewHorizonte', [$platform, 'viewHorizonte']);
+        Gate::define('viewClio', [$platform, 'viewClio']);
         Gate::define('exportAnalyticsPdf', [$platform, 'exportAnalyticsPdf']);
         Gate::define('exportInclusionNee', [$platform, 'exportInclusionNee']);
         Gate::define('viewSyncQueue', [$platform, 'viewSyncQueue']);

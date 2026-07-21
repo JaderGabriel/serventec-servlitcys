@@ -256,6 +256,23 @@ Notifica administradores (`kind=public_data`) com resumo das fontes FNDE, CadÚn
 
 ---
 
+## 11a. Clio (campanhas Educacenso 1ª etapa)
+
+Menu superior após Horizonte · Rotas `/clio/*` · Documentação: [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · Rastreio: [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md).
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `CLIO_ENABLED` | `true` | Liga menu e rotas Clio (`canViewClio`) |
+| `CLIO_UPLOAD_MAX_MB` | `64` | Tamanho máximo por ficheiro no upload |
+| `CLIO_MAX_FILES_PER_UPLOAD` | `200` | Máximo de ficheiros por pedido |
+| `CLIO_RETENTION_DAYS` | `90` | Retenção de artefactos (limpeza futura) |
+| `CLIO_QUEUE` | `clio` | Nome da fila de jobs |
+| `CLIO_LAYOUT_YEAR_DEFAULT` | `2026` | Ano sugerido em nova campanha |
+| `CLIO_DISK` | `local` | Disco Laravel para uploads |
+| `CLIO_PROMOTE_ENABLED` | `false` | Promote para i-Educar (Onda 3; desligado no MVP) |
+
+---
+
 ## 11b. Horizonte (mapa de oportunidade)
 
 Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).

@@ -1,6 +1,6 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **7.0.2** · tag `20260706-Hermes` · **Última revisão:** 2026-07-06
+**Versão em produção:** **7.0.3** · tag `20260709-Calliope` · **Última revisão:** 2026-07-21
 
 > **Índice:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -59,6 +59,7 @@ flowchart TD
 | **Horizonte — PNAD** | UI modal pronta; falta pipeline SIDRA | [HOR-10](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) · [HOR-18](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) | Tabela `municipal_pnad_snapshots` vazia |
 | **Horizonte — v2.2** | Geo INEP escolas, IDHM, SIDRA ampliado, programas FNDE | [HORIZONTE.md](HORIZONTE.md) §11.3–§11.6 · `HOR-01`, `HOR-05`–`HOR-07` | — |
 | **Consultoria — SAEB** | Metas PNE / semáforo no quadro | [GRA-07](BACKLOG_IMPLEMENTACOES.md#b-painel--gráficos-e-inferências-mec--inep) · [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | Em andamento |
+| **Censo — Clio** | Roadmap fechado; próximo = código S1–S4 (MVP) | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) | Implementação |
 | **Infra — CI** | `pdo_sqlite` / MySQL de testes no pipeline | [INF-04](BACKLOG_IMPLEMENTACOES.md#a-produto-e-infraestrutura) | Em andamento |
 | **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitetura-e-refactor-técnico) | Em andamento |
 
@@ -71,6 +72,7 @@ flowchart TD
 | **Onda 2** | CNES, busca ativa CadÚnico, PNAD completo | [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) · [HORIZONTE.md](HORIZONTE.md) §11.6 | HOR-09–10, HOR-18, CUN-03, INT-07–08 |
 | **Onda 3** | e-SUS escola, comparativo compliance clientes | [HORIZONTE.md](HORIZONTE.md) §11.7 | HOR-13, INT-09 |
 | **Transversal** | Power BI, plugins i-Educar, inclusão NEE | Ver tabela abaixo | PBI-*, PLG-*, CAD-* |
+| **Censo / Educacenso** | **Clio** — campanhas CSV 1ª etapa | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | CEN-04…CEN-16 |
 
 ---
 
@@ -118,6 +120,29 @@ flowchart TD
 | [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) | CUN-01/02 entregues; CUN-03 pendente |
 | [CADUNICO_AUTOMACAO.md](CADUNICO_AUTOMACAO.md) | Import nacional, cron, filas |
 | [BACKLOG_IMPLEMENTACOES.md § I](BACKLOG_IMPLEMENTACOES.md#i-cadúnico--acurácia-da-lacuna-mapa-e-busca-ativa) | IDs `CUN-*` |
+
+### Censo / Educacenso — 1ª etapa
+
+| Documento | Conteúdo |
+|-----------|----------|
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | **Clio** — multi-arquivo, análise com/sem i-Educar, carga · §9 validado |
+| [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de código do módulo Clio (S1–S8) |
+| [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) | Landing Clio |
+| [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Spec CEN-01 (conferência TXT × i-Educar) — base a reutilizar |
+| [modulos/MODULO_RX_CENSO.md](modulos/MODULO_RX_CENSO.md) | Landing RX / Censo |
+| [BACKLOG_IMPLEMENTACOES.md § F](BACKLOG_IMPLEMENTACOES.md#f-plugins-integrações-e-cadastro-i-educar) | IDs `CEN-*` |
+
+**Estado dos itens Educacenso (`CEN-*`):**
+
+| ID | Item | Estado |
+|----|------|--------|
+| CEN-01 | Conferência TXT portal × i-Educar | Concluído (4.4.8) |
+| CEN-02 | Inventário corpus Drive COLETA 2026 | **Concluído** (docs 21/07) |
+| CEN-03 | Modelo de campanha (spec) | **Concluído** (docs 21/07) |
+| CEN-04–07 | MVP ingestão CSV + análise Modo A | Pendente |
+| CEN-14 | Cadastro ficha leve (sem i-Educar) | Pendente |
+| CEN-08–10 · CEN-15–16 | Modo B, vínculo i-Educar, BI campanha | Pendente |
+| CEN-11–13 | Carga assistida i-Educar | Pendente |
 
 ### Inclusão, NEE e qualidade de cadastro
 
@@ -167,7 +192,7 @@ flowchart TD
 | Resumo / Diagnóstico | [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | TEC-01–03 |
 | Cadastro | [CADUNICO_CECAD.md](CADUNICO_CECAD.md) | CUN-*, CAD-* |
 | Pedagógico | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | GRA-*, PLG-* |
-| Censo | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | CEN-01 ✓ |
+| Censo | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) · [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | CEN-01 ✓ · CEN-02… planeado |
 | Finanças | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | FIN-* (maioria ✓) |
 | Horizonte (paralelo) | [HORIZONTE.md](HORIZONTE.md) | HOR-* |
 

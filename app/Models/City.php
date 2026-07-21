@@ -107,6 +107,14 @@ class City extends Model
     }
 
     /**
+     * Catálogo Clio: municípios activos com ou sem conexão i-Educar.
+     */
+    public function scopeForClioCatalog(Builder $query): void
+    {
+        $query->active();
+    }
+
+    /**
      * Dados mínimos para consultar a base desta cidade no painel.
      */
     public function hasDataSetup(): bool
@@ -114,6 +122,11 @@ class City extends Model
         return filled($this->db_host)
             && filled($this->db_database)
             && filled($this->db_username);
+    }
+
+    public function isClioCatalogOnly(): bool
+    {
+        return $this->is_active && ! $this->hasDataSetup();
     }
 
     /**

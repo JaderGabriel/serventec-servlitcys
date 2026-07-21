@@ -178,6 +178,21 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | PLG-03 | P2 | PNAE/transporte × NEE (se schema i-Educar existir) | Pendente | PLUGINS §5.3, backlog CAD-03 |
 | PLG-04 | P2 | Validação pós-export Educacenso (recurso×NEE) | Pendente | PLUGINS §5.3, CAD-04 |
 | CEN-01 | **P0** | Conferência Educacenso 1ª etapa: arquivo portal INEP × i-Educar + painel analítico | Concluído (4.4.8) | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) |
+| CEN-02 | **P0** | Inventário corpus Drive COLETA 2026 (formatos × município) + fixtures anonimizadas | **Concluído (inventário)** — fixtures código na Onda 1 | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) §3.2 |
+| CEN-03 | **P0** | Modelo de campanha (município, ano, origem, artefactos, perfil A/B) | **Concluído (spec)** — migrations/UI na Onda 1 | Idem §4 |
+| CEN-04 | **P0** | **Clio** — Upload em lote/ZIP associado a campanha | Pendente | [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) S2 · [ROADMAP…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) |
+| CEN-05 | **P0** | **Clio** — Normalizador/parsers CSV multi-arquivo | Pendente | Idem S3 |
+| CEN-06 | **P0** | **Clio** — Motor análise Modo A (INF-*) + painel | Pendente | Idem S4 MVP |
+| CEN-07 | P1 | **Clio** — Persistência findings/inferences | Pendente | Idem S4 |
+| CEN-08 | P1 | **Clio** — Cruzamento i-Educar (INF-GAP) | Pendente | Idem S5 |
+| CEN-09 | P2 | **Clio** — Comparativo multi-município (RX) | Pendente | Idem S6 |
+| CEN-10 | P2 | **Clio** — Export Serventec CSV/PDF | Pendente | Idem S6 |
+| CEN-11 | P2 | **Clio** — Mapa Relacao → entidades i-Educar | Pendente | Idem S8 |
+| CEN-12 | P1 | **Clio** — Dry-run de carga i-Educar | Pendente | Idem S8 |
+| CEN-13 | P1 | **Clio** — Promote confirmado + auditoria | Pendente | Idem S8 |
+| CEN-14 | **P0** | **Clio** — Cadastro ficha leve + `City::forClioCatalog()` | Pendente | Idem S1 |
+| CEN-15 | P1 | **Clio** — Vincular/desvincular i-Educar | Pendente | Idem S5 |
+| CEN-16 | P2 | **Clio** — ETL `bi_clio_*` + refresh | Pendente | Idem S7 · [POWERBI.md](POWERBI.md) |
 | PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
 | PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
 | PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |
