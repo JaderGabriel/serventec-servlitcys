@@ -49,4 +49,24 @@ class ClioCampaignFinding extends Model
     {
         return $this->belongsTo(ClioCampaignArtifact::class, 'artifact_id');
     }
+
+    public function severityLabel(): string
+    {
+        return match ($this->severity) {
+            self::SEVERITY_ERROR => __('Erro'),
+            self::SEVERITY_WARNING => __('Atenção'),
+            self::SEVERITY_INFO => __('Informação'),
+            default => $this->severity,
+        };
+    }
+
+    public function severityHint(): string
+    {
+        return match ($this->severity) {
+            self::SEVERITY_ERROR => __('Precisa de correção na coleta ou no sistema'),
+            self::SEVERITY_WARNING => __('Revisar antes de concluir'),
+            self::SEVERITY_INFO => __('Registro informativo'),
+            default => '',
+        };
+    }
 }
