@@ -34,6 +34,9 @@ final class ClioParsersTest extends TestCase
         $this->assertCount(3, $result->schools);
         $this->assertSame('2026-07-21', $result->referenceDate);
         $this->assertSame('29174651', $result->schools[0]['inep_code']);
+        $this->assertSame(120, $result->schools[0]['meta']['total_curricular']);
+        $this->assertSame(8, $result->schools[0]['meta']['total_aee']);
+        $this->assertSame(15, $result->schools[0]['meta']['total_ac']);
     }
 
     #[Test]
@@ -69,7 +72,8 @@ final class ClioParsersTest extends TestCase
             $base.'/RelacaoTurmaEscola_21_7_2026.csv',
             $this->artifact()
         );
-        $this->assertSame(2, $turma->rowCount);
+        $this->assertSame(4, $turma->rowCount);
+        $this->assertSame(1, $turma->meta['aggregates']['by_tipo_bucket']['aee']);
 
         $prof = (new RelacaoProfissionalEscolaParser($csv))->parse(
             $base.'/RelacaoProfissionalEscola_21_7_2026.csv',

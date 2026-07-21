@@ -42,6 +42,7 @@ class HomeController extends Controller
                 'artifacts',
                 'schools',
                 'findings as findings_error_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_ERROR),
+                'findings as findings_warning_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_WARNING),
             ])
             ->where('year', $filterYear)
             ->orderBy('municipality_name');
@@ -62,25 +63,43 @@ class HomeController extends Controller
             ->paginate(24)
             ->withQueryString();
 
-        $reportReadyCount = ClioCampaign::query()
-            ->where('year', $filterYear)
+        $yearBase = ClioCampaign::query()->where('year', $filterYear);
+
+        $reportReadyCount = (clone $yearBase)
             ->whereIn('status', [
                 ClioCampaign::STATUS_ANALYZED,
                 ClioCampaign::STATUS_CROSS_CHECKED,
             ])
             ->count();
 
-        $triades = ClioCampaign::query()
-            ->where('year', $filterYear)
+        $inProgressCount = (clone $yearBase)
+            ->whereNotIn('status', [
+                ClioCampaign::STATUS_ANALYZED,
+                ClioCampaign::STATUS_CROSS_CHECKED,
+            ])
+            ->count();
+
+        $yearErrors = (int) ClioCampaignFinding::query()
+            ->where('severity', ClioCampaignFinding::SEVERITY_ERROR)
+            ->whereIn('campaign_id', (clone $yearBase)->select('id'))
+            ->count();
+
+        $yearCampaignsForStats = (clone $yearBase)
             ->with(['inferences' => fn ($rel) => $rel->where('code', 'INF-COE')])
-            ->get()
+            ->withCount('schools')
+            ->get();
+
+        $yearSchools = (int) $yearCampaignsForStats->sum('schools_count');
+
+        $triades = $yearCampaignsForStats
             ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())
             ->filter(fn ($v) => $v !== null);
 
-        $campaignCityIds = ClioCampaign::query()
-            ->where('year', $filterYear)
-            ->whereNotNull('city_id')
+        $campaignCityIds = $yearCampaignsForStats
             ->pluck('city_id')
+            ->filter()
+            ->unique()
+            ->values()
             ->all();
 
         $citiesWithoutCampaign = City::query()
@@ -96,6 +115,9 @@ class HomeController extends Controller
             'filterYear' => $filterYear,
             'search' => $q,
             'reportReadyCount' => $reportReadyCount,
+            'inProgressCount' => $inProgressCount,
+            'yearErrors' => $yearErrors,
+            'yearSchools' => $yearSchools,
             'avgTriade' => $triades->isNotEmpty() ? round((float) $triades->avg(), 1) : null,
             'citiesWithoutCampaign' => $citiesWithoutCampaign,
             'citiesWithoutCampaignTotal' => City::query()

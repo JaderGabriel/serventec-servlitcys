@@ -3,6 +3,7 @@
 namespace App\Services\Clio\Parse;
 
 use App\Models\Clio\ClioCampaignArtifact;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use Throwable;
 
 final class RelacaoTurmaEscolaParser implements ArtifactParser
@@ -14,6 +15,7 @@ final class RelacaoTurmaEscolaParser implements ArtifactParser
 
     public function __construct(
         private readonly CsvReader $csv,
+        private readonly ?RelationCsvAggregator $aggregator = null,
     ) {}
 
     public function supports(string $kind): bool
@@ -38,12 +40,20 @@ final class RelacaoTurmaEscolaParser implements ArtifactParser
             );
         }
 
+        $agg = ($this->aggregator ?? new RelationCsvAggregator)->aggregateTurmas($data['rows'], $this->csv);
+        $warnings = [];
+        if ($agg['without_etapa'] > 0) {
+            $warnings[] = __('Turmas sem Etapa de ensino: :n', ['n' => $agg['without_etapa']]);
+        }
+
         return new ParseResult(
-            status: ParseResult::STATUS_OK,
+            status: $warnings === [] ? ParseResult::STATUS_OK : ParseResult::STATUS_WARNING,
             rowCount: count($data['rows']),
+            warnings: $warnings,
             meta: [
                 'header_offset' => 1,
                 'delimiter' => CsvReader::DELIMITER,
+                'aggregates' => $agg,
             ],
         );
     }

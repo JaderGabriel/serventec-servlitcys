@@ -37,7 +37,8 @@ final class ClioCampaignFlowTest extends TestCase
             ->get(route('clio.home'))
             ->assertOk()
             ->assertSee('Clio', false)
-            ->assertSee('Relatórios por município', false);
+            ->assertSee('Relatórios por município', false)
+            ->assertSee('Central de relatórios', false);
     }
 
     #[Test]

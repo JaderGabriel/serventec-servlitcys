@@ -71,6 +71,7 @@ final class CampaignAnalysisPresenterTest extends TestCase
         $incomplete = collect($dash['schools'])->firstWhere('inep', '29085667');
         $this->assertSame(__('Incompleta'), $incomplete['status']);
         $this->assertContains(__('Turmas'), $incomplete['missing']);
+        $this->assertArrayHasKey('report', $dash);
     }
 
     #[Test]

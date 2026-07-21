@@ -173,6 +173,244 @@
                     </div>
                 </section>
 
+                {{-- Relatório da rede (Matrícula inicial / Educacenso) --}}
+                @if (! empty($dashboard['report']['available']))
+                    @php $report = $dashboard['report']; @endphp
+                    <section aria-labelledby="clio-report-heading" class="space-y-4">
+                        <div>
+                            <h3 id="clio-report-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white">
+                                {{ __('Relatório da rede') }}
+                            </h3>
+                            <p class="mt-1 text-sm text-slate-500 max-w-3xl">
+                                {{ __('Quadro para decisão com indicadores possíveis a partir dos CSV importados (INEP/MEC · Matrícula inicial): turmas, etapas/anos, alunos, AEE e atividade complementar.') }}
+                            </p>
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                            @foreach ($report['totals'] ?? [] as $kpi)
+                                <div class="serv-panel p-4">
+                                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
+                                    <p class="mt-1 font-display text-2xl font-semibold tabular-nums {{ $toneValue($kpi['tone'] ?? 'slate') }}">{{ $kpi['value'] }}</p>
+                                    <p class="mt-1 text-xs text-slate-500 leading-snug">{{ $kpi['hint'] }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        @if (! empty($report['quality_notes']))
+                            <div class="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+                                <p class="font-medium">{{ __('Qualidade dos dados neste relatório') }}</p>
+                                <ul class="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed">
+                                    @foreach ($report['quality_notes'] as $note)
+                                        <li>{{ $note }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div class="grid gap-4 lg:grid-cols-2">
+                            <div class="serv-panel p-5 space-y-4">
+                                <div>
+                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Turmas por ano / etapa') }}</h4>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('Campo «Etapa de ensino» da Relação de turmas (proxy Educacenso por ano).') }}</p>
+                                </div>
+                                @forelse ($report['turmas_por_ano'] ?? [] as $bar)
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                        </div>
+                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                            <div class="h-full rounded-full bg-sky-500" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-slate-500">{{ __('Sem distribuição por etapa nas turmas importadas.') }}</p>
+                                @endforelse
+                            </div>
+
+                            <div class="serv-panel p-5 space-y-4">
+                                <div>
+                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Alunos matriculados por ano / etapa') }}</h4>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('Campo «Etapa de ensino» da Relação de alunos.') }}</p>
+                                </div>
+                                @forelse ($report['matriculas_por_ano'] ?? [] as $bar)
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                        </div>
+                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                            <div class="h-full rounded-full bg-emerald-500" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-sm text-slate-500">{{ __('Sem distribuição por etapa nas matrículas importadas.') }}</p>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 lg:grid-cols-3">
+                            <div class="serv-panel p-5 space-y-4">
+                                <div>
+                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Composição das turmas') }}</h4>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('Tipo de turma: curricular, AEE e atividade complementar.') }}</p>
+                                </div>
+                                @foreach ($report['composicao_turmas'] ?? [] as $bar)
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs font-medium {{ $toneValue($bar['tone'] ?? 'slate') }}">{{ $bar['count'] }}</span>
+                                        </div>
+                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                            <div class="h-full rounded-full {{ $toneBar($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="serv-panel p-5 space-y-4">
+                                <div>
+                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Matrícula por modalidade (Acomp)') }}</h4>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('Totais do relatório municipal de acompanhamento, quando disponíveis.') }}</p>
+                                </div>
+                                @foreach ($report['matricula_modalidade'] ?? [] as $bar)
+                                    <div>
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs font-medium {{ $toneValue($bar['tone'] ?? 'slate') }}">{{ number_format($bar['count']) }}</span>
+                                        </div>
+                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                                            <div class="h-full rounded-full {{ $toneBar($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div class="serv-panel p-5 space-y-4">
+                                <div>
+                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Etapa agregada e mediação') }}</h4>
+                                    <p class="mt-1 text-xs text-slate-500">{{ __('Visão resumida (anos iniciais/finais, EJA, presencial…).') }}</p>
+                                </div>
+                                @if (! empty($report['turmas_por_etapa_agregada']))
+                                    <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('Etapa agregada') }}</p>
+                                    @foreach ($report['turmas_por_etapa_agregada'] as $bar)
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="truncate text-slate-700 dark:text-slate-200" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }}</span>
+                                        </div>
+                                    @endforeach
+                                @endif
+                                @if (! empty($report['mediacao']))
+                                    <p class="pt-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('Mediação') }}</p>
+                                    @foreach ($report['mediacao'] as $bar)
+                                        <div class="flex items-baseline justify-between gap-2 text-sm">
+                                            <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
+                                            <span class="tabular-nums text-xs text-slate-500">{{ $bar['count'] }}</span>
+                                        </div>
+                                    @endforeach
+                                @endif
+                                @if (empty($report['turmas_por_etapa_agregada']) && empty($report['mediacao']))
+                                    <p class="text-sm text-slate-500">{{ __('Sem dados de etapa agregada/mediação.') }}</p>
+                                @endif
+                                @if (! empty($report['inclusion']['summary']))
+                                    <div class="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+                                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">{{ __('Inclusão (heurística)') }}</p>
+                                        <p class="mt-1 text-sm text-slate-700 dark:text-slate-300">{{ $report['inclusion']['summary'] }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="serv-panel overflow-hidden">
+                            <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                <h4 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Por escola') }}</h4>
+                                <p class="text-xs text-slate-500">{{ __('Turmas, alunos e flags de inconsistência Acomp × Relações (prioridade para apontamento).') }}</p>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm">
+                                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60">
+                                        <tr>
+                                            <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right">{{ __('Alunos') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right">{{ __('Curr.') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right">{{ __('AEE') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right">{{ __('AC') }}</th>
+                                            <th class="px-4 py-2 font-medium">{{ __('Apontamentos') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        @forelse ($report['schools'] ?? [] as $row)
+                                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
+                                                <td class="px-4 py-3">
+                                                    <div class="font-medium text-serv-navy dark:text-white">{{ $row['name'] }}</div>
+                                                    <div class="font-mono text-[11px] text-slate-500">INEP {{ $row['inep'] }}</div>
+                                                </td>
+                                                <td class="px-4 py-3 text-right tabular-nums">
+                                                    {{ $row['turmas'] }}
+                                                    <div class="text-[10px] text-slate-400">C {{ $row['turmas_curricular'] }} · AEE {{ $row['turmas_aee'] }} · AC {{ $row['turmas_ac'] }}</div>
+                                                </td>
+                                                <td class="px-4 py-3 text-right tabular-nums">{{ $row['alunos'] }}</td>
+                                                <td class="px-4 py-3 text-right tabular-nums">
+                                                    {{ $row['acomp_curricular'] ?? '—' }}
+                                                    @if ($row['delta_curricular'] !== null && $row['delta_curricular'] !== 0)
+                                                        <div class="text-[10px] {{ $row['delta_curricular'] > 0 ? 'text-amber-600' : 'text-rose-600' }}">
+                                                            {{ $row['delta_curricular'] > 0 ? '+' : '' }}{{ $row['delta_curricular'] }}
+                                                        </div>
+                                                    @endif
+                                                </td>
+                                                <td class="px-4 py-3 text-right tabular-nums">{{ $row['acomp_aee'] ?? '—' }}</td>
+                                                <td class="px-4 py-3 text-right tabular-nums">{{ $row['acomp_ac'] ?? '—' }}</td>
+                                                <td class="px-4 py-3">
+                                                    @if (! empty($row['flags']))
+                                                        <div class="flex flex-wrap gap-1">
+                                                            @foreach ($row['flags'] as $flag)
+                                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $toneBadge('amber') }}">{{ $flag }}</span>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <span class="text-xs text-emerald-700 dark:text-emerald-300">{{ __('Ok') }}</span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="7" class="px-4 py-8 text-center text-slate-500">{{ __('Sem agregados por escola ainda. Atualize a análise após importar as relações.') }}</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        @if (! empty($report['apontamentos']))
+                            <div class="serv-panel overflow-hidden">
+                                <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                    <h4 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Apontamentos do relatório') }}</h4>
+                                    <p class="text-xs text-slate-500">{{ __('Inconsistências úteis para correção no portal Educacenso / i-Educar.') }}</p>
+                                </div>
+                                <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach ($report['apontamentos'] as $item)
+                                        <li class="px-4 py-3 text-sm">
+                                            <div class="flex flex-wrap items-center gap-2">
+                                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $toneBadge(($item['severity'] ?? '') === 'error' ? 'rose' : (($item['severity'] ?? '') === 'warning' ? 'amber' : 'slate')) }}">
+                                                    {{ $item['severity_label'] }}
+                                                </span>
+                                                @if (! empty($item['school']))
+                                                    <span class="text-xs text-slate-600 dark:text-slate-300">{{ $item['school'] }}</span>
+                                                    <span class="font-mono text-[10px] text-slate-400">{{ $item['inep'] }}</span>
+                                                @endif
+                                            </div>
+                                            <p class="mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ $item['message'] }}</p>
+                                            <p class="mt-0.5 text-[11px] text-slate-400">{{ $item['code'] }}</p>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+                    </section>
+                @endif
+
                 {{-- Resumo em linguagem simples --}}
                 @if (! empty($dashboard['highlights']))
                     <section aria-labelledby="clio-highlights-heading">

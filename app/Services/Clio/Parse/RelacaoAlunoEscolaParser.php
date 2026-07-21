@@ -3,6 +3,7 @@
 namespace App\Services\Clio\Parse;
 
 use App\Models\Clio\ClioCampaignArtifact;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use Throwable;
 
 final class RelacaoAlunoEscolaParser implements ArtifactParser
@@ -15,6 +16,7 @@ final class RelacaoAlunoEscolaParser implements ArtifactParser
 
     public function __construct(
         private readonly CsvReader $csv,
+        private readonly ?RelationCsvAggregator $aggregator = null,
     ) {}
 
     public function supports(string $kind): bool
@@ -41,16 +43,15 @@ final class RelacaoAlunoEscolaParser implements ArtifactParser
             }
         }
 
-        $withTurma = 0;
-        foreach ($data['rows'] as $row) {
-            if ($this->csv->value($row, 'Código da turma') !== '') {
-                $withTurma++;
-            }
-        }
+        $agg = ($this->aggregator ?? new RelationCsvAggregator)->aggregateAlunos($data['rows'], $this->csv);
+        $withTurma = $agg['total'] - $agg['without_turma'];
 
         $warnings = [];
-        if ($withTurma === 0 && count($data['rows']) > 0) {
+        if ($withTurma === 0 && $agg['total'] > 0) {
             $warnings[] = __('Nenhuma linha com Código da turma preenchido.');
+        }
+        if ($agg['without_etapa'] > 0) {
+            $warnings[] = __('Matrículas sem Etapa de ensino: :n', ['n' => $agg['without_etapa']]);
         }
 
         return new ParseResult(
@@ -61,6 +62,7 @@ final class RelacaoAlunoEscolaParser implements ArtifactParser
                 'header_offset' => 1,
                 'rows_with_turma' => $withTurma,
                 'delimiter' => CsvReader::DELIMITER,
+                'aggregates' => $agg,
             ],
         );
     }

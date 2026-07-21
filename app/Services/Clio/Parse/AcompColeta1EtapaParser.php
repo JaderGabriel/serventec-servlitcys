@@ -71,7 +71,21 @@ final class AcompColeta1EtapaParser implements ArtifactParser
                 'meta' => [
                     'blocked' => $this->csv->value($row, 'Escola Bloqueada'),
                     'location' => $this->csv->value($row, 'Localização'),
-                    'total_curricular' => $this->csv->value($row, 'Total matrículas - Curricular'),
+                    'total_curricular' => $this->optionalNumeric($row, [
+                        'Total matrículas - Curricular',
+                    ]),
+                    'total_aee' => $this->optionalNumeric($row, [
+                        'Total matrículas - AEE',
+                        'Total matrículas - Atendimento Educacional Especializado',
+                    ]),
+                    'total_ac' => $this->optionalNumeric($row, [
+                        'Total matrículas - AC',
+                        'Total matrículas - Atividade Complementar',
+                        'Total matrículas - Atividade complementar',
+                    ]),
+                    'matriculas_a_confirmar' => $this->optionalNumeric($row, [
+                        'Matrículas a confirmar ou desconsiderar',
+                    ]),
                 ],
             ];
         }
@@ -112,6 +126,26 @@ final class AcompColeta1EtapaParser implements ArtifactParser
     private function nullIfEmpty(string $value): ?string
     {
         return $value === '' ? null : $value;
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     * @param  list<string>  $headers
+     */
+    private function optionalNumeric(array $row, array $headers): ?int
+    {
+        foreach ($headers as $header) {
+            $raw = $this->csv->value($row, $header);
+            if ($raw === '') {
+                continue;
+            }
+            $normalized = preg_replace('/[^\d\-]/', '', $raw) ?? '';
+            if ($normalized !== '' && is_numeric($normalized)) {
+                return (int) $normalized;
+            }
+        }
+
+        return null;
     }
 
     private function normalizeDate(string $raw): ?string
