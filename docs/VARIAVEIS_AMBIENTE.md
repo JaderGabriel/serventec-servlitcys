@@ -270,7 +270,7 @@ Menu superior após Horizonte · Rotas `/clio/*` · Documentação: [modulos/MOD
 | `CLIO_LAYOUT_YEAR_DEFAULT` | `2026` | Ano sugerido em nova coleta |
 | `CLIO_DISK` | `local` | Disco Laravel para uploads |
 | `CLIO_PROMOTE_ENABLED` | `false` | Promote para i-Educar (Onda 3; desligado no MVP) |
-| `CLIO_DRIVE_API_KEY` | — | API key Google (Drive API v3) para verificar/importar pastas partilhadas |
+| `CLIO_DRIVE_API_KEY` | — | Opcional. Fallback Google Drive API v3; pastas «anyone with link» funcionam sem key |
 | `CLIO_DRIVE_MAX_FILES` | `500` | Máx. ficheiros por importação Drive |
 | `CLIO_DRIVE_MAX_FILE_MB` | `64` | Máx. MB por ficheiro Drive |
 | `CLIO_DRIVE_MAX_DEPTH` | `4` | Profundidade de subpastas no Drive |

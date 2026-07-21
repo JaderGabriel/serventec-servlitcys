@@ -19,7 +19,7 @@
 | **Coletas** | Lote por município + ano (Acomp + Relações por escola / ZIP) |
 | **Município só coleta** | Cadastro **sem** i-Educar — só análise (perfil `analysis_only`) |
 | **Município consultoria** | Seleciona município **já** com `db_*` na plataforma → perfil `consultancy` + **INF-GAP** |
-| **Pasta Drive** | Link no município/coleta · **Verificar** inventário · **Importar** CSV/ZIP (requer `CLIO_DRIVE_API_KEY`) |
+| **Pasta Drive** | Link no município/coleta · **Verificar** / **Importar** (pastas públicas sem API key; `CLIO_DRIVE_API_KEY` opcional) |
 | **Inferências** | INF-COL…INF-DELTA (Modo A) e INF-GAP (Modo B) |
 | **Exposição** | Painel T8, detalhe escola T9, bloco Censo, export CSV/PDF, ranking no RX |
 

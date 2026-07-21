@@ -3,14 +3,15 @@
 namespace App\Services\Clio\Drive;
 
 use App\Services\Clio\Ingest\ArtifactClassifier;
-use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
- * Lista e descarrega pastas/ficheiros Google Drive partilhados (anyone with link)
- * via Drive API v3 + API key.
+ * Lista e descarrega pastas/ficheiros Google Drive partilhados («qualquer pessoa com o link»).
+ *
+ * Por defeito usa a vista pública (embeddedfolderview) + uc?export=download — sem API key.
+ * Se CLIO_DRIVE_API_KEY estiver definida, usa Drive API v3 como fallback/reforço.
  */
 final class GoogleDriveFolderClient
 {
@@ -42,7 +43,6 @@ final class GoogleDriveFolderClient
         }
 
         if (preg_match('~[?&]id=([a-zA-Z0-9_-]+)~', $url, $m)) {
-            // Ambíguo: tratar como ficheiro se open?id=; pastas usam /folders/
             return ['type' => 'file', 'id' => $m[1]];
         }
 
@@ -81,43 +81,28 @@ final class GoogleDriveFolderClient
             return [...$empty, 'message' => __('URL do Google Drive inválida. Use o link da pasta (…/folders/…) ou do ficheiro (…/file/d/…).')];
         }
 
-        if (! $this->apiKeyConfigured()) {
-            return [
-                ...$empty,
-                'resource_type' => $resource['type'],
-                'resource_id' => $resource['id'],
-                'message' => __('Configure CLIO_DRIVE_API_KEY para verificar e importar pastas do Drive.'),
-                'warnings' => [__('A URL foi reconhecida (:type :id), mas a API key não está definida.', [
-                    'type' => $resource['type'],
-                    'id' => $resource['id'],
-                ])],
-            ];
-        }
-
         try {
             if ($resource['type'] === 'file') {
-                $meta = $this->getFileMeta($resource['id']);
-                $name = (string) ($meta['name'] ?? 'arquivo');
+                $name = $this->guessFileName($resource['id']);
                 $kindInfo = $this->classifier->classify($name);
                 $file = [
                     'id' => $resource['id'],
                     'name' => $name,
                     'path' => $name,
-                    'mime' => (string) ($meta['mimeType'] ?? ''),
-                    'size' => isset($meta['size']) ? (int) $meta['size'] : null,
+                    'mime' => $this->mimeFromName($name),
+                    'size' => null,
                     'kind' => (string) ($kindInfo['kind'] ?? 'unknown'),
                 ];
-                $byKind = [$file['kind'] => 1];
 
                 return [
                     'ok' => true,
                     'resource_type' => 'file',
                     'resource_id' => $resource['id'],
-                    'message' => __('Ficheiro Drive acessível.'),
+                    'message' => __('Ficheiro Drive reconhecido.'),
                     'files' => [$file],
                     'summary' => [
                         'total' => 1,
-                        'by_kind' => $byKind,
+                        'by_kind' => [$file['kind'] => 1],
                         'folders' => 0,
                         'ignored' => ($kindInfo['ignored'] ?? false) ? 1 : 0,
                     ],
@@ -147,6 +132,15 @@ final class GoogleDriveFolderClient
                     'mime' => $row['mime'],
                     'size' => $row['size'],
                     'kind' => $kind,
+                ];
+            }
+
+            if ($files === [] && ($listed['folders'] ?? 0) === 0) {
+                return [
+                    ...$empty,
+                    'resource_type' => 'folder',
+                    'resource_id' => $resource['id'],
+                    'message' => __('Pasta Drive vazia ou sem acesso público. Partilhe com «qualquer pessoa com o link».'),
                 ];
             }
 
@@ -188,8 +182,6 @@ final class GoogleDriveFolderClient
     }
 
     /**
-     * Descarrega ficheiros relevantes para um diretório local (preserva paths relativos).
-     *
      * @return array{dir: string, downloaded: int, skipped: int, bytes: int, verify: array}
      */
     public function downloadRelevantToTemp(string $url): array
@@ -241,8 +233,22 @@ final class GoogleDriveFolderClient
             }
 
             $this->downloadFileBinary((string) $file['id'], $dest);
+            $size = is_file($dest) ? (int) filesize($dest) : 0;
+            if ($size <= 0 || $this->looksLikeHtmlErrorPage($dest)) {
+                @unlink($dest);
+                $skipped++;
+
+                continue;
+            }
+            if ($size > $maxBytes) {
+                @unlink($dest);
+                $skipped++;
+
+                continue;
+            }
+
             $downloaded++;
-            $bytes += is_file($dest) ? (int) filesize($dest) : 0;
+            $bytes += $size;
         }
 
         if ($downloaded === 0) {
@@ -297,22 +303,133 @@ final class GoogleDriveFolderClient
             return compact('files', 'folders', 'warnings');
         }
 
+        try {
+            $entries = $this->listFolderPublicEmbed($folderId);
+            if ($entries === [] && $this->apiKeyConfigured()) {
+                $entries = $this->listFolderViaApi($folderId);
+            }
+        } catch (\Throwable $e) {
+            if ($this->apiKeyConfigured()) {
+                $entries = $this->listFolderViaApi($folderId);
+            } else {
+                throw $e;
+            }
+        }
+
+        foreach ($entries as $entry) {
+            $path = $prefix === '' ? $entry['name'] : $prefix.'/'.$entry['name'];
+
+            if ($entry['type'] === 'folder') {
+                $folders++;
+                $child = $this->listFolderRecursive($entry['id'], $path, $depth + 1);
+                $files = array_merge($files, $child['files']);
+                $folders += $child['folders'];
+                $warnings = array_merge($warnings, $child['warnings']);
+
+                continue;
+            }
+
+            $files[] = [
+                'id' => $entry['id'],
+                'name' => $entry['name'],
+                'path' => $path,
+                'mime' => $entry['mime'],
+                'size' => null,
+            ];
+        }
+
+        return compact('files', 'folders', 'warnings');
+    }
+
+    /**
+     * @return list<array{type: 'folder'|'file', id: string, name: string, mime: string}>
+     */
+    private function listFolderPublicEmbed(string $folderId): array
+    {
+        $response = Http::timeout((int) config('clio.drive.request_timeout', 120))
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; ServLitcys-Clio/1.0)'])
+            ->get('https://drive.google.com/embeddedfolderview', [
+                'id' => $folderId,
+            ]);
+
+        if ($response->failed()) {
+            throw new RuntimeException(__('Vista pública do Drive indisponível (:status). Confirme que a pasta está partilhada com «qualquer pessoa com o link».', [
+                'status' => $response->status(),
+            ]));
+        }
+
+        $html = $response->body();
+        if ($html === '') {
+            throw new RuntimeException(__('Resposta vazia do Google Drive.'));
+        }
+
+        // Pastas vazias (ou páginas sem listagem) — não abortar a árvore inteira.
+        if (! str_contains($html, 'flip-entry')) {
+            return [];
+        }
+
+        $entries = [];
+        if (preg_match_all(
+            '~<div class="flip-entry"[^>]*\bid="entry-([^"]+)"[^>]*>[\s\S]*?<a href="(https://drive\.google\.com/(?:drive/folders/|file/d/)[^"]+)"[\s\S]*?<div class="flip-entry-title">([^<]+)</div>~u',
+            $html,
+            $matches,
+            PREG_SET_ORDER
+        ) === false || $matches === []) {
+            return [];
+        }
+
+        foreach ($matches as $match) {
+            $id = $match[1];
+            $href = html_entity_decode($match[2], ENT_QUOTES | ENT_HTML5);
+            $name = html_entity_decode(trim($match[3]), ENT_QUOTES | ENT_HTML5);
+            if ($id === '' || $name === '') {
+                continue;
+            }
+
+            $isFolder = str_contains($href, '/folders/');
+            $entries[] = [
+                'type' => $isFolder ? 'folder' : 'file',
+                'id' => $id,
+                'name' => $name,
+                'mime' => $isFolder ? 'application/vnd.google-apps.folder' : $this->mimeFromName($name),
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * @return list<array{type: 'folder'|'file', id: string, name: string, mime: string}>
+     */
+    private function listFolderViaApi(string $folderId): array
+    {
+        $key = $this->apiKey();
+        if ($key === null) {
+            throw new RuntimeException(__('CLIO_DRIVE_API_KEY não configurada.'));
+        }
+
+        $entries = [];
         $pageToken = null;
         do {
             $query = [
                 'q' => sprintf("'%s' in parents and trashed = false", $folderId),
-                'fields' => 'nextPageToken, files(id, name, mimeType, size)',
+                'fields' => 'nextPageToken, files(id, name, mimeType)',
                 'pageSize' => 1000,
                 'supportsAllDrives' => 'true',
                 'includeItemsFromAllDrives' => 'true',
+                'key' => $key,
             ];
             if ($pageToken) {
                 $query['pageToken'] = $pageToken;
             }
 
-            $payload = $this->http()->get('https://www.googleapis.com/drive/v3/files', $query)->throw()->json();
-            $pageToken = $payload['nextPageToken'] ?? null;
+            $payload = Http::timeout((int) config('clio.drive.request_timeout', 120))
+                ->acceptJson()
+                ->get('https://www.googleapis.com/drive/v3/files', $query)
+                ->throw()
+                ->json();
 
+            $pageToken = $payload['nextPageToken'] ?? null;
             foreach ($payload['files'] ?? [] as $item) {
                 $mime = (string) ($item['mimeType'] ?? '');
                 $name = (string) ($item['name'] ?? '');
@@ -320,65 +437,30 @@ final class GoogleDriveFolderClient
                 if ($id === '' || $name === '') {
                     continue;
                 }
-
-                $path = $prefix === '' ? $name : $prefix.'/'.$name;
-
-                if ($mime === 'application/vnd.google-apps.folder') {
-                    $folders++;
-                    $child = $this->listFolderRecursive($id, $path, $depth + 1);
-                    $files = array_merge($files, $child['files']);
-                    $folders += $child['folders'];
-                    $warnings = array_merge($warnings, $child['warnings']);
-
+                if (str_starts_with($mime, 'application/vnd.google-apps.') && $mime !== 'application/vnd.google-apps.folder') {
                     continue;
                 }
-
-                // Ignorar docs Google nativos (não CSV)
-                if (str_starts_with($mime, 'application/vnd.google-apps.')) {
-                    continue;
-                }
-
-                $files[] = [
+                $entries[] = [
+                    'type' => $mime === 'application/vnd.google-apps.folder' ? 'folder' : 'file',
                     'id' => $id,
                     'name' => $name,
-                    'path' => $path,
-                    'mime' => $mime,
-                    'size' => isset($item['size']) ? (int) $item['size'] : null,
+                    'mime' => $mime !== '' ? $mime : $this->mimeFromName($name),
                 ];
             }
         } while ($pageToken);
 
-        return compact('files', 'folders', 'warnings');
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function getFileMeta(string $fileId): array
-    {
-        return $this->http()
-            ->get('https://www.googleapis.com/drive/v3/files/'.$fileId, [
-                'fields' => 'id,name,mimeType,size',
-                'supportsAllDrives' => 'true',
-            ])
-            ->throw()
-            ->json();
+        return $entries;
     }
 
     private function downloadFileBinary(string $fileId, string $destPath): void
     {
-        $key = $this->apiKey();
-        if ($key === null) {
-            throw new RuntimeException(__('CLIO_DRIVE_API_KEY não configurada.'));
-        }
+        $timeout = (int) config('clio.drive.request_timeout', 120);
+        $url = 'https://drive.google.com/uc?export=download&id='.$fileId.'&confirm=t';
 
-        $response = Http::timeout((int) config('clio.drive.request_timeout', 120))
-            ->withOptions(['sink' => $destPath])
-            ->get('https://www.googleapis.com/drive/v3/files/'.$fileId, [
-                'alt' => 'media',
-                'supportsAllDrives' => 'true',
-                'key' => $key,
-            ]);
+        $response = Http::timeout($timeout)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; ServLitcys-Clio/1.0)'])
+            ->withOptions(['sink' => $destPath, 'allow_redirects' => true])
+            ->get($url);
 
         if ($response->failed()) {
             @unlink($destPath);
@@ -387,6 +469,68 @@ final class GoogleDriveFolderClient
                 'status' => $response->status(),
             ]));
         }
+
+        // Confirmação anti-vírus (ficheiros grandes): HTML com confirm=
+        if ($this->looksLikeHtmlErrorPage($destPath)) {
+            $html = (string) file_get_contents($destPath);
+            $confirm = null;
+            if (preg_match('~confirm=([0-9A-Za-z_-]+)~', $html, $m)) {
+                $confirm = $m[1];
+            } elseif (preg_match('~name="confirm"\s+value="([^"]+)"~', $html, $m)) {
+                $confirm = $m[1];
+            }
+
+            if ($confirm !== null) {
+                $response = Http::timeout($timeout)
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; ServLitcys-Clio/1.0)'])
+                    ->withOptions(['sink' => $destPath, 'allow_redirects' => true])
+                    ->get('https://drive.google.com/uc', [
+                        'export' => 'download',
+                        'id' => $fileId,
+                        'confirm' => $confirm,
+                    ]);
+
+                if ($response->failed() || $this->looksLikeHtmlErrorPage($destPath)) {
+                    @unlink($destPath);
+                    throw new RuntimeException(__('Falha ao confirmar download do ficheiro Drive :id.', ['id' => $fileId]));
+                }
+            }
+        }
+    }
+
+    private function looksLikeHtmlErrorPage(string $path): bool
+    {
+        if (! is_file($path) || filesize($path) === 0) {
+            return true;
+        }
+
+        $sample = (string) file_get_contents($path, false, null, 0, 512);
+
+        return str_contains($sample, '<!DOCTYPE html')
+            || str_contains($sample, '<html')
+            || str_contains($sample, 'drive.google.com');
+    }
+
+    private function guessFileName(string $fileId): string
+    {
+        // Sem API, usamos extensão neutra; o classificador pode falhar — o download mantém bytes.
+        return 'drive-'.$fileId.'.bin';
+    }
+
+    private function mimeFromName(string $name): string
+    {
+        $lower = Str::lower($name);
+        if (str_ends_with($lower, '.csv')) {
+            return 'text/csv';
+        }
+        if (str_ends_with($lower, '.zip')) {
+            return 'application/zip';
+        }
+        if (str_ends_with($lower, '.txt')) {
+            return 'text/plain';
+        }
+
+        return 'application/octet-stream';
     }
 
     private function sanitizeRelativePath(string $path): string
@@ -402,18 +546,6 @@ final class GoogleDriveFolderClient
         }
 
         return implode('/', $parts);
-    }
-
-    private function http(): PendingRequest
-    {
-        $key = $this->apiKey();
-        if ($key === null) {
-            throw new RuntimeException(__('CLIO_DRIVE_API_KEY não configurada.'));
-        }
-
-        return Http::timeout((int) config('clio.drive.request_timeout', 120))
-            ->acceptJson()
-            ->withQueryParameters(['key' => $key]);
     }
 
     private function apiKey(): ?string

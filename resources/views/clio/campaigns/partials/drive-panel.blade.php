@@ -20,8 +20,8 @@
     </div>
 
     @unless ($apiConfigured)
-        <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-            {{ __('Para verificar/importar, configure CLIO_DRIVE_API_KEY (Google Cloud · API Drive ativada). A pasta deve estar partilhada com «qualquer pessoa com o link».') }}
+        <p class="text-xs text-slate-500">
+            {{ __('Pastas partilhadas com «qualquer pessoa com o link» funcionam sem API key. CLIO_DRIVE_API_KEY é opcional (fallback).') }}
         </p>
     @endunless
 
@@ -47,7 +47,6 @@
             </button>
             @can('upload', $campaign)
                 <button type="submit" formaction="{{ route('clio.campaigns.drive.import', $campaign) }}" class="serv-btn-primary text-sm"
-                        {{ ! $apiConfigured ? 'disabled' : '' }}
                         onclick="return confirm(@js(__('Importar do Drive agora? Ficheiros CSV/ZIP reconhecidos serão descarregados e ingeridos nesta coleta.')))">
                     {{ __('Importar do Drive') }}
                 </button>

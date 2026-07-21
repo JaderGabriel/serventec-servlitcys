@@ -246,19 +246,14 @@ final class ClioCampaignFlowTest extends TestCase
     #[Test]
     public function admin_cadastra_municipio_com_drive_e_verifica_pasta(): void
     {
-        config(['clio.drive.api_key' => 'test-key']);
+        config(['clio.drive.api_key' => null]);
 
         \Illuminate\Support\Facades\Http::fake([
-            'www.googleapis.com/drive/v3/files*' => \Illuminate\Support\Facades\Http::response([
-                'files' => [
-                    [
-                        'id' => 'f1',
-                        'name' => 'Relatorio_Acomp_Coleta_1Etapa_20072026.csv',
-                        'mimeType' => 'text/csv',
-                        'size' => '800',
-                    ],
-                ],
-            ]),
+            'drive.google.com/embeddedfolderview*' => \Illuminate\Support\Facades\Http::response(<<<'HTML'
+<div class="flip-entries">
+<div class="flip-entry" id="entry-f1" tabindex="0" role="link"><div class="flip-entry-info"><a href="https://drive.google.com/file/d/f1/view?usp=drive_web" target="_blank"><div class="flip-entry-title">Relatorio_Acomp_Coleta_1Etapa_20072026.csv</div></a></div></div>
+</div>
+HTML, 200),
         ]);
 
         $admin = User::factory()->admin()->create();
