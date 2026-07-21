@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.0.0** |
 | **Tag de deploy** | `20260721-Aletheia` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `3951fab` |
 | **Data de referência** | 2026-07-21 |
 | **Release** | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) |
 | **Marco** | **Aletheia** — Clio hub de relatórios; AEE/AC/etapas; tag + GitHub Release |

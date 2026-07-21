@@ -10,7 +10,7 @@
 | **Data de referência** | **21/07/2026** |
 | **Último marco documentado** | **Clio relatórios (Aletheia)** — hub municipal, relatório AEE/AC/etapas — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `pending` (#**536**) |
+| **Commit de release** | `3951fab` (#**536**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -62,7 +62,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.0.0** | `pending` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | **Produção:** Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |
+| **▶ 8.0.0** | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | **Produção:** Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |
 | 7.0.3 | `98bfeee` / `20260709-Calliope` → `main` | **518** | 09/07/2026 | Leitor documentação modular, layout amplo, tabelas com scroll; README 7.x; `product:release-publish` — [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md). |
 | 7.0.2 | `41344e9` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
 | 7.0.1 | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |
