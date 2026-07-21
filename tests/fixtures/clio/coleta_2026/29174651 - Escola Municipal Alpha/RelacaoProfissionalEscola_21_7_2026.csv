@@ -1,0 +1,4 @@
+﻿Dados cadastrais;;;;;;;Vínculos
+Identificação única;Nome;CPF;Data de nascimento;Código do vínculo;Função;Código da turma;Cargo
+PROF-001;PROFISSIONAL_001;***.***.***-**;01/01/1980;VIN-1;Docente;TUR-01;Professor
+PROF-002;PROFISSIONAL_002;***.***.***-**;02/02/1985;VIN-2;Docente;TUR-02;Professor

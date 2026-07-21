@@ -459,6 +459,39 @@ final class ArtisanCommandsCatalog
                 ],
             ],
             [
+                'id' => 'clio',
+                'title' => __('Clio — campanhas Educacenso 1ª etapa'),
+                'description' => __('Upload/ZIP de relatórios CSV do portal, inventário e análise (menu Clio).'),
+                'admin_route' => 'clio.campaigns.index',
+                'commands' => [
+                    [
+                        'name' => 'clio:campaign-ingest',
+                        'summary' => __('Ingere ZIP, pasta ou ficheiros e classifica artefactos (parse pendente).'),
+                        'signature' => 'clio:campaign-ingest {uuid} {--path=} {--disk=} {--queue}',
+                        'examples' => [
+                            'php artisan clio:campaign-ingest {uuid} --path=tests/fixtures/clio/coleta_2026/Dados_SantoAmaro_smoke.zip',
+                            'php artisan clio:campaign-ingest {uuid} --path=/dados/Saubara',
+                            'php artisan clio:campaign-ingest {uuid} --queue',
+                            'php artisan clio:campaign-ingest {uuid} --no-parse',
+                        ],
+                        'env' => ['CLIO_ENABLED', 'CLIO_QUEUE', 'CLIO_DISK'],
+                        'doc_anchor' => 'clio',
+                    ],
+                    [
+                        'name' => 'clio:campaign-status',
+                        'summary' => __('Cobertura da campanha: tríade por escola, parse_status, data de referência.'),
+                        'signature' => 'clio:campaign-status {uuid} {--parse} {--reparse} {--json}',
+                        'examples' => [
+                            'php artisan clio:campaign-status {uuid}',
+                            'php artisan clio:campaign-status {uuid} --parse',
+                            'php artisan clio:campaign-status {uuid} --json',
+                        ],
+                        'env' => ['CLIO_ENABLED'],
+                        'doc_anchor' => 'clio',
+                    ],
+                ],
+            ],
+            [
                 'id' => 'horizonte',
                 'title' => __('Horizonte — inteligência comercial'),
                 'description' => __('Abastecimento nacional do mapa de oportunidade municipal (FUNDEB, Censo, SAEB, CadÚnico, IBGE, repasses).'),

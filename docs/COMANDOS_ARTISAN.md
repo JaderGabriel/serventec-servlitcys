@@ -117,6 +117,30 @@ Documentação: [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARG
 
 ---
 
+## 3.1b Clio — campanhas Educacenso 1ª etapa
+
+| Comando | Descrição |
+|---------|-----------|
+| `clio:campaign-ingest` | Ingere ZIP, pasta ou ficheiros para uma campanha (`{uuid}`). Classifica kinds, deduplica SHA-256, ignora `.~lock.*`, e **por defeito faz parse CSV**. Opções: `--path=`, `--disk=`, `--queue`, `--no-parse`. |
+| `clio:campaign-status` | Relatório de cobertura (tríade, parse_status, `reference_date`). Opções: `--parse`, `--reparse`, `--json`. |
+
+**Interface web:** menu **Clio** → campanha → **Enviar dados**
+
+**Fixtures:** `tests/fixtures/clio/coleta_2026/` (Acomp + tríade anonimizados + ZIP smoke)
+
+```bash
+php artisan clio:campaign-ingest {uuid} --path=tests/fixtures/clio/coleta_2026
+php artisan clio:campaign-ingest {uuid} --path=tests/fixtures/clio/coleta_2026/Dados_SantoAmaro_smoke.zip
+php artisan clio:campaign-status {uuid}
+php artisan clio:campaign-status {uuid} --parse --json
+```
+
+Documentação: [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
+
+**Variáveis:** `CLIO_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11a
+
+---
+
 ## 3.2 Verificação diária de fontes oficiais
 
 | Comando | Descrição |
@@ -408,6 +432,7 @@ Procedimento completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md).
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
 | **Verificação diária** | `public-data:check-official` | notificação sino + hub |
 | **Educacenso 1ª etapa** | `censo:analyze-educacenso-file` | Analytics → Censo |
+| **Clio (campanhas CSV)** | `clio:campaign-ingest` | Menu Clio · `/clio/campanhas` |
 | **Monitor de módulos** | `module-monitor:collect` | `/admin/monitor-modulos` |
 | **Release do produto** | `product:release-publish` | — (CLI; ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md)) |
 | Schema | `ieducar:schema-probe` | ieducar-compatibility |
