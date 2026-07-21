@@ -11,14 +11,16 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
-                @if ($canRun)
-                    <form method="post" action="{{ route('clio.campaigns.cross-check.run', $campaign) }}">
-                        @csrf
-                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr cruzamento') }}</button>
-                    </form>
-                @else
-                    <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Vincular i-Educar primeiro') }}</a>
-                @endif
+                @can('analyze', $campaign)
+                    @if ($canRun)
+                        <form method="post" action="{{ route('clio.campaigns.cross-check.run', $campaign) }}">
+                            @csrf
+                            <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr cruzamento') }}</button>
+                        </form>
+                    @elseif (Auth::user()->can('linkConsultancy', $campaign))
+                        <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Vincular i-Educar primeiro') }}</a>
+                    @endif
+                @endcan
                 <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Painel') }}</a>
                 <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Hub') }}</a>
             </div>

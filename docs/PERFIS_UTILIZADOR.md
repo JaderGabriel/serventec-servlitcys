@@ -31,6 +31,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Criar e editar usuários de **qualquer perfil**, incluindo vincular municípios a municipais
 - **Desativar**, **reativar** e **excluir** usuários na lista `/users` (com confirmação)
 - Consultar **histórico de logins** por usuário
+- **Clio**: criar/gerir campanhas, upload, análise, cruzamento i-Educar e CLI `clio:*`
 
 **Não pode:** desativar ou excluir a própria conta; remover o único administrador ativo ou a única conta admin do sistema.
 
@@ -48,6 +49,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Acompanhar **filas de exportação** próprias (`/filas`) — NEE e PDF Serventec
 - **Gerir usuários** apenas do perfil **Usuário** (criar, editar, alterar senha)
 - Editar o próprio perfil
+- **Clio**: ver campanhas, painel, cruzamento (leitura) e export CSV/PDF — **sem** insert/upload/comandos sensíveis
 
 **Não pode:**
 - Aceder ao **Painel** administrativo (`/dashboard` redireciona para Análise)
@@ -55,6 +57,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Criar administradores ou municipais
 - Ver Pulse, sessões globais ou histórico de logins de outros
 - Ver tarefas de sincronização de outros usuárioes ou documentação de deploy/integração admin
+- Mutar dados Clio (criar campanha, upload, correr análise/cruzamento, ficha leve, vincular i-Educar)
 
 ---
 
@@ -76,6 +79,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Atribuir municípios fora do seu âmbito (validação no servidor após sanitize de `city_ids`)
 - Importar, sincronizar ou configurar o sistema
 - Criar administradores ou usuários “rede inteira”
+- Aceder ao módulo **Clio** (menu e rotas `/clio/*`)
 
 **Nota:** um municipal **sem** municípios vinculados não vê cidades na análise (lista vazia) até um administrador associar cidades à conta.
 
@@ -88,6 +92,8 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Painel `/dashboard` | Sim | Não | Não |
 | Análise (todos `forAnalytics`) | Sim | Sim | — |
 | Análise (só vinculados) | Sim | — | Sim |
+| **Clio** (ver campanhas / export CSV·PDF / RX bloco) | Sim | Sim | **Não** |
+| **Clio** (criar campanha, upload, analisar, cruzar, ficha leve, vincular i-Educar) | Sim | Não | Não |
 | Documentação (`/documentacao`) | Sim | Sim | Sim |
 | Filas exportação (`/filas`, só as próprias) | Sim | Sim | Sim |
 | Exportação NEE detalhada (Inclusão) | Sim | Sim | Sim* |

@@ -27,6 +27,10 @@
                 :activePhase="$rx['deadline']['phase'] ?? null"
             />
 
+            @if (! empty($clio['enabled']))
+                @include('dashboard.rx.partials.clio-campaigns', ['clio' => $clio])
+            @endif
+
             <div class="serv-panel serv-panel--info px-4 py-3 text-sm">
                 <p class="font-medium text-serv-navy dark:text-blue-100">{{ __('RX — cadastro em andamento e meta') }}</p>
                 <p class="mt-1 text-slate-700 dark:text-slate-300 leading-relaxed">

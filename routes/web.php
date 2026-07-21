@@ -92,6 +92,8 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::post('/campanhas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'runCrossCheck'])->name('campaigns.cross-check.run');
             Route::get('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
             Route::post('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
+            Route::get('/campanhas/{campaign}/export/csv', [\App\Http\Controllers\Clio\CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
+            Route::get('/campanhas/{campaign}/export/pdf', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
             Route::get('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
             Route::post('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'store'])->name('cities.store');
         });

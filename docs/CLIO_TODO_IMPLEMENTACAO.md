@@ -1,6 +1,6 @@
 # Clio — TODO de implementação (código)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S5 concluída — próximo S6 (export / RX)
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 concluída — próximo S7 (BI)
 
 > **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
 
@@ -150,10 +150,11 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ## S6 — Export e RX (CEN-09, CEN-10)
 
-- [ ] Export CSV agregado (sem PII) da campanha
-- [ ] Export PDF Serventec (fila PDF existente)
-- [ ] T13 bloco RX — ranking cobertura / críticos multi-município
-- [ ] Comparativo lista campanhas do exercício
+- [x] Export CSV agregado (sem PII) da campanha
+- [x] Export PDF Serventec (DomPDF, vista `pdf.clio-campaign`)
+- [x] T13 bloco RX — ranking cobertura / críticos multi-município
+- [x] Comparativo lista campanhas do exercício
+- [x] Policies: ver = admin+usuário; mutações = só admin
 
 **Aceite S6:** PDF/CSV gerados; RX mostra ≥ 2 campanhas.
 
@@ -192,7 +193,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 - [ ] Nota RELEASE quando houver tag de versão
 
 ### Segurança / LGPD
-- [ ] Policies + middleware admin
+- [x] Policies + UI: ver (admin/usuário); inserts e ações sensíveis só admin; municipal excluído
 - [ ] Mascarar PII em logs e UI de achados (amostra)
 - [ ] Não versionar CSV reais do Drive
 

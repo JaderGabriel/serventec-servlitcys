@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clio;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\Clio\ClioCampaign;
+use App\Models\Clio\ClioCampaignFinding;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,16 +16,68 @@ class CampaignController extends Controller
     {
         $this->authorize('viewAny', ClioCampaign::class);
 
-        $campaigns = ClioCampaign::query()
-            ->with(['city'])
-            ->withCount(['artifacts', 'schools'])
+        $year = $request->integer('year') ?: null;
+        $defaultYear = (int) config('clio.layout_year_default', (int) date('Y'));
+
+        $years = ClioCampaign::query()
+            ->select('year')
+            ->distinct()
             ->orderByDesc('year')
-            ->orderByDesc('id')
-            ->paginate(20)
+            ->pluck('year')
+            ->map(fn ($y) => (int) $y)
+            ->all();
+
+        if ($years === []) {
+            $years = [$defaultYear];
+        }
+
+        $filterYear = $year && in_array($year, $years, true) ? $year : ($years[0] ?? $defaultYear);
+
+        $campaigns = ClioCampaign::query()
+            ->with(['city', 'inferences' => fn ($q) => $q->where('code', 'INF-COL')])
+            ->withCount([
+                'artifacts',
+                'schools',
+                'findings as findings_error_count' => fn ($q) => $q->where('severity', ClioCampaignFinding::SEVERITY_ERROR),
+            ])
+            ->where('year', $filterYear)
+            ->orderBy('municipality_name')
+            ->paginate(40)
             ->withQueryString();
+
+        $comparativo = [
+            'year' => $filterYear,
+            'total' => $campaigns->total(),
+            'analyzed' => ClioCampaign::query()
+                ->where('year', $filterYear)
+                ->whereIn('status', [
+                    ClioCampaign::STATUS_ANALYZED,
+                    ClioCampaign::STATUS_CROSS_CHECKED,
+                ])
+                ->count(),
+            'avg_triade' => null,
+        ];
+
+        $triades = ClioCampaign::query()
+            ->where('year', $filterYear)
+            ->with(['inferences' => fn ($q) => $q->where('code', 'INF-COL')])
+            ->get()
+            ->map(function (ClioCampaign $c) {
+                $payload = $c->inferences->first()?->payload;
+
+                return is_array($payload) ? (float) ($payload['triade_coverage_pct'] ?? 0) : null;
+            })
+            ->filter(fn ($v) => $v !== null);
+
+        if ($triades->isNotEmpty()) {
+            $comparativo['avg_triade'] = round($triades->avg(), 1);
+        }
 
         return view('clio.campaigns.index', [
             'campaigns' => $campaigns,
+            'years' => $years,
+            'filterYear' => $filterYear,
+            'comparativo' => $comparativo,
         ]);
     }
 

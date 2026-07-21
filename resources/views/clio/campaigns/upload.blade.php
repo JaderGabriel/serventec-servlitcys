@@ -45,6 +45,7 @@
                 </div>
             </div>
 
+            @can('upload', $campaign)
             <form
                 method="post"
                 action="{{ route('clio.campaigns.upload.store', $campaign) }}"
@@ -123,6 +124,11 @@
                     <button type="submit" class="serv-btn-primary text-sm">{{ __('Enviar e classificar') }}</button>
                 </div>
             </form>
+            @else
+                <div class="serv-panel p-5 text-sm text-slate-600 dark:text-slate-300">
+                    {{ __('Só administradores podem enviar ficheiros. Pode consultar o inventário abaixo.') }}
+                </div>
+            @endcan
 
             <section class="serv-panel overflow-hidden" id="inventario">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">

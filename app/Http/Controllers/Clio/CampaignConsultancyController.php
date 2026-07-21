@@ -15,8 +15,7 @@ class CampaignConsultancyController extends Controller
 {
     public function editLink(ClioCampaign $campaign): View
     {
-        $this->authorize('update', $campaign);
-        abort_unless(auth()->user()?->isAdmin(), 403);
+        $this->authorize('linkConsultancy', $campaign);
 
         $campaign->load('city');
 
@@ -28,8 +27,7 @@ class CampaignConsultancyController extends Controller
 
     public function storeLink(Request $request, ClioCampaign $campaign, CityDataConnection $cityData): RedirectResponse
     {
-        $this->authorize('update', $campaign);
-        abort_unless($request->user()?->isAdmin(), 403);
+        $this->authorize('linkConsultancy', $campaign);
 
         $city = $campaign->city;
         abort_if($city === null, 404);

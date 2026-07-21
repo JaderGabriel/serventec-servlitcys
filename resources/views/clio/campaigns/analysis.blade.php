@@ -15,12 +15,18 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <form method="post" action="{{ route('clio.campaigns.analyze', $campaign) }}">
-                    @csrf
-                    <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr análise') }}</button>
-                </form>
+                @can('analyze', $campaign)
+                    <form method="post" action="{{ route('clio.campaigns.analyze', $campaign) }}">
+                        @csrf
+                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr análise') }}</button>
+                    </form>
+                @endcan
+                <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
+                <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
                 <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Hub') }}</a>
-                <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Upload') }}</a>
+                @can('upload', $campaign)
+                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Upload') }}</a>
+                @endcan
             </div>
         </div>
     </x-slot>

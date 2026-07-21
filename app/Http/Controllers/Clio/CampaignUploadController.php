@@ -16,7 +16,7 @@ class CampaignUploadController extends Controller
 {
     public function edit(ClioCampaign $campaign): View
     {
-        $this->authorize('upload', $campaign);
+        $this->authorize('view', $campaign);
 
         $campaign->load([
             'artifacts' => fn ($q) => $q->with('school')->latest(),

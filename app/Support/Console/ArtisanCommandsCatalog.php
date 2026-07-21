@@ -461,7 +461,7 @@ final class ArtisanCommandsCatalog
             [
                 'id' => 'clio',
                 'title' => __('Clio — campanhas Educacenso 1ª etapa'),
-                'description' => __('Upload/ZIP de relatórios CSV do portal, inventário e análise (menu Clio).'),
+                'description' => __('Upload/ZIP e análise de relatórios CSV (menu Clio). Ver: admin e usuário. Mutações e CLI clio:*: só admin/ops.'),
                 'admin_route' => 'clio.campaigns.index',
                 'commands' => [
                     [

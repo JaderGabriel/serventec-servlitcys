@@ -47,6 +47,76 @@ final class ClioCampaignFlowTest extends TestCase
     }
 
     #[Test]
+    public function usuario_ve_clio_mas_nao_cria_nem_faz_upload(): void
+    {
+        Storage::fake('local');
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('clio.campaigns.index'))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->post(route('clio.cities.store'), [
+                'name' => 'Bloqueado',
+                'uf' => 'BA',
+                'ibge_municipio' => '2929752',
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->post(route('clio.cities.store'), [
+                'name' => 'Saubara User Test',
+                'uf' => 'BA',
+                'ibge_municipio' => '2929752',
+            ])
+            ->assertRedirect();
+
+        $city = City::query()->where('name', 'Saubara User Test')->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('clio.campaigns.store'), [
+                'city_id' => $city->id,
+                'year' => 2026,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->post(route('clio.campaigns.store'), [
+                'city_id' => $city->id,
+                'year' => 2026,
+            ])
+            ->assertRedirect();
+
+        $campaign = ClioCampaign::query()->where('city_id', $city->id)->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('clio.campaigns.show', $campaign))
+            ->assertOk();
+
+        $this->actingAs($user)
+            ->get(route('clio.campaigns.upload', $campaign))
+            ->assertOk();
+
+        $file = UploadedFile::fake()->create(
+            'Relatorio_Acomp_Coleta_1Etapa_20072026.csv',
+            12,
+            'text/csv'
+        );
+
+        $this->actingAs($user)
+            ->post(route('clio.campaigns.upload.store', $campaign), [
+                'files' => [$file],
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($user)
+            ->post(route('clio.campaigns.analyze', $campaign))
+            ->assertForbidden();
+    }
+
+    #[Test]
     public function admin_cria_ficha_leve_campanha_e_faz_upload(): void
     {
         Storage::fake('local');

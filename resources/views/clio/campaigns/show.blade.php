@@ -14,12 +14,18 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Painel analítico') }}</a>
+                <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
+                <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
                 @if ($campaign->city?->hasDataSetup())
                     <a href="{{ route('clio.campaigns.cross-check', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Cruzamento i-Educar') }}</a>
-                @elseif (Auth::user()->isAdmin())
+                @elseif (Auth::user()->can('linkConsultancy', $campaign))
                     <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Vincular i-Educar') }}</a>
                 @endif
-                <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Enviar dados') }}</a>
+                @can('upload', $campaign)
+                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Enviar dados') }}</a>
+                @else
+                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Inventário') }}</a>
+                @endcan
                 <a href="{{ route('clio.campaigns.index') }}" class="serv-btn-secondary text-sm">{{ __('Todas as campanhas') }}</a>
             </div>
         </div>
@@ -61,14 +67,20 @@
                             · {{ __('Ref. :d', ['d' => $coverage['reference_date']]) }}
                         @endif
                     </p>
-                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ir ao upload') }} →</a>
+                    @can('upload', $campaign)
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ir ao upload') }} →</a>
+                    @else
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ver inventário') }} →</a>
+                    @endcan
                 </div>
             </div>
 
             <section class="serv-panel overflow-hidden" id="artefactos">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                     <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Artefactos') }}</h3>
-                    <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerir upload') }}</a>
+                    @can('upload', $campaign)
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerir upload') }}</a>
+                    @endcan
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">

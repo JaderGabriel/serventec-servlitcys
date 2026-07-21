@@ -12,16 +12,27 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 | Campo | Valor |
 |-------|--------|
-| Sprint | **S5 concluída** — próximo **S6** (export / RX) |
+| Sprint | **S6 concluída** — próximo **S7** (BI) |
 | Menu superior | **Clio** após Horizonte |
 | Docs (leitor) | Secção **9 · Clio — Educacenso** |
-| Rotas | campanhas, upload, analise, vincular, cruzamento |
-| CLI | `ingest` · `status` · `analyze` · `cross-check` |
-| Pronto para release? | **MVP+consultoria** — falta S6–S8 e nota de release |
+| Rotas | campanhas, upload, analise, vincular, cruzamento, export CSV/PDF |
+| CLI | `ingest` · `status` · `analyze` · `cross-check` (ops/admin) |
+| Permissões | Ver: admin+usuário · Mutar: só admin · Municipal: sem acesso |
+| Pronto para release? | **MVP+consultoria+export** — falta S7–S8 e nota de release |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-21 — S6 Export + RX + permissões
+
+**Entregue**
+
+- CSV agregado sem PII + PDF Serventec (`/export/csv`, `/export/pdf`)
+- Bloco Clio no painel RX (ranking tríade / erros)
+- Lista de campanhas com comparativo por exercício
+- `ClioCampaignPolicy`: leitura admin+usuário; create/upload/analyze/link só admin
+- Matriz em `PERFIS_UTILIZADOR.md`
 
 ### 2026-07-21 — S5 Consultoria + documentação no menu
 

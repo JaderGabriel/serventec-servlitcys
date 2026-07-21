@@ -1,12 +1,14 @@
 # Módulo — Clio (campanhas Educacenso 1ª etapa)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S5 (cruzamento i-Educar) em curso / MVP S1–S4 estável
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 (export / RX) — S1–S6 estável
 
 > **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio/campanhas`
 
 **Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e cruzar** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso (CSV `;` / ZIP), com ou sem i-Educar.
 
 **Não substitui** a conferência TXT pipe × i-Educar ([CEN-01](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)).
+
+**Acesso:** Admin e Usuário (não Municipal). **Inserts e ações sensíveis** (campanha, upload, análise, cruzamento, ficha leve, vincular i-Educar, CLI `clio:*`) — **só Admin**. Leitura e export CSV/PDF — Admin e Usuário.
 
 ---
 
@@ -33,7 +35,9 @@
 | Painel analítico | `/clio/campanhas/{uuid}/analise` |
 | Vincular i-Educar | `/clio/campanhas/{uuid}/vincular-ieducar` (admin) |
 | Cruzamento | `/clio/campanhas/{uuid}/cruzamento` |
+| Export | `/clio/campanhas/{uuid}/export/csv` · `…/export/pdf` |
 | Aba Censo | Consultoria → **Censo** → bloco Clio |
+| Painel RX | Bloco ranking campanhas do exercício |
 | Documentação | Menu lateral **9 · Clio — Educacenso** |
 
 ---
@@ -50,6 +54,8 @@
 | Análise | `clio:campaign-analyze {uuid}` | S4 |
 | Vincular / gap | `…/vincular-ieducar`, `…/cruzamento` | S5 |
 | Cruzamento CLI | `clio:campaign-cross-check {uuid}` | S5 |
+| Export CSV/PDF | `…/export/csv`, `…/export/pdf` | S6 |
+| Bloco RX | `/dashboard/rx` | S6 |
 
 Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 
