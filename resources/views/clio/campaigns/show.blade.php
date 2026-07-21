@@ -13,7 +13,8 @@
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Enviar dados') }}</a>
+                <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Painel analítico') }}</a>
+                <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Enviar dados') }}</a>
                 <a href="{{ route('clio.campaigns.index') }}" class="serv-btn-secondary text-sm">{{ __('Todas as campanhas') }}</a>
             </div>
         </div>

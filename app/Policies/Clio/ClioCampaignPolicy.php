@@ -32,6 +32,11 @@ class ClioCampaignPolicy
         return $user->canViewClio();
     }
 
+    public function analyze(User $user, ClioCampaign $campaign): bool
+    {
+        return $user->canViewClio();
+    }
+
     public function createCatalogCity(User $user): bool
     {
         return $user->is_active && $user->isAdmin();

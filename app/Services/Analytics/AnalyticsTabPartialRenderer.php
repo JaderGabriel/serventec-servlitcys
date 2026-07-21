@@ -312,6 +312,8 @@ final class AnalyticsTabPartialRenderer
                         $tabWarnings,
                     ),
                     'educacensoAnalysis' => $this->resolveEducacensoAnalysis($request->user(), $city),
+                    'selectedCity' => $city,
+                    'filters' => $filters,
                 ]))
                 ->withHeaders($headers),
             'municipality_health' => response()

@@ -12,16 +12,27 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 | Campo | Valor |
 |-------|--------|
-| Sprint | **S3 concluída** — próximo **S4** (painel MVP / INF-*) |
+| Sprint | **S4 MVP concluída** — próximo **S5** (consultoria / i-Educar) |
 | Menu superior | **Clio** após Horizonte |
-| Rotas | `/clio/campanhas`, upload (ZIP/pasta), ficha leve |
-| CLI | `clio:campaign-ingest` · `clio:campaign-status` |
+| Rotas | `/clio/campanhas`, upload, `/analise`, escolas |
+| CLI | `clio:campaign-ingest` · `status` · `analyze` |
 | Testes | `tests/Unit/Clio/*`, fixtures `tests/fixtures/clio/` |
-| Pronto para release? | **Não** — falta S4 (MVP) |
+| Pronto para release? | **Quase** — MVP funcional; falta endurecer Feature tests + release notes |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-21 — S4 Painel MVP (CEN-06/07)
+
+**Entregue**
+
+- Migrations `clio_campaign_findings` / `clio_campaign_inferences`
+- `CampaignAnalyzer` — INF-COL…INF-DELTA + achados `CLIO-*`
+- `clio:campaign-analyze`
+- T8 `/clio/campanhas/{uuid}/analise` · T9 detalhe escola
+- T12 bloco Clio na aba Censo (`work_done`)
+- Status `analyzed`
 
 ### 2026-07-21 — S3 Parsers (CEN-05)
 

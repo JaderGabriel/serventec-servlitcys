@@ -1,6 +1,6 @@
 # Clio — TODO de implementação (código)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S3 concluída — próximo S4 (MVP painel)
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S4 MVP concluída — próximo S5 (consultoria)
 
 > **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16`
 
@@ -111,25 +111,25 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 ## S4 — Análise e painel MVP (CEN-06, CEN-07) ← **MVP**
 
 ### Motor
-- [ ] Migration `clio_campaign_findings`, `clio_campaign_inferences`
-- [ ] `Clio\Analysis\CampaignAnalyzer`
-- [ ] Inferências: INF-COL, INF-ESC, INF-MAT, INF-TUR, INF-DOC, INF-NEE, INF-COE, INF-DUP, INF-DELTA
-- [ ] Catálogo códigos `EDU-REL-*` / `CLIO-*`
-- [ ] Completeness checklist (§4.5) → % cobertura tríade
-- [ ] Status `analyzed`
-- [ ] `clio:campaign-analyze {uuid}`
+- [x] Migration `clio_campaign_findings`, `clio_campaign_inferences`
+- [x] `Clio\Analysis\CampaignAnalyzer`
+- [x] Inferências: INF-COL, INF-ESC, INF-MAT, INF-TUR, INF-DOC, INF-NEE, INF-COE, INF-DUP, INF-DELTA
+- [x] Catálogo códigos `EDU-REL-*` / `CLIO-*`
+- [x] Completeness checklist (§4.5) → % cobertura tríade
+- [x] Status `analyzed`
+- [x] `clio:campaign-analyze {uuid}`
 
 ### UI exposição
-- [ ] T8 painel analítico — KPIs + tabela escolas + filtros
-- [ ] T9 detalhe escola
-- [ ] T12 bloco na aba Censo (`work_done`) — link campanha do município/ano
+- [x] T8 painel analítico — KPIs + tabela escolas + filtros
+- [x] T9 detalhe escola
+- [x] T12 bloco na aba Censo (`work_done`) — link campanha do município/ano
 - [ ] Retenção / purge job opcional (`clio:prune-artifacts`)
 
 ### Testes
-- [ ] Unit inferências com fixtures
-- [ ] Feature: fluxo T4→upload→analyze→T8 (HTTP)
+- [x] Unit catálogo/inferências com fixtures (leve)
+- [ ] Feature: fluxo T4→upload→analyze→T8 (HTTP) *(pdo_sqlite)*
 
-**Aceite S4 (MVP):** cenário A do roadmap (§9.5) completo em Saubara **ou** Mairi sem i-Educar.
+**Aceite S4 (MVP):** painel T8 + INF-* + detalhe escola + CLI analyze.
 
 ---
 

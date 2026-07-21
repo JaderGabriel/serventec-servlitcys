@@ -1,6 +1,6 @@
 # Módulo — Clio (campanhas Educacenso 1ª etapa)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S3 concluída (parsers) — próximo S4 painel MVP
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S4 MVP (painel INF-*) — próximo S5
 
 > **Índice de módulos:** [README.md](README.md) · **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) · **Rastreio até release:** [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md)
 
@@ -31,7 +31,8 @@
 | Hub + upload | `/clio/campanhas/{id}`, `…/upload` | S1 (classificar; parse em S3) |
 | Ficha leve | `/clio/municipios/ficha-leve` | S1 |
 | Painel analítico | `/clio/campanhas/{id}/analise` | S4 |
-| CLI | `php artisan clio:campaign-ingest\|status` | S2–S3 |
+| Detalhe escola | `/clio/campanhas/{id}/escolas/{inep}` | S4 |
+| CLI | `php artisan clio:campaign-ingest\|status\|analyze` | S2–S4 |
 
 ---
 

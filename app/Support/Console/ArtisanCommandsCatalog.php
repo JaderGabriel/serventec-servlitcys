@@ -489,6 +489,17 @@ final class ArtisanCommandsCatalog
                         'env' => ['CLIO_ENABLED'],
                         'doc_anchor' => 'clio',
                     ],
+                    [
+                        'name' => 'clio:campaign-analyze',
+                        'summary' => __('Gera inferências INF-* e achados; marca campanha analyzed.'),
+                        'signature' => 'clio:campaign-analyze {uuid} {--skip-parse}',
+                        'examples' => [
+                            'php artisan clio:campaign-analyze {uuid}',
+                            'php artisan clio:campaign-analyze {uuid} --skip-parse',
+                        ],
+                        'env' => ['CLIO_ENABLED'],
+                        'doc_anchor' => 'clio',
+                    ],
                 ],
             ],
             [

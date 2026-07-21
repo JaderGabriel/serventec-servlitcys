@@ -17,6 +17,16 @@
     $anoRef = (int) ($baseline['ano'] ?? $est['ano_referencia'] ?? 0);
     $fmt = static fn (int|float $n): string => number_format($n, is_float($n) ? 1 : 0, ',', '.');
     $pct = static fn (?float $v): string => $v !== null ? $fmt($v).'%' : '—';
+
+    $clioCampaign = null;
+    if (\Illuminate\Support\Facades\Auth::user()?->canViewClio() && $selectedCity !== null) {
+        $clioYear = (int) (is_object($filters) && isset($filters->ano) ? $filters->ano : $anoRef);
+        $clioCampaign = \App\Models\Clio\ClioCampaign::query()
+            ->where('city_id', $selectedCity->id)
+            ->when($clioYear > 0, fn ($q) => $q->where('year', $clioYear))
+            ->orderByDesc('id')
+            ->first();
+    }
 @endphp
 
 @php
@@ -63,6 +73,25 @@
     @if (count($censoKpis) > 0)
         <x-dashboard.consultoria-kpi-grid :items="$censoKpis" class="grid-cols-2 md:grid-cols-4 gap-2" />
     @endif
+
+        @if ($clioCampaign !== null)
+            <div id="censo-clio" class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/30 px-4 py-3 text-sm text-sky-950 dark:text-sky-100">
+                <p class="font-semibold">{{ __('Clio — campanha Educacenso 1ª etapa') }}</p>
+                <p class="mt-1 text-xs opacity-90">
+                    {{ $clioCampaign->statusLabel() }} · {{ $clioCampaign->year }}
+                    · {{ __(':n arquivo(s)', ['n' => $clioCampaign->artifacts()->count()]) }}
+                </p>
+                <div class="mt-2 flex flex-wrap gap-3">
+                    <a href="{{ route('clio.campaigns.analysis', $clioCampaign) }}" class="serv-link text-sm font-medium">{{ __('Abrir painel Clio') }} →</a>
+                    <a href="{{ route('clio.campaigns.show', $clioCampaign) }}" class="serv-link text-sm">{{ __('Hub da campanha') }}</a>
+                </div>
+            </div>
+        @elseif (\Illuminate\Support\Facades\Auth::user()?->canViewClio())
+            <div id="censo-clio" class="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <p>{{ __('Clio: ainda sem campanha para este município/ano.') }}</p>
+                <a href="{{ route('clio.campaigns.create') }}" class="serv-link mt-1 inline-block text-sm font-medium">{{ __('Criar campanha') }} →</a>
+            </div>
+        @endif
 
         @if ($yearClosure !== null)
             <div class="rounded-lg border px-4 py-3 text-sm {{ ($yearClosure['consolidated'] ?? false) ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/80 dark:bg-emerald-950/30 text-emerald-950 dark:text-emerald-100' : 'border-amber-200 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 text-amber-950 dark:text-amber-100' }}">

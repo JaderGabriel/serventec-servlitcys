@@ -89,6 +89,16 @@ class ClioCampaign extends Model
         return $this->hasMany(ClioCampaignArtifact::class, 'campaign_id');
     }
 
+    public function findings(): HasMany
+    {
+        return $this->hasMany(ClioCampaignFinding::class, 'campaign_id');
+    }
+
+    public function inferences(): HasMany
+    {
+        return $this->hasMany(ClioCampaignInference::class, 'campaign_id');
+    }
+
     public function isAnalysisOnly(): bool
     {
         return $this->profile === self::PROFILE_ANALYSIS_ONLY;

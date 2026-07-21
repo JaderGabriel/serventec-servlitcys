@@ -83,6 +83,9 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::get('/campanhas/nova', [\App\Http\Controllers\Clio\CampaignController::class, 'create'])->name('campaigns.create');
             Route::post('/campanhas', [\App\Http\Controllers\Clio\CampaignController::class, 'store'])->name('campaigns.store');
             Route::get('/campanhas/{campaign}', [\App\Http\Controllers\Clio\CampaignController::class, 'show'])->name('campaigns.show');
+            Route::get('/campanhas/{campaign}/analise', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'show'])->name('campaigns.analysis');
+            Route::post('/campanhas/{campaign}/analisar', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'run'])->name('campaigns.analyze');
+            Route::get('/campanhas/{campaign}/escolas/{inep}', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'school'])->name('campaigns.school');
             Route::get('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
             Route::post('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
             Route::get('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
