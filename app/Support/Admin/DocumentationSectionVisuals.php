@@ -87,7 +87,7 @@ final class DocumentationSectionVisuals
             'clio' => [
                 'icon' => 'academic-cap',
                 'tone' => 'sky',
-                'analogy' => __('Clio — campanhas CSV 1ª etapa'),
+                'analogy' => __('Clio — coletas CSV 1ª etapa'),
             ],
             'funding' => [
                 'icon' => 'banknotes',

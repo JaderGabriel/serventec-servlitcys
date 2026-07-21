@@ -74,7 +74,7 @@ class CampaignConsultancyController extends Controller
 
         return redirect()
             ->route('clio.campaigns.show', $campaign)
-            ->with('success', __('i-Educar vinculado. Perfil da campanha: Consultoria. Teste de conexão: :s.', [
+            ->with('success', __('i-Educar vinculado. Perfil da coleta: Consultoria. Teste de conexão: :s.', [
                 's' => $status['status'],
             ]));
     }

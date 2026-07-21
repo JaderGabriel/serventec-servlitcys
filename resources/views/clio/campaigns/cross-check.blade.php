@@ -7,7 +7,7 @@
                     {{ $campaign->municipality_name }} — {{ $campaign->year }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {{ __('INF-GAP: escolas só na campanha, só no i-Educar, ou em ambos (somente leitura).') }}
+                    {{ __('INF-GAP: escolas só na coleta, só no i-Educar, ou em ambos (somente leitura).') }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">

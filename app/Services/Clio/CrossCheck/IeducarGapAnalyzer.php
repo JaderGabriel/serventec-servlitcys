@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * INF-GAP — cruza escolas da campanha Clio com snapshot i-Educar (somente leitura).
+ * INF-GAP — cruza escolas da coleta Clio com snapshot i-Educar (somente leitura).
  * Não usa EducacensoFileReader (TXT / CEN-01).
  */
 final class IeducarGapAnalyzer
@@ -101,7 +101,7 @@ final class IeducarGapAnalyzer
                     'school_id' => $school?->id,
                     'code' => 'CLIO-GAP-CLIO',
                     'severity' => ClioCampaignFinding::SEVERITY_WARNING,
-                    'message' => __('Escola na campanha Clio sem INEP correspondente no i-Educar.'),
+                    'message' => __('Escola na coleta Clio sem INEP correspondente no i-Educar.'),
                     'meta' => ['inep' => $inep],
                 ]);
             }
@@ -112,7 +112,7 @@ final class IeducarGapAnalyzer
                     'campaign_id' => $campaign->id,
                     'code' => 'CLIO-GAP-IEDUCAR',
                     'severity' => ClioCampaignFinding::SEVERITY_INFO,
-                    'message' => __('Escola no i-Educar sem pasta/linha na campanha: :n', ['n' => $nome]),
+                    'message' => __('Escola no i-Educar sem pasta/linha na coleta: :n', ['n' => $nome]),
                     'meta' => ['inep' => $inep, 'nome' => $nome],
                 ]);
             }

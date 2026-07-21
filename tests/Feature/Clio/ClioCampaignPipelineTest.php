@@ -100,7 +100,7 @@ final class ClioCampaignPipelineTest extends TestCase
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)
-            ->get(route('clio.campaigns.index'))
+            ->get(route('clio.home'))
             ->assertForbidden();
     }
 
@@ -129,7 +129,7 @@ final class ClioCampaignPipelineTest extends TestCase
         $this->actingAs($admin)
             ->get(route('dashboard.rx'))
             ->assertOk()
-            ->assertSee('Campanhas Educacenso', false)
+            ->assertSee('Coletas Educacenso', false)
             ->assertSee('RX Clio Mun', false);
     }
 }

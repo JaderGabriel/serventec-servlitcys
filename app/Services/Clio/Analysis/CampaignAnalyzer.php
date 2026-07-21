@@ -341,7 +341,7 @@ final class CampaignAnalyzer
                 $campaign,
                 'CLIO-COE-ACOMP',
                 ClioCampaignFinding::SEVERITY_INFO,
-                __('Campanha sem relatório municipal de acompanhamento.'),
+                __('Coleta sem relatório municipal de acompanhamento.'),
             );
         }
 

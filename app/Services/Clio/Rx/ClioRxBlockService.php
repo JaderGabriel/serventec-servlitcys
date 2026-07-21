@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Policies\PlatformFeaturePolicy;
 
 /**
- * Bloco RX (T13): ranking multi-campanha do exercício vigente.
+ * Bloco RX (T13): ranking multi-coleta do exercício vigente.
  */
 final class ClioRxBlockService
 {

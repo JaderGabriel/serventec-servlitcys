@@ -3,19 +3,19 @@
         <div>
             <p class="serv-eyebrow">{{ __('Clio') }}</p>
             <h3 id="rx-clio-heading" class="font-display font-semibold text-lg text-serv-navy dark:text-white">
-                {{ __('Campanhas Educacenso :ano', ['ano' => $clio['year'] ?? '']) }}
+                {{ __('Coletas Educacenso :ano', ['ano' => $clio['year'] ?? '']) }}
             </h3>
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {{ __('Ranking por achados críticos e cobertura da tríade (aluno · turma · profissional).') }}
             </p>
         </div>
-        <a href="{{ route('clio.campaigns.index', ['year' => $clio['year'] ?? null]) }}" class="serv-link text-sm shrink-0">
-            {{ __('Ver todas as campanhas →') }}
+        <a href="{{ route('clio.home', ['year' => $clio['year'] ?? null]) }}" class="serv-link text-sm shrink-0">
+            {{ __('Abrir Clio →') }}
         </a>
     </div>
 
     @if (($clio['campaigns_count'] ?? 0) === 0)
-        <p class="mt-4 text-sm text-slate-500">{{ __('Ainda sem campanhas Clio neste exercício.') }}</p>
+        <p class="mt-4 text-sm text-slate-500">{{ __('Ainda sem coletas Clio neste exercício.') }}</p>
     @else
         <div class="mt-4 overflow-x-auto">
             <table class="min-w-full text-sm">

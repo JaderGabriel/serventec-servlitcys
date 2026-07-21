@@ -8,8 +8,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-status {uuid : UUID da campanha} {--parse : Executar interpretação pendente antes do relatório} {--reparse : Reinterpretar todos os CSV} {--json}')]
-#[Description('Clio — cobertura da campanha (tríade, status de interpretação, data de referência).')]
+#[Signature('clio:campaign-status {uuid : UUID da coleta} {--parse : Executar interpretação pendente antes do relatório} {--reparse : Reinterpretar todos os CSV} {--json}')]
+#[Description('Clio — cobertura da coleta (tríade, status de interpretação, data de referência).')]
 final class ClioCampaignStatusCommand extends Command
 {
     public function handle(CampaignParseService $parser): int
@@ -17,7 +17,7 @@ final class ClioCampaignStatusCommand extends Command
         $uuid = (string) $this->argument('uuid');
         $campaign = ClioCampaign::query()->where('uuid', $uuid)->first();
         if ($campaign === null) {
-            $this->error(__('Campanha Clio não encontrada: :uuid', ['uuid' => $uuid]));
+            $this->error(__('Coleta Clio não encontrada: :uuid', ['uuid' => $uuid]));
 
             return self::FAILURE;
         }

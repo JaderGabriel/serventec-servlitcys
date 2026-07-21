@@ -40,7 +40,7 @@ final class PlatformFeaturePolicy
         return $user->is_active && ($user->isAdmin() || $user->isUsuário());
     }
 
-    /** Clio — campanhas Educacenso 1ª etapa (mesmo público que Horizonte). */
+    /** Clio — coletas Educacenso 1ª etapa (mesmo público que Horizonte). */
     public function viewClio(User $user): bool
     {
         return $user->is_active

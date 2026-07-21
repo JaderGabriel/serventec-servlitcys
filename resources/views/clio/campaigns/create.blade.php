@@ -3,7 +3,7 @@
         <div>
             <p class="serv-eyebrow">{{ __('Clio') }}</p>
             <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
-                {{ __('Nova campanha') }}
+                {{ __('Nova coleta') }}
             </h2>
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 {{ __('Associe um município do catálogo Clio (com ou sem i-Educar) ao exercício da 1ª etapa.') }}
@@ -16,6 +16,11 @@
             @if (session('success'))
                 <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
                     {{ session('success') }}
+                </div>
+            @endif
+            @if (session('warning'))
+                <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                    {{ session('warning') }}
                 </div>
             @endif
 
@@ -39,8 +44,8 @@
                     @error('city_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                     @can('createCatalogCity', App\Models\Clio\ClioCampaign::class)
                         <p class="mt-2 text-xs text-slate-500">
-                            {{ __('Município novo sem i-Educar?') }}
-                            <a href="{{ route('clio.cities.create') }}" class="serv-link font-medium">{{ __('Cadastrar ficha leve') }}</a>
+                            {{ __('Município ainda não cadastrado?') }}
+                            <a href="{{ route('clio.cities.create') }}" class="serv-link font-medium">{{ __('Cadastrar município') }}</a>
                         </p>
                     @endcan
                 </div>
@@ -58,8 +63,8 @@
                 </div>
 
                 <div class="flex items-center justify-end gap-3">
-                    <a href="{{ route('clio.campaigns.index') }}" class="text-sm text-slate-600 hover:underline dark:text-slate-400">{{ __('Cancelar') }}</a>
-                    <button type="submit" class="serv-btn-primary text-sm">{{ __('Criar campanha') }}</button>
+                    <a href="{{ route('clio.home') }}" class="text-sm text-slate-600 hover:underline dark:text-slate-400">{{ __('Cancelar') }}</a>
+                    <button type="submit" class="serv-btn-primary text-sm">{{ __('Criar coleta') }}</button>
                 </div>
             </form>
         </div>

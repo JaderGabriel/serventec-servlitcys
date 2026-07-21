@@ -76,23 +76,23 @@
 
         @if ($clioCampaign !== null)
             <div id="censo-clio" class="rounded-lg border border-sky-200 dark:border-sky-800 bg-sky-50/70 dark:bg-sky-950/30 px-4 py-3 text-sm text-sky-950 dark:text-sky-100">
-                <p class="font-semibold">{{ __('Clio — campanha Educacenso 1ª etapa') }}</p>
+                <p class="font-semibold">{{ __('Clio — coleta Educacenso 1ª etapa') }}</p>
                 <p class="mt-1 text-xs opacity-90">
                     {{ $clioCampaign->statusLabel() }} · {{ $clioCampaign->year }}
                     · {{ __(':n arquivo(s)', ['n' => $clioCampaign->artifacts()->count()]) }}
                 </p>
                 <div class="mt-2 flex flex-wrap gap-3">
                     <a href="{{ route('clio.campaigns.analysis', $clioCampaign) }}" class="serv-link text-sm font-medium">{{ __('Abrir painel Clio') }} →</a>
-                    <a href="{{ route('clio.campaigns.show', $clioCampaign) }}" class="serv-link text-sm">{{ __('Central da campanha') }}</a>
+                    <a href="{{ route('clio.campaigns.show', $clioCampaign) }}" class="serv-link text-sm">{{ __('Central da coleta') }}</a>
                 </div>
             </div>
         @elseif (\Illuminate\Support\Facades\Auth::user()?->canViewClio())
             <div id="censo-clio" class="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                <p>{{ __('Clio: ainda sem campanha para este município/ano.') }}</p>
+                <p>{{ __('Clio: ainda sem coleta para este município/ano.') }}</p>
                 @can('create', App\Models\Clio\ClioCampaign::class)
-                    <a href="{{ route('clio.campaigns.create') }}" class="serv-link mt-1 inline-block text-sm font-medium">{{ __('Criar campanha') }} →</a>
+                    <a href="{{ route('clio.campaigns.create') }}" class="serv-link mt-1 inline-block text-sm font-medium">{{ __('Criar coleta') }} →</a>
                 @else
-                    <p class="mt-1 text-xs text-slate-500">{{ __('Peça a um administrador para criar a campanha Clio.') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Peça a um administrador para criar a coleta Clio.') }}</p>
                 @endcan
             </div>
         @endif

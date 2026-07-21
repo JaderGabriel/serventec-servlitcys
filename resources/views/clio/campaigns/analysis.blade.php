@@ -46,7 +46,7 @@
                     @can('analyze', $campaign)
                         {{ __('Ainda sem inferências. Envie os CSV e clique em "Executar análise".') }}
                     @else
-                        {{ __('Ainda sem inferências. Um administrador precisa executar a análise desta campanha.') }}
+                        {{ __('Ainda sem inferências. Um administrador precisa executar a análise desta coleta.') }}
                     @endcan
                 </div>
             @else

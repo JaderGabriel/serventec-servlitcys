@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     'db_driver',
     'ieducar_schema',
     'ieducar_app_url',
+    'clio_drive_url',
     'db_host',
     'db_port',
     'db_database',

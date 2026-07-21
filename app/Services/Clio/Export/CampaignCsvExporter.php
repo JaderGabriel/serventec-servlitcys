@@ -8,7 +8,7 @@ use App\Services\Clio\Parse\CampaignParseService;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Export CSV agregado da campanha — sem PII (só INEP, nomes de escola, totais, códigos).
+ * Export CSV agregado da coleta — sem PII (só INEP, nomes de escola, totais, códigos).
  */
 final class CampaignCsvExporter
 {
@@ -42,14 +42,14 @@ final class CampaignCsvExporter
             fputcsv($out, ['secao', 'chave', 'valor', 'nota'], ';');
 
             $metaRows = [
-                ['campanha', 'uuid', $campaign->uuid, ''],
-                ['campanha', 'municipio', $campaign->municipality_name, ''],
-                ['campanha', 'uf', (string) $campaign->uf, ''],
-                ['campanha', 'ibge', (string) ($campaign->ibge_municipio ?? ''), ''],
-                ['campanha', 'ano', (string) $campaign->year, ''],
-                ['campanha', 'perfil', $campaign->profile, $campaign->profileLabel()],
-                ['campanha', 'estado', $campaign->status, $campaign->statusLabel()],
-                ['campanha', 'referencia', (string) optional($campaign->reference_date)?->toDateString(), ''],
+                ['coleta', 'uuid', $campaign->uuid, ''],
+                ['coleta', 'municipio', $campaign->municipality_name, ''],
+                ['coleta', 'uf', (string) $campaign->uf, ''],
+                ['coleta', 'ibge', (string) ($campaign->ibge_municipio ?? ''), ''],
+                ['coleta', 'ano', (string) $campaign->year, ''],
+                ['coleta', 'perfil', $campaign->profile, $campaign->profileLabel()],
+                ['coleta', 'estado', $campaign->status, $campaign->statusLabel()],
+                ['coleta', 'referencia', (string) optional($campaign->reference_date)?->toDateString(), ''],
                 ['cobertura', 'escolas_total', (string) ($coverage['schools_total'] ?? 0), ''],
                 ['cobertura', 'triade_completa', (string) ($coverage['schools_triade_complete'] ?? 0), ''],
                 ['cobertura', 'triade_pct', (string) ($coverage['triade_coverage_pct'] ?? 0), ''],

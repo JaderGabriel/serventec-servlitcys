@@ -50,7 +50,7 @@
                         </x-nav-link>
                     @endif
                     @if (Auth::user()->canViewClio())
-                        <x-nav-link :href="route('clio.campaigns.index')" :active="request()->routeIs('clio.*')" icon="academic-cap">
+                        <x-nav-link :href="route('clio.home')" :active="request()->routeIs('clio.*')" icon="academic-cap">
                             {{ __('Clio') }}
                         </x-nav-link>
                     @endif
@@ -108,7 +108,7 @@
                 </x-responsive-nav-link>
             @endif
             @if (Auth::user()->canViewClio())
-                <x-responsive-nav-link :href="route('clio.campaigns.index')" :active="request()->routeIs('clio.*')" icon="academic-cap">
+                <x-responsive-nav-link :href="route('clio.home')" :active="request()->routeIs('clio.*')" icon="academic-cap">
                     {{ __('Clio') }}
                 </x-responsive-nav-link>
             @endif

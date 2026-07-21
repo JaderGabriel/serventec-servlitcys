@@ -1,14 +1,14 @@
-# Módulo — Clio (campanhas Educacenso 1ª etapa)
+# Módulo — Clio (coletas Educacenso 1ª etapa)
 
 **Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 (export / RX) — S1–S6 estável
 
-> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio/campanhas`
+> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio`
 
 **Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e cruzar** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso (CSV `;` / ZIP), com ou sem i-Educar.
 
 **Não substitui** a conferência TXT pipe × i-Educar ([CEN-01](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)).
 
-**Acesso:** Admin e Usuário (não Municipal). **Inserts e ações sensíveis** (campanha, upload, análise, cruzamento, ficha leve, vincular i-Educar, CLI `clio:*`) — **só Admin**. Leitura e export CSV/PDF — Admin e Usuário.
+**Acesso:** Admin e Usuário (não Municipal). **Inserts e ações sensíveis** (coleta, upload, análise, cruzamento, ficha leve, vincular i-Educar, CLI `clio:*`) — **só Admin**. Leitura e export CSV/PDF — Admin e Usuário.
 
 ---
 
@@ -16,9 +16,10 @@
 
 | Capacidade | Descrição |
 |------------|-----------|
-| **Campanhas** | Lote por município + ano (Acomp + Relações por escola / ZIP) |
-| **Ficha leve** | Municípios **sem** i-Educar — só análise (perfil `analysis_only`) |
-| **Consultoria** | Vincular `db_*` + URL app → perfil `consultancy` + **INF-GAP** |
+| **Coletas** | Lote por município + ano (Acomp + Relações por escola / ZIP) |
+| **Município só coleta** | Cadastro **sem** i-Educar — só análise (perfil `analysis_only`) |
+| **Município consultoria** | Cadastro (ou vínculo) com `db_*` + URL → perfil `consultancy` + **INF-GAP** |
+| **Pasta Drive** | Link no município/coleta · **Verificar** inventário · **Importar** CSV/ZIP (requer `CLIO_DRIVE_API_KEY`) |
 | **Inferências** | INF-COL…INF-DELTA (Modo A) e INF-GAP (Modo B) |
 | **Exposição** | Painel T8, detalhe escola T9, bloco Censo, export CSV/PDF, ranking no RX |
 
@@ -29,15 +30,16 @@
 | Superfície | Caminho |
 |------------|---------|
 | Menu superior | **Clio** (após Horizonte) — `canViewClio()` / `CLIO_ENABLED` |
-| Lista / hub | `/clio/campanhas` |
-| Ficha leve | `/clio/municipios/ficha-leve` |
-| Upload | `/clio/campanhas/{uuid}/upload` |
-| Painel analítico | `/clio/campanhas/{uuid}/analise` |
-| Vincular i-Educar | `/clio/campanhas/{uuid}/vincular-ieducar` (admin) |
-| Cruzamento | `/clio/campanhas/{uuid}/cruzamento` |
-| Export | `/clio/campanhas/{uuid}/export/csv` · `…/export/pdf` |
+| Home / relatórios | `/clio` — municípios do exercício → abrir relatório |
+| Vista em tabela | `/clio/coletas` |
+| Novo município | `/clio/municipios/novo` (só coleta ou consultoria) |
+| Upload | `/clio/coletas/{uuid}/upload` |
+| Painel analítico | `/clio/coletas/{uuid}/analise` |
+| Vincular i-Educar | `/clio/coletas/{uuid}/vincular-ieducar` (admin) |
+| Cruzamento | `/clio/coletas/{uuid}/cruzamento` |
+| Export | `/clio/coletas/{uuid}/export/csv` · `…/export/pdf` |
 | Aba Censo | Consultoria → **Censo** → bloco Clio |
-| Painel RX | Bloco ranking campanhas do exercício |
+| Painel RX | Bloco ranking coletas do exercício |
 | Documentação | Menu lateral **9 · Clio — Educacenso** |
 
 ---
@@ -46,7 +48,7 @@
 
 | Área | Rota / comando | Sprint |
 |------|----------------|--------|
-| Lista / nova / hub | `/clio/campanhas`… | S1 |
+| Home / lista / nova / hub | `/clio`, `/clio/coletas`… | S1 + home |
 | Upload ZIP/pasta | `…/upload` | S2 |
 | Parse implícito | após upload / `clio:campaign-ingest` | S3 |
 | Status cobertura | `clio:campaign-status {uuid}` | S3 |
@@ -65,11 +67,11 @@ Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 
 ## Jornada rápida (cenário A — sem i-Educar)
 
-1. **Clio** → Novo município (ficha leve) ou escolher existente.  
-2. Nova campanha (ano).  
+1. **Clio** → home com municípios do exercício → **Abrir relatório**.  
+2. Se ainda não existir coleta: Novo município (**só coleta** ou **consultoria**) ou **Nova coleta**.  
 3. Enviar CSV/ZIP (ou `clio:campaign-ingest`).  
 4. **Painel analítico** → Correr análise (INF-*).  
-5. (Opcional) admin **Vincular i-Educar** → **Cruzamento** (INF-GAP).
+5. Se ainda for só coleta: admin pode **Vincular i-Educar** depois → **Cruzamento** (INF-GAP).
 
 ---
 

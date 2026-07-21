@@ -4,18 +4,19 @@
             <div>
                 <p class="serv-eyebrow">{{ __('Clio') }}</p>
                 <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
-                    {{ __('Campanhas Educacenso — 1ª etapa') }}
+                    {{ __('Coletas — vista em tabela') }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-                    {{ __('Receba relatórios do portal, analise redes com ou sem i-Educar e acompanhe a coleta da Matrícula inicial.') }}
+                    {{ __('Lista operacional do exercício. Para abrir relatórios por município, use o início do Clio.') }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2 shrink-0">
+                <a href="{{ route('clio.home', ['year' => $filterYear]) }}" class="serv-btn-secondary text-sm">{{ __('Início Clio') }}</a>
                 @can('createCatalogCity', App\Models\Clio\ClioCampaign::class)
-                    <a href="{{ route('clio.cities.create') }}" class="serv-btn-secondary text-sm">{{ __('Novo município (ficha leve)') }}</a>
+                    <a href="{{ route('clio.cities.create') }}" class="serv-btn-secondary text-sm">{{ __('Novo município') }}</a>
                 @endcan
                 @can('create', App\Models\Clio\ClioCampaign::class)
-                    <a href="{{ route('clio.campaigns.create') }}" class="serv-btn-primary text-sm">{{ __('Nova campanha') }}</a>
+                    <a href="{{ route('clio.campaigns.create') }}" class="serv-btn-primary text-sm">{{ __('Nova coleta') }}</a>
                 @endcan
             </div>
         </div>
@@ -39,7 +40,7 @@
                     </select>
                 </form>
                 <div class="flex flex-wrap gap-4 text-sm text-slate-600 dark:text-slate-400">
-                    <span>{{ __(':n campanha(s)', ['n' => $comparativo['total'] ?? 0]) }}</span>
+                    <span>{{ __(':n coleta(s)', ['n' => $comparativo['total'] ?? 0]) }}</span>
                     <span>{{ __(':n analisada(s)', ['n' => $comparativo['analyzed'] ?? 0]) }}</span>
                     @if ($comparativo['avg_triade'] !== null)
                         <span>{{ __('Tríade média :p%', ['p' => $comparativo['avg_triade']]) }}</span>
@@ -85,15 +86,17 @@
                                     </td>
                                     <td class="px-4 py-3 text-right tabular-nums">{{ $campaign->artifacts_count }}</td>
                                     <td class="px-4 py-3 text-right">
-                                        <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-link text-sm font-medium">{{ __('Abrir') }}</a>
+                                        <a href="{{ $campaign->primaryReportUrl() }}" class="serv-link text-sm font-medium">
+                                            {{ $campaign->hasReportReady() ? __('Relatório') : __('Abrir') }}
+                                        </a>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="7" class="px-4 py-10 text-center text-slate-500">
-                                        {{ __('Nenhuma campanha neste exercício.') }}
+                                        {{ __('Nenhuma coleta neste exercício.') }}
                                         @can('create', App\Models\Clio\ClioCampaign::class)
-                                            {{ __('Cadastre um município ficha leve ou use um existente e crie a primeira campanha.') }}
+                                            {{ __('Cadastre um município (só coleta ou consultoria) ou use um existente e crie a primeira coleta.') }}
                                         @endcan
                                     </td>
                                 </tr>

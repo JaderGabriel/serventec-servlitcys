@@ -106,6 +106,26 @@ class ClioCampaign extends Model
         return $this->profile === self::PROFILE_ANALYSIS_ONLY;
     }
 
+    public function hasReportReady(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_ANALYZED,
+            self::STATUS_CROSS_CHECKED,
+        ], true);
+    }
+
+    /**
+     * Destino principal a partir da home: painel analítico se já houver análise; senão a central da coleta.
+     */
+    public function primaryReportUrl(): string
+    {
+        if ($this->hasReportReady() || $this->status === self::STATUS_PARSED) {
+            return route('clio.campaigns.analysis', $this);
+        }
+
+        return route('clio.campaigns.show', $this);
+    }
+
     public function profileLabel(): string
     {
         return $this->isAnalysisOnly()

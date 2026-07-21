@@ -30,7 +30,7 @@
 <div class="cover-pro__band">
     <div class="cover-pro__band-inner">
         <p class="cover-pro__eyebrow">{{ __('Clio') }}</p>
-        <p class="cover-pro__type">{{ __('Relatório de campanha — Matrícula inicial') }}</p>
+        <p class="cover-pro__type">{{ __('Relatório de coleta — Matrícula inicial') }}</p>
         <h1 class="cover-pro__city">{{ $campaign->municipality_name }}</h1>
         <p class="cover-pro__sub">{{ $campaign->uf }} · {{ $campaign->year }} · {{ $campaign->profileLabel() }}</p>
     </div>

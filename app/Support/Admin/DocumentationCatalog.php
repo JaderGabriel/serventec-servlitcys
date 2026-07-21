@@ -458,7 +458,7 @@ final class DocumentationCatalog
                     ['label' => __('Cadastro e CadÚnico'), 'path' => 'docs/modulos/MODULO_CADUNICO.md'],
                     ['label' => __('Pedagogia e SAEB'), 'path' => 'docs/modulos/MODULO_PEDAGOGIA_SAEB.md'],
                     ['label' => __('RX — Censo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md'],
-                    ['label' => __('Clio — campanhas Educacenso'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('1ª etapa · relatórios CSV')],
+                    ['label' => __('Clio — coletas Educacenso'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('1ª etapa · relatórios CSV')],
                     ['label' => __('Financiamento (FUNDEB)'), 'path' => 'docs/modulos/MODULO_FUNDEB.md'],
                     ['label' => __('Dados públicos (admin)'), 'path' => 'docs/modulos/MODULO_DADOS_PUBLICOS.md', 'audience' => self::AUDIENCE_ADMIN],
                 ],
@@ -531,13 +531,13 @@ final class DocumentationCatalog
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md', 'hint' => __('Porta de entrada')],
                     ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md', 'hint' => __('CEN-01 · TXT × i-Educar')],
-                    ['label' => __('Clio (campanhas CSV)'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Módulo irmão — 1ª etapa')],
+                    ['label' => __('Clio (coletas CSV)'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Módulo irmão — 1ª etapa')],
                 ],
             ],
             [
                 'key' => 'clio',
                 'title' => __('9 · Clio — Educacenso'),
-                'description' => __('`/clio/campanhas` — coleta CSV, análise INF-*, cruzamento i-Educar, export CSV/PDF e bloco RX.'),
+                'description' => __('`/clio` — home por município, coleta CSV, análise INF-*, cruzamento i-Educar, export CSV/PDF e bloco RX.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Porta de entrada')],

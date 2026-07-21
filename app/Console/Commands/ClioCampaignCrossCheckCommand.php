@@ -8,8 +8,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-cross-check {uuid : UUID da campanha}')]
-#[Description('Clio — INF-GAP: cruza escolas da campanha com i-Educar (somente leitura).')]
+#[Signature('clio:campaign-cross-check {uuid : UUID da coleta}')]
+#[Description('Clio — INF-GAP: cruza escolas da coleta com i-Educar (somente leitura).')]
 final class ClioCampaignCrossCheckCommand extends Command
 {
     public function handle(IeducarGapAnalyzer $analyzer): int
@@ -17,7 +17,7 @@ final class ClioCampaignCrossCheckCommand extends Command
         $uuid = (string) $this->argument('uuid');
         $campaign = ClioCampaign::query()->where('uuid', $uuid)->first();
         if ($campaign === null) {
-            $this->error(__('Campanha Clio não encontrada.'));
+            $this->error(__('Coleta Clio não encontrada.'));
 
             return self::FAILURE;
         }

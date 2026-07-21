@@ -88,7 +88,8 @@ class CampaignController extends Controller
 
         return view('clio.campaigns.create', [
             'cities' => $cities,
-            'defaultYear' => (int) config('clio.layout_year_default', (int) date('Y')),
+            'defaultYear' => (int) request()->integer('year')
+                ?: (int) config('clio.layout_year_default', (int) date('Y')),
         ]);
     }
 
@@ -108,6 +109,12 @@ class CampaignController extends Controller
             ? ClioCampaign::PROFILE_CONSULTANCY
             : ClioCampaign::PROFILE_ANALYSIS_ONLY;
 
+        $driveUrl = trim((string) ($city->clio_drive_url ?? ''));
+        $meta = filled($data['notes'] ?? null) ? ['notes' => $data['notes']] : [];
+        if ($driveUrl !== '') {
+            $meta['drive_folder_url'] = $driveUrl;
+        }
+
         $campaign = ClioCampaign::query()->create([
             'city_id' => $city->id,
             'municipality_name' => $city->name,
@@ -117,14 +124,16 @@ class CampaignController extends Controller
             'stage' => ClioCampaign::STAGE_1,
             'profile' => $profile,
             'status' => ClioCampaign::STATUS_DRAFT,
-            'source' => 'manual_upload',
-            'meta' => filled($data['notes'] ?? null) ? ['notes' => $data['notes']] : null,
+            'source' => $driveUrl !== '' ? 'drive_upload' : 'manual_upload',
+            'meta' => $meta !== [] ? $meta : null,
             'created_by' => $request->user()?->id,
         ]);
 
         return redirect()
             ->route('clio.campaigns.show', $campaign)
-            ->with('success', __('Campanha Clio criada. Envie os relatórios da 1ª etapa.'));
+            ->with('success', $driveUrl !== ''
+                ? __('Coleta Clio criada com pasta Drive. Verifique e importe os dados.')
+                : __('Coleta Clio criada. Envie os relatórios da 1ª etapa.'));
     }
 
     public function show(ClioCampaign $campaign, \App\Services\Clio\Parse\CampaignParseService $parser): View

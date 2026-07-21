@@ -8,8 +8,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-analyze {uuid : UUID da campanha} {--skip-parse : Não executar interpretação pendente antes}')]
-#[Description('Clio — gera inferências INF-* e achados; marca a campanha como analisada.')]
+#[Signature('clio:campaign-analyze {uuid : UUID da coleta} {--skip-parse : Não executar interpretação pendente antes}')]
+#[Description('Clio — gera inferências INF-* e achados; marca a coleta como analisada.')]
 final class ClioCampaignAnalyzeCommand extends Command
 {
     public function handle(CampaignAnalyzer $analyzer): int
@@ -23,7 +23,7 @@ final class ClioCampaignAnalyzeCommand extends Command
         $uuid = (string) $this->argument('uuid');
         $campaign = ClioCampaign::query()->where('uuid', $uuid)->first();
         if ($campaign === null) {
-            $this->error(__('Campanha Clio não encontrada: :uuid', ['uuid' => $uuid]));
+            $this->error(__('Coleta Clio não encontrada: :uuid', ['uuid' => $uuid]));
 
             return self::FAILURE;
         }

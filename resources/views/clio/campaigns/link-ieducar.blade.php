@@ -7,7 +7,7 @@
                     {{ $campaign->municipality_name }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {{ __('Preencha as credenciais da base. Após o teste OK, a campanha passa a perfil Consultoria.') }}
+                    {{ __('Preencha as credenciais da base. Após o teste OK, a coleta passa a perfil Consultoria.') }}
                 </p>
             </div>
             <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Voltar') }}</a>

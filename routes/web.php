@@ -79,23 +79,32 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
         Route::get('/dashboard/horizonte/municipality/{ibge}/enrollment-series', [HorizonteController::class, 'enrollmentSeries'])->name('dashboard.horizonte.enrollment-series');
 
         Route::prefix('clio')->name('clio.')->group(function () {
-            Route::get('/campanhas', [\App\Http\Controllers\Clio\CampaignController::class, 'index'])->name('campaigns.index');
-            Route::get('/campanhas/nova', [\App\Http\Controllers\Clio\CampaignController::class, 'create'])->name('campaigns.create');
-            Route::post('/campanhas', [\App\Http\Controllers\Clio\CampaignController::class, 'store'])->name('campaigns.store');
-            Route::get('/campanhas/{campaign}', [\App\Http\Controllers\Clio\CampaignController::class, 'show'])->name('campaigns.show');
-            Route::get('/campanhas/{campaign}/analise', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'show'])->name('campaigns.analysis');
-            Route::post('/campanhas/{campaign}/analisar', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'run'])->name('campaigns.analyze');
-            Route::get('/campanhas/{campaign}/escolas/{inep}', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'school'])->name('campaigns.school');
-            Route::get('/campanhas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'editLink'])->name('campaigns.link');
-            Route::post('/campanhas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'storeLink'])->name('campaigns.link.store');
-            Route::get('/campanhas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'crossCheck'])->name('campaigns.cross-check');
-            Route::post('/campanhas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'runCrossCheck'])->name('campaigns.cross-check.run');
-            Route::get('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
-            Route::post('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
-            Route::get('/campanhas/{campaign}/export/csv', [\App\Http\Controllers\Clio\CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
-            Route::get('/campanhas/{campaign}/export/pdf', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
-            Route::get('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
-            Route::post('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'store'])->name('cities.store');
+            // URLs legadas (bookmarks)
+            Route::redirect('/campanhas', '/clio');
+            Route::redirect('/campanhas/nova', '/clio/coletas/nova');
+            Route::redirect('/municipios/ficha-leve', '/clio/municipios/novo');
+
+            Route::get('/', \App\Http\Controllers\Clio\HomeController::class)->name('home');
+            Route::get('/coletas', [\App\Http\Controllers\Clio\CampaignController::class, 'index'])->name('campaigns.index');
+            Route::get('/coletas/nova', [\App\Http\Controllers\Clio\CampaignController::class, 'create'])->name('campaigns.create');
+            Route::post('/coletas', [\App\Http\Controllers\Clio\CampaignController::class, 'store'])->name('campaigns.store');
+            Route::get('/coletas/{campaign}', [\App\Http\Controllers\Clio\CampaignController::class, 'show'])->name('campaigns.show');
+            Route::get('/coletas/{campaign}/analise', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'show'])->name('campaigns.analysis');
+            Route::post('/coletas/{campaign}/analisar', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'run'])->name('campaigns.analyze');
+            Route::get('/coletas/{campaign}/escolas/{inep}', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'school'])->name('campaigns.school');
+            Route::get('/coletas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'editLink'])->name('campaigns.link');
+            Route::post('/coletas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'storeLink'])->name('campaigns.link.store');
+            Route::get('/coletas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'crossCheck'])->name('campaigns.cross-check');
+            Route::post('/coletas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'runCrossCheck'])->name('campaigns.cross-check.run');
+            Route::get('/coletas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
+            Route::post('/coletas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
+            Route::post('/coletas/{campaign}/drive', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'updateUrl'])->name('campaigns.drive.update');
+            Route::post('/coletas/{campaign}/drive/verificar', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'verify'])->name('campaigns.drive.verify');
+            Route::post('/coletas/{campaign}/drive/importar', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'import'])->name('campaigns.drive.import');
+            Route::get('/coletas/{campaign}/export/csv', [\App\Http\Controllers\Clio\CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
+            Route::get('/coletas/{campaign}/export/pdf', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
+            Route::get('/municipios/novo', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
+            Route::post('/municipios/novo', [\App\Http\Controllers\Clio\CatalogCityController::class, 'store'])->name('cities.store');
         });
 
         Route::get('/dashboard/analytics/tab', [AnalyticsDashboardController::class, 'tabPartial'])->name('dashboard.analytics.tab');

@@ -460,9 +460,9 @@ final class ArtisanCommandsCatalog
             ],
             [
                 'id' => 'clio',
-                'title' => __('Clio — campanhas Educacenso 1ª etapa'),
+                'title' => __('Clio — coletas Educacenso 1ª etapa'),
                 'description' => __('Upload/ZIP e análise de relatórios CSV (menu Clio). Ver: admin e usuário. Mutações e CLI clio:*: só admin/ops.'),
-                'admin_route' => 'clio.campaigns.index',
+                'admin_route' => 'clio.home',
                 'commands' => [
                     [
                         'name' => 'clio:campaign-ingest',
@@ -479,7 +479,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'clio:campaign-status',
-                        'summary' => __('Cobertura da campanha: tríade por escola, parse_status, data de referência.'),
+                        'summary' => __('Cobertura da coleta: tríade por escola, parse_status, data de referência.'),
                         'signature' => 'clio:campaign-status {uuid} {--parse} {--reparse} {--json}',
                         'examples' => [
                             'php artisan clio:campaign-status {uuid}',
@@ -491,7 +491,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'clio:campaign-analyze',
-                        'summary' => __('Gera inferências INF-* e achados; marca a campanha como analisada.'),
+                        'summary' => __('Gera inferências INF-* e achados; marca a coleta como analisada.'),
                         'signature' => 'clio:campaign-analyze {uuid} {--skip-parse}',
                         'examples' => [
                             'php artisan clio:campaign-analyze {uuid}',
@@ -502,7 +502,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'clio:campaign-cross-check',
-                        'summary' => __('INF-GAP: cruza escolas da campanha com i-Educar (somente leitura).'),
+                        'summary' => __('INF-GAP: cruza escolas da coleta com i-Educar (somente leitura).'),
                         'signature' => 'clio:campaign-cross-check {uuid}',
                         'examples' => [
                             'php artisan clio:campaign-cross-check {uuid}',

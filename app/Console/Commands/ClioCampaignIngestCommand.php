@@ -10,7 +10,7 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-ingest {uuid : UUID da campanha Clio} {--path= : Arquivo, pasta ou ZIP a ingerir} {--disk= : Disco Laravel (opcional)} {--queue : Despachar job em vez de sincronizar} {--no-parse : Só classificar, sem interpretar CSV}')]
+#[Signature('clio:campaign-ingest {uuid : UUID da coleta Clio} {--path= : Arquivo, pasta ou ZIP a ingerir} {--disk= : Disco Laravel (opcional)} {--queue : Despachar job em vez de sincronizar} {--no-parse : Só classificar, sem interpretar CSV}')]
 #[Description('Clio — ingere ZIP/pasta/arquivos, classifica e (por padrão) interpreta CSV.')]
 final class ClioCampaignIngestCommand extends Command
 {
@@ -25,7 +25,7 @@ final class ClioCampaignIngestCommand extends Command
         $uuid = (string) $this->argument('uuid');
         $campaign = ClioCampaign::query()->where('uuid', $uuid)->first();
         if ($campaign === null) {
-            $this->error(__('Campanha Clio não encontrada: :uuid', ['uuid' => $uuid]));
+            $this->error(__('Coleta Clio não encontrada: :uuid', ['uuid' => $uuid]));
 
             return self::FAILURE;
         }

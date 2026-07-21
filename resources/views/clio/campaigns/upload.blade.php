@@ -45,6 +45,8 @@
                 </div>
             </div>
 
+            @include('clio.campaigns.partials.drive-panel')
+
             @can('upload', $campaign)
             <form
                 method="post"

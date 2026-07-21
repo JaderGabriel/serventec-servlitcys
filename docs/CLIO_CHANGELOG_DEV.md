@@ -15,7 +15,7 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 | Sprint | **S6 concluída** — próximo **S7** (BI) |
 | Menu superior | **Clio** após Horizonte |
 | Docs (leitor) | Secção **9 · Clio — Educacenso** |
-| Rotas | campanhas, upload, analise, vincular, cruzamento, export CSV/PDF |
+| Rotas | coletas, upload, analise, vincular, cruzamento, export CSV/PDF |
 | CLI | `ingest` · `status` · `analyze` · `cross-check` (ops/admin) |
 | Permissões | Ver: admin+usuário · Mutar: só admin · Municipal: sem acesso |
 | Pronto para release? | **MVP+consultoria+export** — falta S7–S8 e nota de release |
@@ -60,7 +60,7 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 - CSV agregado sem PII + PDF Serventec (`/export/csv`, `/export/pdf`)
 - Bloco Clio no painel RX (ranking tríade / erros)
-- Lista de campanhas com comparativo por exercício
+- Lista de coletas com comparativo por exercício
 - `ClioCampaignPolicy`: leitura admin+usuário; create/upload/analyze/link só admin
 - Matriz em `PERFIS_UTILIZADOR.md`
 
@@ -81,7 +81,7 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 - Migrations `clio_campaign_findings` / `clio_campaign_inferences`
 - `CampaignAnalyzer` — INF-COL…INF-DELTA + achados `CLIO-*`
 - `clio:campaign-analyze`
-- T8 `/clio/campanhas/{uuid}/analise` · T9 detalhe escola
+- T8 `/clio/coletas/{uuid}/analise` · T9 detalhe escola
 - T12 bloco Clio na aba Censo (`work_done`)
 - Status `analyzed`
 
@@ -136,7 +136,7 @@ tests/Unit/Clio/CampaignIngestServiceTest.php
 - Migrations `clio_campaigns`, `clio_campaign_schools`, `clio_campaign_artifacts`
 - Models `App\Models\Clio\*`
 - `ArtifactClassifier` + fachada `CampaignUploadService`
-- Controllers: campanhas, ficha leve, upload
+- Controllers: coletas, ficha leve, upload
 - Views `resources/views/clio/**`
 - Menu desktop/mobile após Horizonte
 - `City::forClioCatalog()` / `isClioCatalogOnly()`

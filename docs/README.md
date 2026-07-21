@@ -31,7 +31,7 @@ Cada seção do índice usa identidade própria (implementação: `Documentation
 | **6 · Cadastro e CadÚnico** | Violet | `users` | Cadastro × CadÚnico — inclusão |
 | **7 · Pedagogia e SAEB** | Sky | `academic-cap` | SAEB / IDEB — pedagogia |
 | **8 · RX — Censo** | Amber | `clipboard-document-list` | RX — Educacenso e ritmo |
-| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — campanhas CSV 1ª etapa (S1–S6) |
+| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — coletas CSV 1ª etapa (S1–S6) |
 | **10 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
 | **11 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
 | **12 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |

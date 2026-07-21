@@ -15,7 +15,7 @@ Painel **RX** — visão nacional de volume digitado, status Educacenso e trabal
 | **RX nacional** | Todos os municípios conectados |
 | **Status Censo** | Ritmo e pendências Educacenso |
 | **Educacenso etapa 1** | Conferência TXT × i-Educar (CEN-01) |
-| **Campanhas / Clio** | Menu **Clio** (`/clio/campanhas`) + bloco ranking no RX (S6) — export CSV/PDF |
+| **Coletas / Clio** | Menu **Clio** (`/clio`) + bloco ranking no RX (S6) — export CSV/PDF |
 | **Horizonte** | Contadores Educacenso no modal |
 
 ---

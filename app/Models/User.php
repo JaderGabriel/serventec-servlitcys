@@ -142,7 +142,7 @@ class User extends Authenticatable
         return app(PlatformFeaturePolicy::class)->viewHorizonte($this);
     }
 
-    /** Clio — campanhas e relatórios Educacenso 1ª etapa. */
+    /** Clio — coletas e relatórios Educacenso 1ª etapa. */
     public function canViewClio(): bool
     {
         return app(PlatformFeaturePolicy::class)->viewClio($this);

@@ -28,7 +28,7 @@
                 @else
                     <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Inventário') }}</a>
                 @endcan
-                <a href="{{ route('clio.campaigns.index') }}" class="serv-btn-secondary text-sm">{{ __('Todas as campanhas') }}</a>
+                <a href="{{ route('clio.home') }}" class="serv-btn-secondary text-sm">{{ __('Início Clio') }}</a>
             </div>
         </div>
     </x-slot>
@@ -76,6 +76,8 @@
                     @endcan
                 </div>
             </div>
+
+            @include('clio.campaigns.partials.drive-panel')
 
             <section class="serv-panel overflow-hidden" id="arquivos">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">

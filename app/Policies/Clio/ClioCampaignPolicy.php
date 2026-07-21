@@ -8,7 +8,7 @@ use App\Policies\PlatformFeaturePolicy;
 
 /**
  * Clio: Admin e Usuário (não Municipal) podem ver painel/relatórios.
- * Inserts e comandos sensíveis (campanha, upload, analisar, cruzar, ficha leve, vínculo i-Educar) — só Admin.
+ * Inserts e comandos sensíveis (coleta, upload, analisar, cruzar, ficha leve, vínculo i-Educar) — só Admin.
  */
 class ClioCampaignPolicy
 {
