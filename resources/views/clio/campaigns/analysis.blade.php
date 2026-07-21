@@ -21,8 +21,10 @@
                         <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr análise') }}</button>
                     </form>
                 @endcan
-                <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
-                <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
+                @can('export', $campaign)
+                    <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
+                    <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
+                @endcan
                 <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Hub') }}</a>
                 @can('upload', $campaign)
                     <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Upload') }}</a>
@@ -41,7 +43,11 @@
 
             @if ($inferences->isEmpty())
                 <div class="serv-panel p-6 text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Ainda sem inferências. Envie os CSV e clique em «Correr análise».') }}
+                    @can('analyze', $campaign)
+                        {{ __('Ainda sem inferências. Envie os CSV e clique em «Correr análise».') }}
+                    @else
+                        {{ __('Ainda sem inferências. Um administrador precisa correr a análise desta campanha.') }}
+                    @endcan
                 </div>
             @else
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

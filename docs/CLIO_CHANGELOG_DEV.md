@@ -24,6 +24,14 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — Revisão pós-S6 (correções de produto)
+
+**Entregue**
+
+- Tríade % no índice/RX lê **INF-COE** (bug: lia INF-COL)
+- Re-análise preserva INF-GAP / `cross_checked`
+- Copy hub + upload + T12 `@can`; máscara de IDs em DUP
+
 ### 2026-07-21 — Suíte de testes Clio
 
 **Entregue**

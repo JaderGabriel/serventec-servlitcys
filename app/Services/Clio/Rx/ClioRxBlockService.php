@@ -26,7 +26,7 @@ final class ClioRxBlockService
         $campaigns = ClioCampaign::query()
             ->where('year', $year)
             ->with([
-                'inferences' => fn ($q) => $q->where('code', 'INF-COL'),
+                'inferences' => fn ($q) => $q->where('code', 'INF-COE'),
             ])
             ->withCount([
                 'schools',
@@ -38,9 +38,7 @@ final class ClioRxBlockService
 
         $rows = [];
         foreach ($campaigns as $campaign) {
-            $inf = $campaign->inferences->first();
-            $payload = is_array($inf?->payload) ? $inf->payload : [];
-            $triade = (float) ($payload['triade_coverage_pct'] ?? 0);
+            $triade = $campaign->triadeCoveragePct() ?? 0.0;
 
             $rows[] = [
                 'uuid' => $campaign->uuid,

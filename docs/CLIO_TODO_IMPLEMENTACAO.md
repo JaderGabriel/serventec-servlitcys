@@ -1,6 +1,6 @@
 # Clio — TODO de implementação (código)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 concluída — próximo S7 (BI)
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 estável com correcções de produto (tríade/RX, preservação INF-GAP, copy) — próximo S7 (BI)
 
 > **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
 
@@ -196,7 +196,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ### Segurança / LGPD
 - [x] Policies + UI: ver (admin/usuário); inserts e ações sensíveis só admin; municipal excluído
-- [ ] Mascarar PII em logs e UI de achados (amostra)
+- [x] Mascarar IDs óbvios em achados DUP (amostra) + CSV export
 - [ ] Não versionar CSV reais do Drive
 
 ### Qualidade

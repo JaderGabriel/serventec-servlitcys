@@ -36,7 +36,7 @@
                 <div class="serv-panel p-4">
                     <p class="serv-eyebrow">{{ __('Pendentes de parse') }}</p>
                     <p class="mt-1 font-display text-2xl font-semibold tabular-nums text-serv-navy dark:text-white">{{ $counts['pending'] }}</p>
-                    <p class="text-xs text-slate-500">{{ __('S3 — interpretação CSV') }}</p>
+                    <p class="text-xs text-slate-500">{{ __('Aguardando interpretação CSV') }}</p>
                 </div>
                 <div class="serv-panel p-4">
                     <p class="serv-eyebrow">{{ __('Estado') }}</p>

@@ -14,8 +14,10 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Painel analítico') }}</a>
-                <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
-                <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
+                @can('export', $campaign)
+                    <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
+                    <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
+                @endcan
                 @if ($campaign->city?->hasDataSetup())
                     <a href="{{ route('clio.campaigns.cross-check', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Cruzamento i-Educar') }}</a>
                 @elseif (Auth::user()->can('linkConsultancy', $campaign))
@@ -45,9 +47,9 @@
                     <p class="mt-1 font-display text-lg font-semibold text-serv-navy dark:text-white">{{ $campaign->profileLabel() }}</p>
                     <p class="mt-1 text-xs text-slate-500">
                         @if ($campaign->isAnalysisOnly())
-                            {{ __('Sem conexão i-Educar — análise dos relatórios.') }}
+                            {{ __('Sem conexão i-Educar — análise dos relatórios do portal.') }}
                         @else
-                            {{ __('Com i-Educar — cruzamento disponível nas próximas etapas.') }}
+                            {{ __('Com i-Educar — use o cruzamento para ver o gap de escolas (INF-GAP).') }}
                         @endif
                     </p>
                 </div>

@@ -39,9 +39,22 @@ final class CampaignAnalyzer
 
         $campaign->load(['schools.artifacts', 'artifacts']);
 
+        $wasCrossChecked = $campaign->status === ClioCampaign::STATUS_CROSS_CHECKED
+            || ClioCampaignInference::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('code', 'INF-GAP')
+                ->exists();
+
         DB::transaction(function () use ($campaign): void {
-            ClioCampaignFinding::query()->where('campaign_id', $campaign->id)->delete();
-            ClioCampaignInference::query()->where('campaign_id', $campaign->id)->delete();
+            // Preserva Modo B (INF-GAP / CLIO-GAP-*) — a re-análise é só Modo A.
+            ClioCampaignFinding::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('code', 'not like', 'CLIO-GAP-%')
+                ->delete();
+            ClioCampaignInference::query()
+                ->where('campaign_id', $campaign->id)
+                ->where('code', '!=', 'INF-GAP')
+                ->delete();
 
             $this->inferColeta($campaign);
             $this->inferEscolas($campaign);
@@ -54,7 +67,16 @@ final class CampaignAnalyzer
             $this->inferDelta($campaign);
         });
 
-        $campaign->update(['status' => ClioCampaign::STATUS_ANALYZED]);
+        $stillHasGap = ClioCampaignInference::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'INF-GAP')
+            ->exists();
+
+        $campaign->update([
+            'status' => ($wasCrossChecked && $stillHasGap)
+                ? ClioCampaign::STATUS_CROSS_CHECKED
+                : ClioCampaign::STATUS_ANALYZED,
+        ]);
 
         return [
             'inferences' => ClioCampaignInference::query()->where('campaign_id', $campaign->id)->count(),
@@ -367,7 +389,9 @@ final class CampaignAnalyzer
                             $campaign,
                             'CLIO-DUP-ID',
                             ClioCampaignFinding::SEVERITY_WARNING,
-                            __('Identificação duplicada na rede: :id', ['id' => $id]),
+                            __('Identificação duplicada na rede (amostra: :id).', [
+                                'id' => $this->maskIdentifier($id),
+                            ]),
                             $artifact->school,
                             $artifact,
                         );
@@ -431,5 +455,22 @@ final class CampaignAnalyzer
             __('Escolas com delta Acomp×Relação: :n.', ['n' => $divergent]),
             ['divergent_schools' => $divergent, 'samples' => array_slice($deltas, 0, 20)],
         );
+    }
+
+    private function maskIdentifier(string $id): string
+    {
+        $id = trim($id);
+        if ($id === '') {
+            return '***';
+        }
+        if (preg_match('/^\d{11}$/', $id) === 1) {
+            return '[redacted]';
+        }
+        $len = mb_strlen($id);
+        if ($len <= 4) {
+            return str_repeat('*', $len);
+        }
+
+        return mb_substr($id, 0, 2).str_repeat('*', max(0, $len - 4)).mb_substr($id, -2);
     }
 }

@@ -124,4 +124,21 @@ class ClioCampaign extends Model
             default => $this->status,
         };
     }
+
+    /**
+     * Cobertura da tríade (%) a partir de INF-COE (payload da análise).
+     */
+    public function triadeCoveragePct(): ?float
+    {
+        $inf = $this->relationLoaded('inferences')
+            ? $this->inferences->firstWhere('code', 'INF-COE')
+            : $this->inferences()->where('code', 'INF-COE')->first();
+
+        $payload = is_array($inf?->payload) ? $inf->payload : [];
+        if (! array_key_exists('triade_coverage_pct', $payload)) {
+            return null;
+        }
+
+        return (float) $payload['triade_coverage_pct'];
+    }
 }

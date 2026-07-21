@@ -64,7 +64,7 @@
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                             @forelse ($campaigns as $campaign)
                                 @php
-                                    $triade = $campaign->inferences->first()?->payload['triade_coverage_pct'] ?? null;
+                                    $triade = $campaign->triadeCoveragePct();
                                 @endphp
                                 <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
                                     <td class="px-4 py-3">

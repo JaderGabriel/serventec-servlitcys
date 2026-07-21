@@ -89,7 +89,11 @@
         @elseif (\Illuminate\Support\Facades\Auth::user()?->canViewClio())
             <div id="censo-clio" class="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                 <p>{{ __('Clio: ainda sem campanha para este município/ano.') }}</p>
-                <a href="{{ route('clio.campaigns.create') }}" class="serv-link mt-1 inline-block text-sm font-medium">{{ __('Criar campanha') }} →</a>
+                @can('create', App\Models\Clio\ClioCampaign::class)
+                    <a href="{{ route('clio.campaigns.create') }}" class="serv-link mt-1 inline-block text-sm font-medium">{{ __('Criar campanha') }} →</a>
+                @else
+                    <p class="mt-1 text-xs text-slate-500">{{ __('Peça a um administrador para criar a campanha Clio.') }}</p>
+                @endcan
             </div>
         @endif
 

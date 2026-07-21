@@ -34,7 +34,7 @@ class CampaignController extends Controller
         $filterYear = $year && in_array($year, $years, true) ? $year : ($years[0] ?? $defaultYear);
 
         $campaigns = ClioCampaign::query()
-            ->with(['city', 'inferences' => fn ($q) => $q->where('code', 'INF-COL')])
+            ->with(['city', 'inferences' => fn ($q) => $q->where('code', 'INF-COE')])
             ->withCount([
                 'artifacts',
                 'schools',
@@ -60,17 +60,13 @@ class CampaignController extends Controller
 
         $triades = ClioCampaign::query()
             ->where('year', $filterYear)
-            ->with(['inferences' => fn ($q) => $q->where('code', 'INF-COL')])
+            ->with(['inferences' => fn ($q) => $q->where('code', 'INF-COE')])
             ->get()
-            ->map(function (ClioCampaign $c) {
-                $payload = $c->inferences->first()?->payload;
-
-                return is_array($payload) ? (float) ($payload['triade_coverage_pct'] ?? 0) : null;
-            })
+            ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())
             ->filter(fn ($v) => $v !== null);
 
         if ($triades->isNotEmpty()) {
-            $comparativo['avg_triade'] = round($triades->avg(), 1);
+            $comparativo['avg_triade'] = round((float) $triades->avg(), 1);
         }
 
         return view('clio.campaigns.index', [
