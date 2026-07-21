@@ -170,35 +170,34 @@ final class ClioCampaignFlowTest extends TestCase
     }
 
     #[Test]
-    public function admin_cadastra_municipio_consultoria_e_coleta_usa_perfil_consultancy(): void
+    public function admin_seleciona_municipio_consultoria_e_coleta_usa_perfil_consultancy(): void
     {
-        $this->mock(\App\Services\CityDataConnection::class, function ($mock) {
-            $mock->shouldReceive('connectionStatus')
-                ->once()
-                ->andReturn(['status' => 'ok', 'message' => null, 'ms' => 1]);
-        });
-
         $admin = User::factory()->admin()->create();
+        $city = City::query()->create([
+            'name' => 'Consultoria Alpha',
+            'uf' => 'BA',
+            'ibge_municipio' => '2910800',
+            'country' => 'Brasil',
+            'db_driver' => City::DRIVER_PGSQL,
+            'db_host' => '127.0.0.1',
+            'db_port' => 5432,
+            'db_database' => 'ieducar_teste',
+            'db_username' => 'ieducar',
+            'db_password' => 'secret',
+            'is_active' => true,
+        ]);
+        $this->assertTrue($city->hasDataSetup());
 
         $this->actingAs($admin)
             ->post(route('clio.cities.store'), [
                 'setup_mode' => 'consultancy',
-                'name' => 'Consultoria Alpha',
-                'uf' => 'BA',
-                'ibge_municipio' => '2910800',
-                'db_driver' => 'pgsql',
-                'db_host' => '127.0.0.1',
-                'db_port' => 5432,
-                'db_database' => 'ieducar_teste',
-                'db_username' => 'ieducar',
-                'db_password' => 'secret',
-                'ieducar_schema' => 'pmieducar',
+                'city_id' => $city->id,
+                'clio_drive_url' => 'https://drive.google.com/drive/folders/abcConsultoria',
             ])
-            ->assertRedirect();
+            ->assertRedirect(route('clio.campaigns.create', ['city_id' => $city->id]));
 
-        $city = City::query()->where('name', 'Consultoria Alpha')->firstOrFail();
-        $this->assertTrue($city->hasDataSetup());
-        $this->assertFalse($city->isClioCatalogOnly());
+        $city->refresh();
+        $this->assertSame('https://drive.google.com/drive/folders/abcConsultoria', $city->clio_drive_url);
 
         $this->actingAs($admin)
             ->post(route('clio.campaigns.store'), [
