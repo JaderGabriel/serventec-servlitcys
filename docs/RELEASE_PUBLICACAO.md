@@ -1,6 +1,6 @@
 # Publicação de releases — tag Git + GitHub Release
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-09
+**Versão do produto:** 8.0.0 · **Última revisão:** 2026-07-21
 
 > **Índice:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6
 
@@ -44,7 +44,7 @@ Implementação: `App\Support\Product\ProductReleaseTag`.
 ### 1. Verificar alinhamento
 
 ```bash
-php artisan product:release-status 20260709-Calliope --product-version=7.0.3
+php artisan product:release-status 20260721-Aletheia --product-version=8.0.0
 ```
 
 Mostra: nota RELEASE, config, tag local/remota, GitHub Release.
@@ -54,7 +54,7 @@ Mostra: nota RELEASE, config, tag local/remota, GitHub Release.
 ### 2. Publicar tag + GitHub Release
 
 ```bash
-php artisan product:release-publish 20260709-Calliope --product-version=7.0.3
+php artisan product:release-publish 20260721-Aletheia --product-version=8.0.0
 ```
 
 - Cria **tag anotada** em `HEAD`
@@ -73,11 +73,11 @@ Opções:
 ### 3. Exemplo manual (legado)
 
 ```bash
-git tag -a 20260709-Calliope -m "ServLitcys 7.0.3 — Calliope"
-git push origin 20260709-Calliope
-gh release create 20260709-Calliope \
-  --title "ServLitcys 7.0.3 — 20260709-Calliope" \
-  --notes-file docs/RELEASE_20260709_CALLIOPE.md
+git tag -a 20260721-Aletheia -m "ServLitcys 8.0.0 — Aletheia"
+git push origin 20260721-Aletheia
+gh release create 20260721-Aletheia \
+  --title "ServLitcys 8.0.0 — 20260721-Aletheia" \
+  --notes-file docs/RELEASE_20260721_ALETHEIA.md
 ```
 
 Prefira `product:release-publish` para evitar drift entre tag e GitHub.
@@ -87,8 +87,8 @@ Prefira `product:release-publish` para evitar drift entre tag e GitHub.
 ## Após publicar
 
 ```bash
-php artisan product:release-status 20260709-Calliope --product-version=7.0.3
-gh release view 20260709-Calliope
+php artisan product:release-status 20260721-Aletheia --product-version=8.0.0
+gh release view 20260721-Aletheia
 ```
 
 Deploy no servidor: `git fetch --tags && git checkout TAG`.

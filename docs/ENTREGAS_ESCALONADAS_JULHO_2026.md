@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **7.0.3** · tag **`20260709-Calliope`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **8.0.0** · tag **`20260721-Aletheia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -12,9 +12,9 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 |-------|--------|-----|------|-----------|--------|
 | 1 | **7.0.0** | `20260705-Ploutos` | 05/07 | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) | SICONFI, Transparência, tendência SAEB, modal enriquecido, scoring ampliado |
 | 2 | **7.0.1** | `20260705b-Moneta` | 05/07 | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) | Tooltip FUNDEB por UF; `horizonte:warm-map-cache` estável |
-
 | 3 | **7.0.2** | `20260706-Hermes` | 06/07 | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) | pt-BR unificado (UI, menus, documentação) |
 | 4 | **7.0.3** | `20260709-Calliope` | 09/07 | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) | Leitor docs modular; tag + GitHub Release |
+| 5 | **8.0.0** | `20260721-Aletheia` | 21/07 | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) | Clio hub de relatórios; AEE/AC/etapas Educacenso |
 
 ---
 

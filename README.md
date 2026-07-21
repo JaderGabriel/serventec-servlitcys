@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
-**Versão em produção (`main`):** **7.0.3** · tag **`20260709-Calliope`** · [release](docs/RELEASE_20260709_CALLIOPE.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **8.0.0** · tag **`20260721-Aletheia`** · [release](docs/RELEASE_20260721_ALETHEIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
