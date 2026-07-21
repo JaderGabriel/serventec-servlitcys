@@ -39,7 +39,7 @@
                 </div>
             @else
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-COE', 'INF-DUP', 'INF-DELTA'] as $code)
+                    @foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-GAP'] as $code)
                         @php $inf = $inferences->get($code); @endphp
                         @if ($inf)
                             <div class="serv-panel p-4">

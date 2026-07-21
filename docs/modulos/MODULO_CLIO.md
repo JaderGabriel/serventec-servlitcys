@@ -1,10 +1,12 @@
 # Módulo — Clio (campanhas Educacenso 1ª etapa)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S4 MVP (painel INF-*) — próximo S5
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S5 (cruzamento i-Educar) em curso / MVP S1–S4 estável
 
-> **Índice de módulos:** [README.md](README.md) · **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) · **Rastreio até release:** [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md)
+> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio/campanhas`
 
-**Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e (opcionalmente) promover** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso.
+**Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e cruzar** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso (CSV `;` / ZIP), com ou sem i-Educar.
+
+**Não substitui** a conferência TXT pipe × i-Educar ([CEN-01](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)).
 
 ---
 
@@ -12,27 +14,54 @@
 
 | Capacidade | Descrição |
 |------------|-----------|
-| **Campanhas** | Lote por município + ano (CSV Acomp + Relacoes por escola / ZIP) |
-| **Ficha leve** | Municípios **sem** i-Educar — só análise |
-| **Consultoria** | Municípios **com** link i-Educar — cruzamento + carga assistida (ondas posteriores) |
-| **Inferências** | Coleta, matrícula, turmas, profissionais, NEE, coerência, duplicidades |
-| **BI** | Agregados `bi_clio_*` (sem PII) — Onda 2 |
-
-**Não substitui:** conferência TXT pipe × i-Educar (**CEN-01**).
+| **Campanhas** | Lote por município + ano (Acomp + Relações por escola / ZIP) |
+| **Ficha leve** | Municípios **sem** i-Educar — só análise (perfil `analysis_only`) |
+| **Consultoria** | Vincular `db_*` + URL app → perfil `consultancy` + **INF-GAP** |
+| **Inferências** | INF-COL…INF-DELTA (Modo A) e INF-GAP (Modo B) |
+| **Exposição** | Painel T8, detalhe escola T9, bloco na aba Censo |
 
 ---
 
-## Rotas (implementadas / previstas)
+## Onde encontrar na aplicação
 
-| Área | Rota | Estado |
-|------|------|--------|
-| Lista de campanhas | `/clio/campanhas` | S1 |
-| Nova campanha | `/clio/campanhas/nova` | S1 |
-| Hub + upload | `/clio/campanhas/{id}`, `…/upload` | S1 (classificar; parse em S3) |
-| Ficha leve | `/clio/municipios/ficha-leve` | S1 |
-| Painel analítico | `/clio/campanhas/{id}/analise` | S4 |
-| Detalhe escola | `/clio/campanhas/{id}/escolas/{inep}` | S4 |
-| CLI | `php artisan clio:campaign-ingest\|status\|analyze` | S2–S4 |
+| Superfície | Caminho |
+|------------|---------|
+| Menu superior | **Clio** (após Horizonte) — `canViewClio()` / `CLIO_ENABLED` |
+| Lista / hub | `/clio/campanhas` |
+| Ficha leve | `/clio/municipios/ficha-leve` |
+| Upload | `/clio/campanhas/{uuid}/upload` |
+| Painel analítico | `/clio/campanhas/{uuid}/analise` |
+| Vincular i-Educar | `/clio/campanhas/{uuid}/vincular-ieducar` (admin) |
+| Cruzamento | `/clio/campanhas/{uuid}/cruzamento` |
+| Aba Censo | Consultoria → **Censo** → bloco Clio |
+| Documentação | Menu lateral **9 · Clio — Educacenso** |
+
+---
+
+## Rotas e CLI
+
+| Área | Rota / comando | Sprint |
+|------|----------------|--------|
+| Lista / nova / hub | `/clio/campanhas`… | S1 |
+| Upload ZIP/pasta | `…/upload` | S2 |
+| Parse implícito | após upload / `clio:campaign-ingest` | S3 |
+| Status cobertura | `clio:campaign-status {uuid}` | S3 |
+| Painel + detalhe | `…/analise`, `…/escolas/{inep}` | S4 |
+| Análise | `clio:campaign-analyze {uuid}` | S4 |
+| Vincular / gap | `…/vincular-ieducar`, `…/cruzamento` | S5 |
+| Cruzamento CLI | `clio:campaign-cross-check {uuid}` | S5 |
+
+Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
+
+---
+
+## Jornada rápida (cenário A — sem i-Educar)
+
+1. **Clio** → Novo município (ficha leve) ou escolher existente.  
+2. Nova campanha (ano).  
+3. Enviar CSV/ZIP (ou `clio:campaign-ingest`).  
+4. **Painel analítico** → Correr análise (INF-*).  
+5. (Opcional) admin **Vincular i-Educar** → **Cruzamento** (INF-GAP).
 
 ---
 
@@ -40,9 +69,12 @@
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa (inventário, campanha, BI, caminho §9) |
-| [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | Checklist do que codificar (S1–S8) |
-| [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | CEN-01 (paralelo) |
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa |
+| [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | Checklist S1–S8 |
+| [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md) | Rastreio até a release |
+| [COMANDOS_ARTISAN.md](../COMANDOS_ARTISAN.md) §3.1b | `clio:*` |
 | [MODULO_RX_CENSO.md](MODULO_RX_CENSO.md) | RX — ritmo Censo |
-| [POWERBI.md](../POWERBI.md) | Camada BI |
+| [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | CEN-01 (paralelo) |
 | [Coleta 2026 (Drive)](https://drive.google.com/drive/folders/1xP9cMR6JYHXRezzMs5ybSUdoR5V-yxLh) | Corpus de amostras |
+
+Fixtures de teste: `tests/fixtures/clio/coleta_2026/` (anonimizadas).

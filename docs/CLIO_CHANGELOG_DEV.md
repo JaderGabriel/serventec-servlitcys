@@ -12,16 +12,26 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 | Campo | Valor |
 |-------|--------|
-| Sprint | **S4 MVP concluída** — próximo **S5** (consultoria / i-Educar) |
+| Sprint | **S5 concluída** — próximo **S6** (export / RX) |
 | Menu superior | **Clio** após Horizonte |
-| Rotas | `/clio/campanhas`, upload, `/analise`, escolas |
-| CLI | `clio:campaign-ingest` · `status` · `analyze` |
-| Testes | `tests/Unit/Clio/*`, fixtures `tests/fixtures/clio/` |
-| Pronto para release? | **Quase** — MVP funcional; falta endurecer Feature tests + release notes |
+| Docs (leitor) | Secção **9 · Clio — Educacenso** |
+| Rotas | campanhas, upload, analise, vincular, cruzamento |
+| CLI | `ingest` · `status` · `analyze` · `cross-check` |
+| Pronto para release? | **MVP+consultoria** — falta S6–S8 e nota de release |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-21 — S5 Consultoria + documentação no menu
+
+**Entregue**
+
+- Secção **9 · Clio** no `DocumentationCatalog` (+ visuals); RX fica com link irmão
+- `MODULO_CLIO.md` como porta de entrada operacional
+- Vincular i-Educar (T2) + upgrade perfil `consultancy`
+- `IeducarGapAnalyzer` / INF-GAP + UI cruzamento + `clio:campaign-cross-check`
+- Badge «Só coleta (Clio)» / «Consultoria» na listagem de cidades
 
 ### 2026-07-21 — S4 Painel MVP (CEN-06/07)
 

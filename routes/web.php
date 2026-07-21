@@ -86,6 +86,10 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::get('/campanhas/{campaign}/analise', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'show'])->name('campaigns.analysis');
             Route::post('/campanhas/{campaign}/analisar', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'run'])->name('campaigns.analyze');
             Route::get('/campanhas/{campaign}/escolas/{inep}', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'school'])->name('campaigns.school');
+            Route::get('/campanhas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'editLink'])->name('campaigns.link');
+            Route::post('/campanhas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'storeLink'])->name('campaigns.link.store');
+            Route::get('/campanhas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'crossCheck'])->name('campaigns.cross-check');
+            Route::post('/campanhas/{campaign}/cruzamento', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'runCrossCheck'])->name('campaigns.cross-check.run');
             Route::get('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'edit'])->name('campaigns.upload');
             Route::post('/campanhas/{campaign}/upload', [\App\Http\Controllers\Clio\CampaignUploadController::class, 'store'])->name('campaigns.upload.store');
             Route::get('/municipios/ficha-leve', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');

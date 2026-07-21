@@ -530,16 +530,29 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md', 'hint' => __('Porta de entrada')],
-                    ['label' => __('Clio — campanhas 1ª etapa'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Novo módulo')],
-                    ['label' => __('Roadmap Clio'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
-                    ['label' => __('TODO implementação Clio'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
-                    ['label' => __('Clio — rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],
-                    ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md'],
+                    ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md', 'hint' => __('CEN-01 · TXT × i-Educar')],
+                    ['label' => __('Clio (campanhas CSV)'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Módulo irmão — 1ª etapa')],
+                ],
+            ],
+            [
+                'key' => 'clio',
+                'title' => __('9 · Clio — Educacenso'),
+                'description' => __('`/clio/campanhas` — coleta CSV 1ª etapa, análise e cruzamento i-Educar.'),
+                'audience' => self::AUDIENCE_ALL,
+                'items' => [
+                    ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap (spec)'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('TODO implementação'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md', 'hint' => __('clio:*')],
+                    ['label' => __('Variáveis de ambiente'), 'path' => 'docs/VARIAVEIS_AMBIENTE.md', 'hint' => __('CLIO_*'), 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('RX — Censo (irmão)'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md'],
+                    ['label' => __('Conferência TXT (CEN-01)'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md'],
                 ],
             ],
             [
                 'key' => 'funding',
-                'title' => __('9 · Financiamento (FUNDEB)'),
+                'title' => __('10 · Financiamento (FUNDEB)'),
                 'description' => __('Aba Finanças — VAAF, repasses, exportações e fontes públicas.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
@@ -554,7 +567,7 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'integrations',
-                'title' => __('10 · Integrações (admin)'),
+                'title' => __('11 · Integrações (admin)'),
                 'description' => __('Importações, APIs propostas e estudos.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
@@ -568,7 +581,7 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'operations',
-                'title' => __('11 · Operação (admin)'),
+                'title' => __('12 · Operação (admin)'),
                 'description' => __('Deploy, ambiente, performance e CLI.'),
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [

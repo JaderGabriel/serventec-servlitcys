@@ -500,6 +500,16 @@ final class ArtisanCommandsCatalog
                         'env' => ['CLIO_ENABLED'],
                         'doc_anchor' => 'clio',
                     ],
+                    [
+                        'name' => 'clio:campaign-cross-check',
+                        'summary' => __('INF-GAP: cruza escolas da campanha com i-Educar (read-only).'),
+                        'signature' => 'clio:campaign-cross-check {uuid}',
+                        'examples' => [
+                            'php artisan clio:campaign-cross-check {uuid}',
+                        ],
+                        'env' => ['CLIO_ENABLED'],
+                        'doc_anchor' => 'clio',
+                    ],
                 ],
             ],
             [

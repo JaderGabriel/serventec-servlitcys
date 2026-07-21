@@ -1,8 +1,9 @@
 # Clio — TODO de implementação (código)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S4 MVP concluída — próximo S5 (consultoria)
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S5 concluída — próximo S6 (export / RX)
 
-> **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16`
+> **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
+
 
 Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` → `- [x]` conforme entrega. Ordem = sprints **S1→S8** (§9.7 do roadmap).
 
@@ -32,7 +33,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 ### City — ficha leve
 - [x] `City::scopeForClioCatalog()` — `is_active` **sem** exigir `hasDataSetup()`
 - [x] UI ficha leve (`/clio/municipios/ficha-leve`) (T1)
-- [ ] Badge na listagem de cidades: «Só coleta (Clio)» vs «Consultoria»
+- [x] Badge na listagem de cidades: «Só coleta (Clio)» vs «Consultoria»
 - [x] Validação IBGE 7 dígitos (opcional no create)
 - [x] Testes Feature: criar ficha leve; garantir que **não** aparece em `forAnalytics()` *(requer pdo_sqlite no ambiente)*
 
@@ -135,13 +136,15 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ## S5 — Consultoria e cruzamento (CEN-15, CEN-08)
 
-- [ ] T2: secção «Vincular i-Educar» (credenciais + teste conexão + `ieducar_app_url`)
-- [ ] Upgrade ficha leve → `hasDataSetup()`; perfil campanha → `consultancy`
-- [ ] `Clio\CrossCheck\IeducarGapAnalyzer` (INF-GAP) — reutilizar padrões CEN-01, não FileReader TXT
-- [ ] T10 UI cross-check
-- [ ] Status `cross_checked`
+- [x] T2: secção «Vincular i-Educar» (credenciais + teste conexão + `ieducar_app_url`)
+- [x] Upgrade ficha leve → `hasDataSetup()`; perfil campanha → `consultancy`
+- [x] `Clio\CrossCheck\IeducarGapAnalyzer` (INF-GAP) — reutiliza `EducacensoIeducarSnapshot`, não FileReader TXT
+- [x] T10 UI cross-check
+- [x] Status `cross_checked`
+- [x] Documentação: secção **9 · Clio** no `DocumentationCatalog` + landing `MODULO_CLIO`
+- [x] Badge cidades: Só coleta (Clio) / Consultoria
 
-**Aceite S5:** município com DB; gap escolas/matrículas visível.
+**Aceite S5:** município com DB; gap escolas visível no cruzamento.
 
 ---
 

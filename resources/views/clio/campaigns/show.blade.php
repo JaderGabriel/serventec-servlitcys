@@ -14,6 +14,11 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Painel analítico') }}</a>
+                @if ($campaign->city?->hasDataSetup())
+                    <a href="{{ route('clio.campaigns.cross-check', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Cruzamento i-Educar') }}</a>
+                @elseif (Auth::user()->isAdmin())
+                    <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Vincular i-Educar') }}</a>
+                @endif
                 <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Enviar dados') }}</a>
                 <a href="{{ route('clio.campaigns.index') }}" class="serv-btn-secondary text-sm">{{ __('Todas as campanhas') }}</a>
             </div>

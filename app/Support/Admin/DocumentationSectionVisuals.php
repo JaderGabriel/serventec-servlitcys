@@ -84,6 +84,11 @@ final class DocumentationSectionVisuals
                 'tone' => 'amber',
                 'analogy' => __('RX — Educacenso e ritmo'),
             ],
+            'clio' => [
+                'icon' => 'academic-cap',
+                'tone' => 'sky',
+                'analogy' => __('Clio — campanhas CSV 1ª etapa'),
+            ],
             'funding' => [
                 'icon' => 'banknotes',
                 'tone' => 'rose',

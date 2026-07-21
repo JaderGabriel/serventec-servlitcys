@@ -25,6 +25,8 @@ class ClioCampaign extends Model
 
     public const STATUS_ANALYZED = 'analyzed';
 
+    public const STATUS_CROSS_CHECKED = 'cross_checked';
+
     protected $table = 'clio_campaigns';
 
     protected $fillable = [
@@ -118,6 +120,7 @@ class ClioCampaign extends Model
             self::STATUS_INGESTING => __('A ingerir'),
             self::STATUS_PARSED => __('Interpretado'),
             self::STATUS_ANALYZED => __('Analisado'),
+            self::STATUS_CROSS_CHECKED => __('Cruzado i-Educar'),
             default => $this->status,
         };
     }

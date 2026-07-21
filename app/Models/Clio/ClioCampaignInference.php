@@ -43,6 +43,7 @@ class ClioCampaignInference extends Model
             'INF-COE' => __('Coerência'),
             'INF-DUP' => __('Duplicidades'),
             'INF-DELTA' => __('Delta Acomp × Relações'),
+            'INF-GAP' => __('Gap × i-Educar'),
             default => $this->code,
         };
     }

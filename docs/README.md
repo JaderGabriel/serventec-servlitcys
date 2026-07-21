@@ -12,7 +12,7 @@ Ponto de entrada da documentação técnica e funcional. Para **padrão editoria
 
 | Recurso | Descrição |
 |---------|-----------|
-| **Menu lateral** | Seções **modulares** (1–11) com accordion, cor e ícone por módulo + releases |
+| **Menu lateral** | Seções **modulares** (1–12) com accordion, cor e ícone por módulo + releases |
 | **Pesquisa** | Campo no menu — mínimo 2 caracteres; indexa título, seção e cabeçalhos |
 | **Neste documento** | Sumário à direita (desktop) com âncoras nos títulos `h1`–`h4` |
 | **Idioma** | **pt-BR** em toda a UI, menus e documentação viva (usuário, seção, atualizar, convênio) |
@@ -31,9 +31,10 @@ Cada seção do índice usa identidade própria (implementação: `Documentation
 | **6 · Cadastro e CadÚnico** | Violet | `users` | Cadastro × CadÚnico — inclusão |
 | **7 · Pedagogia e SAEB** | Sky | `academic-cap` | SAEB / IDEB — pedagogia |
 | **8 · RX — Censo** | Amber | `clipboard-document-list` | RX — Educacenso e ritmo |
-| **9 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
-| **10 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
-| **11 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
+| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — campanhas CSV 1ª etapa |
+| **10 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
+| **11 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
+| **12 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
 | **Entregas escalonadas** | Fuchsia | `arrow-path` | Linha do tempo — entregas mensais |
 | **Arquivo** | Slate | `clipboard-document-list` | Arquivo — notas executivas antigas |
 | **Outros documentos** | Emerald | `document-text` | Acervo extra — releases e descobertas |
