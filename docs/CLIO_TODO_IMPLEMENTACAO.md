@@ -12,8 +12,9 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 | Item | Valor |
 |------|--------|
 | Nome de produto | **Clio** |
-| Namespace PHP | `App\Services\Clio\`, `App\Models\Clio\`, `App\Http\Controllers\Admin\Clio\` |
-| Rotas | `/admin/clio/...` |
+| Namespace PHP | `App\Services\Clio\`, `App\Models\Clio\`, `App\Http\Controllers\Clio\` |
+| Rotas | `/clio/...` |
+| Views | `resources/views/clio/` |
 | Artisan | `clio:*` |
 | Tabelas | `clio_*` |
 | Config | `config/clio.php` |
@@ -173,7 +174,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ## S8 — Promote i-Educar (CEN-11…13)
 
-- [ ] Feature flag `CLIO_PROMOTE_ENABLED`
+- [x] Feature flag `CLIO_PROMOTE_ENABLED` em `config/clio.php` + `.env` (desligada por omissão)
 - [ ] Mapa Relacao → entidades i-Educar (doc + código)
 - [ ] Dry-run T11 + `clio:campaign-promote {uuid} --dry-run`
 - [ ] Promote real com `--confirm=` slug + auditoria
@@ -186,10 +187,11 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 ## Transversal (todas as sprints)
 
 ### Docs / catálogos
-- [x] `docs/COMANDOS_ARTISAN.md` — secção `clio:*` (ingest; restante em S3+)
-- [x] `ArtisanCommandsCatalog` — `clio:campaign-ingest`
-- [ ] `ModuleMonitorCatalog` — sonda `clio` (opcional S4+)
-- [ ] Actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) ao fechar MVP
+- [x] `docs/COMANDOS_ARTISAN.md` — secção `clio:*`
+- [x] `ArtisanCommandsCatalog` — `clio:campaign-ingest|status|analyze|cross-check`
+- [ ] `ModuleMonitorCatalog` — sonda `clio` (opcional)
+- [x] Actualizar [STATUS_PROJETO.md](STATUS_PROJETO.md) (S1–S6)
+- [x] Índices: [BACKLOG…](BACKLOG_IMPLEMENTACOES.md) · [ROADMAP_INDICE…](ROADMAP_INDICE.md) · [modulos/README…](modulos/README.md)
 - [ ] Nota RELEASE quando houver tag de versão
 
 ### Segurança / LGPD
@@ -204,7 +206,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ---
 
-## Mapa rápido ficheiros a criar (orientação)
+## Mapa rápido ficheiros (orientação — paths reais S1–S6)
 
 ```
 config/clio.php
@@ -216,21 +218,21 @@ app/Models/Clio/ClioCampaignInference.php
 app/Services/Clio/Ingest/...
 app/Services/Clio/Parse/...
 app/Services/Clio/Analysis/...
-app/Services/Clio/Inference/...
 app/Services/Clio/CrossCheck/...
-app/Services/Clio/Promote/...
-app/Jobs/Clio/ProcessClioCampaignIngestJob.php
-app/Jobs/Clio/AnalyzeClioCampaignJob.php
-app/Http/Controllers/Admin/Clio/CampaignController.php
-app/Http/Controllers/Admin/Clio/CampaignUploadController.php
-app/Http/Controllers/Admin/Clio/CampaignAnalysisController.php
+app/Services/Clio/Export/...
+app/Services/Clio/Rx/...
+app/Services/Clio/Promote/...          # S8
+app/Jobs/ProcessClioCampaignIngestJob.php
+app/Http/Controllers/Clio/...
 app/Console/Commands/Clio/...
-resources/views/admin/clio/...
-database/migrations/xxxx_create_clio_*.php
+resources/views/clio/...
+resources/views/pdf/clio-campaign/...
+resources/views/dashboard/rx/partials/clio-campaigns.blade.php
+database/migrations/*_clio_*.php
 tests/Unit/Clio/...
 tests/Feature/Clio/...
 tests/fixtures/clio/coleta_2026/...
-routes/web.php  # grupo admin/clio
+routes/web.php  # grupo prefix clio → /clio/*
 ```
 
 ---

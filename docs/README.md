@@ -31,7 +31,7 @@ Cada seção do índice usa identidade própria (implementação: `Documentation
 | **6 · Cadastro e CadÚnico** | Violet | `users` | Cadastro × CadÚnico — inclusão |
 | **7 · Pedagogia e SAEB** | Sky | `academic-cap` | SAEB / IDEB — pedagogia |
 | **8 · RX — Censo** | Amber | `clipboard-document-list` | RX — Educacenso e ritmo |
-| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — campanhas CSV 1ª etapa |
+| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — campanhas CSV 1ª etapa (S1–S6) |
 | **10 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
 | **11 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
 | **12 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
@@ -134,8 +134,9 @@ mindmap
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB / IDEB |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Cadastro e integrações |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência arquivo Educacenso (portal INEP) × i-Educar + painel |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Roadmap **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida |
-| [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de implementação do módulo Clio (S1–S8) |
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Roadmap **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
+| [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de implementação do módulo Clio (S1–S6 ✓ · S7–S8) |
+| [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) | Rastreio até release do Clio |
 | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Roadmap NEE / AEE |
 
 ### 3. Financiamento e repasses

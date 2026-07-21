@@ -5,7 +5,8 @@
 > **Módulo:** [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **TODO de código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **CEN-01:** [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)
 
 **Nome:** **Clio** (mitologia grega — musa da história): regista e narra a **declaração da Matrícula inicial** a partir dos relatórios do portal Educacenso.  
-**Código:** namespace `App\Services\Clio\` · rotas `/admin/clio/*` · Artisan `clio:*` · tabelas `clio_*`.  
+**Código:** namespace `App\Services\Clio\` · controllers `App\Http\Controllers\Clio\` · rotas `/clio/*` · Artisan `clio:*` · tabelas `clio_*`.  
+**Implementação:** S1–S6 no código ([CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [CHANGELOG dev](CLIO_CHANGELOG_DEV.md)); próximo S7 BI / S8 promote.  
 **Corpus:** [Google Drive — COLETA 2026](https://drive.google.com/drive/folders/1xP9cMR6JYHXRezzMs5ybSUdoR5V-yxLh)
 
 | Marco | Estado |
@@ -14,7 +15,8 @@
 | CEN-03 modelo de campanha | **Concluído (spec)** |
 | §5 cadastro dual · §8 BI | **Concluído (spec)** |
 | §9 caminho de desenvolvimento | **Validado** (§9.6) |
-| TODO de implementação | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) |
+| S1–S6 (código) | **Concluído** — [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) |
+| S7–S8 | Pendente |
 
 ---
 
@@ -281,7 +283,7 @@ Campos úteis do acompanhamento: dependência, situação de funcionamento, form
 | `clio:campaign-status {uuid}` | Completude e status |
 | `censo:campaign-promote {uuid} --dry-run` | Onda 3 |
 
-Rotas sugeridas: `/admin/clio/campaigns` (consultoria) e bloco na aba **Censo** / RX.
+Rotas: `/clio/campanhas` (consultoria) e bloco na aba **Censo** / RX.
 
 ### 4.8 Relação com CEN-01
 
@@ -530,9 +532,9 @@ flowchart LR
 |---|---------------|------|----------|-------|
 | T1 | `/admin/cities/create?mode=catalog` | Novo município **ficha leve** | Admin | E1 |
 | T2 | `/admin/cities/{id}/edit` | Editar + **Vincular i-Educar** (credenciais, teste, URL app) | Admin | E1 / E5 |
-| T3 | `/admin/clio/campaigns` | Lista de campanhas (município, ano, status, cobertura %) | Operador | E2+ |
-| T4 | `/admin/clio/campaigns/create` | Nova campanha (município, ano, perfil A/B) | Operador | E2 |
-| T5 | `/admin/clio/campaigns/{uuid}` | **Hub da campanha** — resumo, upload, progresso, atalhos | Operador | E2–E4 |
+| T3 | `/clio/campanhas` | Lista de campanhas (município, ano, status, cobertura %) | Operador | E2+ |
+| T4 | `/clio/campanhas/nova` | Nova campanha (município, ano, perfil A/B) | Operador | E2 |
+| T5 | `/clio/campanhas/{uuid}` | **Hub da campanha** — resumo, upload, progresso, atalhos | Operador | E2–E4 |
 | T6 | `…/{uuid}/upload` | Zona de upload (arrastar pasta/ZIP/ficheiros) | Operador | E2 |
 | T7 | `…/{uuid}/artifacts` | Inventário de artefactos (kind, escola, parse_status) | Operador / TI | E3 |
 | T8 | `…/{uuid}/analysis` | **Painel analítico** (INF-*, escolas, drill-down) | Consultor | E4 |
@@ -671,7 +673,7 @@ Decisões adoptadas para desbloquear o código (ajustes pontuais de rota/copy OK
 
 | # | Pergunta | Decisão |
 |---|----------|---------|
-| V1 | Telas T1–T13 | **Sim** — prefixo de rota `/admin/clio/…` (não `/educacenso/`) |
+| V1 | Telas T1–T13 | **Sim** — prefixo de rota `/clio/…` (spec inicial `/admin/clio`; ajustado na implementação) |
 | V2 | Uploads U1–U3 no MVP | **Sim** — U5 CLI na mesma onda (S2/S3) |
 | V3 | Processamento em fila | **Sim** — fila `clio`; lotes grandes assíncronos |
 | V4 | Exposição principal | **Painel T8** no MVP; Power BI / `bi_clio_*` na Onda 2 |
@@ -748,7 +750,7 @@ app/Services/Clio/
   CrossCheck/        # Modo B (reusa padrões CEN-01, não o FileReader TXT)
   Promote/           # Onda 3
 app/Models/Clio/     # ClioCampaign, ClioCampaignSchool, …
-app/Http/Controllers/Admin/Clio/
+app/Http/Controllers/Clio/
 config/clio.php      # kinds, limites, feature flags
 ```
 
@@ -756,8 +758,8 @@ config/clio.php      # kinds, limites, feature flags
 |------|-------|
 | Migrations | `clio_campaigns`, `clio_campaign_schools`, `clio_campaign_artifacts`, `clio_campaign_findings`, `clio_campaign_inferences` |
 | Config | `config/clio.php` (+ refs em `educacenso.php` se partilhar layout year) |
-| UI | `/admin/clio/campaigns` + ficha leve em `/admin/cities` |
-| CLI | `clio:campaign-ingest\|analyze\|status\|promote` · `bi:refresh-clio-campaigns` |
+| UI | `/clio/campanhas` + ficha leve `/clio/municipios/ficha-leve` |
+| CLI | `clio:campaign-ingest\|status\|analyze\|cross-check` · (S8) `promote` · (S7) `bi:refresh-clio-campaigns` |
 | Fila | `clio` (fallback `admin-sync`) |
 
 CEN-01 (`Educacenso*`) permanece **paralelo**; Clio **não** reutiliza `EducacensoFileReader` (TXT). Partilhar catálogo de erros / padrões de UI quando fizer sentido.
@@ -802,12 +804,10 @@ Alinhados ao checklist de validação **§9.6** e às sprints **S1–S4** (§9.7
 Seguir o caminho **§9** (E1→E4 = MVP). Ordem técnica:
 
 1. ~~CEN-02 inventário~~ · ~~CEN-03 spec~~ · ~~§9.6 validado~~
-2. **S1** CEN-14 cadastro ficha leve ← **começar aqui** ([TODO](CLIO_TODO_IMPLEMENTACAO.md))
-3. **S2–S3** CEN-04 + CEN-05 (upload + parsers)
-4. **S4** CEN-06–CEN-07 painel Modo A ← **MVP demonstrável**
-5. **S5–S6** CEN-15 + CEN-08–CEN-10 consultoria / RX / export
-6. **S7** CEN-16 datasets BI
-7. **S8** CEN-11–CEN-13 carga i-Educar
+2. ~~**S1–S4**~~ MVP (ficha leve, upload, parsers, painel INF-*) — **concluído**
+3. ~~**S5–S6**~~ consultoria / cruzamento / export / RX — **concluído**
+4. **S7** CEN-16 datasets BI ← **próximo** ([TODO](CLIO_TODO_IMPLEMENTACAO.md))
+5. **S8** CEN-11–CEN-13 carga i-Educar
 
 ---
 
@@ -833,4 +833,4 @@ Landing do módulo: **[modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md)**.
 
 ---
 
-*Roadmap **Clio** fechado 2026-07-21 (§9.6 validado). Implementação: [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · sprints S1–S4 = MVP.*
+*Roadmap **Clio** fechado 2026-07-21 (§9.6 validado). Implementação: [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · S1–S6 concluídos · próximo S7–S8.*

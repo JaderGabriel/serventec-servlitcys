@@ -24,6 +24,13 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — Alinhamento documental (pós-S6)
+
+**Entregue**
+
+- `STATUS_PROJETO`, `BACKLOG` (CEN-04…15), `ROADMAP_INDICE`, `modulos/README`, `MODULO_RX`, roadmap paths `/clio/*`
+- Menu docs §9: export/RX + link Perfis; `PERFIS` + CEN-01 com irmão Clio
+
 ### 2026-07-21 — S6 Export + RX + permissões
 
 **Entregue**

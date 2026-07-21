@@ -2,13 +2,13 @@
 
 **Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
 
-> **Índice:** [README.md](README.md) · **Evolução (multi-arquivo / Modo A–B):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Relacionado:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) · [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md) · [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)
+> **Índice:** [README.md](README.md) · **Evolução (multi-arquivo / Clio):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Módulo irmão (CSV portal):** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Relacionado:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) · [RELEASE_20260615a_MNEMOSYNE.md](RELEASE_20260615a_MNEMOSYNE.md) · [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) · [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)
 
 ---
 
 ## 1. Resumo
 
-Este documento especifica um **módulo de conferência e simulação** para a **1ª etapa do Censo Escolar (Matrícula inicial)**:
+Este documento especifica um **módulo de conferência e simulação** para a **1ª etapa do Censo Escolar (Matrícula inicial)** (CEN-01 — arquivo **TXT** pipe do portal). Para campanhas com **relatórios CSV** do portal (Acomp + Relações), use o módulo **[Clio](modulos/MODULO_CLIO.md)** — não substitui este fluxo.
 
 1. Recebe o **arquivo originado no sistema Educacenso** (portal INEP) — **não** um export gerado pelo i-Educar.
 2. Interpreta a estrutura oficial (layout INEP, registos pipe-delimited).

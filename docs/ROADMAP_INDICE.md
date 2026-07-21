@@ -59,7 +59,7 @@ flowchart TD
 | **Horizonte — PNAD** | UI modal pronta; falta pipeline SIDRA | [HOR-10](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) · [HOR-18](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) | Tabela `municipal_pnad_snapshots` vazia |
 | **Horizonte — v2.2** | Geo INEP escolas, IDHM, SIDRA ampliado, programas FNDE | [HORIZONTE.md](HORIZONTE.md) §11.3–§11.6 · `HOR-01`, `HOR-05`–`HOR-07` | — |
 | **Consultoria — SAEB** | Metas PNE / semáforo no quadro | [GRA-07](BACKLOG_IMPLEMENTACOES.md#b-painel--gráficos-e-inferências-mec--inep) · [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | Em andamento |
-| **Censo — Clio** | Roadmap fechado; próximo = código S1–S4 (MVP) | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) | Implementação |
+| **Censo — Clio** | S1–S6 no código; próximo S7 BI / S8 promote | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [MODULO_CLIO…](modulos/MODULO_CLIO.md) | Em curso |
 | **Infra — CI** | `pdo_sqlite` / MySQL de testes no pipeline | [INF-04](BACKLOG_IMPLEMENTACOES.md#a-produto-e-infraestrutura) | Em andamento |
 | **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitetura-e-refactor-técnico) | Em andamento |
 
@@ -139,10 +139,11 @@ flowchart TD
 | CEN-01 | Conferência TXT portal × i-Educar | Concluído (4.4.8) |
 | CEN-02 | Inventário corpus Drive COLETA 2026 | **Concluído** (docs 21/07) |
 | CEN-03 | Modelo de campanha (spec) | **Concluído** (docs 21/07) |
-| CEN-04–07 | MVP ingestão CSV + análise Modo A | Pendente |
-| CEN-14 | Cadastro ficha leve (sem i-Educar) | Pendente |
-| CEN-08–10 · CEN-15–16 | Modo B, vínculo i-Educar, BI campanha | Pendente |
-| CEN-11–13 | Carga assistida i-Educar | Pendente |
+| CEN-04–07 | MVP ingestão CSV + análise Modo A | **Concluído** (S1–S4) |
+| CEN-14 | Cadastro ficha leve (sem i-Educar) | **Concluído** (S1) |
+| CEN-08–10 · CEN-15 | Modo B, vínculo i-Educar, export/RX | **Concluído** (S5–S6) |
+| CEN-16 | ETL `bi_clio_*` | Pendente (S7) |
+| CEN-11–13 | Carga assistida i-Educar | Pendente (S8) |
 
 ### Inclusão, NEE e qualidade de cadastro
 
@@ -192,7 +193,7 @@ flowchart TD
 | Resumo / Diagnóstico | [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | TEC-01–03 |
 | Cadastro | [CADUNICO_CECAD.md](CADUNICO_CECAD.md) | CUN-*, CAD-* |
 | Pedagógico | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | GRA-*, PLG-* |
-| Censo | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) · [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | CEN-01 ✓ · CEN-02… planeado |
+| Censo | [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) · [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | CEN-01 ✓ · CEN-04…15 ✓ (S1–S6) · CEN-16/11–13 pendente |
 | Finanças | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | FIN-* (maioria ✓) |
 | Horizonte (paralelo) | [HORIZONTE.md](HORIZONTE.md) | HOR-* |
 

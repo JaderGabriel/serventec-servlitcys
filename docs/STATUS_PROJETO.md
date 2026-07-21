@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **7.0.3** · release `20260709-Calliope` · **Ramo:** `main` · **Última revisão:** 2026-07-09
+**Versão em produção:** **7.0.3** · release `20260709-Calliope` · **Ramo:** `main` · **Última revisão:** 2026-07-21
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -17,6 +17,7 @@ flowchart TB
         CAD[Cadastro · CadÚnico]
         PED[Pedagógico · NEE/SAEB]
         CEN[Censo · ritmo]
+        CLI[Clio · campanhas CSV]
         FIN[Finanças · FUNDEB · Tempo Real]
         HOR[Horizonte · mapa GIS]
     end
@@ -36,6 +37,8 @@ flowchart TB
 
     Consultoria --> IED
     Consultoria --> LOC
+    CLI --> LOC
+    RX --> CLI
     HOR --> PUB
     HOR --> LOC
     Admin --> PUB
@@ -79,6 +82,7 @@ flowchart TB
 | Overlay global de carregamento (filtros, admin, auth) | Implementado |
 | Discrepâncias + export CSV | Implementado |
 | FUNDEB / VAAF (import + cascata + matriz + export CSV + perfil planejamento) | Implementado |
+| **Clio** — campanhas Educacenso CSV (menu Clio, export, bloco RX) | Implementado (S1–S6) — [MODULO_CLIO.md](modulos/MODULO_CLIO.md) |
 | Importações externas (guias UX admin + hub público) | Implementado |
 | Mapa Início — semáforo cadastro RX + contato municipal | Implementado (2.3.8.6) |
 | Pulse — diagnóstico SQL + operações estruturadas | Implementado (2.3.8.7) |
@@ -175,6 +179,7 @@ flowchart TB
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu usuário) | Implementado (5.0.0) |
 | Educacenso — conferência 1ª etapa (upload, cruzamento i-Educar, painel Censo) | Implementado (4.4.8) |
+| **Clio** — campanhas Educacenso 1ª etapa (CSV/ZIP, INF-*, cruzamento i-Educar, export CSV/PDF, bloco RX) | Implementado (dev 7.0.3+; S1–S6) — [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · próximo S7 BI / S8 promote |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |
@@ -194,9 +199,9 @@ flowchart TB
 
 | Perfil | Página inicial | Escopo |
 |--------|----------------|--------|
-| `admin` | `/dashboard` | Sistema completo |
-| `user` | `/dashboard/analytics` | Todos os municípios `forAnalytics` |
-| `municipal` | `/dashboard/analytics` (+ `city_id` se um só município) | Só `city_user` |
+| `admin` | `/dashboard` | Sistema completo (incl. mutações Clio) |
+| `user` | `/dashboard/analytics` | Todos os municípios `forAnalytics` + leitura/export Clio |
+| `municipal` | `/dashboard/analytics` (+ `city_id` se um só município) | Só `city_user` · **sem** Clio |
 
 - Contas **`is_active = false`**: login bloqueado; sessão terminada pelo middleware `EnsureUserIsActive`.
 - Admin em `/users`: **Desativar**, **Ativar**, **Excluir** (com proteção do último admin).

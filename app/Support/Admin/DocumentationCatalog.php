@@ -537,10 +537,11 @@ final class DocumentationCatalog
             [
                 'key' => 'clio',
                 'title' => __('9 · Clio — Educacenso'),
-                'description' => __('`/clio/campanhas` — coleta CSV 1ª etapa, análise e cruzamento i-Educar.'),
+                'description' => __('`/clio/campanhas` — coleta CSV, análise INF-*, cruzamento i-Educar, export CSV/PDF e bloco RX.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Perfis e acesso'), 'path' => 'docs/PERFIS_UTILIZADOR.md', 'hint' => __('Ver vs mutar · municipal excluído')],
                     ['label' => __('Roadmap (spec)'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('TODO implementação'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],

@@ -20,7 +20,7 @@
 | **Ficha leve** | Municípios **sem** i-Educar — só análise (perfil `analysis_only`) |
 | **Consultoria** | Vincular `db_*` + URL app → perfil `consultancy` + **INF-GAP** |
 | **Inferências** | INF-COL…INF-DELTA (Modo A) e INF-GAP (Modo B) |
-| **Exposição** | Painel T8, detalhe escola T9, bloco na aba Censo |
+| **Exposição** | Painel T8, detalhe escola T9, bloco Censo, export CSV/PDF, ranking no RX |
 
 ---
 
@@ -78,6 +78,7 @@ Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa |
 | [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | Checklist S1–S8 |
 | [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md) | Rastreio até a release |
+| [PERFIS_UTILIZADOR.md](../PERFIS_UTILIZADOR.md) | Quem vê / quem muta |
 | [COMANDOS_ARTISAN.md](../COMANDOS_ARTISAN.md) §3.1b | `clio:*` |
 | [MODULO_RX_CENSO.md](MODULO_RX_CENSO.md) | RX — ritmo Censo |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | CEN-01 (paralelo) |

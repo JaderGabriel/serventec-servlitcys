@@ -1,6 +1,6 @@
 # Perfis de usuário — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21
 
 > **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
 
@@ -119,7 +119,8 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 | Auditoria admin | `app/Support/Auth/AdminUserAuditLogger.php` |
 | Sessões | `app/Support/Auth/UserSessionTerminator.php` |
 | Destino após login | `User::homeRouteName()`, `User::homeUrl()` |
-| Policies | `UserPolicy`, `CityPolicy`, `AdminSyncTaskPolicy`, `AnalyticsReportExportPolicy` |
+| Policies | `UserPolicy`, `CityPolicy`, `AdminSyncTaskPolicy`, `AnalyticsReportExportPolicy`, `ClioCampaignPolicy` |
+| Clio | Gate `viewClio` (`PlatformFeaturePolicy` + `CLIO_ENABLED`); mutações só admin |
 | Documentação | `DocumentationCatalog`, rotas `documentation.*` / `admin.documentation.*` |
 | Filas | `SyncQueueUserScope`, rotas `sync-queue.*` / `admin.sync-queue.*` |
 | Middleware | `admin`, `manage.users` em `bootstrap/app.php` |

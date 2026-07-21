@@ -1,6 +1,6 @@
 # Módulos da consultoria — servlitcys
 
-**Versão do produto:** 7.0.2 · **Última revisão:** 2026-07-06
+**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21
 
 > **Índice geral:** [README.md](../README.md) · **Estado em produção:** [STATUS_PROJETO.md](../STATUS_PROJETO.md) · **Roadmaps:** [ROADMAP_INDICE.md](../ROADMAP_INDICE.md)
 
@@ -17,7 +17,7 @@ Visão por **módulo funcional**, alinhada ao menu da aplicação (Consultoria, 
 | **Cadastro e CadÚnico** | Aba Cadastro no analytics | [MODULO_CADUNICO.md](MODULO_CADUNICO.md) |
 | **Pedagogia e SAEB** | Aba Pedagógico no analytics | [MODULO_PEDAGOGIA_SAEB.md](MODULO_PEDAGOGIA_SAEB.md) |
 | **RX — Censo** | `/dashboard/rx` | [MODULO_RX_CENSO.md](MODULO_RX_CENSO.md) |
-| **Clio** (campanhas Educacenso 1ª etapa) | `/clio/campanhas` | [MODULO_CLIO.md](MODULO_CLIO.md) — S5 (cruzamento) |
+| **Clio** (campanhas Educacenso 1ª etapa) | `/clio/campanhas` | [MODULO_CLIO.md](MODULO_CLIO.md) — S6 (export / RX); próximo S7 |
 | **Financiamento (FUNDEB)** | Aba Finanças no analytics | [MODULO_FUNDEB.md](MODULO_FUNDEB.md) |
 | **Dados públicos (admin)** | `/admin/public-data`, `/admin/horizonte-import` | [MODULO_DADOS_PUBLICOS.md](MODULO_DADOS_PUBLICOS.md) |
 
@@ -27,6 +27,7 @@ flowchart LR
         A[Painel analítico]
         H[Horizonte]
         R[RX Censo]
+        L[Clio]
     end
     subgraph Abas
         C[CadÚnico]
@@ -39,6 +40,7 @@ flowchart LR
     A --> C
     A --> P
     A --> F
+    R --> L
     D --> A
     D --> H
 ```
