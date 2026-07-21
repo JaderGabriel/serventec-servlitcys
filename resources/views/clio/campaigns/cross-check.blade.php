@@ -7,7 +7,7 @@
                     {{ $campaign->municipality_name }} — {{ $campaign->year }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    {{ __('INF-GAP: escolas só na campanha, só no i-Educar, ou em ambos (read-only).') }}
+                    {{ __('INF-GAP: escolas só na campanha, só no i-Educar, ou em ambos (somente leitura).') }}
                 </p>
             </div>
             <div class="flex flex-wrap gap-2">
@@ -15,14 +15,14 @@
                     @if ($canRun)
                         <form method="post" action="{{ route('clio.campaigns.cross-check.run', $campaign) }}">
                             @csrf
-                            <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr cruzamento') }}</button>
+                            <button type="submit" class="serv-btn-primary text-sm">{{ __('Executar cruzamento') }}</button>
                         </form>
                     @elseif (Auth::user()->can('linkConsultancy', $campaign))
                         <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Vincular i-Educar primeiro') }}</a>
                     @endif
                 @endcan
                 <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Painel') }}</a>
-                <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Hub') }}</a>
+                <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Central') }}</a>
             </div>
         </div>
     </x-slot>
@@ -55,8 +55,8 @@
             @else
                 <div class="serv-panel p-6 text-sm text-slate-600 dark:text-slate-300">
                     {{ $canRun
-                        ? __('Ainda sem cruzamento. Clique em «Correr cruzamento».')
-                        : __('Vincule as credenciais i-Educar do município para activar o INF-GAP.') }}
+                        ? __('Ainda sem cruzamento. Clique em "Executar cruzamento".')
+                        : __('Vincule as credenciais i-Educar do município para ativar o INF-GAP.') }}
                 </div>
             @endif
 

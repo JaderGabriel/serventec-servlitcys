@@ -24,6 +24,12 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — Idioma pt-BR do módulo Clio
+
+**Entregue**
+
+- Telas, flash messages, CLI e catálogo Artisan alinhados a pt-BR (arquivo, usuário, executar, salvar, etc.)
+
 ### 2026-07-21 — Revisão pós-S6 (correções de produto)
 
 **Entregue**

@@ -65,7 +65,7 @@ class CampaignConsultancyController extends Controller
         if ($status['status'] === 'error') {
             return redirect()
                 ->route('clio.campaigns.link', $campaign)
-                ->with('warning', __('Credenciais gravadas, mas o teste de conexão falhou: :m', [
+                ->with('warning', __('Credenciais salvas, mas o teste de conexão falhou: :m', [
                     'm' => $status['message'] ?? __('erro desconhecido'),
                 ]));
         }

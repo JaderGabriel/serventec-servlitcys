@@ -71,7 +71,7 @@ class CampaignUploadController extends Controller
             $result['parsed'] = $parseStats['parsed'];
         }
 
-        $message = __('Upload Clio: :stored guardado(s), :exp de ZIP, :dup duplicado(s), :ign ignorado(s).', [
+        $message = __('Upload Clio: :stored salvo(s), :exp de ZIP, :dup duplicado(s), :ign ignorado(s).', [
             'stored' => $result['stored'],
             'exp' => $result['expanded'],
             'dup' => $result['duplicates'],
@@ -79,11 +79,11 @@ class CampaignUploadController extends Controller
         ]);
 
         if (isset($result['parsed'])) {
-            $message .= ' '.__('Parse: :n ficheiro(s).', ['n' => $result['parsed']]);
+            $message .= ' '.__('Interpretação: :n arquivo(s).', ['n' => $result['parsed']]);
         }
 
         if ($asyncZip && $result['zip_ids'] !== []) {
-            $message .= ' '.__('Expansão/parse ZIP na fila :queue.', ['queue' => (string) config('clio.queue', 'clio')]);
+            $message .= ' '.__('Expansão/interpretação ZIP na fila :queue.', ['queue' => (string) config('clio.queue', 'clio')]);
         }
 
         return redirect()

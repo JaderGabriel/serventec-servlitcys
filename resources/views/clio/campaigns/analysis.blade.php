@@ -18,14 +18,14 @@
                 @can('analyze', $campaign)
                     <form method="post" action="{{ route('clio.campaigns.analyze', $campaign) }}">
                         @csrf
-                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Correr análise') }}</button>
+                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Executar análise') }}</button>
                     </form>
                 @endcan
                 @can('export', $campaign)
                     <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
                     <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
                 @endcan
-                <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Hub') }}</a>
+                <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Central') }}</a>
                 @can('upload', $campaign)
                     <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Upload') }}</a>
                 @endcan
@@ -44,9 +44,9 @@
             @if ($inferences->isEmpty())
                 <div class="serv-panel p-6 text-sm text-slate-600 dark:text-slate-300">
                     @can('analyze', $campaign)
-                        {{ __('Ainda sem inferências. Envie os CSV e clique em «Correr análise».') }}
+                        {{ __('Ainda sem inferências. Envie os CSV e clique em "Executar análise".') }}
                     @else
-                        {{ __('Ainda sem inferências. Um administrador precisa correr a análise desta campanha.') }}
+                        {{ __('Ainda sem inferências. Um administrador precisa executar a análise desta campanha.') }}
                     @endcan
                 </div>
             @else
@@ -104,7 +104,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Sem escolas. Faça upload e parse primeiro.') }}</td>
+                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Sem escolas. Envie os arquivos e aguarde a interpretação.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

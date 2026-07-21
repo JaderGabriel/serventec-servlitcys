@@ -33,7 +33,7 @@ final class RelacaoTurmaEscolaParser implements ArtifactParser
         if ($missing !== []) {
             return ParseResult::failed(
                 'EDU-REL-COLS',
-                __('Colunas obrigatórias em falta (turmas): :cols', ['cols' => implode(', ', $missing)]),
+                __('Colunas obrigatórias ausentes (turmas): :cols', ['cols' => implode(', ', $missing)]),
                 ['missing' => $missing, 'headers' => $data['headers']],
             );
         }

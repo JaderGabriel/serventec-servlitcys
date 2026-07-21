@@ -34,7 +34,7 @@ final class AcompColeta1EtapaParser implements ArtifactParser
         if ($missing !== []) {
             return ParseResult::failed(
                 'EDU-REL-COLS',
-                __('Colunas obrigatórias em falta: :cols', ['cols' => implode(', ', $missing)]),
+                __('Colunas obrigatórias ausentes: :cols', ['cols' => implode(', ', $missing)]),
                 ['missing' => $missing, 'headers' => $data['headers']],
             );
         }
@@ -83,7 +83,7 @@ final class AcompColeta1EtapaParser implements ArtifactParser
         if ($schools === []) {
             return ParseResult::failed(
                 'EDU-REL-EMPTY',
-                __('Acompanhamento sem escolas utilizáveis.'),
+                __('Acompanhamento sem escolas válidas.'),
                 ['header_offset' => 1],
             );
         }

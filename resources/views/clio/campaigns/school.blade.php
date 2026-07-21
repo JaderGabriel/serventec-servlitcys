@@ -41,7 +41,7 @@
 
             <section class="serv-panel overflow-hidden">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Artefactos') }}</h3>
+                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Arquivos') }}</h3>
                 </div>
                 <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                     @forelse ($school->artifacts as $artifact)
@@ -53,7 +53,7 @@
                             <span class="tabular-nums text-xs text-slate-500">{{ $artifact->row_count ?? '—' }} {{ __('linhas') }}</span>
                         </li>
                     @empty
-                        <li class="px-4 py-8 text-center text-slate-500 text-sm">{{ __('Sem artefactos ligados a esta escola.') }}</li>
+                        <li class="px-4 py-8 text-center text-slate-500 text-sm">{{ __('Sem arquivos ligados a esta escola.') }}</li>
                     @endforelse
                 </ul>
             </section>

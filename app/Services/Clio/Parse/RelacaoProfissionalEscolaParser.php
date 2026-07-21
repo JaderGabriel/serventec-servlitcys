@@ -45,7 +45,7 @@ final class RelacaoProfissionalEscolaParser implements ArtifactParser
             if (! $found) {
                 return ParseResult::failed(
                     'EDU-REL-COLS',
-                    __('Colunas obrigatórias em falta (profissionais): :cols', ['cols' => implode(' | ', $group)]),
+                    __('Colunas obrigatórias ausentes (profissionais): :cols', ['cols' => implode(' | ', $group)]),
                     [
                         'missing_group' => $group,
                         'headers' => $data['headers'],

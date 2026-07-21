@@ -8,8 +8,8 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-status {uuid : UUID da campanha} {--parse : Correr parse pending antes do relatório} {--reparse : Reparsear todos os CSV} {--json}')]
-#[Description('Clio — cobertura da campanha (tríade, parse_status, reference_date).')]
+#[Signature('clio:campaign-status {uuid : UUID da campanha} {--parse : Executar interpretação pendente antes do relatório} {--reparse : Reinterpretar todos os CSV} {--json}')]
+#[Description('Clio — cobertura da campanha (tríade, status de interpretação, data de referência).')]
 final class ClioCampaignStatusCommand extends Command
 {
     public function handle(CampaignParseService $parser): int
@@ -24,7 +24,7 @@ final class ClioCampaignStatusCommand extends Command
 
         if ($this->option('parse') || $this->option('reparse')) {
             $stats = $parser->parseCampaign($campaign, reparse: (bool) $this->option('reparse'));
-            $this->info(__('Parse: :p · ok=:ok aviso=:w falha=:f', [
+            $this->info(__('Interpretação: :p · ok=:ok aviso=:w falha=:f', [
                 'p' => $stats['parsed'],
                 'ok' => $stats['ok'],
                 'w' => $stats['warning'],
@@ -63,7 +63,7 @@ final class ClioCampaignStatusCommand extends Command
 
         $this->newLine();
         $this->table(
-            [__('Parse'), __('Qtd')],
+            [__('Interpretação'), __('Qtd')],
             collect($coverage['parse_stats'] ?? [])->map(fn ($n, $k) => [$k, $n])->values()->all()
         );
 

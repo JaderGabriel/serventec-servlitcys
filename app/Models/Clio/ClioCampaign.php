@@ -117,7 +117,7 @@ class ClioCampaign extends Model
     {
         return match ($this->status) {
             self::STATUS_DRAFT => __('Rascunho'),
-            self::STATUS_INGESTING => __('A ingerir'),
+            self::STATUS_INGESTING => __('Em ingestão'),
             self::STATUS_PARSED => __('Interpretado'),
             self::STATUS_ANALYZED => __('Analisado'),
             self::STATUS_CROSS_CHECKED => __('Cruzado i-Educar'),

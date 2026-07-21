@@ -10,14 +10,14 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-ingest {uuid : UUID da campanha Clio} {--path= : Ficheiro, pasta ou ZIP a ingerir} {--disk= : Disco Laravel (opcional)} {--queue : Despachar job em vez de sincronizar} {--no-parse : Só classificar, sem parse CSV}')]
-#[Description('Clio — ingere ZIP/pasta/ficheiros, classifica e (por defeito) faz parse CSV.')]
+#[Signature('clio:campaign-ingest {uuid : UUID da campanha Clio} {--path= : Arquivo, pasta ou ZIP a ingerir} {--disk= : Disco Laravel (opcional)} {--queue : Despachar job em vez de sincronizar} {--no-parse : Só classificar, sem interpretar CSV}')]
+#[Description('Clio — ingere ZIP/pasta/arquivos, classifica e (por padrão) interpreta CSV.')]
 final class ClioCampaignIngestCommand extends Command
 {
     public function handle(CampaignIngestService $ingest, CampaignParseService $parser): int
     {
         if (! filter_var(config('clio.enabled', true), FILTER_VALIDATE_BOOL)) {
-            $this->error(__('Clio está desactivado (CLIO_ENABLED).'));
+            $this->error(__('Clio está desativado (CLIO_ENABLED).'));
 
             return self::FAILURE;
         }
@@ -54,7 +54,7 @@ final class ClioCampaignIngestCommand extends Command
             $result = $ingest->expandPendingZips($campaign);
         }
 
-        $this->info(__('Clio ingest: :stored guardado(s), :exp expandido(s) de ZIP, :dup duplicado(s), :ign ignorado(s).', [
+        $this->info(__('Clio ingestão: :stored salvo(s), :exp expandido(s) de ZIP, :dup duplicado(s), :ign ignorado(s).', [
             'stored' => $result['stored'],
             'exp' => $result['expanded'],
             'dup' => $result['duplicates'],
@@ -63,7 +63,7 @@ final class ClioCampaignIngestCommand extends Command
 
         if ($doParse) {
             $stats = $parser->parseCampaign($campaign->fresh() ?? $campaign);
-            $this->info(__('Clio parse: :p processado(s) · ok=:ok · aviso=:w · falha=:f', [
+            $this->info(__('Clio interpretação: :p processado(s) · ok=:ok · aviso=:w · falha=:f', [
                 'p' => $stats['parsed'],
                 'ok' => $stats['ok'],
                 'w' => $stats['warning'],
@@ -72,7 +72,7 @@ final class ClioCampaignIngestCommand extends Command
         }
 
         $campaign->refresh();
-        $this->line(__('Estado: :s · artefactos: :n · escolas: :e', [
+        $this->line(__('Estado: :s · arquivos: :n · escolas: :e', [
             's' => $campaign->statusLabel(),
             'n' => (string) $campaign->artifacts()->count(),
             'e' => (string) $campaign->schools()->count(),

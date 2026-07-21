@@ -14,7 +14,7 @@ use RecursiveIteratorIterator;
 use SplFileInfo;
 
 /**
- * Pipeline S2: classificar, deduplicar e gravar artefactos (parse fica para S3).
+ * Pipeline S2: classificar, deduplicar e gravar artefatos (interpretação fica para S3).
  */
 final class CampaignIngestService
 {
@@ -85,7 +85,7 @@ final class CampaignIngestService
     }
 
     /**
-     * Ingere ficheiro único, pasta ou ZIP a partir do filesystem (CLI U5).
+     * Ingere arquivo único, pasta ou ZIP a partir do filesystem (CLI U5).
      *
      * @return array{stored: int, ignored: int, duplicates: int, expanded: int, artifacts: list<ClioCampaignArtifact>}
      */

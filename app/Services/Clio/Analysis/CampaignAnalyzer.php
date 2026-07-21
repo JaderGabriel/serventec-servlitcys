@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
- * Modo A — inferências INF-COL…INF-DELTA a partir de artefactos parseados.
+ * Modo A — inferências INF-COL…INF-DELTA a partir de artefatos interpretados.
  */
 final class CampaignAnalyzer
 {
@@ -190,7 +190,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-ESC',
-            __('Rede: :a activas, :e extintas.', ['a' => $ativas, 'e' => $extintas]),
+            __('Rede: :a ativas, :e extintas.', ['a' => $ativas, 'e' => $extintas]),
             [
                 'active' => $ativas,
                 'extinct' => $extintas,

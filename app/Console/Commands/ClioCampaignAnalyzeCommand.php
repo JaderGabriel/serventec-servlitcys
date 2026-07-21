@@ -8,14 +8,14 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
-#[Signature('clio:campaign-analyze {uuid : UUID da campanha} {--skip-parse : Não correr parse pending antes}')]
-#[Description('Clio S4 — gera inferências INF-* e achados; status analyzed.')]
+#[Signature('clio:campaign-analyze {uuid : UUID da campanha} {--skip-parse : Não executar interpretação pendente antes}')]
+#[Description('Clio — gera inferências INF-* e achados; marca a campanha como analisada.')]
 final class ClioCampaignAnalyzeCommand extends Command
 {
     public function handle(CampaignAnalyzer $analyzer): int
     {
         if (! filter_var(config('clio.enabled', true), FILTER_VALIDATE_BOOL)) {
-            $this->error(__('Clio está desactivado (CLIO_ENABLED).'));
+            $this->error(__('Clio está desativado (CLIO_ENABLED).'));
 
             return self::FAILURE;
         }
@@ -30,7 +30,7 @@ final class ClioCampaignAnalyzeCommand extends Command
 
         $result = $analyzer->analyze($campaign, parseFirst: ! $this->option('skip-parse'));
 
-        $this->info(__('Clio analyze: :i inferências · :f achados · estado :s', [
+        $this->info(__('Clio análise: :i inferências · :f achados · estado :s', [
             'i' => $result['inferences'],
             'f' => $result['findings'],
             's' => $campaign->fresh()?->statusLabel() ?? '—',

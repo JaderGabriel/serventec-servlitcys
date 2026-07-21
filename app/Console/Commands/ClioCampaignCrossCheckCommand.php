@@ -9,7 +9,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('clio:campaign-cross-check {uuid : UUID da campanha}')]
-#[Description('Clio S5 — INF-GAP: cruza escolas da campanha com i-Educar (read-only).')]
+#[Description('Clio — INF-GAP: cruza escolas da campanha com i-Educar (somente leitura).')]
 final class ClioCampaignCrossCheckCommand extends Command
 {
     public function handle(IeducarGapAnalyzer $analyzer): int

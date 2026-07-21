@@ -35,7 +35,7 @@ final class RelacaoAlunoEscolaParser implements ArtifactParser
             if (count($missing) === count($group)) {
                 return ParseResult::failed(
                     'EDU-REL-COLS',
-                    __('Colunas obrigatórias em falta (alunos): :cols', ['cols' => implode(' | ', $group)]),
+                    __('Colunas obrigatórias ausentes (alunos): :cols', ['cols' => implode(' | ', $group)]),
                     ['missing_group' => $group, 'headers' => $data['headers']],
                 );
             }

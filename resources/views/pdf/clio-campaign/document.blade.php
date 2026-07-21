@@ -64,7 +64,7 @@
             </tr>
         @empty
             <tr>
-                <td colspan="2">{{ __('Sem inferências — corra a análise na aplicação.') }}</td>
+                <td colspan="2">{{ __('Sem inferências — execute a análise na aplicação.') }}</td>
             </tr>
         @endforelse
     </tbody>

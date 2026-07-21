@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Throwable;
 
 /**
- * INF-GAP — cruza escolas da campanha Clio com snapshot i-Educar (read-only).
+ * INF-GAP — cruza escolas da campanha Clio com snapshot i-Educar (somente leitura).
  * Não usa EducacensoFileReader (TXT / CEN-01).
  */
 final class IeducarGapAnalyzer

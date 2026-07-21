@@ -7,10 +7,10 @@
                     {{ $campaign->municipality_name }} — {{ $campaign->year }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
-                    {{ __('Envie CSV do portal, ZIP municipal ou pasta de escolas. Máx. :mb MB · até :n ficheiros.', ['mb' => $maxMb, 'n' => $maxFiles]) }}
+                    {{ __('Envie CSV do portal, ZIP municipal ou pasta de escolas. Máx. :mb MB · até :n arquivos.', ['mb' => $maxMb, 'n' => $maxFiles]) }}
                 </p>
             </div>
-            <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Voltar ao hub') }}</a>
+            <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Voltar à central') }}</a>
         </div>
     </x-slot>
 
@@ -56,7 +56,7 @@
                 @csrf
                 <div class="space-y-3">
                     <div>
-                        <label for="files" class="block text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Ficheiros / ZIP') }}</label>
+                        <label for="files" class="block text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Arquivos / ZIP') }}</label>
                         <input
                             id="files"
                             type="file"
@@ -95,7 +95,7 @@
 
                 <div x-show="rows.length > 0" x-cloak class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                     <p class="border-b border-slate-100 bg-slate-50 px-3 py-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-900/60">
-                        {{ __('Pré-visualização') }} (<span x-text="rows.length"></span>)
+                        {{ __('Prévia') }} (<span x-text="rows.length"></span>)
                     </p>
                     <table class="min-w-full text-sm">
                         <thead class="text-left text-xs uppercase tracking-wide text-slate-500">
@@ -117,7 +117,7 @@
                             </template>
                         </tbody>
                     </table>
-                    <p x-show="rows.length > 80" class="px-3 py-2 text-xs text-slate-500" x-text="'… +' + (rows.length - 80) + ' ficheiros'"></p>
+                    <p x-show="rows.length > 80" class="px-3 py-2 text-xs text-slate-500" x-text="'… +' + (rows.length - 80) + ' arquivos'"></p>
                 </div>
 
                 <div class="flex justify-end">
@@ -126,13 +126,13 @@
             </form>
             @else
                 <div class="serv-panel p-5 text-sm text-slate-600 dark:text-slate-300">
-                    {{ __('Só administradores podem enviar ficheiros. Pode consultar o inventário abaixo.') }}
+                    {{ __('Só administradores podem enviar arquivos. Você pode consultar o inventário abaixo.') }}
                 </div>
             @endcan
 
             <section class="serv-panel overflow-hidden" id="inventario">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Inventário (parse_status=pending)') }}</h3>
+                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Inventário (aguardando interpretação)') }}</h3>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
@@ -141,7 +141,7 @@
                                 <th class="px-4 py-2 font-medium">{{ __('Nome') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Tipo') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Parse') }}</th>
+                                <th class="px-4 py-2 font-medium">{{ __('Interpretação') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Tamanho') }}</th>
                             </tr>
                         </thead>

@@ -36,7 +36,7 @@
                     </div>
                 </div>
                 <div>
-                    <label for="contact_name" class="block text-sm font-medium">{{ __('Contacto (opcional)') }}</label>
+                    <label for="contact_name" class="block text-sm font-medium">{{ __('Contato (opcional)') }}</label>
                     <input id="contact_name" name="contact_name" value="{{ old('contact_name') }}"
                            class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900" />
                 </div>

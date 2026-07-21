@@ -466,7 +466,7 @@ final class ArtisanCommandsCatalog
                 'commands' => [
                     [
                         'name' => 'clio:campaign-ingest',
-                        'summary' => __('Ingere ZIP, pasta ou ficheiros e classifica artefactos (parse pendente).'),
+                        'summary' => __('Ingere ZIP, pasta ou arquivos e classifica artefatos (interpretação pendente).'),
                         'signature' => 'clio:campaign-ingest {uuid} {--path=} {--disk=} {--queue}',
                         'examples' => [
                             'php artisan clio:campaign-ingest {uuid} --path=tests/fixtures/clio/coleta_2026/Dados_SantoAmaro_smoke.zip',
@@ -491,7 +491,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'clio:campaign-analyze',
-                        'summary' => __('Gera inferências INF-* e achados; marca campanha analyzed.'),
+                        'summary' => __('Gera inferências INF-* e achados; marca a campanha como analisada.'),
                         'signature' => 'clio:campaign-analyze {uuid} {--skip-parse}',
                         'examples' => [
                             'php artisan clio:campaign-analyze {uuid}',
@@ -502,7 +502,7 @@ final class ArtisanCommandsCatalog
                     ],
                     [
                         'name' => 'clio:campaign-cross-check',
-                        'summary' => __('INF-GAP: cruza escolas da campanha com i-Educar (read-only).'),
+                        'summary' => __('INF-GAP: cruza escolas da campanha com i-Educar (somente leitura).'),
                         'signature' => 'clio:campaign-cross-check {uuid}',
                         'examples' => [
                             'php artisan clio:campaign-cross-check {uuid}',

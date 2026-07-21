@@ -70,18 +70,18 @@
                         @endif
                     </p>
                     @can('upload', $campaign)
-                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ir ao upload') }} →</a>
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ir para o envio') }} →</a>
                     @else
                         <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ver inventário') }} →</a>
                     @endcan
                 </div>
             </div>
 
-            <section class="serv-panel overflow-hidden" id="artefactos">
+            <section class="serv-panel overflow-hidden" id="arquivos">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Artefactos') }}</h3>
+                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Arquivos') }}</h3>
                     @can('upload', $campaign)
-                        <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerir upload') }}</a>
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerenciar upload') }}</a>
                     @endcan
                 </div>
                 <div class="overflow-x-auto">
@@ -90,7 +90,7 @@
                             <tr>
                                 <th class="px-4 py-2 font-medium">{{ __('Nome') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Tipo') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Parse') }}</th>
+                                <th class="px-4 py-2 font-medium">{{ __('Interpretação') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Linhas') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Tamanho') }}</th>
                             </tr>

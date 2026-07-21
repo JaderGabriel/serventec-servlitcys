@@ -3,7 +3,7 @@
 namespace App\Services\Clio\Ingest;
 
 /**
- * Classifica ficheiros da coleta Educacenso 1ª etapa pelo nome.
+ * Classifica arquivos da coleta Educacenso 1ª etapa pelo nome.
  */
 final class ArtifactClassifier
 {

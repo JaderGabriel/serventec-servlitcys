@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * S2/S3 — ingerir (classificar/ZIP) e em seguida parsear artefactos pending.
+ * S2/S3 — ingerir (classificar/ZIP) e em seguida interpretar artefatos pendentes.
  */
 class ProcessClioCampaignIngestJob implements ShouldQueue
 {

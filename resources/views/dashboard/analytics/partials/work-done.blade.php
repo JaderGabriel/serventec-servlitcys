@@ -83,7 +83,7 @@
                 </p>
                 <div class="mt-2 flex flex-wrap gap-3">
                     <a href="{{ route('clio.campaigns.analysis', $clioCampaign) }}" class="serv-link text-sm font-medium">{{ __('Abrir painel Clio') }} →</a>
-                    <a href="{{ route('clio.campaigns.show', $clioCampaign) }}" class="serv-link text-sm">{{ __('Hub da campanha') }}</a>
+                    <a href="{{ route('clio.campaigns.show', $clioCampaign) }}" class="serv-link text-sm">{{ __('Central da campanha') }}</a>
                 </div>
             </div>
         @elseif (\Illuminate\Support\Facades\Auth::user()?->canViewClio())

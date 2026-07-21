@@ -20,7 +20,7 @@ return [
 
     'feature_promote' => filter_var(env('CLIO_PROMOTE_ENABLED', false), FILTER_VALIDATE_BOOL),
 
-    /** Tipos de artefacto reconhecidos no classificador de nomes. */
+    /** Tipos de artefato reconhecidos no classificador de nomes. */
     'kinds' => [
         'acomp_coleta_1etapa',
         'relacao_aluno_escola',

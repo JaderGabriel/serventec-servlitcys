@@ -43,18 +43,18 @@
                     </div>
                 </div>
                 <div>
-                    <label for="db_database" class="block text-sm font-medium">{{ __('Base de dados') }}</label>
+                    <label for="db_database" class="block text-sm font-medium">{{ __('Banco de dados') }}</label>
                     <input id="db_database" name="db_database" type="text" required value="{{ old('db_database', $city->db_database) }}" class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900" />
                 </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <label for="db_username" class="block text-sm font-medium">{{ __('Utilizador') }}</label>
+                        <label for="db_username" class="block text-sm font-medium">{{ __('Usuário') }}</label>
                         <input id="db_username" name="db_username" type="text" required value="{{ old('db_username', $city->db_username) }}" class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900" />
                     </div>
                     <div>
                         <label for="db_password" class="block text-sm font-medium">{{ __('Senha') }}</label>
                         <input id="db_password" name="db_password" type="password" autocomplete="new-password" class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-900" placeholder="{{ $city->db_password ? '••••••••' : '' }}" />
-                        <p class="mt-1 text-xs text-slate-500">{{ __('Deixe em branco para manter a senha actual.') }}</p>
+                        <p class="mt-1 text-xs text-slate-500">{{ __('Deixe em branco para manter a senha atual.') }}</p>
                     </div>
                 </div>
                 <div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <a href="{{ route('cities.edit', $city) }}" class="serv-link text-sm">{{ __('Editar ficha completa do município') }} →</a>
-                    <button type="submit" class="serv-btn-primary text-sm">{{ __('Gravar e testar conexão') }}</button>
+                    <button type="submit" class="serv-btn-primary text-sm">{{ __('Salvar e testar conexão') }}</button>
                 </div>
             </form>
         </div>

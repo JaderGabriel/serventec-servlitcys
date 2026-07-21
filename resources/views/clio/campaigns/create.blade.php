@@ -24,7 +24,7 @@
                 <div>
                     <label for="city_id" class="block text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Município') }}</label>
                     <select id="city_id" name="city_id" required class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-900">
-                        <option value="">{{ __('Seleccione…') }}</option>
+                        <option value="">{{ __('Selecione…') }}</option>
                         @foreach ($cities as $city)
                             <option value="{{ $city->id }}" @selected((string) old('city_id', request('city_id')) === (string) $city->id)>
                                 {{ $city->name }} / {{ $city->uf }}

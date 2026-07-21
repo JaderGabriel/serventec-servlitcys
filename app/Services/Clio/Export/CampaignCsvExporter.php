@@ -39,7 +39,7 @@ final class CampaignCsvExporter
             }
 
             fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, ['secção', 'chave', 'valor', 'nota'], ';');
+            fputcsv($out, ['secao', 'chave', 'valor', 'nota'], ';');
 
             $metaRows = [
                 ['campanha', 'uuid', $campaign->uuid, ''],
