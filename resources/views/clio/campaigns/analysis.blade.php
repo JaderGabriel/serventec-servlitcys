@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
-                <p class="serv-eyebrow">{{ __('Clio') }} · {{ __('Resultado da coleta') }}</p>
+                <p class="clio-eyebrow">{{ __('Clio') }} · {{ __('Resultado da coleta') }}</p>
                 <h2 class="font-display font-semibold text-2xl text-serv-navy dark:text-white leading-tight">
                     {{ $campaign->municipality_name }} — {{ $campaign->year }}
                 </h2>
@@ -31,48 +31,42 @@
     </x-slot>
 
     @php
-        $toneValue = static function (string $tone): string {
+        $toneClass = static fn (string $tone): string => 'clio-tone-'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $tileTone = static fn (string $tone): string => 'clio-kpi-tile--'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $fillTone = static fn (string $tone): string => 'clio-dist__fill--'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'sky');
+        $chipTone = static function (string $tone): string {
             return match ($tone) {
-                'emerald' => 'text-emerald-700 dark:text-emerald-300',
-                'amber' => 'text-amber-700 dark:text-amber-300',
-                'rose' => 'text-rose-700 dark:text-rose-300',
-                'sky' => 'text-sky-700 dark:text-sky-300',
-                default => 'text-serv-navy dark:text-white',
+                'emerald' => 'clio-chip clio-chip--ready',
+                'amber' => 'clio-chip clio-chip--warn',
+                'rose' => 'clio-chip clio-chip--error',
+                default => 'clio-chip clio-chip--neutral',
             };
         };
-        $toneBar = static function (string $tone): string {
-            return match ($tone) {
-                'emerald' => 'bg-emerald-500',
-                'amber' => 'bg-amber-500',
-                'rose' => 'bg-rose-500',
-                default => 'bg-sky-500',
-            };
-        };
-        $toneBadge = static function (string $tone): string {
-            return match ($tone) {
-                'emerald' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100',
-                'amber' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100',
-                'rose' => 'bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-100',
-                default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
-            };
+        $meterFill = static function (float $pct): string {
+            if ($pct >= 80) {
+                return 'clio-meter__fill--good';
+            }
+            if ($pct >= 40) {
+                return 'clio-meter__fill--mid';
+            }
+
+            return 'clio-meter__fill--bad';
         };
         $triade = $dashboard['triade'] ?? [];
         $buckets = $dashboard['collection_buckets'] ?? [];
         $bucketTotal = max(1, array_sum($buckets));
     @endphp
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="clio-page py-8 sm:py-10">
+        <div class="clio-shell">
             @if (session('success'))
-                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
-                    {{ session('success') }}
-                </div>
+                <div class="clio-flash clio-flash--ok">{{ session('success') }}</div>
             @endif
 
             @unless ($dashboard['has_analysis'] ?? false)
-                <div class="serv-panel p-8 text-center">
-                    <p class="font-display text-lg font-semibold text-serv-navy dark:text-white">{{ __('Ainda não há resultado consolidado') }}</p>
-                    <p class="mt-2 text-sm text-slate-500 max-w-lg mx-auto">
+                <div class="clio-empty">
+                    <p class="clio-section-title">{{ __('Ainda não há resultado consolidado') }}</p>
+                    <p class="clio-empty__lead">
                         @can('analyze', $campaign)
                             {{ __('Envie os CSV/ZIP (ou importe do Drive) e clique em «Atualizar análise» para ver indicadores, acertos e problemas.') }}
                         @else
@@ -83,15 +77,15 @@
             @else
                 {{-- KPIs --}}
                 <section aria-labelledby="clio-kpi-heading">
-                    <h3 id="clio-kpi-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white mb-3">
+                    <h3 id="clio-kpi-heading" class="clio-section-title mb-3">
                         {{ __('Indicadores principais') }}
                     </h3>
-                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="clio-kpi-grid">
                         @foreach ($dashboard['kpis'] as $kpi)
-                            <div class="serv-panel p-4">
-                                <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-                                <p class="mt-1 font-display text-3xl font-semibold tabular-nums {{ $toneValue($kpi['tone']) }}">{{ $kpi['value'] }}</p>
-                                <p class="mt-1 text-xs text-slate-500 leading-snug">{{ $kpi['hint'] }}</p>
+                            <div class="clio-kpi-tile {{ $tileTone($kpi['tone'] ?? 'slate') }}">
+                                <p class="clio-kpi-tile__label">{{ $kpi['label'] }}</p>
+                                <p class="clio-kpi-tile__value {{ $toneClass($kpi['tone'] ?? 'slate') }}">{{ $kpi['value'] }}</p>
+                                <p class="clio-kpi-tile__hint">{{ $kpi['hint'] }}</p>
                             </div>
                         @endforeach
                     </div>
@@ -99,72 +93,74 @@
 
                 {{-- Cobertura visual --}}
                 <section class="grid gap-4 lg:grid-cols-2" aria-labelledby="clio-coverage-heading">
-                    <div class="serv-panel p-5 space-y-4">
+                    <div class="clio-panel clio-panel--pad space-y-4">
                         <div>
-                            <h3 id="clio-coverage-heading" class="font-display text-base font-semibold text-serv-navy dark:text-white">
+                            <h3 id="clio-coverage-heading" class="clio-section-title text-base">
                                 {{ __('Cobertura da tríade') }}
                             </h3>
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="clio-section-lead">
                                 {{ __('Cada escola precisa dos três arquivos: alunos, turmas e profissionais.') }}
                             </p>
                         </div>
-                        <div>
-                            <div class="flex items-baseline justify-between gap-2">
-                                <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Escolas com tríade completa') }}</span>
-                                <span class="tabular-nums text-sm font-semibold">{{ number_format((float) ($triade['pct'] ?? 0), 1, ',', '.') }}%</span>
+                        <div class="clio-meter clio-meter--lg mt-0">
+                            <div class="clio-meter__row">
+                                <span class="clio-meter__label font-medium text-slate-700 dark:text-slate-200">{{ __('Escolas com tríade completa') }}</span>
+                                <span class="clio-meter__value">{{ number_format((float) ($triade['pct'] ?? 0), 1, ',', '.') }}%</span>
                             </div>
-                            <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                <div class="h-full rounded-full {{ $toneBar(($triade['pct'] ?? 0) >= 80 ? 'emerald' : (($triade['pct'] ?? 0) >= 40 ? 'amber' : 'rose')) }}"
+                            <div class="clio-meter__track">
+                                <div class="clio-meter__fill {{ $meterFill((float) ($triade['pct'] ?? 0)) }}"
                                      style="width: {{ min(100, max(0, (float) ($triade['pct'] ?? 0))) }}%"></div>
                             </div>
-                            <p class="mt-1 text-xs text-slate-500">{{ __(':ok de :total escolas', ['ok' => $triade['complete'] ?? 0, 'total' => $triade['total'] ?? 0]) }}</p>
+                            <p class="text-xs text-slate-500">{{ __(':ok de :total escolas', ['ok' => $triade['complete'] ?? 0, 'total' => $triade['total'] ?? 0]) }}</p>
                         </div>
-                        @foreach ([
-                            ['key' => 'aluno', 'label' => __('Arquivo de alunos'), 'pct' => $triade['aluno_pct'] ?? 0, 'n' => $triade['aluno'] ?? 0],
-                            ['key' => 'turma', 'label' => __('Arquivo de turmas'), 'pct' => $triade['turma_pct'] ?? 0, 'n' => $triade['turma'] ?? 0],
-                            ['key' => 'profissional', 'label' => __('Arquivo de profissionais'), 'pct' => $triade['profissional_pct'] ?? 0, 'n' => $triade['profissional'] ?? 0],
-                        ] as $bar)
-                            <div>
-                                <div class="flex items-baseline justify-between gap-2 text-sm">
-                                    <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
-                                    <span class="tabular-nums text-xs text-slate-500">{{ $bar['n'] }}/{{ $triade['total'] ?? 0 }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                        <div class="clio-dist">
+                            @foreach ([
+                                ['label' => __('Arquivo de alunos'), 'pct' => $triade['aluno_pct'] ?? 0, 'n' => $triade['aluno'] ?? 0],
+                                ['label' => __('Arquivo de turmas'), 'pct' => $triade['turma_pct'] ?? 0, 'n' => $triade['turma'] ?? 0],
+                                ['label' => __('Arquivo de profissionais'), 'pct' => $triade['profissional_pct'] ?? 0, 'n' => $triade['profissional'] ?? 0],
+                            ] as $bar)
+                                <div class="clio-dist__row">
+                                    <div class="clio-dist__head">
+                                        <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                        <span class="clio-dist__count">{{ $bar['n'] }}/{{ $triade['total'] ?? 0 }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                    </div>
+                                    <div class="clio-dist__track">
+                                        <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                    </div>
                                 </div>
-                                <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                    <div class="h-full rounded-full bg-sky-500" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                </div>
-                            </div>
-                        @endforeach
+                            @endforeach
+                        </div>
                     </div>
 
-                    <div class="serv-panel p-5 space-y-4">
+                    <div class="clio-panel clio-panel--pad space-y-4">
                         <div>
-                            <h3 class="font-display text-base font-semibold text-serv-navy dark:text-white">
+                            <h3 class="clio-section-title text-base">
                                 {{ __('Andamento da coleta no portal') }}
                             </h3>
-                            <p class="mt-1 text-sm text-slate-500">
+                            <p class="clio-section-lead">
                                 {{ __('Situação declarada no relatório de acompanhamento, por escola.') }}
                             </p>
                         </div>
                         @php
                             $bucketLabels = [
-                                'em_andamento' => [__('Em andamento'), 'bg-sky-500'],
-                                'nao_iniciou' => [__('Não iniciou'), 'bg-amber-500'],
-                                'fechada' => [__('Fechada'), 'bg-emerald-500'],
-                                'bloqueada' => [__('Bloqueada'), 'bg-rose-500'],
+                                'em_andamento' => [__('Em andamento'), 'sky'],
+                                'nao_iniciou' => [__('Não iniciou'), 'amber'],
+                                'fechada' => [__('Fechada'), 'emerald'],
+                                'bloqueada' => [__('Bloqueada'), 'rose'],
                             ];
                         @endphp
-                        <div class="flex h-4 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                            @foreach ($bucketLabels as $key => [$label, $color])
+                        <div class="clio-stack">
+                            @foreach ($bucketLabels as $key => [$label, $seg])
                                 @if (($buckets[$key] ?? 0) > 0)
-                                    <div class="{{ $color }}" style="width: {{ round(100 * ($buckets[$key] ?? 0) / $bucketTotal, 2) }}%"
+                                    <div class="clio-stack__seg--{{ $seg }}" style="width: {{ round(100 * ($buckets[$key] ?? 0) / $bucketTotal, 2) }}%"
                                          title="{{ $label }}: {{ $buckets[$key] }}"></div>
                                 @endif
                             @endforeach
                         </div>
-                        <ul class="grid grid-cols-2 gap-2 text-sm">
-                            @foreach ($bucketLabels as $key => [$label, $color])
-                                <li class="flex items-center gap-2">
-                                    <span class="inline-block h-2.5 w-2.5 rounded-full {{ $color }}"></span>
+                        <ul class="clio-legend">
+                            @foreach ($bucketLabels as $key => [$label, $seg])
+                                <li class="clio-legend__item">
+                                    <span class="clio-legend__dot clio-stack__seg--{{ $seg }}"></span>
                                     <span class="text-slate-600 dark:text-slate-300">{{ $label }}</span>
                                     <span class="ml-auto tabular-nums font-medium text-serv-navy dark:text-white">{{ $buckets[$key] ?? 0 }}</span>
                                 </li>
@@ -178,7 +174,7 @@
                     @php $report = $dashboard['report']; @endphp
                     <section aria-labelledby="clio-report-heading" class="space-y-4">
                         <div>
-                            <h3 id="clio-report-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white">
+                            <h3 id="clio-report-heading" class="clio-section-title">
                                 {{ __('Relatório da rede') }}
                             </h3>
                             <p class="mt-1 text-sm text-slate-500 max-w-3xl">
@@ -186,20 +182,20 @@
                             </p>
                         </div>
 
-                        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                        <div class="clio-kpi-grid clio-kpi-grid--6">
                             @foreach ($report['totals'] ?? [] as $kpi)
-                                <div class="serv-panel p-4">
-                                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-                                    <p class="mt-1 font-display text-2xl font-semibold tabular-nums {{ $toneValue($kpi['tone'] ?? 'slate') }}">{{ $kpi['value'] }}</p>
-                                    <p class="mt-1 text-xs text-slate-500 leading-snug">{{ $kpi['hint'] }}</p>
+                                <div class="clio-kpi-tile {{ $tileTone($kpi['tone'] ?? 'slate') }}">
+                                    <p class="clio-kpi-tile__label">{{ $kpi['label'] }}</p>
+                                    <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass($kpi['tone'] ?? 'slate') }}">{{ $kpi['value'] }}</p>
+                                    <p class="clio-kpi-tile__hint">{{ $kpi['hint'] }}</p>
                                 </div>
                             @endforeach
                         </div>
 
                         @if (! empty($report['quality_notes']))
-                            <div class="rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-950 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
-                                <p class="font-medium">{{ __('Qualidade dos dados neste relatório') }}</p>
-                                <ul class="mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed">
+                            <div class="clio-note">
+                                <p class="clio-note__title">{{ __('Qualidade dos dados neste relatório') }}</p>
+                                <ul class="clio-note__list">
                                     @foreach ($report['quality_notes'] as $note)
                                         <li>{{ $note }}</li>
                                     @endforeach
@@ -208,9 +204,9 @@
                         @endif
 
                         <div class="grid gap-4 lg:grid-cols-2">
-                            <div class="serv-panel p-5 space-y-4">
+                            <div class="clio-panel clio-panel--pad space-y-4">
                                 <div>
-                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Turmas por ano / etapa') }}</h4>
+                                    <h4 class="clio-section-title text-base">{{ __('Turmas por ano / etapa') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('Campo «Etapa de ensino» da Relação de turmas (proxy Educacenso por ano).') }}</p>
                                 </div>
                                 @forelse ($report['turmas_por_ano'] ?? [] as $bar)
@@ -219,8 +215,8 @@
                                             <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
                                             <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
                                         </div>
-                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                            <div class="h-full rounded-full bg-sky-500" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        <div class="clio-dist__track">
+                                            <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
                                         </div>
                                     </div>
                                 @empty
@@ -228,9 +224,9 @@
                                 @endforelse
                             </div>
 
-                            <div class="serv-panel p-5 space-y-4">
+                            <div class="clio-panel clio-panel--pad space-y-4">
                                 <div>
-                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Alunos matriculados por ano / etapa') }}</h4>
+                                    <h4 class="clio-section-title text-base">{{ __('Alunos matriculados por ano / etapa') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('Campo «Etapa de ensino» da Relação de alunos.') }}</p>
                                 </div>
                                 @forelse ($report['matriculas_por_ano'] ?? [] as $bar)
@@ -239,8 +235,8 @@
                                             <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
                                             <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
                                         </div>
-                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                            <div class="h-full rounded-full bg-emerald-500" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        <div class="clio-dist__track">
+                                            <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
                                         </div>
                                     </div>
                                 @empty
@@ -250,45 +246,45 @@
                         </div>
 
                         <div class="grid gap-4 lg:grid-cols-3">
-                            <div class="serv-panel p-5 space-y-4">
+                            <div class="clio-panel clio-panel--pad space-y-4">
                                 <div>
-                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Composição das turmas') }}</h4>
+                                    <h4 class="clio-section-title text-base">{{ __('Composição das turmas') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('Tipo de turma: curricular, AEE e atividade complementar.') }}</p>
                                 </div>
                                 @foreach ($report['composicao_turmas'] ?? [] as $bar)
                                     <div>
                                         <div class="flex items-baseline justify-between gap-2 text-sm">
                                             <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
-                                            <span class="tabular-nums text-xs font-medium {{ $toneValue($bar['tone'] ?? 'slate') }}">{{ $bar['count'] }}</span>
+                                            <span class="tabular-nums text-xs font-medium {{ $toneClass($bar['tone'] ?? 'slate') }}">{{ $bar['count'] }}</span>
                                         </div>
-                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                            <div class="h-full rounded-full {{ $toneBar($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        <div class="clio-dist__track">
+                                            <div class="clio-dist__fill {{ $fillTone($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
 
-                            <div class="serv-panel p-5 space-y-4">
+                            <div class="clio-panel clio-panel--pad space-y-4">
                                 <div>
-                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Matrícula por modalidade (Acomp)') }}</h4>
+                                    <h4 class="clio-section-title text-base">{{ __('Matrícula por modalidade (Acomp)') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('Totais do relatório municipal de acompanhamento, quando disponíveis.') }}</p>
                                 </div>
                                 @foreach ($report['matricula_modalidade'] ?? [] as $bar)
                                     <div>
                                         <div class="flex items-baseline justify-between gap-2 text-sm">
                                             <span class="text-slate-700 dark:text-slate-200">{{ $bar['label'] }}</span>
-                                            <span class="tabular-nums text-xs font-medium {{ $toneValue($bar['tone'] ?? 'slate') }}">{{ number_format($bar['count']) }}</span>
+                                            <span class="tabular-nums text-xs font-medium {{ $toneClass($bar['tone'] ?? 'slate') }}">{{ number_format($bar['count']) }}</span>
                                         </div>
-                                        <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                            <div class="h-full rounded-full {{ $toneBar($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                        <div class="clio-dist__track">
+                                            <div class="clio-dist__fill {{ $fillTone($bar['tone'] ?? 'sky') }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
                                         </div>
                                     </div>
                                 @endforeach
                             </div>
 
-                            <div class="serv-panel p-5 space-y-4">
+                            <div class="clio-panel clio-panel--pad space-y-4">
                                 <div>
-                                    <h4 class="font-display text-base font-semibold text-serv-navy dark:text-white">{{ __('Etapa agregada e mediação') }}</h4>
+                                    <h4 class="clio-section-title text-base">{{ __('Etapa agregada e mediação') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">{{ __('Visão resumida (anos iniciais/finais, EJA, presencial…).') }}</p>
                                 </div>
                                 @if (! empty($report['turmas_por_etapa_agregada']))
@@ -321,14 +317,14 @@
                             </div>
                         </div>
 
-                        <div class="serv-panel overflow-hidden">
+                        <div class="clio-panel overflow-hidden">
                             <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                <h4 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Por escola') }}</h4>
+                                <h4 class="clio-section-title">{{ __('Por escola') }}</h4>
                                 <p class="text-xs text-slate-500">{{ __('Turmas, alunos e flags de inconsistência Acomp × Relações (prioridade para apontamento).') }}</p>
                             </div>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full text-sm">
-                                    <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60">
+                            <div class="clio-table-wrap">
+                                <table class="clio-table">
+                                    <thead class="">
                                         <tr>
                                             <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
                                             <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
@@ -365,7 +361,7 @@
                                                     @if (! empty($row['flags']))
                                                         <div class="flex flex-wrap gap-1">
                                                             @foreach ($row['flags'] as $flag)
-                                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $toneBadge('amber') }}">{{ $flag }}</span>
+                                                                <span class="{{ $chipTone('amber') }}">{{ $flag }}</span>
                                                             @endforeach
                                                         </div>
                                                     @else
@@ -384,16 +380,16 @@
                         </div>
 
                         @if (! empty($report['apontamentos']))
-                            <div class="serv-panel overflow-hidden">
+                            <div class="clio-panel overflow-hidden">
                                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                    <h4 class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Apontamentos do relatório') }}</h4>
+                                    <h4 class="clio-section-title">{{ __('Apontamentos do relatório') }}</h4>
                                     <p class="text-xs text-slate-500">{{ __('Inconsistências úteis para correção no portal Educacenso / i-Educar.') }}</p>
                                 </div>
                                 <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                                     @foreach ($report['apontamentos'] as $item)
                                         <li class="px-4 py-3 text-sm">
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $toneBadge(($item['severity'] ?? '') === 'error' ? 'rose' : (($item['severity'] ?? '') === 'warning' ? 'amber' : 'slate')) }}">
+                                                <span class="{{ $chipTone(($item['severity'] ?? '') === 'error' ? 'rose' : (($item['severity'] ?? '') === 'warning' ? 'amber' : 'slate')) }} clio-chip--upper">
                                                     {{ $item['severity_label'] }}
                                                 </span>
                                                 @if (! empty($item['school']))
@@ -414,12 +410,12 @@
                 {{-- Resumo em linguagem simples --}}
                 @if (! empty($dashboard['highlights']))
                     <section aria-labelledby="clio-highlights-heading">
-                        <h3 id="clio-highlights-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white mb-3">
+                        <h3 id="clio-highlights-heading" class="clio-section-title mb-3">
                             {{ __('O que os dados mostram') }}
                         </h3>
-                        <div class="grid gap-3 sm:grid-cols-2">
+                        <div class="clio-highlight-grid">
                             @foreach ($dashboard['highlights'] as $item)
-                                <article class="serv-panel p-4">
+                                <article class="clio-highlight">
                                     <h4 class="font-medium text-serv-navy dark:text-white">{{ $item['title'] }}</h4>
                                     <p class="mt-1 text-sm text-slate-700 dark:text-slate-300 leading-snug">{{ $item['summary'] }}</p>
                                     @if ($item['hint'])
@@ -433,17 +429,17 @@
             @endunless
 
             {{-- Escolas --}}
-            <section class="serv-panel overflow-hidden" aria-labelledby="clio-schools-heading">
+            <section class="clio-panel overflow-hidden" aria-labelledby="clio-schools-heading">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800 flex flex-wrap items-end justify-between gap-2">
                     <div>
-                        <h3 id="clio-schools-heading" class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Escolas da rede') }}</h3>
+                        <h3 id="clio-schools-heading" class="clio-section-title">{{ __('Escolas da rede') }}</h3>
                         <p class="text-xs text-slate-500">{{ __('Ordenadas pelos casos que mais precisam de atenção.') }}</p>
                     </div>
                     <span class="text-xs text-slate-500">{{ __(':n escola(s)', ['n' => count($dashboard['schools'] ?? [])]) }}</span>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60">
+                <div class="clio-table-wrap">
+                    <table class="clio-table">
+                        <thead class="">
                             <tr>
                                 <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Situação') }}</th>
@@ -461,7 +457,7 @@
                                         <div class="text-xs text-slate-500 mt-0.5">{{ $row['collection_form'] }}</div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $toneBadge($row['tone']) }}">
+                                        <span class="{{ $chipTone($row['tone']) }}">
                                             {{ $row['status'] }}
                                         </span>
                                         @if (! empty($row['missing']))
@@ -503,7 +499,7 @@
             {{-- Achados --}}
             <section class="space-y-4" aria-labelledby="clio-findings-heading">
                 <div>
-                    <h3 id="clio-findings-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white">
+                    <h3 id="clio-findings-heading" class="clio-section-title">
                         {{ __('Acertos e problemas encontrados') }}
                     </h3>
                     <p class="mt-1 text-sm text-slate-500">
@@ -514,7 +510,7 @@
                 @php $f = $dashboard['findings'] ?? []; @endphp
 
                 @if (($f['error_count'] ?? 0) === 0 && ($f['warning_count'] ?? 0) === 0 && ($f['info_count'] ?? 0) === 0)
-                    <div class="serv-panel p-6 text-sm text-emerald-800 dark:text-emerald-200">
+                    <div class="clio-panel clio-panel--pad text-sm text-emerald-800 dark:text-emerald-200">
                         {{ __('Nenhum problema listado nesta análise. Continue acompanhando a cobertura da tríade por escola.') }}
                     </div>
                 @else
@@ -523,10 +519,10 @@
                         ['key' => 'warnings', 'count' => $f['warning_count'] ?? 0, 'title' => __('Pontos de atenção'), 'empty' => __('Nenhum aviso.'), 'tone' => 'amber'],
                         ['key' => 'infos', 'count' => $f['info_count'] ?? 0, 'title' => __('Informações'), 'empty' => __('Nenhuma informação adicional.'), 'tone' => 'slate'],
                     ] as $block)
-                        <div class="serv-panel overflow-hidden">
+                        <div class="clio-panel overflow-hidden">
                             <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800 flex items-center justify-between gap-2">
                                 <h4 class="font-medium text-serv-navy dark:text-white">{{ $block['title'] }}</h4>
-                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $toneBadge($block['tone']) }}">{{ $block['count'] }}</span>
+                                <span class="{{ $chipTone($block['tone']) }}">{{ $block['count'] }}</span>
                             </div>
                             @if ($block['count'] === 0)
                                 <p class="px-4 py-6 text-sm text-slate-500">{{ $block['empty'] }}</p>
@@ -535,7 +531,7 @@
                                     @foreach ($f[$block['key']] as $finding)
                                         <li class="px-4 py-3 text-sm">
                                             <div class="flex flex-wrap items-center gap-2">
-                                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $toneBadge($finding->severity === 'error' ? 'rose' : ($finding->severity === 'warning' ? 'amber' : 'slate')) }}">
+                                                <span class="{{ $chipTone($finding->severity === 'error' ? 'rose' : ($finding->severity === 'warning' ? 'amber' : 'slate')) }} clio-chip--upper">
                                                     {{ $finding->severityLabel() }}
                                                 </span>
                                                 @if ($finding->school)

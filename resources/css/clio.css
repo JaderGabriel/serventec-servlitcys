@@ -1,0 +1,601 @@
+/* —— Clio · Educacenso Matrícula inicial ——
+ * Identidade própria sobre tokens ServLitcys (navy / azul / ouro).
+ */
+
+:root {
+    --clio-navy: 15 23 42;
+    --clio-blue: 37 99 235;
+    --clio-blue-soft: 96 165 250;
+    --clio-gold: 180 134 40;
+    --clio-ink: 15 23 42;
+    --clio-muted: 100 116 139;
+    --clio-paper: 248 250 252;
+    --clio-line: 226 232 240;
+    --clio-radius: 0.875rem;
+    --clio-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.18);
+    --clio-shadow-lift: 0 2px 4px rgb(15 23 42 / 0.06), 0 16px 40px -16px rgb(37 99 235 / 0.35);
+}
+
+.dark {
+    --clio-paper: 2 6 23;
+    --clio-line: 30 41 59;
+    --clio-muted: 148 163 184;
+    --clio-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -16px rgb(0 0 0 / 0.55);
+    --clio-shadow-lift: 0 2px 8px rgb(0 0 0 / 0.4), 0 20px 48px -20px rgb(37 99 235 / 0.45);
+}
+
+/* Página */
+.clio-page {
+    position: relative;
+    isolation: isolate;
+}
+
+.clio-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 50% at 0% -10%, rgb(var(--clio-blue) / 0.07), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 100% 0%, rgb(var(--clio-gold) / 0.06), transparent 50%),
+        linear-gradient(180deg, rgb(var(--clio-paper)) 0%, transparent 28%);
+}
+
+.dark .clio-page::before {
+    background:
+        radial-gradient(ellipse 70% 45% at 10% -5%, rgb(var(--clio-blue) / 0.18), transparent 55%),
+        radial-gradient(ellipse 50% 35% at 95% 5%, rgb(var(--clio-gold) / 0.1), transparent 45%),
+        linear-gradient(180deg, rgb(2 6 23) 0%, transparent 30%);
+}
+
+.clio-shell {
+    @apply max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8;
+}
+
+.clio-shell--narrow {
+    @apply max-w-5xl;
+}
+
+/* Tipografia de secção */
+.clio-eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em];
+    color: rgb(var(--clio-blue));
+}
+
+.dark .clio-eyebrow {
+    @apply text-blue-400;
+}
+
+.clio-section-title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-lg font-semibold leading-tight text-slate-900 dark:text-white;
+}
+
+.clio-section-lead {
+    @apply mt-1 text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl;
+}
+
+.clio-section-head {
+    @apply flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between;
+}
+
+/* Hero / faixa de marca */
+.clio-hero {
+    @apply relative overflow-hidden rounded-[1rem] border border-slate-800/80;
+    background:
+        linear-gradient(135deg, rgb(15 23 42) 0%, rgb(15 23 42) 42%, rgb(23 37 84) 78%, rgb(30 58 138) 100%);
+    box-shadow: var(--clio-shadow);
+}
+
+.clio-hero__glow {
+    @apply pointer-events-none absolute inset-0;
+    opacity: 0.55;
+    background:
+        radial-gradient(circle at 14% 22%, rgb(var(--clio-blue-soft) / 0.35), transparent 42%),
+        radial-gradient(circle at 88% 8%, rgb(var(--clio-gold) / 0.28), transparent 34%),
+        linear-gradient(115deg, transparent 38%, rgb(var(--clio-blue) / 0.28) 100%);
+}
+
+.clio-hero__accent {
+    @apply absolute left-0 top-0 h-full w-1;
+    background: linear-gradient(180deg, rgb(var(--clio-gold)), rgb(var(--clio-blue-soft)));
+}
+
+.clio-hero__body {
+    @apply relative grid gap-6 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-12 lg:items-end text-white;
+}
+
+.clio-hero__kicker {
+    @apply text-[10px] font-semibold uppercase tracking-[0.22em] text-blue-300/90;
+}
+
+.clio-hero__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-2 text-3xl sm:text-4xl font-semibold tracking-tight;
+}
+
+.clio-hero__year {
+    @apply block sm:inline font-medium text-xl sm:text-2xl text-blue-200/90 sm:ml-2;
+}
+
+.clio-hero__lead {
+    @apply mt-3 max-w-xl text-sm text-slate-300 leading-relaxed;
+}
+
+.clio-hero__search {
+    @apply flex flex-col gap-3 sm:flex-row sm:items-end rounded-xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-md;
+}
+
+.clio-hero__label {
+    @apply block text-[10px] font-semibold uppercase tracking-wide text-blue-200/80;
+}
+
+.clio-hero__field {
+    @apply mt-1 w-full rounded-lg border-0 bg-white/95 text-slate-900 text-sm placeholder:text-slate-400
+        focus:ring-2 focus:ring-blue-400 dark:bg-white;
+}
+
+.clio-hero__submit {
+    @apply rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition
+        hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-slate-900;
+}
+
+.clio-hero__clear {
+    @apply text-xs text-blue-200 hover:text-white underline-offset-2 hover:underline;
+}
+
+/* Faixa de KPIs sob o hero */
+.clio-kpi-strip {
+    @apply grid grid-cols-2 lg:grid-cols-5 gap-px rounded-b-[1rem] overflow-hidden
+        border border-t-0 border-slate-200/90 bg-slate-200/90 dark:border-slate-700 dark:bg-slate-800;
+}
+
+.clio-kpi-cell {
+    @apply bg-white px-4 py-4 dark:bg-slate-900/80 transition-colors;
+}
+
+.clio-kpi-cell:hover {
+    @apply bg-slate-50 dark:bg-slate-900;
+}
+
+.clio-kpi-cell__label {
+    @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.clio-kpi-cell__value {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-2xl font-semibold tabular-nums text-slate-900 dark:text-white;
+}
+
+.clio-kpi-cell__hint {
+    @apply mt-0.5 text-[11px] text-slate-500 leading-snug;
+}
+
+/* Painéis e tiles */
+.clio-panel {
+    @apply rounded-[var(--clio-radius)] border border-slate-200/90 bg-white
+        dark:border-slate-700/90 dark:bg-slate-900/50 overflow-hidden;
+    box-shadow: var(--clio-shadow);
+}
+
+.clio-panel--pad {
+    @apply p-4 sm:p-5;
+}
+
+.clio-panel--soft {
+    @apply border-blue-200/70 bg-gradient-to-br from-blue-50/70 via-white to-slate-50/90
+        dark:from-blue-950/25 dark:via-slate-900/50 dark:to-slate-950/80 dark:border-blue-900/40;
+}
+
+.clio-kpi-grid {
+    @apply grid gap-3 sm:grid-cols-2 lg:grid-cols-3;
+}
+
+.clio-kpi-grid--6 {
+    @apply xl:grid-cols-6 lg:grid-cols-3;
+}
+
+.clio-kpi-tile {
+    @apply relative clio-panel p-4 pl-5 transition duration-200;
+}
+
+.clio-kpi-tile::before {
+    content: '';
+    @apply absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-slate-300 dark:bg-slate-600;
+}
+
+.clio-kpi-tile--sky::before { @apply bg-sky-500; }
+.clio-kpi-tile--emerald::before { @apply bg-emerald-500; }
+.clio-kpi-tile--amber::before { @apply bg-amber-500; }
+.clio-kpi-tile--rose::before { @apply bg-rose-500; }
+.clio-kpi-tile--slate::before { @apply bg-slate-400; }
+
+.clio-kpi-tile__label {
+    @apply text-[10px] font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.clio-kpi-tile__value {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-3xl font-semibold tabular-nums leading-none;
+}
+
+.clio-kpi-tile__value--sm {
+    @apply text-2xl;
+}
+
+.clio-kpi-tile__hint {
+    @apply mt-1.5 text-xs text-slate-500 leading-snug;
+}
+
+.clio-tone-sky { @apply text-sky-700 dark:text-sky-300; }
+.clio-tone-emerald { @apply text-emerald-700 dark:text-emerald-300; }
+.clio-tone-amber { @apply text-amber-700 dark:text-amber-300; }
+.clio-tone-rose { @apply text-rose-700 dark:text-rose-300; }
+.clio-tone-slate { @apply text-slate-900 dark:text-white; }
+
+/* Cartão de relatório (home) */
+.clio-report-grid {
+    @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-3;
+}
+
+.clio-report-card {
+    @apply clio-panel relative flex flex-col transition duration-200 ease-out;
+    animation: clio-fade-up 0.45s ease-out both;
+}
+
+.clio-report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--clio-shadow-lift);
+    @apply border-blue-300/80 dark:border-blue-600/50;
+}
+
+.clio-report-card__rail {
+    @apply absolute inset-y-0 left-0 w-1;
+}
+
+.clio-report-card__rail--ready { @apply bg-emerald-500; }
+.clio-report-card__rail--error { @apply bg-rose-500; }
+.clio-report-card__rail--parsed { @apply bg-sky-500; }
+.clio-report-card__rail--progress { @apply bg-amber-500; }
+
+.clio-report-card__body {
+    @apply flex flex-1 flex-col p-4 sm:p-5 pl-5 sm:pl-6;
+}
+
+.clio-report-card__meta {
+    @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400;
+}
+
+.clio-report-card__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-lg font-semibold text-slate-900 dark:text-white leading-snug truncate;
+}
+
+.clio-report-card__chips {
+    @apply mt-3 flex flex-wrap items-center gap-1.5;
+}
+
+.clio-report-card__footer {
+    @apply mt-auto pt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800;
+}
+
+.clio-chip {
+    @apply inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wide;
+}
+
+.clio-chip--upper {
+    @apply uppercase;
+}
+
+.clio-chip--neutral {
+    @apply bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200;
+}
+
+.clio-chip--ready {
+    @apply bg-emerald-100 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100;
+}
+
+.clio-chip--warn {
+    @apply bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100;
+}
+
+.clio-chip--error {
+    @apply bg-rose-100 text-rose-900 dark:bg-rose-950/40 dark:text-rose-100;
+}
+
+.clio-chip--sky {
+    @apply bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100;
+}
+
+.clio-chip--profile {
+    @apply bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100 uppercase;
+}
+
+.clio-chip--profile-lite {
+    @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100 uppercase;
+}
+
+/* Medidor tríade */
+.clio-meter {
+    @apply mt-4 space-y-1.5;
+}
+
+.clio-meter__row {
+    @apply flex items-baseline justify-between gap-2 text-xs;
+}
+
+.clio-meter__label {
+    @apply text-slate-500;
+}
+
+.clio-meter__value {
+    @apply tabular-nums font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-meter__track {
+    @apply h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700;
+}
+
+.clio-meter__fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+}
+
+.clio-meter__fill--good { @apply bg-emerald-500; }
+.clio-meter__fill--mid { @apply bg-amber-500; }
+.clio-meter__fill--bad { @apply bg-rose-500; }
+.clio-meter__fill--sky { @apply bg-sky-500; }
+
+.clio-meter--lg .clio-meter__track {
+    @apply h-3;
+}
+
+/* Mini estatísticas no cartão */
+.clio-mini-stats {
+    @apply mt-4 grid grid-cols-3 gap-2 text-center;
+}
+
+.clio-mini-stat {
+    @apply rounded-lg bg-slate-50 px-2 py-2 dark:bg-slate-800/60;
+}
+
+.clio-mini-stat__label {
+    @apply text-[10px] uppercase tracking-wide text-slate-500;
+}
+
+.clio-mini-stat__value {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-0.5 text-base font-semibold tabular-nums text-slate-900 dark:text-white;
+}
+
+.clio-mini-stat__value--sm {
+    @apply text-xs;
+}
+
+/* Distribuições (barras do relatório) */
+.clio-dist {
+    @apply space-y-3;
+}
+
+.clio-dist__row {
+    @apply space-y-1.5;
+}
+
+.clio-dist__head {
+    @apply flex items-baseline justify-between gap-2 text-sm;
+}
+
+.clio-dist__label {
+    @apply text-slate-700 dark:text-slate-200 truncate;
+}
+
+.clio-dist__count {
+    @apply tabular-nums text-xs text-slate-500 shrink-0;
+}
+
+.clio-dist__track {
+    @apply h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700;
+}
+
+.clio-dist__fill {
+    @apply h-full rounded-full transition-all duration-500;
+}
+
+.clio-dist__fill--sky { @apply bg-sky-500; }
+.clio-dist__fill--emerald { @apply bg-emerald-500; }
+.clio-dist__fill--amber { @apply bg-amber-500; }
+.clio-dist__fill--rose { @apply bg-rose-500; }
+.clio-dist__fill--slate { @apply bg-slate-400; }
+
+/* Stack de buckets (coleta) */
+.clio-stack {
+    @apply flex h-4 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700;
+}
+
+.clio-stack__seg--sky { @apply bg-sky-500; }
+.clio-stack__seg--amber { @apply bg-amber-500; }
+.clio-stack__seg--emerald { @apply bg-emerald-500; }
+.clio-stack__seg--rose { @apply bg-rose-500; }
+
+.clio-legend {
+    @apply grid grid-cols-2 gap-2 text-sm;
+}
+
+.clio-legend__item {
+    @apply flex items-center gap-2;
+}
+
+.clio-legend__dot {
+    @apply inline-block h-2.5 w-2.5 rounded-full shrink-0;
+}
+
+/* Tabelas */
+.clio-table-wrap {
+    @apply overflow-x-auto;
+}
+
+.clio-table {
+    @apply min-w-full text-sm;
+}
+
+.clio-table thead {
+    @apply bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60;
+}
+
+.clio-table th {
+    @apply px-4 py-2.5 font-medium;
+}
+
+.clio-table tbody {
+    @apply divide-y divide-slate-100 dark:divide-slate-800;
+}
+
+.clio-table td {
+    @apply px-4 py-3;
+}
+
+.clio-table tbody tr {
+    @apply transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-900/40;
+}
+
+.clio-table__school {
+    @apply font-medium text-slate-900 dark:text-white;
+}
+
+.clio-table__inep {
+    @apply font-mono text-[11px] text-slate-500;
+}
+
+/* Alertas / notas / vazio */
+.clio-note {
+    @apply rounded-lg border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-950
+        dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100;
+}
+
+.clio-note__title {
+    @apply font-medium;
+}
+
+.clio-note__list {
+    @apply mt-1.5 list-disc space-y-1 pl-5 text-xs leading-relaxed;
+}
+
+.clio-flash {
+    @apply rounded-lg px-4 py-3 text-sm;
+}
+
+.clio-flash--ok {
+    @apply border border-emerald-200 bg-emerald-50 text-emerald-900
+        dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100;
+}
+
+.clio-flash--warn {
+    @apply border border-amber-200 bg-amber-50 text-amber-900
+        dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100;
+}
+
+.clio-empty {
+    @apply clio-panel px-6 py-14 text-center;
+}
+
+.clio-empty__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-2 text-xl font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-empty__lead {
+    @apply mt-2 text-sm text-slate-500 max-w-md mx-auto;
+}
+
+.clio-empty__actions {
+    @apply mt-6 flex flex-wrap justify-center gap-2;
+}
+
+/* Lista pendentes */
+.clio-pending__head {
+    @apply border-b border-slate-100 px-4 py-4 sm:px-5
+        bg-gradient-to-r from-slate-50 via-white to-blue-50/50
+        dark:border-slate-800 dark:from-slate-900/80 dark:via-slate-900/40 dark:to-blue-950/20;
+}
+
+.clio-pending__list {
+    @apply divide-y divide-slate-100 dark:divide-slate-800;
+}
+
+.clio-pending__item {
+    @apply flex flex-col gap-2 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5
+        transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-900/30;
+}
+
+/* Achados */
+.clio-finding {
+    @apply px-4 py-3 text-sm;
+}
+
+.clio-finding__head {
+    @apply flex flex-wrap items-center gap-2;
+}
+
+.clio-finding__msg {
+    @apply mt-1 text-slate-800 dark:text-slate-200 leading-snug;
+}
+
+.clio-finding__code {
+    @apply mt-0.5 text-[11px] text-slate-400;
+}
+
+/* Highlight cards */
+.clio-highlight-grid {
+    @apply grid gap-3 sm:grid-cols-2;
+}
+
+.clio-highlight {
+    @apply clio-panel p-4 transition duration-200 hover:border-blue-300/70 dark:hover:border-blue-700/50;
+}
+
+.clio-highlight__title {
+    @apply font-medium text-slate-900 dark:text-white;
+}
+
+.clio-highlight__summary {
+    @apply mt-1 text-sm text-slate-700 dark:text-slate-300 leading-snug;
+}
+
+.clio-highlight__hint {
+    @apply mt-2 text-xs text-slate-500;
+}
+
+/* Motion */
+@keyframes clio-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clio-report-card {
+        animation: none;
+    }
+
+    .clio-report-card:hover {
+        transform: none;
+    }
+
+    .clio-meter__fill,
+    .clio-dist__fill {
+        transition: none;
+    }
+}
+
+/* Stagger leve nos cartões da home */
+.clio-report-grid > .clio-report-card:nth-child(1) { animation-delay: 0.02s; }
+.clio-report-grid > .clio-report-card:nth-child(2) { animation-delay: 0.05s; }
+.clio-report-grid > .clio-report-card:nth-child(3) { animation-delay: 0.08s; }
+.clio-report-grid > .clio-report-card:nth-child(4) { animation-delay: 0.11s; }
+.clio-report-grid > .clio-report-card:nth-child(5) { animation-delay: 0.14s; }
+.clio-report-grid > .clio-report-card:nth-child(6) { animation-delay: 0.17s; }

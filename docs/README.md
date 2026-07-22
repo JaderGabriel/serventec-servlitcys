@@ -136,6 +136,7 @@ mindmap
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência arquivo Educacenso (portal INEP) × i-Educar + painel |
 | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Roadmap **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
 | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de implementação do módulo Clio (S1–S6 ✓ · S7–S8) |
+| [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo do que o Clio mostra: INF-*, CLIO-*, relatório da rede, UI |
 | [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) | Rastreio até release do Clio |
 | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Roadmap NEE / AEE |
 

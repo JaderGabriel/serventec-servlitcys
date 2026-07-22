@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div class="max-w-3xl">
-                <p class="serv-eyebrow">{{ __('Clio') }} · {{ __('Resultado da escola') }}</p>
+                <p class="clio-eyebrow">{{ __('Clio') }} · {{ __('Resultado da escola') }}</p>
                 <h2 class="font-display font-semibold text-2xl text-serv-navy dark:text-white leading-tight">
                     {{ $school->name }}
                 </h2>
@@ -25,89 +25,80 @@
     </x-slot>
 
     @php
-        $toneValue = static function (string $tone): string {
+        $toneClass = static fn (string $tone): string => 'clio-tone-'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $tileTone = static fn (string $tone): string => 'clio-kpi-tile--'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $fillTone = static fn (string $tone): string => 'clio-dist__fill--'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'sky');
+        $chipTone = static function (string $tone): string {
             return match ($tone) {
-                'emerald' => 'text-emerald-700 dark:text-emerald-300',
-                'amber' => 'text-amber-700 dark:text-amber-300',
-                'rose' => 'text-rose-700 dark:text-rose-300',
-                'sky' => 'text-sky-700 dark:text-sky-300',
-                default => 'text-serv-navy dark:text-white',
+                'emerald' => 'clio-chip clio-chip--ready',
+                'amber' => 'clio-chip clio-chip--warn',
+                'rose' => 'clio-chip clio-chip--error',
+                default => 'clio-chip clio-chip--neutral',
             };
         };
-        $toneBar = static function (string $tone): string {
-            return match ($tone) {
-                'emerald' => 'bg-emerald-500',
-                'amber' => 'bg-amber-500',
-                'rose' => 'bg-rose-500',
-                default => 'bg-sky-500',
-            };
-        };
-        $toneBadge = static function (string $tone): string {
-            return match ($tone) {
-                'emerald' => 'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-100',
-                'amber' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100',
-                'rose' => 'bg-rose-100 text-rose-900 dark:bg-rose-950/50 dark:text-rose-100',
-                default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
-            };
+        $meterFill = static function (float $pct): string {
+            if ($pct >= 80) return 'clio-meter__fill--good';
+            if ($pct >= 40) return 'clio-meter__fill--mid';
+            return 'clio-meter__fill--bad';
         };
         $triade = $dashboard['triade'] ?? [];
         $ctx = $dashboard['context'] ?? [];
         $f = $dashboard['findings'] ?? [];
     @endphp
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 space-y-8">
+    <div class="clio-page py-8 sm:py-10">
+        <div class="clio-shell clio-shell--narrow">
             <section aria-labelledby="clio-school-kpi-heading">
-                <h3 id="clio-school-kpi-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white mb-3">
+                <h3 id="clio-school-kpi-heading" class="clio-section-title mb-3">
                     {{ __('Indicadores desta escola') }}
                 </h3>
-                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="clio-kpi-grid">
                     @foreach ($dashboard['kpis'] as $kpi)
-                        <div class="serv-panel p-4">
-                            <p class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $kpi['label'] }}</p>
-                            <p class="mt-1 font-display text-2xl font-semibold {{ is_numeric(str_replace(['.', ',', '%'], '', $kpi['value'])) || str_ends_with($kpi['value'], '%') ? 'tabular-nums text-3xl' : '' }} {{ $toneValue($kpi['tone']) }}">
+                        <div class="clio-kpi-tile {{ $tileTone($kpi['tone']) }}">
+                            <p class="clio-kpi-tile__label">{{ $kpi['label'] }}</p>
+                            <p class="clio-kpi-tile__value {{ is_numeric(str_replace(['.', ',', '%'], '', $kpi['value'])) || str_ends_with($kpi['value'], '%') ? 'clio-kpi-tile__value' : 'clio-kpi-tile__value--sm' }} {{ $toneClass($kpi['tone']) }}">
                                 {{ $kpi['value'] }}
                             </p>
-                            <p class="mt-1 text-xs text-slate-500 leading-snug">{{ $kpi['hint'] }}</p>
+                            <p class="clio-kpi-tile__hint">{{ $kpi['hint'] }}</p>
                         </div>
                     @endforeach
                 </div>
             </section>
 
             <section class="grid gap-4 lg:grid-cols-2" aria-labelledby="clio-school-triade-heading">
-                <div class="serv-panel p-5 space-y-4">
+                <div class="clio-panel clio-panel--pad space-y-4">
                     <div>
-                        <h3 id="clio-school-triade-heading" class="font-display text-base font-semibold text-serv-navy dark:text-white">
+                        <h3 id="clio-school-triade-heading" class="clio-section-title text-base">
                             {{ __('Cobertura da tríade') }}
                         </h3>
                         <p class="mt-1 text-sm text-slate-500">
                             {{ __('A escola precisa dos três arquivos: alunos, turmas e profissionais.') }}
                         </p>
                     </div>
-                    <div>
-                        <div class="flex items-baseline justify-between gap-2">
-                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Completude') }}</span>
-                            <span class="tabular-nums text-sm font-semibold">{{ number_format((float) ($triade['pct'] ?? 0), 0) }}%</span>
+                    <div class="clio-meter clio-meter--lg mt-0">
+                        <div class="clio-meter__row">
+                            <span class="clio-meter__label font-medium text-slate-700 dark:text-slate-200">{{ __('Completude') }}</span>
+                            <span class="clio-meter__value">{{ number_format((float) ($triade['pct'] ?? 0), 0) }}%</span>
                         </div>
-                        <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                            <div class="h-full rounded-full {{ $toneBar($dashboard['tone'] ?? 'sky') }}"
+                        <div class="clio-meter__track">
+                            <div class="clio-meter__fill {{ $meterFill((float) ($triade['pct'] ?? 0)) }}"
                                  style="width: {{ min(100, max(0, (float) ($triade['pct'] ?? 0))) }}%"></div>
                         </div>
                     </div>
-                    <ul class="space-y-3">
+                    <ul class="clio-dist">
                         @foreach ($triade['parts'] ?? [] as $part)
-                            <li>
-                                <div class="flex items-center justify-between gap-2 text-sm">
-                                    <span class="font-medium text-slate-700 dark:text-slate-200">{{ $part['label'] }}</span>
-                                    <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium {{ $toneBadge($part['ok'] ? 'emerald' : 'amber') }}">
+                            <li class="clio-dist__row">
+                                <div class="clio-dist__head">
+                                    <span class="clio-dist__label font-medium">{{ $part['label'] }}</span>
+                                    <span class="{{ $chipTone($part['ok'] ? 'emerald' : 'amber') }}">
                                         {{ $part['ok'] ? __('Presente') : __('Em falta') }}
                                     </span>
                                 </div>
-                                <div class="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
-                                    <div class="h-full rounded-full {{ $part['ok'] ? 'bg-emerald-500' : 'bg-slate-400' }}"
+                                <div class="clio-dist__track">
+                                    <div class="clio-dist__fill {{ $part['ok'] ? 'clio-dist__fill--emerald' : 'clio-dist__fill--slate' }}"
                                          style="width: {{ $part['ok'] ? 100 : 8 }}%"></div>
                                 </div>
-                                <p class="mt-1 text-xs text-slate-500">
+                                <p class="text-xs text-slate-500">
                                     {{ $part['hint'] }}
                                     @if ($part['rows'] > 0)
                                         · {{ __(':n linha(s)', ['n' => number_format($part['rows'])]) }}
@@ -123,9 +114,9 @@
                     @endif
                 </div>
 
-                <div class="serv-panel p-5 space-y-4">
+                <div class="clio-panel clio-panel--pad space-y-4">
                     <div>
-                        <h3 class="font-display text-base font-semibold text-serv-navy dark:text-white">
+                        <h3 class="clio-section-title text-base">
                             {{ __('Contexto da escola') }}
                         </h3>
                         <p class="mt-1 text-sm text-slate-500">
@@ -148,7 +139,7 @@
                         <div>
                             <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ __('Leitura Clio') }}</dt>
                             <dd class="mt-1">
-                                <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {{ $toneBadge($dashboard['tone'] ?? 'slate') }}">
+                                <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium {{ $chipTone($dashboard['tone'] ?? 'slate') }}">
                                     {{ $dashboard['status'] ?? '—' }}
                                 </span>
                                 <p class="mt-1.5 text-xs text-slate-500">{{ $dashboard['status_hint'] ?? '' }}</p>
@@ -158,9 +149,9 @@
                 </div>
             </section>
 
-            <section class="serv-panel overflow-hidden" aria-labelledby="clio-school-files-heading">
+            <section class="clio-panel overflow-hidden" aria-labelledby="clio-school-files-heading">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                    <h3 id="clio-school-files-heading" class="font-display font-semibold text-serv-navy dark:text-white">{{ __('Arquivos desta escola') }}</h3>
+                    <h3 id="clio-school-files-heading" class="clio-section-title">{{ __('Arquivos desta escola') }}</h3>
                     <p class="text-xs text-slate-500">{{ __('O que já chegou e se foi interpretado com sucesso.') }}</p>
                 </div>
                 <ul class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -171,7 +162,7 @@
                                 <p class="font-mono text-xs text-slate-500 truncate">{{ $file['original_name'] }}</p>
                             </div>
                             <div class="text-right shrink-0">
-                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium {{ $toneBadge($file['tone']) }}">{{ $file['status'] }}</span>
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium {{ $chipTone($file['tone']) }}">{{ $file['status'] }}</span>
                                 <p class="mt-1 tabular-nums text-xs text-slate-500">{{ $file['rows'] !== null ? number_format($file['rows']).' '.__('linhas') : '—' }}</p>
                             </div>
                         </li>
@@ -192,7 +183,7 @@
                 </div>
 
                 @if (($f['error_count'] ?? 0) === 0 && ($f['warning_count'] ?? 0) === 0 && ($f['info_count'] ?? 0) === 0)
-                    <div class="serv-panel p-6 text-sm text-emerald-800 dark:text-emerald-200">
+                    <div class="clio-panel clio-panel--pad text-sm text-emerald-800 dark:text-emerald-200">
                         {{ __('Nenhum problema listado para esta escola. Continue acompanhando a tríade de arquivos.') }}
                     </div>
                 @else
@@ -201,10 +192,10 @@
                         ['key' => 'warnings', 'count' => $f['warning_count'] ?? 0, 'title' => __('Pontos de atenção'), 'empty' => __('Nenhum aviso.'), 'tone' => 'amber'],
                         ['key' => 'infos', 'count' => $f['info_count'] ?? 0, 'title' => __('Informações'), 'empty' => __('Nenhuma informação adicional.'), 'tone' => 'slate'],
                     ] as $block)
-                        <div class="serv-panel overflow-hidden">
+                        <div class="clio-panel overflow-hidden">
                             <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800 flex items-center justify-between gap-2">
                                 <h4 class="font-medium text-serv-navy dark:text-white">{{ $block['title'] }}</h4>
-                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $toneBadge($block['tone']) }}">{{ $block['count'] }}</span>
+                                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $chipTone($block['tone']) }}">{{ $block['count'] }}</span>
                             </div>
                             @if ($block['count'] === 0)
                                 <p class="px-4 py-6 text-sm text-slate-500">{{ $block['empty'] }}</p>
@@ -212,7 +203,7 @@
                                 <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                                     @foreach ($f[$block['key']] as $finding)
                                         <li class="px-4 py-3 text-sm">
-                                            <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $toneBadge($finding->severity === 'error' ? 'rose' : ($finding->severity === 'warning' ? 'amber' : 'slate')) }}">
+                                            <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide {{ $chipTone($finding->severity === 'error' ? 'rose' : ($finding->severity === 'warning' ? 'amber' : 'slate')) }}">
                                                 {{ $finding->severityLabel() }}
                                             </span>
                                             <p class="mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ $finding->message }}</p>
