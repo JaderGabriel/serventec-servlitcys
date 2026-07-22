@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Clio;
 
 use App\Http\Controllers\Controller;
-use App\Models\City;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use Illuminate\Http\Request;
@@ -95,20 +94,6 @@ class HomeController extends Controller
             ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())
             ->filter(fn ($v) => $v !== null);
 
-        $campaignCityIds = $yearCampaignsForStats
-            ->pluck('city_id')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $citiesWithoutCampaign = City::query()
-            ->forClioCatalog()
-            ->when($campaignCityIds !== [], fn ($builder) => $builder->whereNotIn('id', $campaignCityIds))
-            ->orderBy('name')
-            ->limit(12)
-            ->get(['id', 'name', 'uf', 'ibge_municipio', 'db_host', 'db_database', 'db_username']);
-
         return view('clio.home', [
             'campaigns' => $campaigns,
             'years' => $years,
@@ -119,11 +104,6 @@ class HomeController extends Controller
             'yearErrors' => $yearErrors,
             'yearSchools' => $yearSchools,
             'avgTriade' => $triades->isNotEmpty() ? round((float) $triades->avg(), 1) : null,
-            'citiesWithoutCampaign' => $citiesWithoutCampaign,
-            'citiesWithoutCampaignTotal' => City::query()
-                ->forClioCatalog()
-                ->when($campaignCityIds !== [], fn ($builder) => $builder->whereNotIn('id', $campaignCityIds))
-                ->count(),
         ]);
     }
 }

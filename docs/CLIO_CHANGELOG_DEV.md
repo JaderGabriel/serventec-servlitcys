@@ -24,6 +24,14 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-22 — Transporte escolar (`INF-TRA`)
+
+**Entregue**
+
+- Agregação de uso / poder público / veículo na Relação de alunos (quando as colunas existem)
+- Inferência **INF-TRA** + achados `CLIO-TRA-SEM-COL`, `CLIO-TRA-VAZIO`, `CLIO-TRA-SEM-PODER`
+- Painel: chip de cobertura, barras e card em «O que os dados mostram»
+
 ### 2026-07-22 — Painel: fora de atividade + overlay de carregamento
 
 **Entregue**

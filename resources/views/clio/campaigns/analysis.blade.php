@@ -13,8 +13,8 @@
                             : null);
                     $analyzedAt = $campaign->hasReportReady() ? $campaign->lastActivityDisplay() : null;
                 @endphp
-                @if ($refDisplay)
-                    <p class="mt-3 text-base font-bold text-serv-navy dark:text-white tracking-tight">
+                @if (! empty($refDisplay))
+                    <p class="clio-ref-date">
                         {{ __('Data de referência: :d', ['d' => $refDisplay]) }}
                     </p>
                 @endif
@@ -511,6 +511,69 @@
                                     @empty
                                         <p class="text-sm text-slate-500">{{ __('Nenhum marcador positivo nas colunas detectadas.') }}</p>
                                     @endforelse
+                                </div>
+                            @endif
+                            @if (
+                                ! empty($profile['by_transporte'])
+                                || ! empty($profile['by_poder_publico_transporte'])
+                                || ! empty($profile['by_veiculo_transporte'])
+                                || ($profile['transporte_flagged'] ?? 0) > 0
+                            )
+                                <div class="clio-panel clio-panel--pad space-y-3 sm:col-span-2 lg:col-span-3">
+                                    <h4 class="clio-section-title text-base">{{ __('Transporte escolar') }}</h4>
+                                    @if (! empty($profile['transporte_summary']))
+                                        <p class="text-xs text-slate-500">{{ $profile['transporte_summary'] }}</p>
+                                    @endif
+                                    <div class="grid gap-4 sm:grid-cols-3">
+                                        @if (! empty($profile['by_transporte']))
+                                            <div class="space-y-3">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Uso') }}</p>
+                                                @foreach ($profile['by_transporte'] as $bar)
+                                                    <div class="clio-dist__row">
+                                                        <div class="clio-dist__head">
+                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                                        </div>
+                                                        <div class="clio-dist__track">
+                                                            <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if (! empty($profile['by_poder_publico_transporte']))
+                                            <div class="space-y-3">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Poder público') }}</p>
+                                                @foreach ($profile['by_poder_publico_transporte'] as $bar)
+                                                    <div class="clio-dist__row">
+                                                        <div class="clio-dist__head">
+                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                                        </div>
+                                                        <div class="clio-dist__track">
+                                                            <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if (! empty($profile['by_veiculo_transporte']))
+                                            <div class="space-y-3">
+                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Tipo de veículo') }}</p>
+                                                @foreach ($profile['by_veiculo_transporte'] as $bar)
+                                                    <div class="clio-dist__row">
+                                                        <div class="clio-dist__head">
+                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                                        </div>
+                                                        <div class="clio-dist__track">
+                                                            <div class="clio-dist__fill clio-dist__fill--amber" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             @endif
                         </div>

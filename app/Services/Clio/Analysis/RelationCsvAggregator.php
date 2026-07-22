@@ -103,6 +103,12 @@ final class RelationCsvAggregator
      *   by_faixa_etaria: array<string, int>,
      *   by_nee: array<string, int>,
      *   nee_flagged: int,
+     *   by_transporte: array<string, int>,
+     *   transporte_flagged: int,
+     *   without_transporte: int,
+     *   transporte_sem_poder: int,
+     *   by_poder_publico_transporte: array<string, int>,
+     *   by_veiculo_transporte: array<string, int>,
      *   without_cor: int,
      *   without_sexo: int,
      *   without_nascimento: int,
@@ -112,7 +118,9 @@ final class RelationCsvAggregator
      *     nascimento: bool,
      *     nee: bool,
      *     transporte: bool,
-     *     poder_publico: bool
+     *     poder_publico: bool,
+     *     poder_publico_transporte: bool,
+     *     veiculo_transporte: bool
      *   }
      * }
      */
@@ -124,11 +132,17 @@ final class RelationCsvAggregator
         $byIdade = [];
         $byNee = [];
         $byTurma = [];
+        $byTransporte = [];
+        $byPoderPublicoTra = [];
+        $byVeiculoTra = [];
         $withoutEtapa = 0;
         $withoutTurma = 0;
         $withoutCor = 0;
         $withoutSexo = 0;
         $withoutNasc = 0;
+        $withoutTransporte = 0;
+        $transporteFlagged = 0;
+        $transporteSemPoder = 0;
         $neeFlagged = 0;
         $refYear = $referenceYear ?? (int) date('Y');
         $ageRules = new AgeGradeRules;
@@ -150,8 +164,14 @@ final class RelationCsvAggregator
         $hasSexo = $this->rowHasAnyHeader($sampleHeaders, ['Sexo', 'Sexo biológico', 'Sexo biologico', 'Gênero', 'Genero']);
         $hasNasc = $this->rowHasAnyHeader($sampleHeaders, ['Data de nascimento', 'Data Nascimento', 'Nascimento']);
         $hasNee = $this->headersMatchNee($headerKeys);
-        $hasTransporte = $this->headersMatchPattern($headerKeys, '/transporte/i');
-        $hasPoderPublico = $this->headersMatchPattern($headerKeys, '/poder\s*p[uú]blico|bolsa\s*fam[ií]lia|cad[\s\-]?[uú]nico|nis\b/i');
+        $usoTransporteHeader = $this->findTransporteUsoHeader($headerKeys);
+        $poderTraHeader = $this->findHeaderMatching($headerKeys, '/poder\s*p[uú]blico/iu');
+        $veiculoTraHeader = $this->findHeaderMatching($headerKeys, '/ve[ií]culo/iu');
+        $hasTransporte = $usoTransporteHeader !== null
+            || $this->headersMatchPattern($headerKeys, '/transporte/iu');
+        $hasPoderPublicoTra = $poderTraHeader !== null;
+        $hasVeiculoTra = $veiculoTraHeader !== null;
+        $hasPoderPublico = $this->headersMatchPattern($headerKeys, '/poder\s*p[uú]blico|bolsa\s*fam[ií]lia|cad[\s\-]?[uú]nico|nis\b/iu');
 
         foreach ($rows as $row) {
             $etapa = trim($csv->value($row, 'Etapa de ensino'));
@@ -234,6 +254,43 @@ final class RelationCsvAggregator
                     }
                 }
             }
+
+            $usoTra = null;
+            if ($usoTransporteHeader !== null) {
+                $usoTra = $this->normalizeYesNo(trim($csv->value($row, $usoTransporteHeader)));
+                if ($usoTra === __('Não informado')) {
+                    $withoutTransporte++;
+                }
+                if ($usoTra === __('Sim')) {
+                    $transporteFlagged++;
+                }
+                $byTransporte[$usoTra] = ($byTransporte[$usoTra] ?? 0) + 1;
+            }
+
+            $poderTra = null;
+            if ($poderTraHeader !== null) {
+                $poderTra = trim($csv->value($row, $poderTraHeader));
+                if ($poderTra === '') {
+                    $poderTra = __('Não informado');
+                }
+                $byPoderPublicoTra[$poderTra] = ($byPoderPublicoTra[$poderTra] ?? 0) + 1;
+            }
+
+            if ($veiculoTraHeader !== null) {
+                $veiculo = trim($csv->value($row, $veiculoTraHeader));
+                if ($veiculo === '') {
+                    $veiculo = __('Não informado');
+                }
+                $byVeiculoTra[$veiculo] = ($byVeiculoTra[$veiculo] ?? 0) + 1;
+            }
+
+            if (
+                $usoTra === __('Sim')
+                && $poderTraHeader !== null
+                && ($poderTra === null || $poderTra === __('Não informado'))
+            ) {
+                $transporteSemPoder++;
+            }
         }
 
         $eligible = max(0, (int) $ageGrade['eligible']);
@@ -253,6 +310,12 @@ final class RelationCsvAggregator
             'by_faixa_etaria' => $this->sortAgeBands($byIdade),
             'by_nee' => $this->sortDesc($byNee),
             'nee_flagged' => $neeFlagged,
+            'by_transporte' => $this->sortYesNoFirst($byTransporte),
+            'transporte_flagged' => $transporteFlagged,
+            'without_transporte' => $withoutTransporte,
+            'transporte_sem_poder' => $transporteSemPoder,
+            'by_poder_publico_transporte' => $this->sortDesc($byPoderPublicoTra),
+            'by_veiculo_transporte' => $this->sortDesc($byVeiculoTra),
             'without_cor' => $withoutCor,
             'without_sexo' => $withoutSexo,
             'without_nascimento' => $withoutNasc,
@@ -264,6 +327,8 @@ final class RelationCsvAggregator
                 'nee' => $hasNee,
                 'transporte' => $hasTransporte,
                 'poder_publico' => $hasPoderPublico,
+                'poder_publico_transporte' => $hasPoderPublicoTra,
+                'veiculo_transporte' => $hasVeiculoTra,
             ],
         ];
     }
@@ -376,13 +441,78 @@ final class RelationCsvAggregator
      */
     private function headersMatchPattern(array $headerKeys, string $pattern): bool
     {
+        return $this->findHeaderMatching($headerKeys, $pattern) !== null;
+    }
+
+    /**
+     * @param  list<string|int>  $headerKeys
+     */
+    private function findHeaderMatching(array $headerKeys, string $pattern): ?string
+    {
         foreach ($headerKeys as $key) {
             if (preg_match($pattern, (string) $key) === 1) {
-                return true;
+                return (string) $key;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    /**
+     * Coluna de uso/utilização de transporte (exclui poder público e tipo de veículo).
+     *
+     * @param  list<string|int>  $headerKeys
+     */
+    private function findTransporteUsoHeader(array $headerKeys): ?string
+    {
+        foreach ($headerKeys as $key) {
+            $k = (string) $key;
+            if (preg_match('/transporte/iu', $k) !== 1) {
+                continue;
+            }
+            if (preg_match('/poder|ve[ií]culo/iu', $k) === 1) {
+                continue;
+            }
+
+            return $k;
+        }
+
+        return null;
+    }
+
+    private function normalizeYesNo(string $raw): string
+    {
+        $s = mb_strtolower(trim($raw));
+        if ($s === '') {
+            return __('Não informado');
+        }
+        if (in_array($s, ['sim', 's', '1', 'true', 'yes', 'y'], true)) {
+            return __('Sim');
+        }
+        if (in_array($s, ['não', 'nao', 'n', '0', 'false', 'no'], true)) {
+            return __('Não');
+        }
+
+        return $raw;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<string, int>
+     */
+    private function sortYesNoFirst(array $counts): array
+    {
+        $order = [__('Sim'), __('Não'), __('Não informado')];
+        $sorted = [];
+        foreach ($order as $label) {
+            if (isset($counts[$label])) {
+                $sorted[$label] = $counts[$label];
+                unset($counts[$label]);
+            }
+        }
+        arsort($counts, SORT_NUMERIC);
+
+        return $sorted + $counts;
     }
 
     /**

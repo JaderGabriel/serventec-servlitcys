@@ -73,9 +73,7 @@
                                         <div class="text-xs text-slate-500">{{ $campaign->uf }}@if($campaign->ibge_municipio) · {{ $campaign->ibge_municipio }}@endif</div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $campaign->isAnalysisOnly() ? 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100' : 'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100' }}">
-                                            {{ $campaign->profileLabel() }}
-                                        </span>
+                                        @include('clio.partials.profile-mark', ['analysisOnly' => $campaign->isAnalysisOnly()])
                                     </td>
                                     <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ $campaign->statusLabel() }}</td>
                                     <td class="px-4 py-3 text-right tabular-nums">
@@ -110,6 +108,58 @@
                     </div>
                 @endif
             </section>
+
+            @if ($citiesWithoutCampaign->isNotEmpty())
+                <section aria-labelledby="clio-table-pending-heading" class="serv-panel overflow-hidden">
+                    <div class="border-b border-slate-100 px-4 py-4 dark:border-slate-800">
+                        <h3 id="clio-table-pending-heading" class="font-display font-semibold text-base text-serv-navy dark:text-white">
+                            {{ __('Municípios sem coleta em :ano', ['ano' => $filterYear]) }}
+                        </h3>
+                        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                            {{ __('Já estão no catálogo Clio, mas ainda sem coleta neste exercício.') }}
+                            @if ($citiesWithoutCampaignTotal > $citiesWithoutCampaign->count())
+                                {{ __('Mostrando :n de :t.', ['n' => $citiesWithoutCampaign->count(), 't' => $citiesWithoutCampaignTotal]) }}
+                            @endif
+                        </p>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-slate-50 dark:bg-slate-900/60 text-left text-xs uppercase tracking-wide text-slate-500">
+                                <tr>
+                                    <th class="px-4 py-3 font-medium">{{ __('Município') }}</th>
+                                    <th class="px-4 py-3 font-medium">{{ __('IBGE') }}</th>
+                                    <th class="px-4 py-3 font-medium">{{ __('Perfil') }}</th>
+                                    <th class="px-4 py-3 font-medium"></th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                @foreach ($citiesWithoutCampaign as $city)
+                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-serv-navy dark:text-white">{{ $city->name }}</div>
+                                            <div class="text-xs text-slate-500">{{ $city->uf }}</div>
+                                        </td>
+                                        <td class="px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
+                                            {{ $city->ibge_municipio ?: '—' }}
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            @include('clio.partials.profile-mark', ['analysisOnly' => ! $city->hasDataSetup()])
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            @can('create', App\Models\Clio\ClioCampaign::class)
+                                                <a
+                                                    href="{{ route('clio.campaigns.create', ['city_id' => $city->id, 'year' => $filterYear]) }}"
+                                                    class="serv-link text-sm font-medium"
+                                                >{{ __('Iniciar coleta') }}</a>
+                                            @endcan
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            @endif
         </div>
     </div>
 </x-app-layout>

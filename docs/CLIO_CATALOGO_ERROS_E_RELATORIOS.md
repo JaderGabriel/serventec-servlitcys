@@ -95,6 +95,7 @@ Disponível no painel municipal quando há `INF-MAT` e/ou `INF-TUR` após a aná
 | Matrícula por modalidade (Acomp) | Totais curricular / AEE / AC no Acomp | Conferência portal |
 | Etapa agregada e mediação | Relação turma | Anos iniciais/finais, presencial… |
 | Inclusão (heurística) | `INF-NEE` | Sinais NEE/TEA/AH quando há colunas |
+| Transporte escolar | `INF-TRA` | Uso / poder público / veículo quando há colunas |
 | Por escola | Cruzamento escola × Acomp × relações | Flags: delta curricular, AEE/AC sem turma, alunos sem turma |
 | Apontamentos do relatório | Subconjunto de `CLIO-*` (ver §5.2) | Correção prioritária |
 | Notas de qualidade | Presenter | Limitações dos CSV importados |
@@ -115,6 +116,7 @@ Geradas por `CampaignAnalyzer` (Modo A) e `IeducarGapAnalyzer` (Modo B). Aparece
 | **INF-TUR** | Turmas | Total e composição curricular/AEE/AC; por etapa/mediação | `by_tipo_bucket`, `by_etapa_*`, `schools` |
 | **INF-DOC** | Profissionais | Vínculos × turmas; turmas sem profissional | `by_turma`, `turmas_sem_docente`, `ratio` |
 | **INF-NEE** | Inclusão / NEE | Alunos com deficiência/TEA/AH | `flagged`, `by_nee`, `has_nee_columns` |
+| **INF-TRA** | Transporte escolar | Uso de transporte; coerência poder público/veículo | `flagged`, `pct`, `by_transporte`, `by_poder_publico`, `by_veiculo` |
 | **INF-DEM** | Perfil demográfico | Cor/Raça, sexo, faixa etária; cobertura de colunas | `by_cor_raca`, `by_sexo`, `by_faixa_etaria`, `columns` |
 | **INF-DIS** | Distorção idade-série | % com atraso ≥2 anos (EF/EM); por etapa | `pct_distorcao`, `by_etapa`, `eligible` |
 | **INF-DEN** | Densidade aluno/turma | Média, turmas vazias, turmas ≥40 | `media_alunos_por_turma`, `turmas_ge_40` |
@@ -149,6 +151,9 @@ A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
 | **CLIO-DEM-SEM-COR** | Informação | Rede | Export sem coluna Cor/Raça |
 | **CLIO-DEM-SEM-SEXO** | Informação | Rede | Export sem coluna Sexo |
 | **CLIO-DEM-SEM-NEE** | Informação | Rede | Export sem colunas de deficiência/TEA/AH |
+| **CLIO-TRA-SEM-COL** | Informação | Rede | Export sem colunas de transporte escolar |
+| **CLIO-TRA-VAZIO** | Atenção | Rede | ≥20% das matrículas sem uso de transporte informado |
+| **CLIO-TRA-SEM-PODER** | Atenção | Rede | Usa transporte sem poder público responsável (≥10% dos que usam) |
 | **CLIO-DEM-COR-VAZIO** | Atenção | Rede | ≥20% das matrículas com Cor/Raça em branco |
 | **CLIO-DIS-SEM-NASC** | Informação | Rede | Sem Data de nascimento para distorção |
 | **CLIO-DIS-ALTA** | Atenção | Rede | Distorção estimada ≥20% no escopo EF/EM |
@@ -261,7 +266,7 @@ flowchart LR
 - Aprovação, abandono e rendimento escolar → **2ª etapa** (Situação do aluno)
 - IDEB e indicadores oficiais publicados pelo INEP → microdados / portais oficiais (não estes CSV)
 - Vulnerabilidade social (CadÚnico / Bolsa Família) → não vem nas Relações Educacenso
-- Transporte escolar detalhado → depende de colunas no export (hoje tratado como cobertura)
+- Detalhe operacional de rotas PNATE → fora destes CSV (o Clio agrega uso/poder público/veículo quando o export traz as colunas — `INF-TRA`)
 
 **Ainda limitados pela qualidade dos CSV ou não persistidos como finding dedicado:**
 

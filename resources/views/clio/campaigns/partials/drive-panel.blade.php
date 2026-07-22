@@ -8,10 +8,10 @@
     $verifyResult = session('clio_drive_verify');
 @endphp
 
-<section class="serv-panel space-y-4 p-5 sm:p-6" aria-labelledby="clio-drive-heading">
+<section class="clio-panel clio-panel--pad space-y-4" aria-labelledby="clio-drive-heading">
     <div>
-        <p class="serv-eyebrow">{{ __('Google Drive') }}</p>
-        <h3 id="clio-drive-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white">
+        <p class="clio-eyebrow">{{ __('Google Drive') }}</p>
+        <h3 id="clio-drive-heading" class="clio-section-title text-base">
             {{ __('Pasta de dados da coleta') }}
         </h3>
         <p class="mt-1 text-sm text-slate-500">

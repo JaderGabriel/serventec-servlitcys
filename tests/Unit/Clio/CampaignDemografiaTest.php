@@ -109,4 +109,101 @@ final class CampaignDemografiaTest extends TestCase
         $this->assertCount(2, $bars);
         $this->assertSame('Parda', $bars[0]['label']);
     }
+
+    #[Test]
+    public function agrega_transporte_escolar_e_coerencia_com_poder_publico(): void
+    {
+        $rows = [
+            [
+                'Etapa de ensino' => 'Ensino Fundamental de 9 anos - 5º Ano',
+                'Código da turma' => 'T1',
+                'Transporte escolar' => 'Sim',
+                'Poder público responsável pelo transporte escolar' => 'Municipal',
+                'Tipo de veículo' => 'Ônibus',
+            ],
+            [
+                'Etapa de ensino' => 'Ensino Fundamental de 9 anos - 5º Ano',
+                'Código da turma' => 'T1',
+                'Transporte escolar' => 'Sim',
+                'Poder público responsável pelo transporte escolar' => '',
+                'Tipo de veículo' => 'Van',
+            ],
+            [
+                'Etapa de ensino' => 'Ensino Fundamental de 9 anos - 6º Ano',
+                'Código da turma' => 'T2',
+                'Transporte escolar' => 'Não',
+                'Poder público responsável pelo transporte escolar' => '',
+                'Tipo de veículo' => '',
+            ],
+            [
+                'Etapa de ensino' => 'Ensino Fundamental de 9 anos - 6º Ano',
+                'Código da turma' => 'T2',
+                'Transporte escolar' => '',
+                'Poder público responsável pelo transporte escolar' => '',
+                'Tipo de veículo' => '',
+            ],
+        ];
+
+        $agg = (new RelationCsvAggregator)->aggregateAlunos($rows, new CsvReader, 2026);
+
+        $this->assertTrue($agg['columns']['transporte']);
+        $this->assertTrue($agg['columns']['poder_publico_transporte']);
+        $this->assertTrue($agg['columns']['veiculo_transporte']);
+        $this->assertSame(2, $agg['transporte_flagged']);
+        $this->assertSame(1, $agg['without_transporte']);
+        $this->assertSame(1, $agg['transporte_sem_poder']);
+        $this->assertSame(2, $agg['by_transporte'][__('Sim')] ?? $agg['by_transporte']['Sim'] ?? 0);
+        $this->assertSame(1, $agg['by_transporte'][__('Não')] ?? $agg['by_transporte']['Não'] ?? 0);
+        $this->assertSame(1, $agg['by_poder_publico_transporte']['Municipal'] ?? 0);
+    }
+
+    #[Test]
+    public function presenter_monta_barras_de_transporte(): void
+    {
+        $campaign = new ClioCampaign([
+            'municipality_name' => 'Mairi',
+            'year' => 2026,
+            'status' => ClioCampaign::STATUS_ANALYZED,
+        ]);
+        $campaign->setRelation('schools', new Collection);
+        $campaign->setRelation('artifacts', new Collection);
+
+        $inferences = collect([
+            'INF-TRA' => new ClioCampaignInference([
+                'code' => 'INF-TRA',
+                'summary' => 'Alunos que usam transporte escolar: 2 de 4 (50%).',
+                'payload' => [
+                    'flagged' => 2,
+                    'scanned' => 4,
+                    'pct' => 50.0,
+                    'by_transporte' => ['Sim' => 2, 'Não' => 1, 'Não informado' => 1],
+                    'by_poder_publico' => ['Municipal' => 1, 'Não informado' => 3],
+                    'by_veiculo' => ['Ônibus' => 1, 'Van' => 1],
+                    'has_transporte_columns' => true,
+                    'has_poder_publico' => true,
+                    'has_veiculo' => true,
+                ],
+            ]),
+        ]);
+
+        $dash = (new CampaignAnalysisPresenter)->present(
+            $campaign,
+            [
+                'schools_total' => 0,
+                'schools_triade_complete' => 0,
+                'triade_coverage_pct' => 0,
+                'has_acomp' => false,
+                'schools' => [],
+            ],
+            $inferences,
+            collect(),
+        );
+
+        $this->assertTrue($dash['profile']['available']);
+        $tra = collect($dash['profile']['coverage'])->firstWhere('key', 'transporte');
+        $this->assertTrue($tra['available']);
+        $this->assertNotEmpty($dash['profile']['by_transporte']);
+        $this->assertSame(2, $dash['profile']['transporte_flagged']);
+        $this->assertContains('INF-TRA', collect($dash['highlights'])->pluck('code')->all());
+    }
 }

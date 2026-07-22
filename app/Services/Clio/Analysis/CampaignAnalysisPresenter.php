@@ -283,7 +283,7 @@ final class CampaignAnalysisPresenter
         ];
 
         $highlights = [];
-        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-DEM', 'INF-DIS', 'INF-DEN', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
+        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-TRA', 'INF-DEM', 'INF-DIS', 'INF-DEN', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
             $inf = $inferences->get($code);
             if ($inf === null) {
                 continue;
@@ -1077,11 +1077,14 @@ final class CampaignAnalysisPresenter
     {
         $dem = $inferences->get('INF-DEM');
         $nee = $inferences->get('INF-NEE');
+        $tra = $inferences->get('INF-TRA');
         $demPayload = is_array($dem?->payload) ? $dem->payload : [];
         $neePayload = is_array($nee?->payload) ? $nee->payload : [];
+        $traPayload = is_array($tra?->payload) ? $tra->payload : [];
         $cols = is_array($demPayload['columns'] ?? null) ? $demPayload['columns'] : [];
         $agg = new RelationCsvAggregator;
-        $scanned = (int) ($demPayload['scanned'] ?? $neePayload['scanned'] ?? 0);
+        $scanned = (int) ($demPayload['scanned'] ?? $neePayload['scanned'] ?? $traPayload['scanned'] ?? 0);
+        $hasTra = (bool) ($cols['transporte'] ?? $traPayload['has_transporte_columns'] ?? false);
 
         $coverage = [
             [
@@ -1119,9 +1122,9 @@ final class CampaignAnalysisPresenter
             [
                 'key' => 'transporte',
                 'label' => __('Transporte escolar'),
-                'available' => (bool) ($cols['transporte'] ?? false),
-                'hint' => ($cols['transporte'] ?? false)
-                    ? __('Coluna detectada (agregação futura)')
+                'available' => $hasTra,
+                'hint' => $hasTra
+                    ? __('Uso, poder público e/ou veículo agregados quando presentes')
                     : __('Não detectado neste export'),
             ],
             [
@@ -1151,8 +1154,8 @@ final class CampaignAnalysisPresenter
         $doc = $inferences->get('INF-DOC');
 
         return [
-            'available' => $dem !== null || $nee !== null || $dis !== null || $den !== null,
-            'summary' => $dem?->summary ?? $nee?->summary,
+            'available' => $dem !== null || $nee !== null || $tra !== null || $dis !== null || $den !== null,
+            'summary' => $dem?->summary ?? $nee?->summary ?? $tra?->summary,
             'scanned' => $scanned,
             'coverage' => $coverage,
             'by_cor_raca' => $agg->toBars(is_array($demPayload['by_cor_raca'] ?? null) ? $demPayload['by_cor_raca'] : [], 10),
@@ -1160,6 +1163,12 @@ final class CampaignAnalysisPresenter
             'by_faixa_etaria' => $agg->toBars(is_array($demPayload['by_faixa_etaria'] ?? null) ? $demPayload['by_faixa_etaria'] : [], 8),
             'by_nee' => $agg->toBars(is_array($neePayload['by_nee'] ?? null) ? $neePayload['by_nee'] : [], 8),
             'nee_flagged' => (int) ($neePayload['flagged'] ?? 0),
+            'by_transporte' => $agg->toBars(is_array($traPayload['by_transporte'] ?? null) ? $traPayload['by_transporte'] : [], 6),
+            'by_poder_publico_transporte' => $agg->toBars(is_array($traPayload['by_poder_publico'] ?? null) ? $traPayload['by_poder_publico'] : [], 8),
+            'by_veiculo_transporte' => $agg->toBars(is_array($traPayload['by_veiculo'] ?? null) ? $traPayload['by_veiculo'] : [], 8),
+            'transporte_flagged' => (int) ($traPayload['flagged'] ?? 0),
+            'transporte_pct' => $traPayload['pct'] ?? null,
+            'transporte_summary' => $tra?->summary,
             'social_note' => $demPayload['social_note']
                 ?? __('Vulnerabilidade social (CadÚnico/Bolsa Família) não está nos CSV da 1ª etapa do Educacenso.'),
             'privacy_note' => __('Somente contagens agregadas — nenhum nome, CPF ou NIS é exibido.'),
@@ -1259,6 +1268,7 @@ final class CampaignAnalysisPresenter
             'INF-TUR' => __('Turmas'),
             'INF-DOC' => __('Profissionais'),
             'INF-NEE' => __('Inclusão / NEE'),
+            'INF-TRA' => __('Transporte escolar'),
             'INF-DEM' => __('Perfil demográfico'),
             'INF-DIS' => __('Distorção idade-série'),
             'INF-DEN' => __('Densidade aluno/turma'),
@@ -1280,6 +1290,7 @@ final class CampaignAnalysisPresenter
             'INF-TUR' => __('Turmas por etapa, mediação e tipo (curricular, AEE, atividade complementar).'),
             'INF-DOC' => __('Volume de profissionais/vínculos nas relações enviadas.'),
             'INF-NEE' => __('Sinais de atendimento educacional especializado / NEE.'),
+            'INF-TRA' => __('Uso de transporte escolar e coerência com poder público / veículo, quando o export traz as colunas.'),
             'INF-DEM' => __('Cor/Raça, sexo e faixa etária agregados a partir das Relações de alunos.'),
             'INF-DIS' => __('Proporção de alunos com 2 ou mais anos acima da idade esperada para a série (estimativa INEP).'),
             'INF-DEN' => __('Média de alunos por turma e turmas vazias ou muito cheias.'),

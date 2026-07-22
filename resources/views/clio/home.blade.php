@@ -164,15 +164,13 @@
                                 <div class="flex items-start justify-between gap-2">
                                     <div class="min-w-0">
                                         <p class="clio-report-card__meta">
-                                            {{ __('Relatório') }} · {{ $campaign->uf }}
+                                            {{ $campaign->ibge_municipio ?: '—' }} · {{ $campaign->uf }}
                                         </p>
                                         <h4 class="clio-report-card__title">
                                             {{ $campaign->municipality_name }}
                                         </h4>
                                     </div>
-                                    <span class="clio-chip clio-chip--upper {{ $campaign->isAnalysisOnly() ? 'clio-chip--profile-lite' : 'clio-chip--profile' }}">
-                                        {{ $campaign->profileLabel() }}
-                                    </span>
+                                    @include('clio.partials.profile-mark', ['analysisOnly' => $campaign->isAnalysisOnly()])
                                 </div>
 
                                 <div class="clio-report-card__chips">
@@ -260,41 +258,6 @@
                     </div>
                 @endif
             </section>
-
-            @if ($citiesWithoutCampaign->isNotEmpty())
-                <section aria-labelledby="clio-home-pending-heading" class="clio-panel overflow-hidden">
-                    <div class="clio-pending__head">
-                        <h3 id="clio-home-pending-heading" class="clio-section-title">
-                            {{ __('Municípios sem coleta em :ano', ['ano' => $filterYear]) }}
-                        </h3>
-                        <p class="clio-section-lead">
-                            {{ __('Já estão no catálogo Clio, mas ainda sem relatório neste exercício.') }}
-                            @if ($citiesWithoutCampaignTotal > $citiesWithoutCampaign->count())
-                                {{ __('Mostrando :n de :t.', ['n' => $citiesWithoutCampaign->count(), 't' => $citiesWithoutCampaignTotal]) }}
-                            @endif
-                        </p>
-                    </div>
-                    <ul class="clio-pending__list">
-                        @foreach ($citiesWithoutCampaign as $city)
-                            <li class="clio-pending__item">
-                                <div>
-                                    <p class="font-medium text-serv-navy dark:text-white">{{ $city->name }}</p>
-                                    <p class="text-xs text-slate-500">
-                                        {{ $city->uf }}
-                                        @if ($city->ibge_municipio) · {{ $city->ibge_municipio }} @endif
-                                        · {{ $city->hasDataSetup() ? __('Consultoria') : __('Só coleta') }}
-                                    </p>
-                                </div>
-                                @can('create', App\Models\Clio\ClioCampaign::class)
-                                    <a href="{{ route('clio.campaigns.create', ['city_id' => $city->id, 'year' => $filterYear]) }}" class="serv-btn-secondary text-sm shrink-0">
-                                        {{ __('Iniciar coleta') }}
-                                    </a>
-                                @endcan
-                            </li>
-                        @endforeach
-                    </ul>
-                </section>
-            @endif
         </div>
     </div>
 </x-app-layout>

@@ -66,6 +66,7 @@ final class CampaignAnalyzer
             $this->inferTurmas($campaign);
             $this->inferDocentes($campaign);
             $this->inferNee($campaign);
+            $this->inferTransporte($campaign);
             $this->inferDemografia($campaign);
             $this->inferDistorcao($campaign);
             $this->inferDensidade($campaign);
@@ -780,6 +781,113 @@ final class CampaignAnalyzer
         );
     }
 
+    private function inferTransporte(ClioCampaign $campaign): void
+    {
+        $flagged = 0;
+        $scanned = 0;
+        $without = 0;
+        $semPoder = 0;
+        $byTransporte = [];
+        $byPoder = [];
+        $byVeiculo = [];
+        $hasCol = false;
+        $hasPoderCol = false;
+        $hasVeiculoCol = false;
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+            $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
+            $scanned += (int) ($agg['total'] ?? 0);
+            $flagged += (int) ($agg['transporte_flagged'] ?? 0);
+            $without += (int) ($agg['without_transporte'] ?? 0);
+            $semPoder += (int) ($agg['transporte_sem_poder'] ?? 0);
+            $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+            if (! empty($cols['transporte'])) {
+                $hasCol = true;
+            }
+            if (! empty($cols['poder_publico_transporte'])) {
+                $hasPoderCol = true;
+            }
+            if (! empty($cols['veiculo_transporte'])) {
+                $hasVeiculoCol = true;
+            }
+            $byTransporte = $this->aggregator->mergeCounts(
+                $byTransporte,
+                is_array($agg['by_transporte'] ?? null) ? $agg['by_transporte'] : [],
+            );
+            $byPoder = $this->aggregator->mergeCounts(
+                $byPoder,
+                is_array($agg['by_poder_publico_transporte'] ?? null) ? $agg['by_poder_publico_transporte'] : [],
+            );
+            $byVeiculo = $this->aggregator->mergeCounts(
+                $byVeiculo,
+                is_array($agg['by_veiculo_transporte'] ?? null) ? $agg['by_veiculo_transporte'] : [],
+            );
+        }
+
+        if (! $hasCol && $scanned > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-TRA-SEM-COL',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('As Relações de alunos desta coleta não trouxeram colunas de transporte escolar — o indicador fica indisponível.'),
+            );
+        }
+
+        if ($hasCol && $scanned > 0 && $without > 0 && ($without / $scanned) >= 0.2) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-TRA-VAZIO',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Em :n de :s matrículas (:p%) o uso de transporte escolar não foi informado.', [
+                    'n' => $without,
+                    's' => $scanned,
+                    'p' => round(100 * $without / $scanned, 1),
+                ]),
+            );
+        }
+
+        if ($hasCol && $hasPoderCol && $flagged > 0 && $semPoder > 0 && ($semPoder / max(1, $flagged)) >= 0.1) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-TRA-SEM-PODER',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __(':n aluno(s) usam transporte escolar sem poder público responsável informado (:p% dos que usam).', [
+                    'n' => $semPoder,
+                    'p' => round(100 * $semPoder / max(1, $flagged), 1),
+                ]),
+            );
+        }
+
+        $pct = $scanned > 0 ? round(100 * $flagged / $scanned, 1) : 0;
+
+        $this->upsertInference(
+            $campaign,
+            'INF-TRA',
+            $hasCol
+                ? __('Alunos que usam transporte escolar: :n de :s (:p%).', [
+                    'n' => $flagged,
+                    's' => $scanned,
+                    'p' => $pct,
+                ])
+                : __('Transporte escolar: colunas não detectadas nas Relações importadas (:s linhas).', [
+                    's' => $scanned,
+                ]),
+            [
+                'flagged' => $flagged,
+                'scanned' => $scanned,
+                'pct' => $pct,
+                'without' => $without,
+                'sem_poder' => $semPoder,
+                'by_transporte' => $byTransporte,
+                'by_poder_publico' => $byPoder,
+                'by_veiculo' => $byVeiculo,
+                'has_transporte_columns' => $hasCol,
+                'has_poder_publico' => $hasPoderCol,
+                'has_veiculo' => $hasVeiculoCol,
+            ],
+        );
+    }
+
     /**
      * Perfil demográfico agregado (Cor/Raça, sexo, faixa etária) — sem PII.
      */
@@ -1354,6 +1462,12 @@ final class CampaignAnalyzer
             'by_faixa_etaria' => [],
             'by_nee' => [],
             'nee_flagged' => 0,
+            'by_transporte' => [],
+            'transporte_flagged' => 0,
+            'without_transporte' => 0,
+            'transporte_sem_poder' => 0,
+            'by_poder_publico_transporte' => [],
+            'by_veiculo_transporte' => [],
             'without_cor' => 0,
             'without_sexo' => 0,
             'without_nascimento' => 0,
@@ -1375,6 +1489,8 @@ final class CampaignAnalyzer
                 'nee' => false,
                 'transporte' => false,
                 'poder_publico' => false,
+                'poder_publico_transporte' => false,
+                'veiculo_transporte' => false,
             ],
         ];
     }
@@ -1421,6 +1537,12 @@ final class CampaignAnalyzer
             'by_faixa_etaria' => is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : [],
             'by_nee' => is_array($agg['by_nee'] ?? null) ? $agg['by_nee'] : [],
             'nee_flagged' => (int) ($agg['nee_flagged'] ?? 0),
+            'by_transporte' => is_array($agg['by_transporte'] ?? null) ? $agg['by_transporte'] : [],
+            'transporte_flagged' => (int) ($agg['transporte_flagged'] ?? 0),
+            'without_transporte' => (int) ($agg['without_transporte'] ?? 0),
+            'transporte_sem_poder' => (int) ($agg['transporte_sem_poder'] ?? 0),
+            'by_poder_publico_transporte' => is_array($agg['by_poder_publico_transporte'] ?? null) ? $agg['by_poder_publico_transporte'] : [],
+            'by_veiculo_transporte' => is_array($agg['by_veiculo_transporte'] ?? null) ? $agg['by_veiculo_transporte'] : [],
             'without_cor' => (int) ($agg['without_cor'] ?? 0),
             'without_sexo' => (int) ($agg['without_sexo'] ?? 0),
             'without_nascimento' => (int) ($agg['without_nascimento'] ?? 0),
@@ -1442,6 +1564,8 @@ final class CampaignAnalyzer
                 'nee' => (bool) ($cols['nee'] ?? false),
                 'transporte' => (bool) ($cols['transporte'] ?? false),
                 'poder_publico' => (bool) ($cols['poder_publico'] ?? false),
+                'poder_publico_transporte' => (bool) ($cols['poder_publico_transporte'] ?? false),
+                'veiculo_transporte' => (bool) ($cols['veiculo_transporte'] ?? false),
             ],
         ];
     }

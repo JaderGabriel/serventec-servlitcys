@@ -7,14 +7,15 @@
                     {{ $campaign->municipality_name }}
                 </h2>
                 @if (! empty($hub['reference_date']))
-                    <p class="mt-3 text-base font-bold text-serv-navy dark:text-white tracking-tight">
+                    <p class="clio-ref-date">
                         {{ __('Data de referência: :d', ['d' => $hub['reference_date']]) }}
                     </p>
                 @endif
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {{ $campaign->profileLabel() }} · {{ $campaign->statusLabel() }}
+                    <span class="clio-chip clio-chip--neutral">{{ $campaign->profileLabel() }}</span>
+                    <span class="clio-chip clio-chip--sky ms-1">{{ $campaign->statusLabel() }}</span>
                     @if (! empty($hub['last_activity']))
-                        · {{ __('Atualizado em :t', ['t' => $hub['last_activity']]) }}
+                        <span class="ms-2 text-xs text-slate-500">{{ __('Atualizado em :t', ['t' => $hub['last_activity']]) }}</span>
                     @endif
                 </p>
             </div>
@@ -45,14 +46,14 @@
                 <div class="clio-flash clio-flash--ok">{{ session('success') }}</div>
             @endif
 
-            <section aria-labelledby="clio-hub-kpi-heading">
-                <div class="clio-section-head mb-3">
+            <section class="clio-panel clio-panel--pad" aria-labelledby="clio-hub-kpi-heading">
+                <div class="clio-section-head mb-4">
                     <div>
                         <h3 id="clio-hub-kpi-heading" class="clio-section-title">{{ __('Indicadores da coleta') }}</h3>
                         <p class="clio-section-lead">{{ __('Resumo operacional antes de abrir o painel completo.') }}</p>
                     </div>
                 </div>
-                <div class="clio-kpi-grid">
+                <div class="clio-kpi-grid clio-kpi-grid--6">
                     <div class="clio-kpi-tile {{ $tileTone('sky') }}">
                         <p class="clio-kpi-tile__label">{{ __('Escolas') }}</p>
                         <p class="clio-kpi-tile__value {{ $toneClass('sky') }}">{{ number_format((int) ($hub['schools_total'] ?? 0)) }}</p>

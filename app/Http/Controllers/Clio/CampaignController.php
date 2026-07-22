@@ -69,11 +69,30 @@ class CampaignController extends Controller
             $comparativo['avg_triade'] = round((float) $triades->avg(), 1);
         }
 
+        $campaignCityIds = ClioCampaign::query()
+            ->where('year', $filterYear)
+            ->whereNotNull('city_id')
+            ->distinct()
+            ->pluck('city_id')
+            ->all();
+
+        $citiesWithoutCampaignQuery = City::query()
+            ->forClioCatalog()
+            ->when($campaignCityIds !== [], fn ($builder) => $builder->whereNotIn('id', $campaignCityIds))
+            ->orderBy('name');
+
+        $citiesWithoutCampaignTotal = (clone $citiesWithoutCampaignQuery)->count();
+        $citiesWithoutCampaign = $citiesWithoutCampaignQuery
+            ->limit(40)
+            ->get(['id', 'name', 'uf', 'ibge_municipio', 'db_host', 'db_database', 'db_username']);
+
         return view('clio.campaigns.index', [
             'campaigns' => $campaigns,
             'years' => $years,
             'filterYear' => $filterYear,
             'comparativo' => $comparativo,
+            'citiesWithoutCampaign' => $citiesWithoutCampaign,
+            'citiesWithoutCampaignTotal' => $citiesWithoutCampaignTotal,
         ]);
     }
 
