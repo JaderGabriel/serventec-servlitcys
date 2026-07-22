@@ -179,7 +179,7 @@ flowchart TB
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu usuário) | Implementado (5.0.0) |
 | Educacenso — conferência 1ª etapa (upload, cruzamento i-Educar, painel Censo) | Implementado (4.4.8) |
-| **Clio** — coletas Educacenso 1ª etapa (CSV/ZIP, INF-*, cruzamento i-Educar, export CSV/PDF, bloco RX) | Implementado (dev 7.0.3+; S1–S6) — [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · próximo S7 BI / S8 promote |
+| **Clio** — coletas Educacenso 1ª etapa (CSV/ZIP, INF-* incl. DEM/DIS/DEN, cruzamento i-Educar, export CSV/PDF, bloco RX) | Implementado (dev 7.0.3+; S1–S6) — [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · próximo S7 BI / S8 promote |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |

@@ -502,6 +502,99 @@
                     </section>
                 @endif
 
+                {{-- Medidores 1ª etapa: distorção, densidade, docentes --}}
+                @php $metrics = $dashboard['stage_metrics'] ?? []; @endphp
+                @if (! empty($metrics['available']))
+                    <section aria-labelledby="clio-metrics-heading" class="space-y-4">
+                        <div>
+                            <h3 id="clio-metrics-heading" class="clio-section-title">{{ __('Medidores da Matrícula inicial') }}</h3>
+                            <p class="mt-1 text-sm text-slate-500 max-w-3xl">
+                                {{ __('Estimativas a partir dos CSV desta etapa: distorção idade-série, densidade aluno/turma e cobertura de profissionais. Não substituem os indicadores oficiais publicados pelo INEP.') }}
+                            </p>
+                        </div>
+                        <div class="clio-kpi-grid">
+                            @php $d = $metrics['distortion'] ?? []; @endphp
+                            <div class="clio-kpi-tile {{ $tileTone($d['tone'] ?? 'slate') }}">
+                                <p class="clio-kpi-tile__label">{{ __('Distorção idade-série') }}</p>
+                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass($d['tone'] ?? 'slate') }}">
+                                    {{ $d['pct'] === null ? '—' : number_format((float) $d['pct'], 1, ',', '.').'%' }}
+                                </p>
+                                <p class="clio-kpi-tile__hint">
+                                    {{ __(':n de :e no escopo EF/EM', ['n' => $d['distorcao'] ?? 0, 'e' => $d['eligible'] ?? 0]) }}
+                                </p>
+                            </div>
+                            @php $den = $metrics['density'] ?? []; @endphp
+                            <div class="clio-kpi-tile {{ $tileTone($den['tone'] ?? 'slate') }}">
+                                <p class="clio-kpi-tile__label">{{ __('Média alunos/turma') }}</p>
+                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass($den['tone'] ?? 'slate') }}">
+                                    {{ $den['media'] === null ? '—' : number_format((float) $den['media'], 1, ',', '.') }}
+                                </p>
+                                <p class="clio-kpi-tile__hint">
+                                    {{ __('≥40 alunos: :n · vazias: :v', ['n' => $den['turmas_ge_40'] ?? 0, 'v' => $den['turmas_sem_aluno'] ?? 0]) }}
+                                </p>
+                            </div>
+                            @php $st = $metrics['staff'] ?? []; @endphp
+                            <div class="clio-kpi-tile {{ $tileTone($st['tone'] ?? 'slate') }}">
+                                <p class="clio-kpi-tile__label">{{ __('Turmas sem profissional') }}</p>
+                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass($st['tone'] ?? 'slate') }}">
+                                    {{ number_format((int) ($st['turmas_sem_docente'] ?? 0)) }}
+                                </p>
+                                <p class="clio-kpi-tile__hint">
+                                    {{ __('Com vínculo: :c · média :r/turma', [
+                                        'c' => $st['turmas_com_docente'] ?? 0,
+                                        'r' => $st['ratio'] ?? '—',
+                                    ]) }}
+                                </p>
+                            </div>
+                            <div class="clio-kpi-tile clio-kpi-tile--slate">
+                                <p class="clio-kpi-tile__label">{{ __('Adequados / atraso 1 ano') }}</p>
+                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm">
+                                    {{ ($d['adequado'] ?? 0).' / '.($d['atraso_1'] ?? 0) }}
+                                </p>
+                                <p class="clio-kpi-tile__hint">{{ __('Adiantados: :n', ['n' => $d['adiantado'] ?? 0]) }}</p>
+                            </div>
+                        </div>
+                        @if (! empty($d['note']))
+                            <div class="clio-note">
+                                <p class="clio-note__title">{{ __('Como lemos a distorção') }}</p>
+                                <p class="mt-1 text-xs leading-relaxed">{{ $d['note'] }}</p>
+                            </div>
+                        @endif
+                        @if (! empty($d['by_etapa']))
+                            <div class="clio-panel overflow-hidden">
+                                <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                                    <h4 class="clio-section-title">{{ __('Distorção por etapa / ano') }}</h4>
+                                    <p class="text-xs text-slate-500">{{ __('Ordenado pelas etapas com mais alunos em distorção (≥2 anos).') }}</p>
+                                </div>
+                                <div class="clio-table-wrap">
+                                    <table class="clio-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="px-4 py-2 font-medium">{{ __('Etapa') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right">{{ __('No escopo') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right">{{ __('Distorção') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right">{{ __('%') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right">{{ __('Atraso 1 ano') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                            @foreach ($d['by_etapa'] as $row)
+                                                <tr>
+                                                    <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
+                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['eligible'] }}</td>
+                                                    <td class="px-4 py-2 text-right tabular-nums {{ ($row['distorcao'] ?? 0) > 0 ? 'text-rose-700 dark:text-rose-300 font-medium' : '' }}">{{ $row['distorcao'] }}</td>
+                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['pct'] === null ? '—' : number_format((float) $row['pct'], 1, ',', '.').'%' }}</td>
+                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['atraso_1'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+                    </section>
+                @endif
+
                 {{-- Relatório da rede (Matrícula inicial / Educacenso) --}}
                 @if (! empty($dashboard['report']['available']))
                     @php $report = $dashboard['report']; @endphp

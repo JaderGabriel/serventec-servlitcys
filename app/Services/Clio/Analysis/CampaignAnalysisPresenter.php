@@ -213,7 +213,7 @@ final class CampaignAnalysisPresenter
         ];
 
         $highlights = [];
-        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-DEM', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
+        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-DEM', 'INF-DIS', 'INF-DEN', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
             $inf = $inferences->get($code);
             if ($inf === null) {
                 continue;
@@ -231,6 +231,7 @@ final class CampaignAnalysisPresenter
         $schoolsOverview = $this->buildSchoolsOverview($campaign, $schoolRows);
         $crossChecks = $this->buildCrossChecks($inferences, $findings);
         $profile = $this->buildProfileSection($inferences);
+        $stageMetrics = $this->buildStageMetricsSection($inferences);
 
         $counters = [
             'errors' => $errors->count(),
@@ -266,6 +267,7 @@ final class CampaignAnalysisPresenter
             'schools_overview' => $schoolsOverview,
             'cross_checks' => $crossChecks,
             'profile' => $profile,
+            'stage_metrics' => $stageMetrics,
             'report' => $report,
             'highlights' => $highlights,
             'schools' => $schoolRows,
@@ -1038,10 +1040,28 @@ final class CampaignAnalysisPresenter
                 'available' => false,
                 'hint' => __('Não vem no Educacenso — use CadÚnico / módulo próprio'),
             ],
+            [
+                'key' => 'distorcao',
+                'label' => __('Distorção idade-série'),
+                'available' => (bool) ($cols['nascimento'] ?? false),
+                'hint' => ($cols['nascimento'] ?? false)
+                    ? __('Calculável com nascimento + etapa seriada')
+                    : __('Precisa de Data de nascimento + etapa'),
+            ],
+            [
+                'key' => 'rendimento',
+                'label' => __('Aprovação / abandono'),
+                'available' => false,
+                'hint' => __('Só na 2ª etapa (Situação do aluno) — fora deste pacote'),
+            ],
         ];
 
+        $dis = $inferences->get('INF-DIS');
+        $den = $inferences->get('INF-DEN');
+        $doc = $inferences->get('INF-DOC');
+
         return [
-            'available' => $dem !== null || $nee !== null,
+            'available' => $dem !== null || $nee !== null || $dis !== null || $den !== null,
             'summary' => $dem?->summary ?? $nee?->summary,
             'scanned' => $scanned,
             'coverage' => $coverage,
@@ -1053,6 +1073,79 @@ final class CampaignAnalysisPresenter
             'social_note' => $demPayload['social_note']
                 ?? __('Vulnerabilidade social (CadÚnico/Bolsa Família) não está nos CSV da 1ª etapa do Educacenso.'),
             'privacy_note' => __('Somente contagens agregadas — nenhum nome, CPF ou NIS é exibido.'),
+            'has_dis' => $dis !== null,
+            'has_den' => $den !== null,
+            'has_doc' => $doc !== null,
+        ];
+    }
+
+    /**
+     * Medidores da 1ª etapa: distorção, densidade, docentes.
+     *
+     * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @return array<string, mixed>
+     */
+    private function buildStageMetricsSection(Collection $inferences): array
+    {
+        $dis = $inferences->get('INF-DIS');
+        $den = $inferences->get('INF-DEN');
+        $doc = $inferences->get('INF-DOC');
+        $disPayload = is_array($dis?->payload) ? $dis->payload : [];
+        $denPayload = is_array($den?->payload) ? $den->payload : [];
+        $docPayload = is_array($doc?->payload) ? $doc->payload : [];
+
+        $pct = $disPayload['pct_distorcao'] ?? null;
+        $disTone = 'slate';
+        if (is_numeric($pct)) {
+            $disTone = ((float) $pct) >= 20 ? 'rose' : (((float) $pct) >= 10 ? 'amber' : 'emerald');
+        }
+
+        $etapaRows = [];
+        foreach (is_array($disPayload['by_etapa'] ?? null) ? $disPayload['by_etapa'] : [] as $etapa => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $etapaRows[] = [
+                'etapa' => $etapa,
+                'eligible' => (int) ($row['eligible'] ?? 0),
+                'distorcao' => (int) ($row['distorcao'] ?? 0),
+                'atraso_1' => (int) ($row['atraso_1'] ?? 0),
+                'adequado' => (int) ($row['adequado'] ?? 0),
+                'pct' => $row['pct_distorcao'] ?? null,
+            ];
+        }
+
+        return [
+            'available' => $dis !== null || $den !== null || ($doc !== null && isset($docPayload['turmas_sem_docente'])),
+            'distortion' => [
+                'summary' => $dis?->summary,
+                'pct' => $pct,
+                'eligible' => (int) ($disPayload['eligible'] ?? 0),
+                'distorcao' => (int) ($disPayload['distorcao'] ?? 0),
+                'atraso_1' => (int) ($disPayload['atraso_1'] ?? 0),
+                'adequado' => (int) ($disPayload['adequado'] ?? 0),
+                'adiantado' => (int) ($disPayload['adiantado'] ?? 0),
+                'tone' => $disTone,
+                'note' => $disPayload['method_note'] ?? null,
+                'by_etapa' => $etapaRows,
+            ],
+            'density' => [
+                'summary' => $den?->summary,
+                'media' => $denPayload['media_alunos_por_turma'] ?? null,
+                'turmas_com_aluno' => (int) ($denPayload['turmas_com_aluno'] ?? 0),
+                'turmas_sem_aluno' => (int) ($denPayload['turmas_sem_aluno'] ?? 0),
+                'turmas_ge_40' => (int) ($denPayload['turmas_ge_40'] ?? 0),
+                'max' => (int) ($denPayload['max_alunos_turma'] ?? 0),
+                'tone' => ((int) ($denPayload['turmas_ge_40'] ?? 0)) > 0 ? 'amber' : 'emerald',
+            ],
+            'staff' => [
+                'summary' => $doc?->summary,
+                'rows' => (int) ($docPayload['relacao_profissional_rows'] ?? 0),
+                'turmas_com_docente' => (int) ($docPayload['turmas_com_docente'] ?? 0),
+                'turmas_sem_docente' => (int) ($docPayload['turmas_sem_docente'] ?? 0),
+                'ratio' => $docPayload['vinculos_por_turma'] ?? null,
+                'tone' => ((int) ($docPayload['turmas_sem_docente'] ?? 0)) > 0 ? 'amber' : 'emerald',
+            ],
         ];
     }
 
@@ -1077,6 +1170,8 @@ final class CampaignAnalysisPresenter
             'INF-DOC' => __('Profissionais'),
             'INF-NEE' => __('Inclusão / NEE'),
             'INF-DEM' => __('Perfil demográfico'),
+            'INF-DIS' => __('Distorção idade-série'),
+            'INF-DEN' => __('Densidade aluno/turma'),
             'INF-COE' => __('Coerência dos arquivos'),
             'INF-DUP' => __('Possíveis duplicidades'),
             'INF-DELTA' => __('Diferenças Acomp × Relações'),
@@ -1096,6 +1191,8 @@ final class CampaignAnalysisPresenter
             'INF-DOC' => __('Volume de profissionais/vínculos nas relações enviadas.'),
             'INF-NEE' => __('Sinais de atendimento educacional especializado / NEE.'),
             'INF-DEM' => __('Cor/Raça, sexo e faixa etária agregados a partir das Relações de alunos.'),
+            'INF-DIS' => __('Proporção de alunos com 2 ou mais anos acima da idade esperada para a série (estimativa INEP).'),
+            'INF-DEN' => __('Média de alunos por turma e turmas vazias ou muito cheias.'),
             'INF-COE' => __('Se cada escola tem o conjunto aluno + turma + profissional.'),
             'INF-DUP' => __('Indícios de registros repetidos nos arquivos.'),
             'INF-DELTA' => __('Quando o Acompanhamento e as relações não batem (curricular, AEE, AC).'),

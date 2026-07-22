@@ -3,6 +3,7 @@
 namespace App\Services\Clio\Parse;
 
 use App\Models\Clio\ClioCampaignArtifact;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use Throwable;
 
 /**
@@ -19,6 +20,7 @@ final class RelacaoProfissionalEscolaParser implements ArtifactParser
 
     public function __construct(
         private readonly CsvReader $csv,
+        private readonly ?RelationCsvAggregator $aggregator = null,
     ) {}
 
     public function supports(string $kind): bool
@@ -55,6 +57,8 @@ final class RelacaoProfissionalEscolaParser implements ArtifactParser
             }
         }
 
+        $agg = ($this->aggregator ?? new RelationCsvAggregator)->aggregateProfissionais($data['rows'], $this->csv);
+
         return new ParseResult(
             status: ParseResult::STATUS_OK,
             rowCount: count($data['rows']),
@@ -62,6 +66,7 @@ final class RelacaoProfissionalEscolaParser implements ArtifactParser
                 'header_offset' => self::HEADER_OFFSET,
                 'delimiter' => CsvReader::DELIMITER,
                 'dual_header' => true,
+                'aggregates' => $agg,
             ],
         );
     }

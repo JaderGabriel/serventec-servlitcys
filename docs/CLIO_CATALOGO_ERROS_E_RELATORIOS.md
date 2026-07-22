@@ -45,7 +45,8 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 | **Arquivo geral (Acomp)** | Nome do CSV, data ref, totais curricular/AEE/AC, a confirmar, bloqueadas, delta vs Relação |
 | **Panorama das escolas** | Contadores + barras por dependência, funcionamento, localização, forma de coleta |
 | **Conferências cruzadas** | Acomp × Relação aluno (rede); alunos × turmas por etapa/ano; apontamentos `CLIO-DELTA-REDE` / `CLIO-XCHK-ETAPA` |
-| **Perfil e indicadores possíveis** | Matriz disponível/indisponível (Cor/Raça, sexo, faixa etária, NEE, transporte, vulnerabilidade); histogramas agregados |
+| **Perfil e indicadores possíveis** | Matriz disponível/indisponível (Cor/Raça, sexo, faixa etária, NEE, transporte, vulnerabilidade, distorção, rendimento); histogramas agregados |
+| **Medidores da Matrícula inicial** | Distorção idade-série (`INF-DIS`), densidade aluno/turma (`INF-DEN`), turmas sem profissional (`INF-DOC`) |
 
 ### 2.3 Detalhe da escola `/clio/coletas/{uuid}/escolas/{inep}`
 
@@ -112,9 +113,11 @@ Geradas por `CampaignAnalyzer` (Modo A) e `IeducarGapAnalyzer` (Modo B). Aparece
 | **INF-ESC** | Rede escolar | Ativas vs extintas; dependência | `active`, `extinct`, `by_dependency` |
 | **INF-MAT** | Matrículas | Curricular + AEE + AC (Acomp) × linhas Relação aluno; por etapa | `acomp_*_sum`, `by_etapa_ensino`, `schools` |
 | **INF-TUR** | Turmas | Total e composição curricular/AEE/AC; por etapa/mediação | `by_tipo_bucket`, `by_etapa_*`, `schools` |
-| **INF-DOC** | Profissionais | Linhas Relação profissional | `relacao_profissional_rows` |
+| **INF-DOC** | Profissionais | Vínculos × turmas; turmas sem profissional | `by_turma`, `turmas_sem_docente`, `ratio` |
 | **INF-NEE** | Inclusão / NEE | Alunos com deficiência/TEA/AH | `flagged`, `by_nee`, `has_nee_columns` |
 | **INF-DEM** | Perfil demográfico | Cor/Raça, sexo, faixa etária; cobertura de colunas | `by_cor_raca`, `by_sexo`, `by_faixa_etaria`, `columns` |
+| **INF-DIS** | Distorção idade-série | % com atraso ≥2 anos (EF/EM); por etapa | `pct_distorcao`, `by_etapa`, `eligible` |
+| **INF-DEN** | Densidade aluno/turma | Média, turmas vazias, turmas ≥40 | `media_alunos_por_turma`, `turmas_ge_40` |
 | **INF-COE** | Coerência dos arquivos | Escolas sem tríade; se há Acomp | `triade_coverage_pct`, `has_acomp` |
 | **INF-DUP** | Possíveis duplicidades | IDs repetidos na Relação aluno (rede) | `duplicate_ids`, `unique_ids` |
 | **INF-DELTA** | Diferenças Acomp × Relações | Deltas curricular; AEE/AC sem turma | `divergent_*`, `samples` |
@@ -147,6 +150,11 @@ A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
 | **CLIO-DEM-SEM-SEXO** | Informação | Rede | Export sem coluna Sexo |
 | **CLIO-DEM-SEM-NEE** | Informação | Rede | Export sem colunas de deficiência/TEA/AH |
 | **CLIO-DEM-COR-VAZIO** | Atenção | Rede | ≥20% das matrículas com Cor/Raça em branco |
+| **CLIO-DIS-SEM-NASC** | Informação | Rede | Sem Data de nascimento para distorção |
+| **CLIO-DIS-ALTA** | Atenção | Rede | Distorção estimada ≥20% no escopo EF/EM |
+| **CLIO-DEN-TURMA-VAZIA** | Informação | Rede | Turmas sem aluno pelo Código da turma |
+| **CLIO-DEN-TURMA-CHEIA** | Atenção | Rede | Turmas com ≥40 alunos vinculados |
+| **CLIO-DOC-SEM-VINCULO** | Atenção | Rede | Turmas sem profissional na Relação |
 | **CLIO-DELTA-AC** | Informação | Escola | Acomp com AC > 0 sem turma de Atividade complementar |
 | **CLIO-GAP-CLIO** | Atenção | Escola | Escola na coleta Clio e **ausente** no snapshot i-Educar |
 | **CLIO-GAP-IEDUCAR** | Informação | Escola* | Escola no i-Educar e **ausente** na coleta Clio |
@@ -222,7 +230,7 @@ Na home, cartões usam trilho colorido: pronto / erro / interpretado / em prepar
 | `acomp_coleta_1etapa` | `Relatorio_Acomp_Coleta_1Etapa_*.csv` | Cadastro de escolas, status coleta, totais curricular/AEE/AC |
 | `relacao_aluno_escola` | `RelacaoAlunoEscola_*.csv` | Matrículas, etapa, duplicidades, NEE heurístico |
 | `relacao_turma_escola` | `RelacaoTurmaEscola_*.csv` | Turmas, etapa, tipo (curricular/AEE/AC), mediação |
-| `relacao_profissional_escola` | `RelacaoProfissionalEscola_*.csv` | Contagem de vínculos (INF-DOC) |
+| `relacao_profissional_escola` | `RelacaoProfissionalEscola_*.csv` | Vínculos por turma (INF-DOC / cobertura docente) |
 | `pacote_zip` | ZIP de pastas INEP | Ingestão; expandido para as relações |
 
 ---
@@ -243,9 +251,18 @@ flowchart LR
 
 ---
 
-## 10. O que ainda **não** é catálogo estável na UI
+## 10. Limitações da 1ª etapa e o que ainda **não** está no catálogo
 
-Itens previstos no roadmap Educacenso, mas ainda limitados pela qualidade dos CSV ou não persistidos como finding dedicado:
+**Possível com os CSV desta etapa (já no painel):** distorção idade-série estimada (`AgeGradeRules`, ref. 31/03), densidade aluno/turma, cobertura docente, perfil demográfico quando as colunas existem.
+
+**Fora do pacote Matrícula inicial / outra fonte:**
+
+- Aprovação, abandono e rendimento escolar → **2ª etapa** (Situação do aluno)
+- IDEB e indicadores oficiais publicados pelo INEP → microdados / portais oficiais (não estes CSV)
+- Vulnerabilidade social (CadÚnico / Bolsa Família) → não vem nas Relações Educacenso
+- Transporte escolar detalhado → depende de colunas no export (hoje tratado como cobertura)
+
+**Ainda limitados pela qualidade dos CSV ou não persistidos como finding dedicado:**
 
 - Pirâmide oficial só a partir do Acomp desagregado por etapa (quando o portal exportar todas as colunas)
 - NEE/TEA/AH fiável sem colunas de deficiência na Relação aluno

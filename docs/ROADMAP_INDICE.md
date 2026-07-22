@@ -59,7 +59,7 @@ flowchart TD
 | **Horizonte — PNAD** | UI modal pronta; falta pipeline SIDRA | [HOR-10](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) · [HOR-18](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) | Tabela `municipal_pnad_snapshots` vazia |
 | **Horizonte — v2.2** | Geo INEP escolas, IDHM, SIDRA ampliado, programas FNDE | [HORIZONTE.md](HORIZONTE.md) §11.3–§11.6 · `HOR-01`, `HOR-05`–`HOR-07` | — |
 | **Consultoria — SAEB** | Metas PNE / semáforo no quadro | [GRA-07](BACKLOG_IMPLEMENTACOES.md#b-painel--gráficos-e-inferências-mec--inep) · [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | Em andamento |
-| **Censo — Clio** | S1–S6 no código; próximo S7 BI / S8 promote | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [MODULO_CLIO…](modulos/MODULO_CLIO.md) | Em curso |
+| **Censo — Clio** | S1–S6 no código (painel + medidores 1ª etapa); próximo S7 BI / S8 promote | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [MODULO_CLIO…](modulos/MODULO_CLIO.md) | Em curso |
 | **Infra — CI** | `pdo_sqlite` / MySQL de testes no pipeline | [INF-04](BACKLOG_IMPLEMENTACOES.md#a-produto-e-infraestrutura) | Em andamento |
 | **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitetura-e-refactor-técnico) | Em andamento |
 

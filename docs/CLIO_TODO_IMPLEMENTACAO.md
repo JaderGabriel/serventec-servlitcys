@@ -115,7 +115,8 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 ### Motor
 - [x] Migration `clio_campaign_findings`, `clio_campaign_inferences`
 - [x] `Clio\Analysis\CampaignAnalyzer`
-- [x] Inferências: INF-COL, INF-ESC, INF-MAT, INF-TUR, INF-DOC, INF-NEE, INF-COE, INF-DUP, INF-DELTA
+- [x] Inferências: INF-COL, INF-ESC, INF-MAT, INF-TUR, INF-DOC, INF-NEE, INF-DEM, INF-DIS, INF-DEN, INF-COE, INF-DUP, INF-DELTA, INF-XCHK
+- [x] Medidores 1ª etapa no painel (distorção / densidade / docentes) + perfil demográfico
 - [x] Catálogo códigos `EDU-REL-*` / `CLIO-*`
 - [x] Completeness checklist (§4.5) → % cobertura tríade
 - [x] Status `analyzed`

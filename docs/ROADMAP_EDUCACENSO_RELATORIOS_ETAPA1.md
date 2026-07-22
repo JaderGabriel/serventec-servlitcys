@@ -404,10 +404,14 @@ IDs de implementação: **CEN-14** (ficha leve + scopes), **CEN-15** (vincular/d
 | **INF-ESC** | Rede: funcionamento, localização, dependência | `acomp_*` | Dimensionar + filtrar extintas |
 | **INF-MAT** | Totais matrícula curricular/AEE/AC + por etapa | `acomp_*` e/ou soma `relacao_aluno` | Volume 1ª etapa |
 | **INF-TUR** | Turmas por etapa / mediação / especial | `relacao_turma` | Perfil pedagógico |
-| **INF-DOC** | Profissionais e vínculos × turmas | `relacao_profissional` (+ turma) | Cobertura docente |
+| **INF-DOC** | Profissionais e vínculos × turmas (turmas sem docente) | `relacao_profissional` (+ turma) | Cobertura docente |
 | **INF-NEE** | Alunos com deficiência/TEA/AH e AEE | `relacao_aluno` (+ totais AEE acomp.) | Inclusão |
+| **INF-DEM** | Perfil demográfico (Cor/Raça, sexo, faixa etária) | `relacao_aluno` | Equidade / cobertura de colunas |
+| **INF-DIS** | Distorção idade-série (atraso ≥2 anos; escopo EF/EM; ref. 31/03) | `relacao_aluno` (nascimento + etapa) | Fluxo escolar (estimativa) |
+| **INF-DEN** | Densidade aluno/turma (média, vazias, ≥40) | aluno × turma | Coerência / lotação |
 | **INF-COE** | Coerência: aluno→turma inexistente; turma sem aluno; escola sem tríade | relações | Qualidade |
 | **INF-DUP** | CPF / identificação única duplicada na rede | `relacao_aluno` | Limpeza |
+| **INF-XCHK** | Conferências cruzadas Acomp × Relação e alunos × turmas por etapa | ambos | Consistência declaratória |
 | **INF-GAP** | Lacunas vs i-Educar | campanha × snapshot | Só Modo B |
 | **INF-DELTA** | Acomp. municipal vs soma das Relacoes | ambos | Divergência de declaração |
 
@@ -442,12 +446,15 @@ Disponível assim que a campanha estiver `analyzed`:
 | **Rede escolar** | Nº escolas ativas vs extintas; urbana/rural; dependência | `acomp_*` · INF-ESC |
 | **Matrícula inicial** | Total curricular, AEE, AC; pirâmide por etapa (creche→EJA/EAD) | `acomp_*` / soma alunos · INF-MAT |
 | **Turmas** | Distribuição por etapa, mediação, classe especial, carga horária | `relacao_turma` · INF-TUR |
-| **Profissionais** | Contagem por escola; vínculos vs turmas (heurística de cobertura) | `relacao_profissional` · INF-DOC |
+| **Profissionais** | Contagem por escola; vínculos vs turmas; turmas sem profissional | `relacao_profissional` · INF-DOC |
 | **Inclusão** | Alunos com NEE/TEA/AH; matrículas AEE vs curricular | `relacao_aluno` · INF-NEE |
-| **Qualidade declaratória** | Tríade incompleta; aluno sem turma; delta Acomp×Relacao; duplicidades | INF-COE / DELTA / DUP |
+| **Perfil demográfico** | Cor/Raça, sexo, faixa etária (quando as colunas existem no CSV) | `relacao_aluno` · INF-DEM |
+| **Distorção idade-série** | % com atraso ≥2 anos no EF/EM (estimativa; não substitui publicação INEP) | nascimento + etapa · INF-DIS |
+| **Densidade** | Média alunos/turma; turmas vazias ou muito cheias | códigos de turma · INF-DEN |
+| **Qualidade declaratória** | Tríade incompleta; aluno sem turma; delta Acomp×Relacao; conferências por etapa; duplicidades | INF-COE / DELTA / XCHK / DUP |
 | **Comparativo multi-município** | Ranking cobertura coleta e volume entre municípios da coleta | várias campanhas |
 
-**Não disponível** sem i-Educar: frequência, aprovação/abandono, discrepâncias cadastrais internas, repasses ligados ao cadastro local, «o que falta corrigir no sistema».
+**Não disponível** nesta etapa / sem i-Educar: aprovação/abandono (2ª etapa), frequência, IDEB oficial, vulnerabilidade CadÚnico, discrepâncias cadastrais internas, repasses ligados ao cadastro local, «o que falta corrigir no sistema».
 
 #### B) Consultoria (campanha + i-Educar)
 

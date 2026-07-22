@@ -44,12 +44,17 @@ final class RelationCsvAggregator
         ];
         $withoutEtapa = 0;
         $withoutTipo = 0;
+        $turmaCodes = [];
 
         foreach ($rows as $row) {
             $etapa = trim($csv->value($row, 'Etapa de ensino'));
             $agregada = trim($csv->value($row, 'Etapa Agregada'));
             $tipo = trim($csv->value($row, 'Tipo de turma'));
             $mediacao = trim($csv->value($row, 'Tipo de mediação'));
+            $codigo = trim($csv->value($row, 'Código da turma'));
+            if ($codigo !== '') {
+                $turmaCodes[$codigo] = true;
+            }
 
             if ($etapa === '') {
                 $withoutEtapa++;
@@ -80,6 +85,7 @@ final class RelationCsvAggregator
             'by_tipo_turma' => $this->sortDesc($byTipo),
             'by_mediacao' => $this->sortDesc($byMediacao),
             'by_tipo_bucket' => $buckets,
+            'turma_codes' => array_keys($turmaCodes),
             'without_etapa' => $withoutEtapa,
             'without_tipo' => $withoutTipo,
         ];
@@ -117,6 +123,7 @@ final class RelationCsvAggregator
         $bySexo = [];
         $byIdade = [];
         $byNee = [];
+        $byTurma = [];
         $withoutEtapa = 0;
         $withoutTurma = 0;
         $withoutCor = 0;
@@ -124,6 +131,17 @@ final class RelationCsvAggregator
         $withoutNasc = 0;
         $neeFlagged = 0;
         $refYear = $referenceYear ?? (int) date('Y');
+        $ageRules = new AgeGradeRules;
+        $ageGrade = [
+            'eligible' => 0,
+            'distorcao' => 0,
+            'atraso_1' => 0,
+            'adequado' => 0,
+            'adiantado' => 0,
+            'indefinido' => 0,
+            'excluido' => 0,
+            'by_etapa' => [],
+        ];
 
         $sampleHeaders = $rows[0] ?? [];
         $headerKeys = array_keys($sampleHeaders);
@@ -141,6 +159,8 @@ final class RelationCsvAggregator
 
             if ($turma === '') {
                 $withoutTurma++;
+            } else {
+                $byTurma[$turma] = ($byTurma[$turma] ?? 0) + 1;
             }
             if ($etapa === '') {
                 $withoutEtapa++;
@@ -167,6 +187,7 @@ final class RelationCsvAggregator
                 $bySexo[$sexo] = ($bySexo[$sexo] ?? 0) + 1;
             }
 
+            $nasc = '';
             if ($hasNasc) {
                 $nasc = $this->firstNonEmpty($csv, $row, ['Data de nascimento', 'Data Nascimento', 'Nascimento']);
                 $band = $this->ageBandFromDate($nasc, $refYear);
@@ -175,6 +196,33 @@ final class RelationCsvAggregator
                     $band = __('Não informado');
                 }
                 $byIdade[$band] = ($byIdade[$band] ?? 0) + 1;
+            }
+
+            if ($hasNasc || $etapa !== __('Não informado')) {
+                $cls = $ageRules->classify($etapa, $nasc, $refYear);
+                $status = $cls['status'];
+                $ageGrade[$status] = ($ageGrade[$status] ?? 0) + 1;
+                if (in_array($status, [
+                    AgeGradeRules::STATUS_ON_TRACK,
+                    AgeGradeRules::STATUS_EARLY,
+                    AgeGradeRules::STATUS_DELAY_1,
+                    AgeGradeRules::STATUS_DISTORTION,
+                ], true)) {
+                    $ageGrade['eligible']++;
+                    if (! isset($ageGrade['by_etapa'][$etapa])) {
+                        $ageGrade['by_etapa'][$etapa] = [
+                            'eligible' => 0,
+                            'distorcao' => 0,
+                            'atraso_1' => 0,
+                            'adequado' => 0,
+                            'adiantado' => 0,
+                        ];
+                    }
+                    $ageGrade['by_etapa'][$etapa]['eligible']++;
+                    if (isset($ageGrade['by_etapa'][$etapa][$status])) {
+                        $ageGrade['by_etapa'][$etapa][$status]++;
+                    }
+                }
             }
 
             if ($hasNee) {
@@ -188,11 +236,18 @@ final class RelationCsvAggregator
             }
         }
 
+        $eligible = max(0, (int) $ageGrade['eligible']);
+        $ageGrade['pct_distorcao'] = $eligible > 0
+            ? round(100 * ((int) $ageGrade['distorcao']) / $eligible, 1)
+            : null;
+        $ageGrade['by_etapa'] = $this->sortDescEtapaAge($ageGrade['by_etapa']);
+
         return [
             'total' => count($rows),
             'by_etapa_ensino' => $this->sortDesc($byEtapa),
             'without_etapa' => $withoutEtapa,
             'without_turma' => $withoutTurma,
+            'by_turma' => $this->sortDesc($byTurma),
             'by_cor_raca' => $this->sortDesc($byCor),
             'by_sexo' => $this->sortDesc($bySexo),
             'by_faixa_etaria' => $this->sortAgeBands($byIdade),
@@ -201,6 +256,7 @@ final class RelationCsvAggregator
             'without_cor' => $withoutCor,
             'without_sexo' => $withoutSexo,
             'without_nascimento' => $withoutNasc,
+            'age_grade' => $ageGrade,
             'columns' => [
                 'cor_raca' => $hasCor,
                 'sexo' => $hasSexo,
@@ -209,6 +265,73 @@ final class RelationCsvAggregator
                 'transporte' => $hasTransporte,
                 'poder_publico' => $hasPoderPublico,
             ],
+        ];
+    }
+
+    /**
+     * @param  array<string, array<string, int>>  $byEtapa
+     * @return array<string, array<string, int|float|null>>
+     */
+    private function sortDescEtapaAge(array $byEtapa): array
+    {
+        uasort($byEtapa, static fn (array $a, array $b): int => ($b['eligible'] ?? 0) <=> ($a['eligible'] ?? 0));
+        $out = [];
+        $i = 0;
+        foreach ($byEtapa as $label => $row) {
+            if ($i >= 25) {
+                break;
+            }
+            $elig = max(1, (int) ($row['eligible'] ?? 0));
+            $out[$label] = [
+                ...$row,
+                'pct_distorcao' => round(100 * ((int) ($row['distorcao'] ?? 0)) / $elig, 1),
+            ];
+            $i++;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<array<string, string>>  $rows
+     * @return array{
+     *   total: int,
+     *   by_turma: array<string, int>,
+     *   without_turma: int,
+     *   docente_rows: int
+     * }
+     */
+    public function aggregateProfissionais(array $rows, CsvReader $csv): array
+    {
+        $byTurma = [];
+        $withoutTurma = 0;
+        $docente = 0;
+
+        foreach ($rows as $row) {
+            $turma = trim($csv->value($row, 'Código da turma'));
+            $funcao = mb_strtolower(trim($csv->value($row, 'Função')));
+            if ($funcao === '') {
+                $funcao = mb_strtolower(trim($csv->value($row, 'Cargo')));
+            }
+            if ($turma === '') {
+                $withoutTurma++;
+            } else {
+                $byTurma[$turma] = ($byTurma[$turma] ?? 0) + 1;
+            }
+            if (
+                str_contains($funcao, 'docente')
+                || str_contains($funcao, 'professor')
+                || str_contains($funcao, 'educador')
+            ) {
+                $docente++;
+            }
+        }
+
+        return [
+            'total' => count($rows),
+            'by_turma' => $this->sortDesc($byTurma),
+            'without_turma' => $withoutTurma,
+            'docente_rows' => $docente > 0 ? $docente : count($rows),
         ];
     }
 

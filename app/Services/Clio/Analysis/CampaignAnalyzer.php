@@ -67,6 +67,8 @@ final class CampaignAnalyzer
             $this->inferDocentes($campaign);
             $this->inferNee($campaign);
             $this->inferDemografia($campaign);
+            $this->inferDistorcao($campaign);
+            $this->inferDensidade($campaign);
             $this->inferCoerencia($campaign);
             $this->inferDuplicidades($campaign);
             $this->inferDelta($campaign);
@@ -458,15 +460,272 @@ final class CampaignAnalyzer
 
     private function inferDocentes(ClioCampaign $campaign): void
     {
-        $rows = $campaign->artifacts
-            ->where('kind', 'relacao_profissional_escola')
-            ->sum(fn (ClioCampaignArtifact $a) => (int) ($a->row_count ?? 0));
+        $rows = 0;
+        $docenteRows = 0;
+        $withoutTurma = 0;
+        $byTurmaProf = [];
+        $turmaCodes = [];
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_profissional_escola') as $artifact) {
+            $agg = $this->resolveProfissionalAggregates($artifact);
+            $rows += (int) ($agg['total'] ?? 0);
+            $docenteRows += (int) ($agg['docente_rows'] ?? 0);
+            $withoutTurma += (int) ($agg['without_turma'] ?? 0);
+            $byTurmaProf = $this->aggregator->mergeCounts(
+                $byTurmaProf,
+                is_array($agg['by_turma'] ?? null) ? $agg['by_turma'] : [],
+            );
+        }
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_turma_escola') as $artifact) {
+            $turmaAgg = $this->resolveTurmaAggregates($artifact);
+            foreach (is_array($turmaAgg['turma_codes'] ?? null) ? $turmaAgg['turma_codes'] : [] as $code) {
+                $turmaCodes[$code] = true;
+            }
+        }
+
+        $turmasTotal = count($turmaCodes);
+        $turmasComDocente = 0;
+        $turmasSemDocente = 0;
+        foreach (array_keys($turmaCodes) as $code) {
+            if (($byTurmaProf[$code] ?? 0) > 0) {
+                $turmasComDocente++;
+            } else {
+                $turmasSemDocente++;
+            }
+        }
+
+        if ($turmasSemDocente > 0 && $turmasTotal > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DOC-SEM-VINCULO',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Há :n turma(s) sem profissional vinculado na Relação (de :t turmas com código).', [
+                    'n' => $turmasSemDocente,
+                    't' => $turmasTotal,
+                ]),
+            );
+        }
+
+        $ratio = $turmasTotal > 0 ? round($docenteRows / $turmasTotal, 2) : null;
 
         $this->upsertInference(
             $campaign,
             'INF-DOC',
-            __('Profissionais na Relação: :n linha(s) de vínculo.', ['n' => $rows]),
-            ['relacao_profissional_rows' => $rows],
+            $turmasTotal > 0
+                ? __('Profissionais: :n vínculo(s) · :d com turma · :s turma(s) sem vínculo · média :r vínculo(s)/turma.', [
+                    'n' => $rows,
+                    'd' => $turmasComDocente,
+                    's' => $turmasSemDocente,
+                    'r' => $ratio ?? '—',
+                ])
+                : __('Profissionais na Relação: :n linha(s) de vínculo.', ['n' => $rows]),
+            [
+                'relacao_profissional_rows' => $rows,
+                'docente_rows' => $docenteRows,
+                'without_turma' => $withoutTurma,
+                'turmas_total' => $turmasTotal,
+                'turmas_com_docente' => $turmasComDocente,
+                'turmas_sem_docente' => $turmasSemDocente,
+                'vinculos_por_turma' => $ratio,
+            ],
+        );
+    }
+
+    private function inferDistorcao(ClioCampaign $campaign): void
+    {
+        $year = (int) $campaign->year;
+        $merged = [
+            'eligible' => 0,
+            'distorcao' => 0,
+            'atraso_1' => 0,
+            'adequado' => 0,
+            'adiantado' => 0,
+            'indefinido' => 0,
+            'excluido' => 0,
+            'by_etapa' => [],
+        ];
+        $hasNasc = false;
+        $scanned = 0;
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+            $agg = $this->resolveAlunoAggregates($artifact, $year);
+            $scanned += (int) ($agg['total'] ?? 0);
+            $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+            if (! empty($cols['nascimento'])) {
+                $hasNasc = true;
+            }
+            $ag = is_array($agg['age_grade'] ?? null) ? $agg['age_grade'] : [];
+            foreach (['eligible', 'distorcao', 'atraso_1', 'adequado', 'adiantado', 'indefinido', 'excluido'] as $k) {
+                $merged[$k] = (int) ($merged[$k] ?? 0) + (int) ($ag[$k] ?? 0);
+            }
+            $byEtapa = is_array($ag['by_etapa'] ?? null) ? $ag['by_etapa'] : [];
+            foreach ($byEtapa as $etapa => $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                if (! isset($merged['by_etapa'][$etapa])) {
+                    $merged['by_etapa'][$etapa] = [
+                        'eligible' => 0,
+                        'distorcao' => 0,
+                        'atraso_1' => 0,
+                        'adequado' => 0,
+                        'adiantado' => 0,
+                    ];
+                }
+                foreach (['eligible', 'distorcao', 'atraso_1', 'adequado', 'adiantado'] as $k) {
+                    $merged['by_etapa'][$etapa][$k] = (int) ($merged['by_etapa'][$etapa][$k] ?? 0) + (int) ($row[$k] ?? 0);
+                }
+            }
+        }
+
+        $eligible = (int) $merged['eligible'];
+        $pct = $eligible > 0 ? round(100 * ((int) $merged['distorcao']) / $eligible, 1) : null;
+        foreach ($merged['by_etapa'] as $etapa => $row) {
+            $elig = max(1, (int) ($row['eligible'] ?? 0));
+            $merged['by_etapa'][$etapa]['pct_distorcao'] = round(100 * ((int) ($row['distorcao'] ?? 0)) / $elig, 1);
+        }
+        uasort($merged['by_etapa'], static fn (array $a, array $b): int => ($b['distorcao'] ?? 0) <=> ($a['distorcao'] ?? 0));
+        $merged['by_etapa'] = array_slice($merged['by_etapa'], 0, 20, true);
+
+        if ($scanned > 0 && ! $hasNasc) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DIS-SEM-NASC',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('Sem Data de nascimento nas Relações — a distorção idade-série não pode ser calculada.'),
+            );
+        } elseif ($pct !== null && $pct >= 20) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DIS-ALTA',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Distorção idade-série estimada em :p% (:n de :e alunos no escopo EF/EM). Revisar fluxos de progressão e defasagem.', [
+                    'p' => $pct,
+                    'n' => $merged['distorcao'],
+                    'e' => $eligible,
+                ]),
+            );
+        }
+
+        $this->upsertInference(
+            $campaign,
+            'INF-DIS',
+            $pct === null
+                ? __('Distorção idade-série: sem base suficiente (nascimento + etapa seriada).')
+                : __('Distorção idade-série estimada: :p% (:n de :e no escopo). Adequados :a · atraso 1 ano :d1 · adiantados :ad.', [
+                    'p' => $pct,
+                    'n' => $merged['distorcao'],
+                    'e' => $eligible,
+                    'a' => $merged['adequado'],
+                    'd1' => $merged['atraso_1'],
+                    'ad' => $merged['adiantado'],
+                ]),
+            [
+                ...$merged,
+                'pct_distorcao' => $pct,
+                'has_nascimento' => $hasNasc,
+                'scanned' => $scanned,
+                'method_note' => __('Estimativa alinhada ao critério INEP (≥2 anos acima da idade esperada em 31/03). EJA/AEE/AC fora do denominador. Não substitui o indicador oficial publicado.'),
+            ],
+        );
+    }
+
+    private function inferDensidade(ClioCampaign $campaign): void
+    {
+        $alunosPorTurma = [];
+        $turmaCodes = [];
+        $alunosComTurma = 0;
+        $alunosSemTurma = 0;
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+            $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
+            $alunosSemTurma += (int) ($agg['without_turma'] ?? 0);
+            $byTurma = is_array($agg['by_turma'] ?? null) ? $agg['by_turma'] : [];
+            foreach ($byTurma as $code => $n) {
+                $alunosPorTurma[$code] = ($alunosPorTurma[$code] ?? 0) + (int) $n;
+                $alunosComTurma += (int) $n;
+            }
+        }
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_turma_escola') as $artifact) {
+            $turmaAgg = $this->resolveTurmaAggregates($artifact);
+            foreach (is_array($turmaAgg['turma_codes'] ?? null) ? $turmaAgg['turma_codes'] : [] as $code) {
+                $turmaCodes[$code] = true;
+            }
+        }
+
+        $turmas = count($turmaCodes);
+        $turmasComAluno = 0;
+        $turmasSemAluno = 0;
+        $turmasCheias = 0;
+        $max = 0;
+        $samplesCheias = [];
+
+        foreach (array_keys($turmaCodes) as $code) {
+            $n = (int) ($alunosPorTurma[$code] ?? 0);
+            if ($n > 0) {
+                $turmasComAluno++;
+            } else {
+                $turmasSemAluno++;
+            }
+            if ($n > $max) {
+                $max = $n;
+            }
+            if ($n >= 40) {
+                $turmasCheias++;
+                if (count($samplesCheias) < 10) {
+                    $samplesCheias[] = ['turma' => $code, 'alunos' => $n];
+                }
+            }
+        }
+
+        $media = $turmasComAluno > 0 ? round($alunosComTurma / $turmasComAluno, 1) : null;
+
+        if ($turmasSemAluno > 0 && $turmas > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEN-TURMA-VAZIA',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('Há :n turma(s) na Relação sem nenhum aluno vinculado pelo Código da turma.', [
+                    'n' => $turmasSemAluno,
+                ]),
+            );
+        }
+        if ($turmasCheias > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEN-TURMA-CHEIA',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Há :n turma(s) com 40 ou mais alunos vinculados (máx. observado: :m). Conferir no portal se a composição está correta.', [
+                    'n' => $turmasCheias,
+                    'm' => $max,
+                ]),
+            );
+        }
+
+        $this->upsertInference(
+            $campaign,
+            'INF-DEN',
+            $media === null
+                ? __('Densidade aluno/turma: sem pareamento suficiente por Código da turma.')
+                : __('Densidade: média :m aluno(s)/turma · :c com aluno · :v sem aluno · :h com ≥40 alunos.', [
+                    'm' => $media,
+                    'c' => $turmasComAluno,
+                    'v' => $turmasSemAluno,
+                    'h' => $turmasCheias,
+                ]),
+            [
+                'alunos_com_turma' => $alunosComTurma,
+                'alunos_sem_turma' => $alunosSemTurma,
+                'turmas_total' => $turmas,
+                'turmas_com_aluno' => $turmasComAluno,
+                'turmas_sem_aluno' => $turmasSemAluno,
+                'turmas_ge_40' => $turmasCheias,
+                'media_alunos_por_turma' => $media,
+                'max_alunos_turma' => $max,
+                'samples_cheias' => $samplesCheias,
+            ],
         );
     }
 
@@ -1015,6 +1274,37 @@ final class CampaignAnalyzer
         return $this->aggregator->aggregateAlunos($data['rows'], $this->csv, $year);
     }
 
+    private function resolveProfissionalAggregates(ClioCampaignArtifact $artifact): array
+    {
+        $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
+        $agg = $meta['aggregates'] ?? null;
+        if (is_array($agg) && isset($agg['by_turma'])) {
+            return [
+                'total' => (int) ($agg['total'] ?? 0),
+                'by_turma' => is_array($agg['by_turma'] ?? null) ? $agg['by_turma'] : [],
+                'without_turma' => (int) ($agg['without_turma'] ?? 0),
+                'docente_rows' => (int) ($agg['docente_rows'] ?? $agg['total'] ?? 0),
+            ];
+        }
+
+        $disk = (string) config('clio.disk', 'local');
+        try {
+            $data = $this->csv->read(
+                Storage::disk($disk)->path($artifact->storage_path),
+                \App\Services\Clio\Parse\RelacaoProfissionalEscolaParser::HEADER_OFFSET,
+            );
+        } catch (Throwable) {
+            return [
+                'total' => 0,
+                'by_turma' => [],
+                'without_turma' => 0,
+                'docente_rows' => 0,
+            ];
+        }
+
+        return $this->aggregator->aggregateProfissionais($data['rows'], $this->csv);
+    }
+
     /**
      * @return array{
      *   total: int,
@@ -1023,6 +1313,7 @@ final class CampaignAnalyzer
      *   by_tipo_turma: array<string, int>,
      *   by_mediacao: array<string, int>,
      *   by_tipo_bucket: array{curricular: int, aee: int, atividade_complementar: int, outra: int},
+     *   turma_codes: list<string>,
      *   without_etapa: int,
      *   without_tipo: int
      * }
@@ -1041,6 +1332,7 @@ final class CampaignAnalyzer
                 RelationCsvAggregator::BUCKET_AC => 0,
                 RelationCsvAggregator::BUCKET_OUTRA => 0,
             ],
+            'turma_codes' => [],
             'without_etapa' => 0,
             'without_tipo' => 0,
         ];
@@ -1056,6 +1348,7 @@ final class CampaignAnalyzer
             'by_etapa_ensino' => [],
             'without_etapa' => 0,
             'without_turma' => 0,
+            'by_turma' => [],
             'by_cor_raca' => [],
             'by_sexo' => [],
             'by_faixa_etaria' => [],
@@ -1064,6 +1357,17 @@ final class CampaignAnalyzer
             'without_cor' => 0,
             'without_sexo' => 0,
             'without_nascimento' => 0,
+            'age_grade' => [
+                'eligible' => 0,
+                'distorcao' => 0,
+                'atraso_1' => 0,
+                'adequado' => 0,
+                'adiantado' => 0,
+                'indefinido' => 0,
+                'excluido' => 0,
+                'by_etapa' => [],
+                'pct_distorcao' => null,
+            ],
             'columns' => [
                 'cor_raca' => false,
                 'sexo' => false,
@@ -1082,6 +1386,7 @@ final class CampaignAnalyzer
     private function normalizeTurmaAgg(array $agg): array
     {
         $base = $this->emptyTurmaAgg();
+        $codes = is_array($agg['turma_codes'] ?? null) ? $agg['turma_codes'] : [];
 
         return [
             'total' => (int) ($agg['total'] ?? 0),
@@ -1090,6 +1395,7 @@ final class CampaignAnalyzer
             'by_tipo_turma' => is_array($agg['by_tipo_turma'] ?? null) ? $agg['by_tipo_turma'] : [],
             'by_mediacao' => is_array($agg['by_mediacao'] ?? null) ? $agg['by_mediacao'] : [],
             'by_tipo_bucket' => $this->aggregator->mergeBuckets($base['by_tipo_bucket'], is_array($agg['by_tipo_bucket'] ?? null) ? $agg['by_tipo_bucket'] : []),
+            'turma_codes' => array_values(array_unique(array_map('strval', $codes))),
             'without_etapa' => (int) ($agg['without_etapa'] ?? 0),
             'without_tipo' => (int) ($agg['without_tipo'] ?? 0),
         ];
@@ -1102,12 +1408,14 @@ final class CampaignAnalyzer
     private function normalizeAlunoAgg(array $agg): array
     {
         $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+        $age = is_array($agg['age_grade'] ?? null) ? $agg['age_grade'] : [];
 
         return [
             'total' => (int) ($agg['total'] ?? 0),
             'by_etapa_ensino' => is_array($agg['by_etapa_ensino'] ?? null) ? $agg['by_etapa_ensino'] : [],
             'without_etapa' => (int) ($agg['without_etapa'] ?? 0),
             'without_turma' => (int) ($agg['without_turma'] ?? 0),
+            'by_turma' => is_array($agg['by_turma'] ?? null) ? $agg['by_turma'] : [],
             'by_cor_raca' => is_array($agg['by_cor_raca'] ?? null) ? $agg['by_cor_raca'] : [],
             'by_sexo' => is_array($agg['by_sexo'] ?? null) ? $agg['by_sexo'] : [],
             'by_faixa_etaria' => is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : [],
@@ -1116,6 +1424,17 @@ final class CampaignAnalyzer
             'without_cor' => (int) ($agg['without_cor'] ?? 0),
             'without_sexo' => (int) ($agg['without_sexo'] ?? 0),
             'without_nascimento' => (int) ($agg['without_nascimento'] ?? 0),
+            'age_grade' => [
+                'eligible' => (int) ($age['eligible'] ?? 0),
+                'distorcao' => (int) ($age['distorcao'] ?? 0),
+                'atraso_1' => (int) ($age['atraso_1'] ?? 0),
+                'adequado' => (int) ($age['adequado'] ?? 0),
+                'adiantado' => (int) ($age['adiantado'] ?? 0),
+                'indefinido' => (int) ($age['indefinido'] ?? 0),
+                'excluido' => (int) ($age['excluido'] ?? 0),
+                'by_etapa' => is_array($age['by_etapa'] ?? null) ? $age['by_etapa'] : [],
+                'pct_distorcao' => $age['pct_distorcao'] ?? null,
+            ],
             'columns' => [
                 'cor_raca' => (bool) ($cols['cor_raca'] ?? false),
                 'sexo' => (bool) ($cols['sexo'] ?? false),
@@ -1157,6 +1476,11 @@ final class CampaignAnalyzer
             is_array($into['by_tipo_bucket'] ?? null) ? $into['by_tipo_bucket'] : $this->emptyTurmaAgg()['by_tipo_bucket'],
             is_array($from['by_tipo_bucket'] ?? null) ? $from['by_tipo_bucket'] : [],
         );
+        $codes = array_unique(array_merge(
+            is_array($into['turma_codes'] ?? null) ? $into['turma_codes'] : [],
+            is_array($from['turma_codes'] ?? null) ? $from['turma_codes'] : [],
+        ));
+        $into['turma_codes'] = array_values($codes);
 
         return $into;
     }
@@ -1176,6 +1500,35 @@ final class CampaignAnalyzer
             }
         }
 
+        $ageInto = is_array($into['age_grade'] ?? null) ? $into['age_grade'] : $this->emptyAlunoAgg()['age_grade'];
+        $ageFrom = is_array($from['age_grade'] ?? null) ? $from['age_grade'] : [];
+        foreach (['eligible', 'distorcao', 'atraso_1', 'adequado', 'adiantado', 'indefinido', 'excluido'] as $k) {
+            $ageInto[$k] = (int) ($ageInto[$k] ?? 0) + (int) ($ageFrom[$k] ?? 0);
+        }
+        $byEtapa = is_array($ageInto['by_etapa'] ?? null) ? $ageInto['by_etapa'] : [];
+        foreach (is_array($ageFrom['by_etapa'] ?? null) ? $ageFrom['by_etapa'] : [] as $etapa => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            if (! isset($byEtapa[$etapa])) {
+                $byEtapa[$etapa] = [
+                    'eligible' => 0,
+                    'distorcao' => 0,
+                    'atraso_1' => 0,
+                    'adequado' => 0,
+                    'adiantado' => 0,
+                ];
+            }
+            foreach (['eligible', 'distorcao', 'atraso_1', 'adequado', 'adiantado'] as $k) {
+                $byEtapa[$etapa][$k] = (int) ($byEtapa[$etapa][$k] ?? 0) + (int) ($row[$k] ?? 0);
+            }
+        }
+        $ageInto['by_etapa'] = $byEtapa;
+        $elig = (int) ($ageInto['eligible'] ?? 0);
+        $ageInto['pct_distorcao'] = $elig > 0
+            ? round(100 * ((int) ($ageInto['distorcao'] ?? 0)) / $elig, 1)
+            : null;
+
         return [
             'total' => (int) ($into['total'] ?? 0) + (int) ($from['total'] ?? 0),
             'by_etapa_ensino' => $this->aggregator->mergeCounts(
@@ -1184,6 +1537,10 @@ final class CampaignAnalyzer
             ),
             'without_etapa' => (int) ($into['without_etapa'] ?? 0) + (int) ($from['without_etapa'] ?? 0),
             'without_turma' => (int) ($into['without_turma'] ?? 0) + (int) ($from['without_turma'] ?? 0),
+            'by_turma' => $this->aggregator->mergeCounts(
+                is_array($into['by_turma'] ?? null) ? $into['by_turma'] : [],
+                is_array($from['by_turma'] ?? null) ? $from['by_turma'] : [],
+            ),
             'by_cor_raca' => $this->aggregator->mergeCounts(
                 is_array($into['by_cor_raca'] ?? null) ? $into['by_cor_raca'] : [],
                 is_array($from['by_cor_raca'] ?? null) ? $from['by_cor_raca'] : [],
@@ -1204,6 +1561,7 @@ final class CampaignAnalyzer
             'without_cor' => (int) ($into['without_cor'] ?? 0) + (int) ($from['without_cor'] ?? 0),
             'without_sexo' => (int) ($into['without_sexo'] ?? 0) + (int) ($from['without_sexo'] ?? 0),
             'without_nascimento' => (int) ($into['without_nascimento'] ?? 0) + (int) ($from['without_nascimento'] ?? 0),
+            'age_grade' => $ageInto,
             'columns' => $intoCols,
         ];
     }

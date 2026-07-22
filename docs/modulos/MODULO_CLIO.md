@@ -20,7 +20,8 @@
 | **Município só coleta** | Cadastro **sem** i-Educar — só análise (perfil `analysis_only`) |
 | **Município consultoria** | Seleciona município **já** com `db_*` na plataforma → perfil `consultancy` + **INF-GAP** |
 | **Pasta Drive** | Link no município/coleta · **Verificar** / **Importar** (pastas públicas sem API key; `CLIO_DRIVE_API_KEY` opcional) |
-| **Inferências** | INF-COL…INF-DELTA (Modo A) e INF-GAP (Modo B) |
+| **Inferências** | Modo A: INF-COL…INF-DELTA + DEM/DIS/DEN/XCHK; Modo B: INF-GAP |
+| **Medidores 1ª etapa** | Distorção idade-série, densidade aluno/turma, cobertura docente (estimativas CSV) |
 | **Exposição** | Painel T8, detalhe escola T9, bloco Censo, export CSV/PDF, ranking no RX |
 
 ---

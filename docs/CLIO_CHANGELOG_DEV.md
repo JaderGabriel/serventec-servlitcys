@@ -24,6 +24,23 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — Medidores da Matrícula inicial (distorção, densidade, docentes)
+
+**Entregue**
+
+- `AgeGradeRules` + agregados `age_grade` / `by_turma` / profissionais por turma
+- Inferências **INF-DIS** (distorção idade-série EF/EM) e **INF-DEN** (densidade aluno/turma); **INF-DOC** enriquecido (turmas sem vínculo)
+- Achados `CLIO-DIS-*`, `CLIO-DEN-*`, `CLIO-DOC-SEM-VINCULO`
+- UI «Medidores da Matrícula inicial» + matriz de cobertura (rendimento = 2ª etapa)
+- Testes `CampaignStageMetricsTest`; catálogo e roadmap alinhados
+
+### 2026-07-21 — Perfil demográfico e cobertura de indicadores
+
+**Entregue**
+
+- Inferência **INF-DEM** (Cor/Raça, sexo, faixa etária) + achados `CLIO-DEM-*`
+- Secção «Perfil e indicadores possíveis» (disponível vs indisponível: transporte, vulnerabilidade, rendimento)
+
 ### 2026-07-21 — Idioma pt-BR do módulo Clio
 
 **Entregue**

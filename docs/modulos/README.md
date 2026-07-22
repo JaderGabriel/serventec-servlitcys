@@ -17,7 +17,7 @@ Visão por **módulo funcional**, alinhada ao menu da aplicação (Consultoria, 
 | **Cadastro e CadÚnico** | Aba Cadastro no analytics | [MODULO_CADUNICO.md](MODULO_CADUNICO.md) |
 | **Pedagogia e SAEB** | Aba Pedagógico no analytics | [MODULO_PEDAGOGIA_SAEB.md](MODULO_PEDAGOGIA_SAEB.md) |
 | **RX — Censo** | `/dashboard/rx` | [MODULO_RX_CENSO.md](MODULO_RX_CENSO.md) |
-| **Clio** (coletas Educacenso 1ª etapa) | `/clio` | [MODULO_CLIO.md](MODULO_CLIO.md) — S6 (export / RX); próximo S7 |
+| **Clio** (coletas Educacenso 1ª etapa) | `/clio` | [MODULO_CLIO.md](MODULO_CLIO.md) — S6 (export / RX) + medidores; próximo S7 |
 | **Financiamento (FUNDEB)** | Aba Finanças no analytics | [MODULO_FUNDEB.md](MODULO_FUNDEB.md) |
 | **Dados públicos (admin)** | `/admin/public-data`, `/admin/horizonte-import` | [MODULO_DADOS_PUBLICOS.md](MODULO_DADOS_PUBLICOS.md) |
 
