@@ -27,10 +27,11 @@ final class CampaignDemografiaTest extends TestCase
         $this->assertTrue($agg['columns']['sexo']);
         $this->assertTrue($agg['columns']['nascimento']);
         $this->assertTrue($agg['columns']['nee']);
-        $this->assertSame(3, $agg['total']);
-        $this->assertSame(1, $agg['by_cor_raca']['Parda']);
-        $this->assertSame(2, $agg['by_sexo'][__('Feminino')] ?? $agg['by_sexo']['Feminino'] ?? 0);
-        $this->assertSame(1, $agg['by_sexo'][__('Masculino')] ?? $agg['by_sexo']['Masculino'] ?? 0);
+        $this->assertSame(5, $agg['total']);
+        $this->assertSame(2, $agg['by_cor_raca']['Parda']);
+        $this->assertSame(1, $agg['without_cor']);
+        $this->assertSame(3, $agg['by_sexo'][__('Feminino')] ?? $agg['by_sexo']['Feminino'] ?? 0);
+        $this->assertSame(2, $agg['by_sexo'][__('Masculino')] ?? $agg['by_sexo']['Masculino'] ?? 0);
         $this->assertGreaterThanOrEqual(1, $agg['nee_flagged']);
         $this->assertNotEmpty($agg['by_faixa_etaria']);
         $this->assertArrayHasKey('11–14', $agg['by_faixa_etaria']);

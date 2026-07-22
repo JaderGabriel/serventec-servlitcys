@@ -70,7 +70,7 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 | Formato | Conteúdo típico |
 |--------|-----------------|
 | **CSV** | Meta da coleta, **contadores** (erros/atenções/infos + escolas), resumos `INF-*`, escolas (situação/tríade/contagens), bloco **o_que_corrigir** (código, severidade em PT, mensagem, **o que fazer**, escola/INEP) — **sem PII** |
-| **PDF** | Capa municipal, **contadores da análise**, o que os dados mostram, **o que corrigir** (erros) + **pontos de atenção**, escolas com situação/tríade/erros/avisos |
+| **PDF** | Capa municipal, contadores, o que os dados mostram, o que corrigir, **pontos de atenção** (escolas primeiro · **Rede por último**), tabelas de **distorção por etapa** (+ amostra de alunos), **sem Cor/Raça ou Sexo**, **NEE** (matrículas/turmas · destaque **NEE sem AEE**), cobertura da tríade — **inclui nome e CPF** das Relações (uso interno) |
 
 ### 2.6 RX e aba Censo
 

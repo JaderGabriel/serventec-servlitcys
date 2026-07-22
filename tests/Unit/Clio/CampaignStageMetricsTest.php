@@ -44,7 +44,8 @@ final class CampaignStageMetricsTest extends TestCase
         $this->assertGreaterThan(0, $agg['age_grade']['distorcao']);
         $this->assertNotNull($agg['age_grade']['pct_distorcao']);
         $this->assertSame(2, $agg['by_turma']['TUR-01']);
-        $this->assertSame(1, $agg['by_turma']['TUR-02']);
+        $this->assertSame(2, $agg['by_turma']['TUR-02']);
+        $this->assertSame(1, $agg['by_turma']['TUR-AEE']);
     }
 
     #[Test]

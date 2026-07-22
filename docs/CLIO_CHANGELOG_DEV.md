@@ -24,6 +24,14 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-21 — PDF: Rede por último + tabelas distorção / demografia / NEE
+
+**Entregue**
+
+- «Pontos de atenção»: avisos por escola primeiro; itens da **Rede** ao final
+- Tabelas no PDF: distorção por etapa (+ amostra de alunos), sem Cor/Raça ou Sexo, NEE com matrículas/turmas e destaque **NEE sem matrícula AEE**
+- `CampaignPdfDetailBuilder` — amostra com **nome e CPF** (uso interno operacional)
+
 ### 2026-07-21 — Medidores da Matrícula inicial (distorção, densidade, docentes)
 
 **Entregue**

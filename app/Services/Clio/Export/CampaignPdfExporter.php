@@ -14,12 +14,14 @@ final class CampaignPdfExporter
     public function __construct(
         private CampaignParseService $parser,
         private CampaignAnalysisPresenter $presenter,
+        private CampaignPdfDetailBuilder $detailBuilder,
     ) {}
 
     public function download(ClioCampaign $campaign): Response
     {
         $campaign->load([
             'schools',
+            'artifacts.school',
             'inferences',
             'findings.school',
         ]);
@@ -33,12 +35,17 @@ final class CampaignPdfExporter
 
         $toCorrect = $campaign->findings
             ->where('severity', ClioCampaignFinding::SEVERITY_ERROR)
+            ->sortBy(fn (ClioCampaignFinding $f): int => $f->school_id === null ? 1 : 0)
             ->take(40)
             ->values();
+        // Escolas primeiro; «Rede» (sem escola) por último.
         $toReview = $campaign->findings
             ->where('severity', ClioCampaignFinding::SEVERITY_WARNING)
-            ->take(25)
-            ->values();
+            ->sortBy(fn (ClioCampaignFinding $f): int => $f->school_id === null ? 1 : 0)
+            ->values()
+            ->take(40);
+
+        $pdfTables = $this->detailBuilder->build($campaign);
 
         $generatedAt = now()->timezone(config('app.timezone'))->format('d/m/Y H:i');
 
@@ -51,6 +58,7 @@ final class CampaignPdfExporter
             'toCorrect' => $toCorrect,
             'toReview' => $toReview,
             'criticalFindings' => $toCorrect,
+            'pdfTables' => $pdfTables,
             'generated_at' => $generatedAt,
             'colors' => [
                 'navy' => '#0f2744',

@@ -23,7 +23,7 @@
                     <span class="pdf-footer__doc-meta">{{ __('Gerado em :data', ['data' => $generated_at ?? '']) }}</span>
                 </td>
                 <td style="width: 33%;">
-                    <span class="pdf-footer__legal">{{ __('Sem dados pessoais — agregados e códigos INEP.') }}</span>
+                    <span class="pdf-footer__legal">{{ __('Uso interno — contém nome e CPF das Relações.') }}</span>
                 </td>
             </tr>
         </table>
@@ -154,6 +154,9 @@
 
 @if (($toReview ?? collect())->isNotEmpty())
     <h2>{{ __('Pontos de atenção (revisar)') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Avisos por escola primeiro; itens da rede ao final.') }}
+    </p>
     <table class="data">
         <thead>
             <tr>
@@ -177,6 +180,186 @@
             @endforeach
         </tbody>
     </table>
+@endif
+
+@php $tables = $pdfTables ?? []; @endphp
+
+@if (! empty($tables['distortion_by_etapa']))
+    <h2>{{ __('Distorção por etapa / ano') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Estimativa INEP (atraso ≥2 anos no EF/EM). Contagens de alunos e escolas a partir das Relações.') }}
+    </p>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{{ __('Etapa / ano') }}</th>
+                <th>{{ __('No escopo') }}</th>
+                <th>{{ __('Distorção') }}</th>
+                <th>{{ __('%') }}</th>
+                <th>{{ __('Alunos') }}</th>
+                <th>{{ __('Escolas') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($tables['distortion_by_etapa'] as $row)
+                <tr>
+                    <td>{{ $row['etapa'] }}</td>
+                    <td>{{ $row['eligible'] }}</td>
+                    <td>{{ $row['distorcao'] }}</td>
+                    <td>{{ $row['pct'] === null ? '—' : number_format((float) $row['pct'], 1, ',', '.').'%' }}</td>
+                    <td>{{ $row['alunos'] }}</td>
+                    <td>{{ $row['escolas'] }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+@if (! empty($tables['distortion_students']))
+    <h2>{{ __('Alunos em distorção (amostra)') }}</h2>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{{ __('Nome') }}</th>
+                <th>{{ __('CPF') }}</th>
+                <th>{{ __('Escola') }}</th>
+                <th>{{ __('Turma') }}</th>
+                <th>{{ __('Matrícula') }}</th>
+                <th>{{ __('Etapa') }}</th>
+                <th>{{ __('Idade') }}</th>
+                <th>{{ __('Esperada') }}</th>
+                <th>{{ __('Atraso') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($tables['distortion_students'] as $row)
+                <tr>
+                    <td>
+                        {{ $row['name'] ?? '—' }}
+                        @if (! empty($row['id']) && ($row['id'] ?? '') !== '—')
+                            <br><span style="font-size: 8px; color: #64748b;">{{ $row['id'] }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $row['cpf'] ?? '—' }}</td>
+                    <td>
+                        {{ $row['school'] }}
+                        @if ($row['inep'] !== '')
+                            <br><span style="font-size: 9px; color: #64748b;">INEP {{ $row['inep'] }}</span>
+                        @endif
+                    </td>
+                    <td>{{ $row['turma'] }}</td>
+                    <td>{{ $row['matricula'] }}</td>
+                    <td>{{ $row['etapa'] }}</td>
+                    <td>{{ $row['age'] ?? '—' }}</td>
+                    <td>{{ $row['expected'] ?? '—' }}</td>
+                    <td>{{ $row['delay'] ?? '—' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+@if (! empty($tables['missing_demographics']) || (int) ($tables['missing_demographics_total'] ?? 0) > 0)
+    <h2>{{ __('Sem Cor/Raça ou Sexo definidos') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Total de pessoas: :n (amostra abaixo com nome e CPF).', ['n' => (int) ($tables['missing_demographics_total'] ?? 0)]) }}
+    </p>
+    @if (! empty($tables['missing_demographics']))
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>{{ __('Nome') }}</th>
+                    <th>{{ __('CPF') }}</th>
+                    <th>{{ __('Escola') }}</th>
+                    <th>{{ __('Faltando') }}</th>
+                    <th>{{ __('Matrículas') }}</th>
+                    <th>{{ __('Turmas') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($tables['missing_demographics'] as $row)
+                    <tr>
+                        <td>
+                            {{ $row['name'] ?? '—' }}
+                            @if (! empty($row['id']) && ($row['id'] ?? '') !== '—')
+                                <br><span style="font-size: 8px; color: #64748b;">{{ $row['id'] }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $row['cpf'] ?? '—' }}</td>
+                        <td>
+                            {{ $row['school'] }}
+                            @if ($row['inep'] !== '')
+                                <br><span style="font-size: 9px; color: #64748b;">INEP {{ $row['inep'] }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $row['faltando'] }}</td>
+                        <td>{{ $row['matriculas'] }}</td>
+                        <td>{{ $row['turmas'] }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+@endif
+
+@if (! empty($tables['nee_students']) || (int) ($tables['nee_total'] ?? 0) > 0)
+    <h2>{{ __('Pessoas com NEE') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Total: :t · sem matrícula AEE: :a (destacados).', [
+            't' => (int) ($tables['nee_total'] ?? 0),
+            'a' => (int) ($tables['nee_without_aee'] ?? 0),
+        ]) }}
+    </p>
+    @if (! empty($tables['nee_students']))
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>{{ __('Nome') }}</th>
+                    <th>{{ __('CPF') }}</th>
+                    <th>{{ __('Escola') }}</th>
+                    <th>{{ __('Necessidades') }}</th>
+                    <th>{{ __('Matrícula') }}</th>
+                    <th>{{ __('Turmas') }}</th>
+                    <th>{{ __('AEE') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($tables['nee_students'] as $row)
+                    <tr @if (empty($row['has_aee'])) style="background: #fff7ed;" @endif>
+                        <td>
+                            {{ $row['name'] ?? '—' }}
+                            @if (! empty($row['id']) && ($row['id'] ?? '') !== '—')
+                                <br><span style="font-size: 8px; color: #64748b;">{{ $row['id'] }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $row['cpf'] ?? '—' }}</td>
+                        <td>
+                            {{ $row['school'] }}
+                            @if ($row['inep'] !== '')
+                                <br><span style="font-size: 9px; color: #64748b;">INEP {{ $row['inep'] }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $row['needs'] }}</td>
+                        <td>
+                            @if (! empty($row['has_matricula']))
+                                {{ $row['matriculas'] }}
+                            @else
+                                <strong style="color: #b45309;">{{ __('Sem matrícula') }}</strong>
+                            @endif
+                        </td>
+                        <td>{{ $row['turmas'] }}</td>
+                        <td>
+                            @if (empty($row['has_aee']))
+                                <strong style="color: #c2410c;">{{ $row['aee_flag'] }}</strong>
+                            @else
+                                {{ $row['aee_flag'] }}
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 @endif
 
 <h2>{{ __('Escolas — cobertura da tríade') }}</h2>

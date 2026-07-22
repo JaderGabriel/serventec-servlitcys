@@ -66,7 +66,7 @@ final class ClioParsersTest extends TestCase
             $this->artifact()
         );
         $this->assertSame(ParseResult::STATUS_OK, $aluno->status);
-        $this->assertSame(3, $aluno->rowCount);
+        $this->assertSame(5, $aluno->rowCount);
 
         $turma = (new RelacaoTurmaEscolaParser($csv))->parse(
             $base.'/RelacaoTurmaEscola_21_7_2026.csv',
