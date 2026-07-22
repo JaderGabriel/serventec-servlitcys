@@ -45,6 +45,7 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 | **Arquivo geral (Acomp)** | Nome do CSV, data ref, totais curricular/AEE/AC, a confirmar, bloqueadas, delta vs Relação |
 | **Panorama das escolas** | Contadores + barras por dependência, funcionamento, localização, forma de coleta |
 | **Conferências cruzadas** | Acomp × Relação aluno (rede); alunos × turmas por etapa/ano; apontamentos `CLIO-DELTA-REDE` / `CLIO-XCHK-ETAPA` |
+| **Perfil e indicadores possíveis** | Matriz disponível/indisponível (Cor/Raça, sexo, faixa etária, NEE, transporte, vulnerabilidade); histogramas agregados |
 
 ### 2.3 Detalhe da escola `/clio/coletas/{uuid}/escolas/{inep}`
 
@@ -112,7 +113,8 @@ Geradas por `CampaignAnalyzer` (Modo A) e `IeducarGapAnalyzer` (Modo B). Aparece
 | **INF-MAT** | Matrículas | Curricular + AEE + AC (Acomp) × linhas Relação aluno; por etapa | `acomp_*_sum`, `by_etapa_ensino`, `schools` |
 | **INF-TUR** | Turmas | Total e composição curricular/AEE/AC; por etapa/mediação | `by_tipo_bucket`, `by_etapa_*`, `schools` |
 | **INF-DOC** | Profissionais | Linhas Relação profissional | `relacao_profissional_rows` |
-| **INF-NEE** | Inclusão / NEE | Heurística de marcadores NEE/TEA/AH/AEE nas colunas | `flagged`, `scanned` |
+| **INF-NEE** | Inclusão / NEE | Alunos com deficiência/TEA/AH | `flagged`, `by_nee`, `has_nee_columns` |
+| **INF-DEM** | Perfil demográfico | Cor/Raça, sexo, faixa etária; cobertura de colunas | `by_cor_raca`, `by_sexo`, `by_faixa_etaria`, `columns` |
 | **INF-COE** | Coerência dos arquivos | Escolas sem tríade; se há Acomp | `triade_coverage_pct`, `has_acomp` |
 | **INF-DUP** | Possíveis duplicidades | IDs repetidos na Relação aluno (rede) | `duplicate_ids`, `unique_ids` |
 | **INF-DELTA** | Diferenças Acomp × Relações | Deltas curricular; AEE/AC sem turma | `divergent_*`, `samples` |
@@ -141,6 +143,10 @@ A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
 | **CLIO-DELTA-MAT** | Informação | Escola | Delta Acomp curricular × linhas Relação aluno |
 | **CLIO-DELTA-REDE** | Atenção | Rede | Soma curricular do Acomp × total de linhas da Relação de alunos |
 | **CLIO-XCHK-ETAPA** | Atenção | Rede | Etapa(s) com alunos na Relação sem turma na mesma etapa |
+| **CLIO-DEM-SEM-COR** | Informação | Rede | Export sem coluna Cor/Raça |
+| **CLIO-DEM-SEM-SEXO** | Informação | Rede | Export sem coluna Sexo |
+| **CLIO-DEM-SEM-NEE** | Informação | Rede | Export sem colunas de deficiência/TEA/AH |
+| **CLIO-DEM-COR-VAZIO** | Atenção | Rede | ≥20% das matrículas com Cor/Raça em branco |
 | **CLIO-DELTA-AC** | Informação | Escola | Acomp com AC > 0 sem turma de Atividade complementar |
 | **CLIO-GAP-CLIO** | Atenção | Escola | Escola na coleta Clio e **ausente** no snapshot i-Educar |
 | **CLIO-GAP-IEDUCAR** | Informação | Escola* | Escola no i-Educar e **ausente** na coleta Clio |

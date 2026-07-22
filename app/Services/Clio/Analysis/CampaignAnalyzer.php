@@ -66,6 +66,7 @@ final class CampaignAnalyzer
             $this->inferTurmas($campaign);
             $this->inferDocentes($campaign);
             $this->inferNee($campaign);
+            $this->inferDemografia($campaign);
             $this->inferCoerencia($campaign);
             $this->inferDuplicidades($campaign);
             $this->inferDelta($campaign);
@@ -471,51 +472,170 @@ final class CampaignAnalyzer
 
     private function inferNee(ClioCampaign $campaign): void
     {
-        $disk = (string) config('clio.disk', 'local');
         $flagged = 0;
         $scanned = 0;
+        $byNee = [];
+        $hasNeeCol = false;
 
         foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
-            try {
-                $data = $this->csv->read(Storage::disk($disk)->path($artifact->storage_path), 1);
-            } catch (Throwable) {
-                continue;
+            $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
+            $scanned += (int) ($agg['total'] ?? 0);
+            $flagged += (int) ($agg['nee_flagged'] ?? 0);
+            $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+            if (! empty($cols['nee'])) {
+                $hasNeeCol = true;
             }
+            $byNee = $this->aggregator->mergeCounts(
+                $byNee,
+                is_array($agg['by_nee'] ?? null) ? $agg['by_nee'] : [],
+            );
+        }
 
-            foreach ($data['rows'] as $row) {
-                $scanned++;
-                $blob = mb_strtolower(implode(' ', array_values($row)));
-                if (
-                    str_contains($blob, 'sim') && (
-                        array_key_exists('Deficiência', $row)
-                        || array_key_exists('Transtorno do espectro autista', $row)
-                        || array_key_exists('Altas habilidades', $row)
-                        || preg_match('/defici|autis|tea|altas habilidades/i', implode(' ', array_keys($row))) === 1
-                    )
-                ) {
-                    // Contar se alguma coluna NEE típica tem valor não vazio / sim
-                    foreach ($row as $key => $value) {
-                        if ($value === '' || in_array(mb_strtolower($value), ['não', 'nao', 'n', '0'], true)) {
-                            continue;
-                        }
-                        if (preg_match('/defici|autis|tea|altas\s*habil|nee|aee/i', (string) $key) === 1) {
-                            $flagged++;
-                            break;
-                        }
-                    }
-                }
-            }
+        if (! $hasNeeCol && $scanned > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEM-SEM-NEE',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('As Relações de alunos desta coleta não trouxeram colunas de deficiência/TEA/AH — o indicador de inclusão fica limitado.'),
+            );
         }
 
         $this->upsertInference(
             $campaign,
             'INF-NEE',
-            __('Alunos com indício de NEE/TEA/AH nas colunas: :n de :s analisados.', [
-                'n' => $flagged,
-                's' => $scanned,
-            ]),
-            ['flagged' => $flagged, 'scanned' => $scanned],
+            $hasNeeCol
+                ? __('Alunos com indício de NEE/TEA/AH: :n de :s (:p%).', [
+                    'n' => $flagged,
+                    's' => $scanned,
+                    'p' => $scanned > 0 ? round(100 * $flagged / $scanned, 1) : 0,
+                ])
+                : __('Inclusão: colunas NEE/TEA/AH não detectadas nas Relações importadas (:s linhas).', [
+                    's' => $scanned,
+                ]),
+            [
+                'flagged' => $flagged,
+                'scanned' => $scanned,
+                'by_nee' => $byNee,
+                'has_nee_columns' => $hasNeeCol,
+            ],
         );
+    }
+
+    /**
+     * Perfil demográfico agregado (Cor/Raça, sexo, faixa etária) — sem PII.
+     */
+    private function inferDemografia(ClioCampaign $campaign): void
+    {
+        $total = 0;
+        $byCor = [];
+        $bySexo = [];
+        $byIdade = [];
+        $withoutCor = 0;
+        $withoutSexo = 0;
+        $withoutNasc = 0;
+        $cols = [
+            'cor_raca' => false,
+            'sexo' => false,
+            'nascimento' => false,
+            'nee' => false,
+            'transporte' => false,
+            'poder_publico' => false,
+        ];
+
+        foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+            $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
+            $total += (int) ($agg['total'] ?? 0);
+            $byCor = $this->aggregator->mergeCounts($byCor, is_array($agg['by_cor_raca'] ?? null) ? $agg['by_cor_raca'] : []);
+            $bySexo = $this->aggregator->mergeCounts($bySexo, is_array($agg['by_sexo'] ?? null) ? $agg['by_sexo'] : []);
+            $byIdade = $this->mergeAgeBands($byIdade, is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : []);
+            $withoutCor += (int) ($agg['without_cor'] ?? 0);
+            $withoutSexo += (int) ($agg['without_sexo'] ?? 0);
+            $withoutNasc += (int) ($agg['without_nascimento'] ?? 0);
+            $c = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+            foreach (array_keys($cols) as $key) {
+                if (! empty($c[$key])) {
+                    $cols[$key] = true;
+                }
+            }
+        }
+
+        if ($total > 0 && ! $cols['cor_raca']) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEM-SEM-COR',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('As Relações de alunos não trouxeram a coluna Cor/Raça — o perfil racial não pode ser calculado neste export.'),
+            );
+        }
+        if ($total > 0 && ! $cols['sexo']) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEM-SEM-SEXO',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('As Relações de alunos não trouxeram a coluna Sexo — o perfil por sexo não pode ser calculado neste export.'),
+            );
+        }
+        if ($cols['cor_raca'] && $withoutCor > 0 && $total > 0 && ($withoutCor / $total) >= 0.2) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DEM-COR-VAZIO',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Cor/Raça em branco em :n de :t matrículas (:p%). Complete no portal para o indicador ficar confiável.', [
+                    'n' => $withoutCor,
+                    't' => $total,
+                    'p' => round(100 * $withoutCor / $total, 1),
+                ]),
+            );
+        }
+
+        $parts = [];
+        if ($cols['cor_raca']) {
+            $parts[] = __('Cor/Raça');
+        }
+        if ($cols['sexo']) {
+            $parts[] = __('sexo');
+        }
+        if ($cols['nascimento']) {
+            $parts[] = __('faixa etária');
+        }
+
+        $this->upsertInference(
+            $campaign,
+            'INF-DEM',
+            $parts === []
+                ? __('Perfil demográfico: nenhuma coluna Cor/Raça, Sexo ou Data de nascimento detectada nas Relações (:n linhas).', [
+                    'n' => $total,
+                ])
+                : __('Perfil demográfico disponível (:campos) em :n matrícula(s) das Relações.', [
+                    'campos' => implode(', ', $parts),
+                    'n' => $total,
+                ]),
+            [
+                'scanned' => $total,
+                'by_cor_raca' => $byCor,
+                'by_sexo' => $bySexo,
+                'by_faixa_etaria' => $byIdade,
+                'without_cor' => $withoutCor,
+                'without_sexo' => $withoutSexo,
+                'without_nascimento' => $withoutNasc,
+                'columns' => $cols,
+                'social_note' => __('Vulnerabilidade social (CadÚnico/Bolsa Família) não vem nos CSV do Educacenso 1ª etapa. Use o módulo CadÚnico do ServLitcys ou cruzamento autorizado.'),
+            ],
+        );
+    }
+
+    /**
+     * @param  array<string, int>  $into
+     * @param  array<string, int>  $from
+     * @return array<string, int>
+     */
+    private function mergeAgeBands(array $into, array $from): array
+    {
+        foreach ($from as $k => $v) {
+            $into[$k] = ($into[$k] ?? 0) + (int) $v;
+        }
+
+        return $into;
     }
 
     private function inferCoerencia(ClioCampaign $campaign): void
@@ -874,11 +994,11 @@ final class CampaignAnalyzer
     /**
      * @return array<string, mixed>
      */
-    private function resolveAlunoAggregates(ClioCampaignArtifact $artifact): array
+    private function resolveAlunoAggregates(ClioCampaignArtifact $artifact, ?int $referenceYear = null): array
     {
         $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
         $agg = $meta['aggregates'] ?? null;
-        if (is_array($agg) && isset($agg['by_etapa_ensino'])) {
+        if (is_array($agg) && isset($agg['by_etapa_ensino'], $agg['columns'])) {
             return $this->normalizeAlunoAgg($agg);
         }
 
@@ -889,7 +1009,10 @@ final class CampaignAnalyzer
             return $this->emptyAlunoAgg();
         }
 
-        return $this->aggregator->aggregateAlunos($data['rows'], $this->csv);
+        $year = $referenceYear
+            ?? ($artifact->campaign?->year ? (int) $artifact->campaign->year : null);
+
+        return $this->aggregator->aggregateAlunos($data['rows'], $this->csv, $year);
     }
 
     /**
@@ -924,7 +1047,7 @@ final class CampaignAnalyzer
     }
 
     /**
-     * @return array{total: int, by_etapa_ensino: array<string, int>, without_etapa: int, without_turma: int}
+     * @return array<string, mixed>
      */
     private function emptyAlunoAgg(): array
     {
@@ -933,6 +1056,22 @@ final class CampaignAnalyzer
             'by_etapa_ensino' => [],
             'without_etapa' => 0,
             'without_turma' => 0,
+            'by_cor_raca' => [],
+            'by_sexo' => [],
+            'by_faixa_etaria' => [],
+            'by_nee' => [],
+            'nee_flagged' => 0,
+            'without_cor' => 0,
+            'without_sexo' => 0,
+            'without_nascimento' => 0,
+            'columns' => [
+                'cor_raca' => false,
+                'sexo' => false,
+                'nascimento' => false,
+                'nee' => false,
+                'transporte' => false,
+                'poder_publico' => false,
+            ],
         ];
     }
 
@@ -958,15 +1097,33 @@ final class CampaignAnalyzer
 
     /**
      * @param  array<string, mixed>  $agg
-     * @return array{total: int, by_etapa_ensino: array<string, int>, without_etapa: int, without_turma: int}
+     * @return array<string, mixed>
      */
     private function normalizeAlunoAgg(array $agg): array
     {
+        $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+
         return [
             'total' => (int) ($agg['total'] ?? 0),
             'by_etapa_ensino' => is_array($agg['by_etapa_ensino'] ?? null) ? $agg['by_etapa_ensino'] : [],
             'without_etapa' => (int) ($agg['without_etapa'] ?? 0),
             'without_turma' => (int) ($agg['without_turma'] ?? 0),
+            'by_cor_raca' => is_array($agg['by_cor_raca'] ?? null) ? $agg['by_cor_raca'] : [],
+            'by_sexo' => is_array($agg['by_sexo'] ?? null) ? $agg['by_sexo'] : [],
+            'by_faixa_etaria' => is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : [],
+            'by_nee' => is_array($agg['by_nee'] ?? null) ? $agg['by_nee'] : [],
+            'nee_flagged' => (int) ($agg['nee_flagged'] ?? 0),
+            'without_cor' => (int) ($agg['without_cor'] ?? 0),
+            'without_sexo' => (int) ($agg['without_sexo'] ?? 0),
+            'without_nascimento' => (int) ($agg['without_nascimento'] ?? 0),
+            'columns' => [
+                'cor_raca' => (bool) ($cols['cor_raca'] ?? false),
+                'sexo' => (bool) ($cols['sexo'] ?? false),
+                'nascimento' => (bool) ($cols['nascimento'] ?? false),
+                'nee' => (bool) ($cols['nee'] ?? false),
+                'transporte' => (bool) ($cols['transporte'] ?? false),
+                'poder_publico' => (bool) ($cols['poder_publico'] ?? false),
+            ],
         ];
     }
 
@@ -1005,17 +1162,49 @@ final class CampaignAnalyzer
     }
 
     /**
-     * @param  array{total: int, by_etapa_ensino: array<string, int>, without_etapa: int, without_turma: int}  $into
-     * @param  array{total: int, by_etapa_ensino: array<string, int>, without_etapa: int, without_turma: int}  $from
-     * @return array{total: int, by_etapa_ensino: array<string, int>, without_etapa: int, without_turma: int}
+     * @param  array<string, mixed>  $into
+     * @param  array<string, mixed>  $from
+     * @return array<string, mixed>
      */
     private function mergeAlunoAgg(array $into, array $from): array
     {
+        $intoCols = is_array($into['columns'] ?? null) ? $into['columns'] : $this->emptyAlunoAgg()['columns'];
+        $fromCols = is_array($from['columns'] ?? null) ? $from['columns'] : [];
+        foreach (array_keys($intoCols) as $key) {
+            if (! empty($fromCols[$key])) {
+                $intoCols[$key] = true;
+            }
+        }
+
         return [
-            'total' => $into['total'] + $from['total'],
-            'by_etapa_ensino' => $this->aggregator->mergeCounts($into['by_etapa_ensino'], $from['by_etapa_ensino']),
-            'without_etapa' => $into['without_etapa'] + $from['without_etapa'],
-            'without_turma' => $into['without_turma'] + $from['without_turma'],
+            'total' => (int) ($into['total'] ?? 0) + (int) ($from['total'] ?? 0),
+            'by_etapa_ensino' => $this->aggregator->mergeCounts(
+                is_array($into['by_etapa_ensino'] ?? null) ? $into['by_etapa_ensino'] : [],
+                is_array($from['by_etapa_ensino'] ?? null) ? $from['by_etapa_ensino'] : [],
+            ),
+            'without_etapa' => (int) ($into['without_etapa'] ?? 0) + (int) ($from['without_etapa'] ?? 0),
+            'without_turma' => (int) ($into['without_turma'] ?? 0) + (int) ($from['without_turma'] ?? 0),
+            'by_cor_raca' => $this->aggregator->mergeCounts(
+                is_array($into['by_cor_raca'] ?? null) ? $into['by_cor_raca'] : [],
+                is_array($from['by_cor_raca'] ?? null) ? $from['by_cor_raca'] : [],
+            ),
+            'by_sexo' => $this->aggregator->mergeCounts(
+                is_array($into['by_sexo'] ?? null) ? $into['by_sexo'] : [],
+                is_array($from['by_sexo'] ?? null) ? $from['by_sexo'] : [],
+            ),
+            'by_faixa_etaria' => $this->mergeAgeBands(
+                is_array($into['by_faixa_etaria'] ?? null) ? $into['by_faixa_etaria'] : [],
+                is_array($from['by_faixa_etaria'] ?? null) ? $from['by_faixa_etaria'] : [],
+            ),
+            'by_nee' => $this->aggregator->mergeCounts(
+                is_array($into['by_nee'] ?? null) ? $into['by_nee'] : [],
+                is_array($from['by_nee'] ?? null) ? $from['by_nee'] : [],
+            ),
+            'nee_flagged' => (int) ($into['nee_flagged'] ?? 0) + (int) ($from['nee_flagged'] ?? 0),
+            'without_cor' => (int) ($into['without_cor'] ?? 0) + (int) ($from['without_cor'] ?? 0),
+            'without_sexo' => (int) ($into['without_sexo'] ?? 0) + (int) ($from['without_sexo'] ?? 0),
+            'without_nascimento' => (int) ($into['without_nascimento'] ?? 0) + (int) ($from['without_nascimento'] ?? 0),
+            'columns' => $intoCols,
         ];
     }
 

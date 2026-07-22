@@ -213,7 +213,7 @@ final class CampaignAnalysisPresenter
         ];
 
         $highlights = [];
-        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
+        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-DEM', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
             $inf = $inferences->get($code);
             if ($inf === null) {
                 continue;
@@ -230,6 +230,7 @@ final class CampaignAnalysisPresenter
         $acomp = $this->buildAcompSection($campaign, $coverage, $inferences);
         $schoolsOverview = $this->buildSchoolsOverview($campaign, $schoolRows);
         $crossChecks = $this->buildCrossChecks($inferences, $findings);
+        $profile = $this->buildProfileSection($inferences);
 
         $counters = [
             'errors' => $errors->count(),
@@ -264,6 +265,7 @@ final class CampaignAnalysisPresenter
             'acomp' => $acomp,
             'schools_overview' => $schoolsOverview,
             'cross_checks' => $crossChecks,
+            'profile' => $profile,
             'report' => $report,
             'highlights' => $highlights,
             'schools' => $schoolRows,
@@ -973,6 +975,87 @@ final class CampaignAnalysisPresenter
         ];
     }
 
+    /**
+     * Perfil demográfico / inclusão a partir das Relações de alunos (agregados, sem PII).
+     *
+     * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @return array<string, mixed>
+     */
+    private function buildProfileSection(Collection $inferences): array
+    {
+        $dem = $inferences->get('INF-DEM');
+        $nee = $inferences->get('INF-NEE');
+        $demPayload = is_array($dem?->payload) ? $dem->payload : [];
+        $neePayload = is_array($nee?->payload) ? $nee->payload : [];
+        $cols = is_array($demPayload['columns'] ?? null) ? $demPayload['columns'] : [];
+        $agg = new RelationCsvAggregator;
+        $scanned = (int) ($demPayload['scanned'] ?? $neePayload['scanned'] ?? 0);
+
+        $coverage = [
+            [
+                'key' => 'cor_raca',
+                'label' => __('Cor/Raça'),
+                'available' => (bool) ($cols['cor_raca'] ?? false),
+                'hint' => ($cols['cor_raca'] ?? false)
+                    ? __('Disponível na Relação de alunos')
+                    : __('Coluna ausente neste export'),
+            ],
+            [
+                'key' => 'sexo',
+                'label' => __('Sexo'),
+                'available' => (bool) ($cols['sexo'] ?? false),
+                'hint' => ($cols['sexo'] ?? false)
+                    ? __('Disponível na Relação de alunos')
+                    : __('Coluna ausente neste export'),
+            ],
+            [
+                'key' => 'nascimento',
+                'label' => __('Faixa etária'),
+                'available' => (bool) ($cols['nascimento'] ?? false),
+                'hint' => ($cols['nascimento'] ?? false)
+                    ? __('Calculada pela Data de nascimento')
+                    : __('Sem Data de nascimento no export'),
+            ],
+            [
+                'key' => 'nee',
+                'label' => __('Inclusão (NEE/TEA/AH)'),
+                'available' => (bool) ($cols['nee'] ?? $neePayload['has_nee_columns'] ?? false),
+                'hint' => (($cols['nee'] ?? false) || ($neePayload['has_nee_columns'] ?? false))
+                    ? __('Colunas de deficiência/TEA/AH detectadas')
+                    : __('Colunas de inclusão não detectadas'),
+            ],
+            [
+                'key' => 'transporte',
+                'label' => __('Transporte escolar'),
+                'available' => (bool) ($cols['transporte'] ?? false),
+                'hint' => ($cols['transporte'] ?? false)
+                    ? __('Coluna detectada (agregação futura)')
+                    : __('Não detectado neste export'),
+            ],
+            [
+                'key' => 'vulnerabilidade',
+                'label' => __('Vulnerabilidade social'),
+                'available' => false,
+                'hint' => __('Não vem no Educacenso — use CadÚnico / módulo próprio'),
+            ],
+        ];
+
+        return [
+            'available' => $dem !== null || $nee !== null,
+            'summary' => $dem?->summary ?? $nee?->summary,
+            'scanned' => $scanned,
+            'coverage' => $coverage,
+            'by_cor_raca' => $agg->toBars(is_array($demPayload['by_cor_raca'] ?? null) ? $demPayload['by_cor_raca'] : [], 10),
+            'by_sexo' => $agg->toBars(is_array($demPayload['by_sexo'] ?? null) ? $demPayload['by_sexo'] : [], 6),
+            'by_faixa_etaria' => $agg->toBars(is_array($demPayload['by_faixa_etaria'] ?? null) ? $demPayload['by_faixa_etaria'] : [], 8),
+            'by_nee' => $agg->toBars(is_array($neePayload['by_nee'] ?? null) ? $neePayload['by_nee'] : [], 8),
+            'nee_flagged' => (int) ($neePayload['flagged'] ?? 0),
+            'social_note' => $demPayload['social_note']
+                ?? __('Vulnerabilidade social (CadÚnico/Bolsa Família) não está nos CSV da 1ª etapa do Educacenso.'),
+            'privacy_note' => __('Somente contagens agregadas — nenhum nome, CPF ou NIS é exibido.'),
+        ];
+    }
+
     private function isSchoolBlocked(?\App\Models\Clio\ClioCampaignSchool $school): bool
     {
         if ($school === null) {
@@ -993,6 +1076,7 @@ final class CampaignAnalysisPresenter
             'INF-TUR' => __('Turmas'),
             'INF-DOC' => __('Profissionais'),
             'INF-NEE' => __('Inclusão / NEE'),
+            'INF-DEM' => __('Perfil demográfico'),
             'INF-COE' => __('Coerência dos arquivos'),
             'INF-DUP' => __('Possíveis duplicidades'),
             'INF-DELTA' => __('Diferenças Acomp × Relações'),
@@ -1011,6 +1095,7 @@ final class CampaignAnalysisPresenter
             'INF-TUR' => __('Turmas por etapa, mediação e tipo (curricular, AEE, atividade complementar).'),
             'INF-DOC' => __('Volume de profissionais/vínculos nas relações enviadas.'),
             'INF-NEE' => __('Sinais de atendimento educacional especializado / NEE.'),
+            'INF-DEM' => __('Cor/Raça, sexo e faixa etária agregados a partir das Relações de alunos.'),
             'INF-COE' => __('Se cada escola tem o conjunto aluno + turma + profissional.'),
             'INF-DUP' => __('Indícios de registros repetidos nos arquivos.'),
             'INF-DELTA' => __('Quando o Acompanhamento e as relações não batem (curricular, AEE, AC).'),

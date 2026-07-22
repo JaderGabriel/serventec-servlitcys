@@ -393,6 +393,115 @@
                     </section>
                 @endif
 
+                {{-- Perfil demográfico e indicadores possíveis --}}
+                @php $profile = $dashboard['profile'] ?? []; @endphp
+                @if (! empty($profile['available']))
+                    <section aria-labelledby="clio-profile-heading" class="space-y-4">
+                        <div>
+                            <h3 id="clio-profile-heading" class="clio-section-title">{{ __('Perfil e indicadores possíveis') }}</h3>
+                            <p class="mt-1 text-sm text-slate-500 max-w-3xl">
+                                {{ $profile['summary'] ?? __('O que as Relações de alunos desta coleta permitem medir (agregado, sem dados pessoais).') }}
+                            </p>
+                        </div>
+                        <div class="clio-panel clio-panel--pad space-y-3">
+                            <p class="text-xs text-slate-500">{{ $profile['privacy_note'] ?? '' }}</p>
+                            <ul class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                @foreach ($profile['coverage'] ?? [] as $item)
+                                    <li class="rounded-lg border border-slate-100 px-3 py-2 dark:border-slate-800">
+                                        <div class="flex items-center gap-2">
+                                            <span class="{{ $chipTone(! empty($item['available']) ? 'emerald' : 'slate') }}">
+                                                {{ ! empty($item['available']) ? __('Disponível') : __('Indisponível') }}
+                                            </span>
+                                            <span class="text-sm font-medium text-serv-navy dark:text-white">{{ $item['label'] }}</span>
+                                        </div>
+                                        <p class="mt-1 text-xs text-slate-500">{{ $item['hint'] }}</p>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if (! empty($profile['social_note']))
+                                <div class="clio-note">
+                                    <p class="clio-note__title">{{ __('Vulnerabilidade social') }}</p>
+                                    <p class="mt-1 text-xs leading-relaxed">{{ $profile['social_note'] }}</p>
+                                </div>
+                            @endif
+                        </div>
+                        <div class="grid gap-4 lg:grid-cols-2">
+                            @if (! empty($profile['by_cor_raca']))
+                                <div class="clio-panel clio-panel--pad space-y-3">
+                                    <h4 class="clio-section-title text-base">{{ __('Cor/Raça') }}</h4>
+                                    @foreach ($profile['by_cor_raca'] as $bar)
+                                        <div class="clio-dist__row">
+                                            <div class="clio-dist__head">
+                                                <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                            </div>
+                                            <div class="clio-dist__track">
+                                                <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if (! empty($profile['by_sexo']))
+                                <div class="clio-panel clio-panel--pad space-y-3">
+                                    <h4 class="clio-section-title text-base">{{ __('Sexo') }}</h4>
+                                    @foreach ($profile['by_sexo'] as $bar)
+                                        <div class="clio-dist__row">
+                                            <div class="clio-dist__head">
+                                                <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                            </div>
+                                            <div class="clio-dist__track">
+                                                <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if (! empty($profile['by_faixa_etaria']))
+                                <div class="clio-panel clio-panel--pad space-y-3">
+                                    <h4 class="clio-section-title text-base">{{ __('Faixa etária (em 31/03 do exercício)') }}</h4>
+                                    @foreach ($profile['by_faixa_etaria'] as $bar)
+                                        <div class="clio-dist__row">
+                                            <div class="clio-dist__head">
+                                                <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                            </div>
+                                            <div class="clio-dist__track">
+                                                <div class="clio-dist__fill clio-dist__fill--amber" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                            @if (! empty($profile['by_nee']) || ($profile['nee_flagged'] ?? 0) > 0)
+                                <div class="clio-panel clio-panel--pad space-y-3">
+                                    <h4 class="clio-section-title text-base">{{ __('Inclusão (NEE / TEA / AH)') }}</h4>
+                                    <p class="text-xs text-slate-500">
+                                        {{ __(':n aluno(s) com marcador positivo em :t analisados.', [
+                                            'n' => $profile['nee_flagged'] ?? 0,
+                                            't' => $profile['scanned'] ?? 0,
+                                        ]) }}
+                                    </p>
+                                    @forelse ($profile['by_nee'] ?? [] as $bar)
+                                        <div class="clio-dist__row">
+                                            <div class="clio-dist__head">
+                                                <span class="clio-dist__label">{{ $bar['label'] }}</span>
+                                                <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
+                                            </div>
+                                            <div class="clio-dist__track">
+                                                <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-slate-500">{{ __('Nenhum marcador positivo nas colunas detectadas.') }}</p>
+                                    @endforelse
+                                </div>
+                            @endif
+                        </div>
+                    </section>
+                @endif
+
                 {{-- Relatório da rede (Matrícula inicial / Educacenso) --}}
                 @if (! empty($dashboard['report']['available']))
                     @php $report = $dashboard['report']; @endphp

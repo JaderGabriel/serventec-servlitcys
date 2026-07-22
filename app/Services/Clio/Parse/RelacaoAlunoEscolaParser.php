@@ -43,7 +43,11 @@ final class RelacaoAlunoEscolaParser implements ArtifactParser
             }
         }
 
-        $agg = ($this->aggregator ?? new RelationCsvAggregator)->aggregateAlunos($data['rows'], $this->csv);
+        $agg = ($this->aggregator ?? new RelationCsvAggregator)->aggregateAlunos(
+            $data['rows'],
+            $this->csv,
+            $artifact->campaign?->year ? (int) $artifact->campaign->year : null,
+        );
         $withTurma = $agg['total'] - $agg['without_turma'];
 
         $warnings = [];
