@@ -412,12 +412,18 @@
 .clio-report-card {
     @apply clio-panel relative flex flex-col transition duration-200 ease-out;
     animation: clio-fade-up 0.45s ease-out both;
+    /* Permite o menu Downloads ultrapassar o rodapé do cartão */
+    overflow: visible;
 }
 
 .clio-report-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--clio-shadow-lift);
     @apply border-blue-300/80 dark:border-blue-600/50;
+}
+
+.clio-report-card:has([aria-expanded="true"]) {
+    z-index: 30;
 }
 
 .clio-report-card__rail {
