@@ -25,6 +25,7 @@ class CampaignAnalysisController extends Controller
             'inferences',
             'findings' => fn ($q) => $q->with('school')->latest('id')->limit(200),
             'schools',
+            'artifacts' => fn ($q) => $q->where('kind', 'acomp_coleta_1etapa'),
         ]);
         $campaign->loadCount(['artifacts', 'schools', 'findings']);
 

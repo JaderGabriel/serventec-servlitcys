@@ -175,12 +175,26 @@
             <section class="space-y-4" aria-labelledby="clio-school-findings-heading">
                 <div>
                     <h3 id="clio-school-findings-heading" class="font-display text-lg font-semibold text-serv-navy dark:text-white">
-                        {{ __('Acertos e problemas desta escola') }}
+                        {{ __('O que corrigir nesta escola') }}
                     </h3>
                     <p class="mt-1 text-sm text-slate-500">
                         {{ __('Erros pedem correção; atenções merecem revisão; informações só registram o contexto.') }}
                     </p>
                 </div>
+
+                @if (! empty($dashboard['glossary']))
+                    <details class="clio-glossary clio-panel clio-panel--pad">
+                        <summary class="clio-glossary__summary">{{ __('Termos usados nesta tela') }}</summary>
+                        <dl class="clio-glossary__list">
+                            @foreach (array_slice($dashboard['glossary'], 0, 5) as $entry)
+                                <div class="clio-glossary__item">
+                                    <dt>{{ $entry['term'] }}</dt>
+                                    <dd>{{ $entry['meaning'] }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                    </details>
+                @endif
 
                 @if (($f['error_count'] ?? 0) === 0 && ($f['warning_count'] ?? 0) === 0 && ($f['info_count'] ?? 0) === 0)
                     <div class="clio-panel clio-panel--pad text-sm text-emerald-800 dark:text-emerald-200">
@@ -207,6 +221,7 @@
                                                 {{ $finding->severityLabel() }}
                                             </span>
                                             <p class="mt-1 text-slate-800 dark:text-slate-200 leading-snug">{{ $finding->message }}</p>
+                                            <p class="mt-1 text-xs text-sky-800 dark:text-sky-200">{{ __('O que fazer:') }} {{ $finding->actionHint() }}</p>
                                             <p class="mt-0.5 text-[11px] text-slate-400">{{ $finding->severityHint() }} · {{ $finding->code }}</p>
                                         </li>
                                     @endforeach

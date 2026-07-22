@@ -34,8 +34,8 @@ final class CampaignAnalyzerCatalogTest extends TestCase
     #[Test]
     public function catalogo_inf_codes_documentado(): void
     {
-        $codes = ['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-COE', 'INF-DUP', 'INF-DELTA'];
-        $this->assertCount(9, $codes);
+        $codes = ['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK'];
+        $this->assertCount(10, $codes);
         $this->assertTrue(class_exists(CampaignAnalyzer::class));
     }
 }

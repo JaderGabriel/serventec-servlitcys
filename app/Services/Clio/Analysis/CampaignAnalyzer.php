@@ -69,6 +69,7 @@ final class CampaignAnalyzer
             $this->inferCoerencia($campaign);
             $this->inferDuplicidades($campaign);
             $this->inferDelta($campaign);
+            $this->inferCruzamentos($campaign);
         });
 
         $stillHasGap = ClioCampaignInference::query()
@@ -138,7 +139,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-COL-BLOCK',
                     ClioCampaignFinding::SEVERITY_WARNING,
-                    __('Escola bloqueada na coleta.'),
+                    __('Esta escola está bloqueada no portal Educacenso. Confirme o motivo ou desbloqueie antes de seguir.'),
                     $school,
                 );
 
@@ -160,7 +161,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-COL',
-            __('Coleta: :a em andamento, :n não iniciou, :f fechada, :b bloqueada.', [
+            __('Situação no portal: :a em andamento, :n ainda não iniciaram, :f fechadas, :b bloqueadas.', [
                 'a' => $buckets['em_andamento'],
                 'n' => $buckets['nao_iniciou'],
                 'f' => $buckets['fechada'],
@@ -194,7 +195,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-ESC',
-            __('Rede: :a ativas, :e extintas.', ['a' => $ativas, 'e' => $extintas]),
+            __('Rede escolar: :a em atividade, :e extintas.', ['a' => $ativas, 'e' => $extintas]),
             [
                 'active' => $ativas,
                 'extinct' => $extintas,
@@ -264,7 +265,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-MAT-SEM-TURMA',
                     ClioCampaignFinding::SEVERITY_WARNING,
-                    __('Matrículas sem Código da turma: :n.', ['n' => $alunoAgg['without_turma']]),
+                    __('Há :n matrícula(s) na Relação de alunos sem Código da turma — vincule cada aluno a uma turma.', ['n' => $alunoAgg['without_turma']]),
                     $school,
                 );
             }
@@ -289,7 +290,7 @@ final class CampaignAnalyzer
                 $campaign,
                 'CLIO-MAT-SEM-ETAPA',
                 ClioCampaignFinding::SEVERITY_INFO,
-                __('Matrículas sem Etapa de ensino preenchida: :n (pirâmide por ano incompleta).', [
+                __('Há :n matrícula(s) sem Etapa de ensino — o quadro por ano fica incompleto até preencher.', [
                     'n' => $withoutEtapa,
                 ]),
             );
@@ -298,7 +299,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-MAT',
-            __('Matrícula: curricular :c · AEE :aee · AC :ac · linhas Relação :r.', [
+            __('Matrículas no Acomp: curricular :c · AEE :aee · AC :ac · linhas na Relação de alunos: :r.', [
                 'c' => $fromAcomp,
                 'aee' => $fromAee,
                 'ac' => $fromAc,
@@ -379,7 +380,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-TUR-SEM-CURRICULAR',
                     ClioCampaignFinding::SEVERITY_WARNING,
-                    __('Acomp indica matrícula curricular (:n), mas não há turma do tipo Curricular na Relação.', [
+                    __('O Acompanhamento indica :n matrícula(s) curricular(es), mas não há turma curricular na Relação de turmas.', [
                         'n' => (int) $curr,
                     ]),
                     $school,
@@ -396,7 +397,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-TUR-AEE-AUSENTE',
                     ClioCampaignFinding::SEVERITY_WARNING,
-                    __('Acomp declara :n matrícula(s) AEE, sem turma AEE na Relação.', [
+                    __('O Acompanhamento declara :n matrícula(s) AEE, mas não há turma AEE na Relação de turmas.', [
                         'n' => (int) $aeeAcomp,
                     ]),
                     $school,
@@ -425,7 +426,7 @@ final class CampaignAnalyzer
                 $campaign,
                 'CLIO-TUR-SEM-ETAPA',
                 ClioCampaignFinding::SEVERITY_INFO,
-                __('Turmas sem Etapa de ensino: :n (indicador por ano incompleto).', [
+                __('Há :n turma(s) sem Etapa de ensino — o indicador por ano fica incompleto até preencher.', [
                     'n' => $withoutEtapa,
                 ]),
             );
@@ -434,7 +435,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-TUR',
-            __('Turmas: :n · curricular :c · AEE :aee · AC :ac.', [
+            __('Turmas na Relação: :n · curricular :c · AEE :aee · atividade complementar :ac.', [
                 'n' => $total,
                 'c' => $buckets[RelationCsvAggregator::BUCKET_CURRICULAR],
                 'aee' => $buckets[RelationCsvAggregator::BUCKET_AEE],
@@ -463,7 +464,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-DOC',
-            __('Profissionais/vínculos (linhas): :n.', ['n' => $rows]),
+            __('Profissionais na Relação: :n linha(s) de vínculo.', ['n' => $rows]),
             ['relacao_profissional_rows' => $rows],
         );
     }
@@ -509,7 +510,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-NEE',
-            __('Alunos com marcadores NEE/TEA/AH (heurística): :n de :s.', [
+            __('Alunos com indício de NEE/TEA/AH nas colunas: :n de :s analisados.', [
                 'n' => $flagged,
                 's' => $scanned,
             ]),
@@ -530,7 +531,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-COE-TRIADE',
                     ClioCampaignFinding::SEVERITY_WARNING,
-                    __('Tríade incompleta (aluno/turma/profissional).'),
+                    __('Faltam arquivos da tríade (alunos, turmas e/ou profissionais) nesta escola.'),
                     $school,
                     null,
                     [
@@ -547,14 +548,14 @@ final class CampaignAnalyzer
                 $campaign,
                 'CLIO-COE-ACOMP',
                 ClioCampaignFinding::SEVERITY_INFO,
-                __('Coleta sem relatório municipal de acompanhamento.'),
+                __('Ainda não há Relatório de Acompanhamento municipal nesta coleta — os totais oficiais do portal ficam indisponíveis.'),
             );
         }
 
         $this->upsertInference(
             $campaign,
             'INF-COE',
-            __('Coerência: :m escola(s) sem tríade completa · cobertura :p%.', [
+            __('Arquivos: :m escola(s) sem tríade completa · cobertura :p%.', [
                 'm' => $missingTriade,
                 'p' => $coverage['triade_coverage_pct'],
             ]),
@@ -595,7 +596,7 @@ final class CampaignAnalyzer
                             $campaign,
                             'CLIO-DUP-ID',
                             ClioCampaignFinding::SEVERITY_WARNING,
-                            __('Identificação duplicada na rede (amostra: :id).', [
+                            __('O mesmo identificador aparece mais de uma vez na Relação de alunos (amostra: :id).', [
                                 'id' => $this->maskIdentifier($id),
                             ]),
                             $artifact->school,
@@ -611,7 +612,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-DUP',
-            __('Duplicidades de identificação: :n.', ['n' => $dupes]),
+            __('Possíveis duplicidades de identificação: :n ocorrência(s).', ['n' => $dupes]),
             ['duplicate_ids' => $dupes, 'unique_ids' => count($seen)],
         );
     }
@@ -642,7 +643,7 @@ final class CampaignAnalyzer
                         $campaign,
                         'CLIO-DELTA-MAT',
                         ClioCampaignFinding::SEVERITY_INFO,
-                        __('Delta matrícula Acomp curricular (:a) × Relação (:r).', [
+                        __('Diferença de matrícula curricular: Acompanhamento indica :a, Relação de alunos tem :r linha(s).', [
                             'a' => (int) $acomp,
                             'r' => $rows,
                         ]),
@@ -671,7 +672,7 @@ final class CampaignAnalyzer
                     $campaign,
                     'CLIO-DELTA-AC',
                     ClioCampaignFinding::SEVERITY_INFO,
-                    __('Acomp declara :n matrícula(s) em Atividade Complementar, sem turma AC na Relação.', [
+                    __('O Acompanhamento declara :n matrícula(s) em Atividade Complementar, mas não há turma AC na Relação.', [
                         'n' => (int) $acAcomp,
                     ]),
                     $school,
@@ -683,7 +684,7 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-DELTA',
-            __('Escolas com delta curricular: :n · AEE sem turma: :aee · AC sem turma: :ac.', [
+            __('Escolas com diferença curricular: :n · AEE sem turma: :aee · AC sem turma: :ac.', [
                 'n' => $divergent,
                 'aee' => $divergentAee,
                 'ac' => $divergentAc,
@@ -693,6 +694,141 @@ final class CampaignAnalyzer
                 'divergent_aee_schools' => $divergentAee,
                 'divergent_ac_schools' => $divergentAc,
                 'samples' => array_slice($deltas, 0, 20),
+            ],
+        );
+    }
+
+    /**
+     * Conferências cruzadas municipais: Acomp (arquivo geral) × Relação aluno × Relação turma.
+     * O Acomp oficial não desagrega por ano/etapa — o cruzamento por ano usa só as Relações.
+     */
+    private function inferCruzamentos(ClioCampaign $campaign): void
+    {
+        $mat = ClioCampaignInference::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'INF-MAT')
+            ->first();
+        $tur = ClioCampaignInference::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('code', 'INF-TUR')
+            ->first();
+
+        $matPayload = is_array($mat?->payload) ? $mat->payload : [];
+        $turPayload = is_array($tur?->payload) ? $tur->payload : [];
+
+        $acompCurricular = (int) ($matPayload['acomp_curricular_sum'] ?? 0);
+        $acompAee = (int) ($matPayload['acomp_aee_sum'] ?? 0);
+        $acompAc = (int) ($matPayload['acomp_ac_sum'] ?? 0);
+        $relacaoAlunos = (int) ($matPayload['relacao_aluno_rows'] ?? 0);
+        $hasAcomp = $acompCurricular > 0 || $acompAee > 0 || $acompAc > 0
+            || $campaign->artifacts->contains(fn ($a) => $a->kind === 'acomp_coleta_1etapa');
+
+        $networkDelta = $hasAcomp && $relacaoAlunos > 0
+            ? $relacaoAlunos - $acompCurricular
+            : null;
+
+        if ($networkDelta !== null && $networkDelta !== 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-DELTA-REDE',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Totais da rede: o arquivo geral (Acomp) soma :a matrículas curriculares e a Relação de alunos tem :r linha(s) — diferença :d.', [
+                    'a' => $acompCurricular,
+                    'r' => $relacaoAlunos,
+                    'd' => ($networkDelta > 0 ? '+' : '').$networkDelta,
+                ]),
+            );
+        }
+
+        $alunoByEtapa = is_array($matPayload['by_etapa_ensino'] ?? null) ? $matPayload['by_etapa_ensino'] : [];
+        $turmaByEtapa = is_array($turPayload['by_etapa_ensino'] ?? null) ? $turPayload['by_etapa_ensino'] : [];
+        $etapas = array_unique(array_merge(array_keys($alunoByEtapa), array_keys($turmaByEtapa)));
+        sort($etapas);
+
+        $etapaRows = [];
+        $alunosSemTurmaEtapa = 0;
+        $turmasSemAlunoEtapa = 0;
+
+        foreach ($etapas as $etapa) {
+            $alunos = (int) ($alunoByEtapa[$etapa] ?? 0);
+            $turmas = (int) ($turmaByEtapa[$etapa] ?? 0);
+            $flag = null;
+            if ($alunos > 0 && $turmas === 0) {
+                $flag = 'alunos_sem_turma';
+                $alunosSemTurmaEtapa++;
+            } elseif ($turmas > 0 && $alunos === 0) {
+                $flag = 'turma_sem_aluno';
+                $turmasSemAlunoEtapa++;
+            }
+
+            $etapaRows[] = [
+                'etapa' => $etapa,
+                'alunos' => $alunos,
+                'turmas' => $turmas,
+                'flag' => $flag,
+            ];
+        }
+
+        usort($etapaRows, static function (array $a, array $b): int {
+            $prio = static fn (?string $f): int => match ($f) {
+                'alunos_sem_turma' => 0,
+                'turma_sem_aluno' => 1,
+                default => 2,
+            };
+            $pa = $prio($a['flag']);
+            $pb = $prio($b['flag']);
+            if ($pa !== $pb) {
+                return $pa <=> $pb;
+            }
+
+            return ($b['alunos'] + $b['turmas']) <=> ($a['alunos'] + $a['turmas']);
+        });
+
+        if ($alunosSemTurmaEtapa > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-XCHK-ETAPA',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Em :n etapa(s)/ano(s) há alunos na Relação sem turma correspondente na mesma etapa. O arquivo geral (Acomp) não informa totais por ano — esta conferência usa só as Relações.', [
+                    'n' => $alunosSemTurmaEtapa,
+                ]),
+            );
+        }
+
+        $okNetwork = $networkDelta === null || $networkDelta === 0;
+        $okEtapa = $alunosSemTurmaEtapa === 0;
+
+        $this->upsertInference(
+            $campaign,
+            'INF-XCHK',
+            $hasAcomp
+                ? __('Cruzamentos: Acomp curricular :a × Relação alunos :r (:delta) · etapas com alunos sem turma: :e.', [
+                    'a' => $acompCurricular,
+                    'r' => $relacaoAlunos,
+                    'delta' => $networkDelta === null
+                        ? __('sem comparação')
+                        : (($networkDelta === 0) ? __('ok') : (($networkDelta > 0 ? '+' : '').$networkDelta)),
+                    'e' => $alunosSemTurmaEtapa,
+                ])
+                : __('Cruzamentos: sem arquivo geral (Acomp) — conferência por etapa só entre Relação aluno e Relação turma (:e etapa(s) com alunos sem turma).', [
+                    'e' => $alunosSemTurmaEtapa,
+                ]),
+            [
+                'has_acomp' => $hasAcomp,
+                'acomp_has_by_etapa' => false,
+                'acomp_by_etapa_note' => __('O Relatório de Acompanhamento (arquivo geral) traz totais por escola (curricular/AEE/AC), sem desagregação por ano/etapa.'),
+                'network' => [
+                    'acomp_curricular' => $acompCurricular,
+                    'acomp_aee' => $acompAee,
+                    'acomp_ac' => $acompAc,
+                    'relacao_aluno_rows' => $relacaoAlunos,
+                    'delta_curricular' => $networkDelta,
+                    'ok' => $okNetwork,
+                ],
+                'etapa_compare' => array_slice($etapaRows, 0, 40),
+                'etapas_alunos_sem_turma' => $alunosSemTurmaEtapa,
+                'etapas_turmas_sem_aluno' => $turmasSemAlunoEtapa,
+                'etapa_ok' => $okEtapa,
             ],
         );
     }

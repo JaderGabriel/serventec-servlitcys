@@ -40,8 +40,11 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 | **Andamento da coleta** | Buckets: em andamento, não iniciou, fechada, bloqueada (`INF-COL`) |
 | **Relatório da rede** | Ver §3 |
 | **O que os dados mostram** | Cards das inferências `INF-*` presentes |
-| **Escolas da rede** | Status Completa / Incompleta / Com erros; flags de arquivos; link por escola |
-| **Acertos e problemas** | Listas por severidade (erro / atenção / informação) |
+| **Escolas da rede** | Status Completa / Incompleta / Com erros; dependência; totais Acomp; flags de arquivos; filtros + busca |
+| **Acertos e problemas** | Listas por severidade (erro / atenção / informação) + «o que fazer» |
+| **Arquivo geral (Acomp)** | Nome do CSV, data ref, totais curricular/AEE/AC, a confirmar, bloqueadas, delta vs Relação |
+| **Panorama das escolas** | Contadores + barras por dependência, funcionamento, localização, forma de coleta |
+| **Conferências cruzadas** | Acomp × Relação aluno (rede); alunos × turmas por etapa/ano; apontamentos `CLIO-DELTA-REDE` / `CLIO-XCHK-ETAPA` |
 
 ### 2.3 Detalhe da escola `/clio/coletas/{uuid}/escolas/{inep}`
 
@@ -64,12 +67,16 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 
 | Formato | Conteúdo típico |
 |--------|-----------------|
-| **CSV** | Meta da coleta, cobertura, inferências (+ payload escalar), escolas (INEP/tríade), achados (código, severidade, mensagem) — **sem PII** |
-| **PDF** | Capa municipal, inferências, amostra de achados críticos |
+| **CSV** | Meta da coleta, **contadores** (erros/atenções/infos + escolas), resumos `INF-*`, escolas (situação/tríade/contagens), bloco **o_que_corrigir** (código, severidade em PT, mensagem, **o que fazer**, escola/INEP) — **sem PII** |
+| **PDF** | Capa municipal, **contadores da análise**, o que os dados mostram, **o que corrigir** (erros) + **pontos de atenção**, escolas com situação/tríade/erros/avisos |
 
 ### 2.6 RX e aba Censo
 
 Bloco de ranking/estado das coletas do exercício (tríade, erros, avisos) — leitura operacional, não substitui o painel analítico.
+
+### 2.7 Glossário e filtros na UI
+
+No painel municipal: seção **Como ler esta análise** (legenda erro/atenção/informação + glossário tríade/Acomp/AEE/AC/delta) e **filtros** na lista de escolas (todas / com erros / incompletas / completas / com avisos + busca nome/INEP).
 
 ---
 
@@ -109,6 +116,7 @@ Geradas por `CampaignAnalyzer` (Modo A) e `IeducarGapAnalyzer` (Modo B). Aparece
 | **INF-COE** | Coerência dos arquivos | Escolas sem tríade; se há Acomp | `triade_coverage_pct`, `has_acomp` |
 | **INF-DUP** | Possíveis duplicidades | IDs repetidos na Relação aluno (rede) | `duplicate_ids`, `unique_ids` |
 | **INF-DELTA** | Diferenças Acomp × Relações | Deltas curricular; AEE/AC sem turma | `divergent_*`, `samples` |
+| **INF-XCHK** | Conferências cruzadas | Totais Acomp × Relação aluno; alunos×turmas por etapa | `network`, `etapa_compare` |
 | **INF-GAP** | Comparação com o i-Educar | Só Clio / só i-Educar / ambos | Contagens de gap (Modo B) |
 
 A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
@@ -131,6 +139,8 @@ A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
 | **CLIO-COE-ACOMP** | Informação | Rede | Coleta sem relatório municipal de acompanhamento |
 | **CLIO-DUP-ID** | Atenção | Escola/arquivo | Identificação duplicada na rede (amostra mascarada) |
 | **CLIO-DELTA-MAT** | Informação | Escola | Delta Acomp curricular × linhas Relação aluno |
+| **CLIO-DELTA-REDE** | Atenção | Rede | Soma curricular do Acomp × total de linhas da Relação de alunos |
+| **CLIO-XCHK-ETAPA** | Atenção | Rede | Etapa(s) com alunos na Relação sem turma na mesma etapa |
 | **CLIO-DELTA-AC** | Informação | Escola | Acomp com AC > 0 sem turma de Atividade complementar |
 | **CLIO-GAP-CLIO** | Atenção | Escola | Escola na coleta Clio e **ausente** no snapshot i-Educar |
 | **CLIO-GAP-IEDUCAR** | Informação | Escola* | Escola no i-Educar e **ausente** na coleta Clio |
@@ -148,6 +158,10 @@ Estes códigos entram na lista **Apontamentos do relatório** (além da seção 
 - `CLIO-MAT-SEM-TURMA`
 - `CLIO-DELTA-MAT`
 - `CLIO-DELTA-AC`
+- `CLIO-DELTA-REDE`
+- `CLIO-XCHK-ETAPA`
+
+**Nota sobre totais por ano:** o arquivo geral (Acomp) **não** traz matrículas por etapa/ano. A conferência «alunos do 1º ano vs total do arquivo geral no 1º ano» **não é possível** com o CSV oficial atual. O Clio compara: (1) totais municipais Acomp × Relação aluno; (2) alunos × turmas **na mesma** `Etapa de ensino` nas Relações.
 
 ### 5.3 Flags na tabela «Por escola» (sem código `CLIO-*`)
 

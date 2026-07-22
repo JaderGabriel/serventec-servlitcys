@@ -2,6 +2,7 @@
 
 namespace App\Models\Clio;
 
+use App\Services\Clio\Support\ClioUserCopy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -52,12 +53,7 @@ class ClioCampaignFinding extends Model
 
     public function severityLabel(): string
     {
-        return match ($this->severity) {
-            self::SEVERITY_ERROR => __('Erro'),
-            self::SEVERITY_WARNING => __('Atenção'),
-            self::SEVERITY_INFO => __('Informação'),
-            default => $this->severity,
-        };
+        return ClioUserCopy::severityLabel((string) $this->severity);
     }
 
     public function severityHint(): string
@@ -68,5 +64,10 @@ class ClioCampaignFinding extends Model
             self::SEVERITY_INFO => __('Registro informativo'),
             default => '',
         };
+    }
+
+    public function actionHint(): string
+    {
+        return ClioUserCopy::findingAction($this->code, (string) $this->severity);
     }
 }

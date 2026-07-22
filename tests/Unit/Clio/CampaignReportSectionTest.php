@@ -46,6 +46,7 @@ final class CampaignReportSectionTest extends TestCase
             'status' => ClioCampaign::STATUS_ANALYZED,
         ]);
         $campaign->setRelation('schools', new Collection);
+        $campaign->setRelation('artifacts', new Collection);
 
         $inferences = collect([
             'INF-MAT' => new ClioCampaignInference([
@@ -124,5 +125,72 @@ final class CampaignReportSectionTest extends TestCase
         $this->assertNotEmpty($dash['report']['schools']);
         $this->assertSame(1, $dash['report']['schools'][0]['turmas_aee']);
         $this->assertNotEmpty($dash['report']['apontamentos']);
+        $this->assertArrayHasKey('acomp', $dash);
+        $this->assertTrue($dash['acomp']['available']);
+        $this->assertArrayHasKey('schools_overview', $dash);
+        $this->assertArrayHasKey('cross_checks', $dash);
+    }
+
+    #[Test]
+    public function presenter_monta_cruzamentos_quando_ha_inf_xchk(): void
+    {
+        $campaign = new ClioCampaign([
+            'municipality_name' => 'Mairi',
+            'year' => 2026,
+            'status' => ClioCampaign::STATUS_ANALYZED,
+        ]);
+        $campaign->setRelation('schools', new Collection);
+        $campaign->setRelation('artifacts', new Collection);
+
+        $inferences = collect([
+            'INF-XCHK' => new ClioCampaignInference([
+                'code' => 'INF-XCHK',
+                'summary' => 'Cruzamentos teste',
+                'payload' => [
+                    'has_acomp' => true,
+                    'acomp_by_etapa_note' => 'Sem desagregação por ano',
+                    'network' => [
+                        'acomp_curricular' => 100,
+                        'relacao_aluno_rows' => 98,
+                        'delta_curricular' => -2,
+                        'ok' => false,
+                    ],
+                    'etapa_compare' => [
+                        ['etapa' => '1º Ano', 'alunos' => 10, 'turmas' => 1, 'flag' => null],
+                        ['etapa' => '2º Ano', 'alunos' => 5, 'turmas' => 0, 'flag' => 'alunos_sem_turma'],
+                    ],
+                    'etapas_alunos_sem_turma' => 1,
+                    'etapas_turmas_sem_aluno' => 0,
+                    'etapa_ok' => false,
+                ],
+            ]),
+            'INF-MAT' => new ClioCampaignInference([
+                'code' => 'INF-MAT',
+                'summary' => 'Mat',
+                'payload' => [
+                    'acomp_curricular_sum' => 100,
+                    'relacao_aluno_rows' => 98,
+                ],
+            ]),
+        ]);
+
+        $dash = (new CampaignAnalysisPresenter)->present(
+            $campaign,
+            [
+                'schools_total' => 0,
+                'schools_triade_complete' => 0,
+                'triade_coverage_pct' => 0,
+                'has_acomp' => true,
+                'reference_date' => '2026-07-21',
+                'schools' => [],
+            ],
+            $inferences,
+            collect(),
+        );
+
+        $this->assertTrue($dash['cross_checks']['available']);
+        $this->assertCount(2, $dash['cross_checks']['checks']);
+        $this->assertFalse($dash['cross_checks']['checks'][0]['ok']);
+        $this->assertCount(2, $dash['cross_checks']['etapa_rows']);
     }
 }

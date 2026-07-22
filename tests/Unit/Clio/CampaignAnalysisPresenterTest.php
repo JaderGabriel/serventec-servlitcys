@@ -22,6 +22,7 @@ final class CampaignAnalysisPresenterTest extends TestCase
             'status' => ClioCampaign::STATUS_ANALYZED,
         ]);
         $campaign->setRelation('schools', new Collection);
+        $campaign->setRelation('artifacts', new Collection);
 
         $coverage = [
             'schools_total' => 2,
@@ -67,9 +68,16 @@ final class CampaignAnalysisPresenterTest extends TestCase
         $this->assertCount(6, $dash['kpis']);
         $this->assertCount(2, $dash['schools']);
         $this->assertSame(1, $dash['findings']['warning_count']);
+        $this->assertArrayHasKey('glossary', $dash);
+        $this->assertNotEmpty($dash['glossary']);
+        $this->assertArrayHasKey('school_filters', $dash);
+        $this->assertArrayHasKey('counters', $dash);
+        $this->assertSame(1, $dash['counters']['warnings']);
+        $this->assertSame(0, $dash['counters']['errors']);
 
         $incomplete = collect($dash['schools'])->firstWhere('inep', '29085667');
         $this->assertSame(__('Incompleta'), $incomplete['status']);
+        $this->assertSame('incomplete', $incomplete['filter']);
         $this->assertContains(__('Turmas'), $incomplete['missing']);
         $this->assertArrayHasKey('report', $dash);
     }
