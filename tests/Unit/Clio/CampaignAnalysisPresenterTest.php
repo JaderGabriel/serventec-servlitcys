@@ -83,6 +83,74 @@ final class CampaignAnalysisPresenterTest extends TestCase
     }
 
     #[Test]
+    public function escolas_extintas_nao_aparecem_como_incompletas(): void
+    {
+        $campaign = new ClioCampaign([
+            'municipality_name' => 'Saubara',
+            'year' => 2026,
+            'status' => ClioCampaign::STATUS_ANALYZED,
+        ]);
+        $extinta = new ClioCampaignSchool([
+            'inep_code' => '29199999',
+            'name' => 'Escola Extinta Gamma',
+            'functioning_status' => 'Extinta',
+            'collection_form' => 'Não iniciou',
+            'dependency' => 'Municipal',
+        ]);
+        $ativa = new ClioCampaignSchool([
+            'inep_code' => '29174651',
+            'name' => 'Escola Municipal Alpha',
+            'functioning_status' => 'Em Atividade',
+            'collection_form' => 'Educacenso Web',
+            'dependency' => 'Municipal',
+        ]);
+        $campaign->setRelation('schools', collect([$extinta, $ativa]));
+        $campaign->setRelation('artifacts', new Collection);
+
+        $dash = (new CampaignAnalysisPresenter)->present(
+            $campaign,
+            [
+                'schools_total' => 2,
+                'schools_triade_complete' => 0,
+                'triade_coverage_pct' => 0,
+                'has_acomp' => true,
+                'schools' => [
+                    [
+                        'inep' => '29199999',
+                        'name' => 'Escola Extinta Gamma',
+                        'aluno' => false,
+                        'turma' => false,
+                        'profissional' => false,
+                        'triade' => false,
+                    ],
+                    [
+                        'inep' => '29174651',
+                        'name' => 'Escola Municipal Alpha',
+                        'aluno' => true,
+                        'turma' => false,
+                        'profissional' => false,
+                        'triade' => false,
+                    ],
+                ],
+            ],
+            collect(),
+            collect(),
+        );
+
+        $ext = collect($dash['schools'])->firstWhere('inep', '29199999');
+        $inc = collect($dash['schools'])->firstWhere('inep', '29174651');
+        $this->assertTrue($ext['inactive']);
+        $this->assertSame('inactive', $ext['filter']);
+        $this->assertSame(__('Extinta'), $ext['status']);
+        $this->assertSame([], $ext['missing']);
+        $this->assertSame('incomplete', $inc['filter']);
+        $this->assertSame(1, $dash['counters']['schools_incomplete']);
+        $this->assertSame(1, $dash['counters']['schools_inactive']);
+        $this->assertSame('29174651', $dash['schools'][0]['inep']);
+        $this->assertSame('29199999', $dash['schools'][1]['inep']);
+    }
+
+    #[Test]
     public function consolida_painel_da_escola(): void
     {
         $school = new ClioCampaignSchool([

@@ -88,6 +88,5 @@ Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 | [COMANDOS_ARTISAN.md](../COMANDOS_ARTISAN.md) §3.1b | `clio:*` |
 | [MODULO_RX_CENSO.md](MODULO_RX_CENSO.md) | RX — ritmo Censo |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | CEN-01 (paralelo) |
-| [Coleta 2026 (Drive)](https://drive.google.com/drive/folders/1xP9cMR6JYHXRezzMs5ybSUdoR5V-yxLh) | Corpus de amostras |
 
 Fixtures de teste: `tests/fixtures/clio/coleta_2026/` (anonimizadas).

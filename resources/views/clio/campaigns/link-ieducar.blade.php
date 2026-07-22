@@ -22,7 +22,7 @@
                 </div>
             @endif
 
-            <form method="post" action="{{ route('clio.campaigns.link.store', $campaign) }}" class="serv-panel space-y-5 p-6">
+            <form method="post" action="{{ route('clio.campaigns.link.store', $campaign) }}" class="serv-panel space-y-5 p-6" data-serv-loading-on-submit data-serv-loading-title="{{ __('Vinculando i-Educar') }}" data-serv-loading-message="{{ __('Salvando a conexão e testando o acesso. Aguarde…') }}">
                 @csrf
                 <div>
                     <label for="db_driver" class="block text-sm font-medium">{{ __('Motor') }}</label>

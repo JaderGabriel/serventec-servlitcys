@@ -24,6 +24,13 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-22 — Painel: fora de atividade + overlay de carregamento
+
+**Entregue**
+
+- Escolas extintas/paralisadas/em reforma com chip próprio, ordenadas no fim e fora do filtro «Incompletas»
+- Overlay global (`data-serv-loading-*`) nas ações Clio (análise, upload, Drive, PDF/CSV, etc.)
+
 ### 2026-07-21 — PDF: Rede por último + tabelas distorção / demografia / NEE
 
 **Entregue**

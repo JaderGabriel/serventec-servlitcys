@@ -40,7 +40,7 @@ Achados aparecem no painel municipal (`/clio/coletas/{uuid}/analise`), no detalh
 | **Andamento da coleta** | Buckets: em andamento, não iniciou, fechada, bloqueada (`INF-COL`) |
 | **Relatório da rede** | Ver §3 |
 | **O que os dados mostram** | Cards das inferências `INF-*` presentes |
-| **Escolas da rede** | Status Completa / Incompleta / Com erros; dependência; totais Acomp; flags de arquivos; filtros + busca |
+| **Escolas da rede** | Status Completa / Incompleta / Com erros / **Fora de atividade** (extinta, paralisada…); filtros + busca; fora de atividade **não** conta como incompleta |
 | **Acertos e problemas** | Listas por severidade (erro / atenção / informação) + «o que fazer» |
 | **Arquivo geral (Acomp)** | Nome do CSV, data ref, totais curricular/AEE/AC, a confirmar, bloqueadas, delta vs Relação |
 | **Panorama das escolas** | Contadores + barras por dependência, funcionamento, localização, forma de coleta |
@@ -78,7 +78,7 @@ Bloco de ranking/estado das coletas do exercício (tríade, erros, avisos) — l
 
 ### 2.7 Glossário e filtros na UI
 
-No painel municipal: seção **Como ler esta análise** (legenda erro/atenção/informação + glossário tríade/Acomp/AEE/AC/delta) e **filtros** na lista de escolas (todas / com erros / incompletas / completas / com avisos + busca nome/INEP).
+No painel municipal: seção **Como ler esta análise** (legenda erro/atenção/informação + glossário tríade/Acomp/AEE/AC/delta) e **filtros** na lista de escolas (todas / com erros / incompletas / completas / com avisos / **fora de atividade** + busca nome/INEP).
 
 ---
 
@@ -216,8 +216,9 @@ Não são `findings` de análise; ficam no `parse_status` / `parse_meta` do arte
 |--------|-----|-------------------|
 | Com erros | Rose | Há finding `error` na escola |
 | Completa | Emerald | Tríade OK e sem erro |
-| Incompleta | Amber | Falta aluno e/ou turma e/ou profissional |
-| Sem arquivos | Slate | Sem relações ligadas |
+| Incompleta | Amber | Falta aluno e/ou turma e/ou profissional (**só escolas em atividade**) |
+| Fora de atividade | Slate | Extinta, paralisada, em reforma etc. — **não** é pendência de coleta |
+| Sem arquivos | Slate | Sem relações ligadas (ainda em atividade) |
 
 Na home, cartões usam trilho colorido: pronto / erro / interpretado / em preparação.
 

@@ -1,17 +1,29 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div class="max-w-3xl">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="max-w-3xl min-w-0">
                 <p class="clio-eyebrow">{{ __('Clio') }} · {{ __('Resultado da coleta') }}</p>
                 <h2 class="font-display font-semibold text-2xl text-serv-navy dark:text-white leading-tight">
                     {{ $campaign->municipality_name }} — {{ $campaign->year }}
                 </h2>
+                @php
+                    $refDisplay = $campaign->referenceDateDisplay()
+                        ?? (filled($dashboard['reference_date'] ?? null)
+                            ? \Illuminate\Support\Carbon::parse($dashboard['reference_date'])->timezone(config('app.timezone'))->format('d/m/Y')
+                            : null);
+                    $analyzedAt = $campaign->hasReportReady() ? $campaign->lastActivityDisplay() : null;
+                @endphp
+                @if ($refDisplay)
+                    <p class="mt-3 text-base font-bold text-serv-navy dark:text-white tracking-tight">
+                        {{ __('Data de referência: :d', ['d' => $refDisplay]) }}
+                    </p>
+                @endif
                 <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     {{ __('Visão clara do que já está certo na Matrícula inicial, o que falta nas escolas e o que precisa ser corrigido.') }}
-                    @if (! empty($dashboard['reference_date']))
-                        · {{ __('Data de referência :d', ['d' => $dashboard['reference_date']]) }}
-                    @endif
                     · {{ $campaign->statusLabel() }}
+                    @if ($analyzedAt)
+                        · {{ __('Última análise :t', ['t' => $analyzedAt]) }}
+                    @endif
                 </p>
                 @if (! empty($dashboard['counters']))
                     <p class="mt-1 text-xs text-slate-500">
@@ -24,17 +36,20 @@
                     </p>
                 @endif
             </div>
-            <div class="flex flex-wrap gap-2 shrink-0">
+            <div class="flex flex-wrap gap-2 shrink-0 items-center">
                 @can('analyze', $campaign)
-                    <form method="post" action="{{ route('clio.campaigns.analyze', $campaign) }}">
+                    <form
+                        method="post"
+                        action="{{ route('clio.campaigns.analyze', $campaign) }}"
+                        data-serv-loading-on-submit
+                        data-serv-loading-title="{{ __('Atualizando análise') }}"
+                        data-serv-loading-message="{{ __('Reinterpretando os CSV da coleta e montando o painel. Aguarde…') }}"
+                    >
                         @csrf
                         <button type="submit" class="serv-btn-primary text-sm">{{ __('Atualizar análise') }}</button>
                     </form>
                 @endcan
-                @can('export', $campaign)
-                    <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm" title="{{ __('PDF com contadores e o que corrigir') }}">{{ __('PDF') }}</a>
-                    <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm" title="{{ __('CSV com contadores e ações') }}">{{ __('CSV') }}</a>
-                @endcan
+                @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
                 <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Central') }}</a>
             </div>
         </div>
@@ -881,7 +896,7 @@
                     <div class="flex flex-wrap items-end justify-between gap-2">
                         <div>
                             <h3 id="clio-schools-heading" class="clio-section-title">{{ __('Escolas da rede') }}</h3>
-                            <p class="text-xs text-slate-500">{{ __('Filtre por situação e priorize quem precisa de correção. Ordenação: erros → incompletas → ok.') }}</p>
+                            <p class="text-xs text-slate-500">{{ __('Filtre por situação e priorize quem precisa de correção. Extintas/paralisadas ficam no fim e não contam como incompletas.') }}</p>
                         </div>
                         <span class="text-xs text-slate-500">
                             {{ __(':n escola(s)', ['n' => count($dashboard['schools'] ?? [])]) }}
@@ -928,8 +943,9 @@
                         </thead>
                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                             @forelse ($dashboard['schools'] ?? [] as $row)
+                                @php $isInactive = ! empty($row['inactive']); @endphp
                                 <tr
-                                    class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
+                                    class="{{ $isInactive ? 'clio-school-row clio-school-row--inactive' : 'clio-school-row' }} hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
                                     data-school-row
                                     data-filter="{{ $row['filter'] ?? '' }}"
                                     data-warnings="{{ $row['warnings'] ?? 0 }}"
@@ -943,9 +959,14 @@
                                         <div class="text-xs text-slate-500 mt-0.5">
                                             {{ $row['dependency'] ?? '—' }}
                                             @if (! empty($row['location'])) · {{ $row['location'] }} @endif
+                                            @if (! empty($row['functioning']))
+                                                · <span class="{{ $isInactive ? 'font-medium text-slate-600 dark:text-slate-300' : '' }}">{{ $row['functioning'] }}</span>
+                                            @endif
                                         </div>
-                                        <div class="text-xs text-slate-500">{{ $row['collection_form'] }}</div>
-                                        @if (($row['acomp_curricular'] ?? null) !== null)
+                                        @unless ($isInactive)
+                                            <div class="text-xs text-slate-500">{{ $row['collection_form'] }}</div>
+                                        @endunless
+                                        @if (($row['acomp_curricular'] ?? null) !== null && ! $isInactive)
                                             <div class="text-[11px] text-slate-400 mt-0.5">
                                                 {{ __('Acomp C :c', ['c' => $row['acomp_curricular']]) }}
                                                 @if (($row['acomp_aee'] ?? 0) > 0) · AEE {{ $row['acomp_aee'] }} @endif
@@ -954,28 +975,37 @@
                                         @endif
                                     </td>
                                     <td class="px-4 py-3">
-                                        <span class="{{ $chipTone($row['tone']) }}">
+                                        <span class="{{ $isInactive ? 'clio-chip clio-chip--inactive' : $chipTone($row['tone']) }}">
                                             {{ $row['status'] }}
                                         </span>
-                                        @if (! empty($row['missing']))
+                                        @if ($isInactive && ! empty($row['status_note']))
+                                            <p class="mt-1 text-xs text-slate-500 leading-snug">{{ $row['status_note'] }}</p>
+                                        @elseif (! empty($row['missing']))
                                             <p class="mt-1 text-xs text-amber-700 dark:text-amber-300">{{ __('Falta: :m', ['m' => implode(', ', $row['missing'])]) }}</p>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="flex flex-wrap gap-1" title="{{ __('Verde = arquivo presente; cinza = em falta') }}">
-                                            <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['aluno'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Alunos') }}</span>
-                                            <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['turma'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Turmas') }}</span>
-                                            <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['profissional'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Prof.') }}</span>
-                                        </div>
+                                        @if ($isInactive)
+                                            <p class="text-xs text-slate-500">{{ __('Tríade não exigida') }}</p>
+                                        @else
+                                            <div class="flex flex-wrap gap-1" title="{{ __('Verde = arquivo presente; cinza = em falta') }}">
+                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['aluno'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Alunos') }}</span>
+                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['turma'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Turmas') }}</span>
+                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-medium {{ $row['profissional'] ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100' : 'bg-slate-100 text-slate-500 dark:bg-slate-800' }}">{{ __('Prof.') }}</span>
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-4 py-3 text-right tabular-nums text-xs">
-                                        @if ($row['errors'] > 0)
+                                        @if ($isInactive)
+                                            <span class="text-slate-500">{{ __('Fora do escopo') }}</span>
+                                        @elseif ($row['errors'] > 0)
                                             <span class="text-rose-700 dark:text-rose-300 font-medium">{{ __(':n a corrigir', ['n' => $row['errors']]) }}</span>
-                                        @endif
-                                        @if ($row['warnings'] > 0)
-                                            <span class="block text-amber-700 dark:text-amber-300">{{ __(':n atenção', ['n' => $row['warnings']]) }}</span>
-                                        @endif
-                                        @if ($row['errors'] === 0 && $row['warnings'] === 0)
+                                            @if ($row['warnings'] > 0)
+                                                <span class="block text-amber-700 dark:text-amber-300">{{ __(':n atenção', ['n' => $row['warnings']]) }}</span>
+                                            @endif
+                                        @elseif ($row['warnings'] > 0)
+                                            <span class="text-amber-700 dark:text-amber-300">{{ __(':n atenção', ['n' => $row['warnings']]) }}</span>
+                                        @else
                                             <span class="text-emerald-700 dark:text-emerald-300">{{ __('Nada pendente') }}</span>
                                         @endif
                                     </td>

@@ -80,6 +80,33 @@
     @apply flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between;
 }
 
+.clio-action-grid {
+    @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
+}
+
+.clio-action-card {
+    @apply block rounded-[var(--clio-radius)] border border-slate-200/90 bg-white p-4 shadow-[var(--clio-shadow)] transition
+        hover:border-sky-300/80 hover:shadow-[var(--clio-shadow-lift)]
+        dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-sky-700/60;
+}
+
+.clio-action-card--static {
+    @apply hover:border-slate-200/90 hover:shadow-[var(--clio-shadow)] dark:hover:border-slate-800;
+}
+
+.clio-action-card__eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300;
+}
+
+.clio-action-card__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-base font-semibold text-serv-navy dark:text-white;
+}
+
+.clio-action-card__text {
+    @apply mt-1.5 text-sm leading-snug text-slate-500 dark:text-slate-400;
+}
+
 /* Hero / faixa de marca */
 .clio-hero {
     @apply relative overflow-hidden rounded-[1rem] border border-slate-800/80;
@@ -314,6 +341,18 @@
 
 .clio-chip--profile-lite {
     @apply bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100 uppercase;
+}
+
+.clio-chip--inactive {
+    @apply bg-slate-200/90 text-slate-600 ring-1 ring-slate-300/60 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-600/50;
+}
+
+.clio-school-row--inactive {
+    @apply bg-slate-50/70 dark:bg-slate-900/25;
+}
+
+.clio-school-row--inactive td:first-child {
+    box-shadow: inset 3px 0 0 #94a3b8;
 }
 
 /* Medidor tríade */

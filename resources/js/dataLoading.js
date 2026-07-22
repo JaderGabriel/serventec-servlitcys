@@ -46,6 +46,10 @@ const LOADING_PRESETS = {
         message:
             "Carregando anos letivos, escolas, cursos e turnos na base do município…",
     },
+    clio: {
+        title: "Processando Clio",
+        message: "Atualizando a coleta Educacenso. Aguarde…",
+    },
     default: {
         title: "Processando pedido",
         message: "Aguarde enquanto a operação é concluída.",
@@ -179,6 +183,9 @@ function inferLoadingPreset(form) {
         if (/\/dashboard\/rx/i.test(path)) {
             return "navigate";
         }
+        if (/\/clio\//i.test(path)) {
+            return "clio";
+        }
     }
 
     return null;
@@ -309,6 +316,7 @@ const NAV_LINK_LOADING = [
     { pattern: /^\/dashboard\/horizonte\/?$/, preset: "horizonte" },
     { pattern: /^\/dashboard\/rx\/?$/, preset: "navigate" },
     { pattern: /^\/dashboard\/analytics\/?$/, preset: "navigate" },
+    { pattern: /^\/clio(\/|$)/, preset: "clio" },
 ];
 
 function linkPathname(link) {
@@ -336,19 +344,29 @@ function bindLoadingOnLink(link) {
         return;
     }
 
+    const explicit = link.hasAttribute("data-serv-loading-on-click");
     const match = NAV_LINK_LOADING.find(({ pattern }) => pattern.test(href));
-    if (!match) {
+    if (!explicit && !match) {
         return;
     }
 
-    if (href === window.location.pathname) {
+    if (!explicit && href === window.location.pathname) {
         return;
     }
 
     link.dataset.servLoadingBound = "1";
-    link.addEventListener("click", () => {
-        const preset = presetCopy(match.preset);
-        servDataLoadingStart(preset.title, preset.message);
+    link.addEventListener("click", (event) => {
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+        const presetKey = explicit
+            ? (link.dataset.servLoadingPreset || "clio")
+            : match.preset;
+        const preset = presetCopy(presetKey);
+        servDataLoadingStart(
+            link.dataset.servLoadingTitle ?? preset.title,
+            link.dataset.servLoadingMessage ?? preset.message,
+        );
     });
 }
 

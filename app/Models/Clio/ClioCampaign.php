@@ -146,6 +146,33 @@ class ClioCampaign extends Model
     }
 
     /**
+     * Data de referência do Acomp (portal), formatada para UI pt-BR.
+     */
+    public function referenceDateDisplay(): ?string
+    {
+        if ($this->reference_date === null) {
+            return null;
+        }
+
+        return $this->reference_date
+            ->timezone(config('app.timezone'))
+            ->format('d/m/Y');
+    }
+
+    /**
+     * Momento da última análise / atualização relevante da coleta.
+     */
+    public function lastActivityDisplay(): ?string
+    {
+        $at = $this->updated_at;
+        if ($at === null) {
+            return null;
+        }
+
+        return $at->timezone(config('app.timezone'))->format('d/m/Y H:i');
+    }
+
+    /**
      * Cobertura da tríade (%) a partir de INF-COE (payload da análise).
      */
     public function triadeCoveragePct(): ?float

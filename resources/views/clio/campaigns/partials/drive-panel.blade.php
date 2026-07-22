@@ -25,7 +25,7 @@
         </p>
     @endunless
 
-    <form method="post" class="space-y-3">
+    <form method="post" class="space-y-3" data-serv-loading-on-submit data-serv-loading-preset="clio">
         @csrf
         <div>
             <label for="clio_drive_url" class="block text-sm font-medium">{{ __('Link da pasta / ficheiro') }}</label>

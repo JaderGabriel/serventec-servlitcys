@@ -24,7 +24,7 @@
                 </div>
             @endif
 
-            <form method="post" action="{{ route('clio.campaigns.store') }}" class="serv-panel space-y-5 p-6">
+            <form method="post" action="{{ route('clio.campaigns.store') }}" class="serv-panel space-y-5 p-6" data-serv-loading-on-submit data-serv-loading-title="{{ __('Criando coleta') }}" data-serv-loading-message="{{ __('Registrando o município e preparando a central. Aguarde…') }}">
                 @csrf
                 <div>
                     <label for="city_id" class="block text-sm font-medium text-slate-700 dark:text-slate-200">{{ __('Município') }}</label>

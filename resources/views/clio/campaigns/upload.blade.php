@@ -54,6 +54,9 @@
                 enctype="multipart/form-data"
                 class="serv-panel space-y-5 p-6"
                 x-data="clioUploadPreview(@js($maxFiles))"
+                data-serv-loading-on-submit
+                data-serv-loading-title="{{ __('Enviando arquivos') }}"
+                data-serv-loading-message="{{ __('Classificando CSV/ZIP e atualizando o inventário da coleta. Aguarde…') }}"
             >
                 @csrf
                 <div class="space-y-3">

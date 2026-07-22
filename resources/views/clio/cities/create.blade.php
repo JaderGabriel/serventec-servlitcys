@@ -23,6 +23,9 @@
                 method="post"
                 action="{{ route('clio.cities.store') }}"
                 class="serv-panel space-y-5 p-6"
+                data-serv-loading-on-submit
+                data-serv-loading-title="{{ __('Cadastrando município') }}"
+                data-serv-loading-message="{{ __('Salvando a ficha no Clio. Aguarde…') }}"
                 x-data="{
                     mode: '{{ old('setup_mode', 'catalog') }}',
                     cityId: '{{ old('city_id', '') }}',

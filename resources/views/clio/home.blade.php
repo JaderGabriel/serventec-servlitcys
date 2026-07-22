@@ -226,7 +226,7 @@
                                     </a>
                                     @if ($ready)
                                         @can('export', $campaign)
-                                            <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm" title="{{ __('Exportar PDF') }}">{{ __('PDF') }}</a>
+                                            @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
                                         @endcan
                                     @endif
                                     <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-link text-sm ml-auto">{{ __('Central') }}</a>

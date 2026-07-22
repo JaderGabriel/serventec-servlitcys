@@ -13,7 +13,7 @@
             <div class="flex flex-wrap gap-2">
                 @can('analyze', $campaign)
                     @if ($canRun)
-                        <form method="post" action="{{ route('clio.campaigns.cross-check.run', $campaign) }}">
+                        <form method="post" action="{{ route('clio.campaigns.cross-check.run', $campaign) }}" data-serv-loading-on-submit data-serv-loading-title="{{ __('Cruzando com i-Educar') }}" data-serv-loading-message="{{ __('Comparando a coleta Clio com o snapshot i-Educar. Aguarde…') }}">
                             @csrf
                             <button type="submit" class="serv-btn-primary text-sm">{{ __('Executar cruzamento') }}</button>
                         </form>

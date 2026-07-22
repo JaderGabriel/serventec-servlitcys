@@ -1,94 +1,184 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <p class="serv-eyebrow">{{ __('Clio') }} · {{ $campaign->year }}</p>
-                <h2 class="font-display font-semibold text-xl text-serv-navy dark:text-white leading-tight">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div class="max-w-3xl min-w-0">
+                <p class="clio-eyebrow">{{ __('Clio') }} · {{ __('Central da coleta') }} · {{ $campaign->year }}</p>
+                <h2 class="font-display font-semibold text-2xl text-serv-navy dark:text-white leading-tight">
                     {{ $campaign->municipality_name }}
                 </h2>
-                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                @if (! empty($hub['reference_date']))
+                    <p class="mt-3 text-base font-bold text-serv-navy dark:text-white tracking-tight">
+                        {{ __('Data de referência: :d', ['d' => $hub['reference_date']]) }}
+                    </p>
+                @endif
+                <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
                     {{ $campaign->profileLabel() }} · {{ $campaign->statusLabel() }}
-                    · {{ __(':n arquivo(s)', ['n' => $campaign->artifacts_count]) }}
-                    · {{ __(':n escola(s)', ['n' => $campaign->schools_count]) }}
+                    @if (! empty($hub['last_activity']))
+                        · {{ __('Atualizado em :t', ['t' => $hub['last_activity']]) }}
+                    @endif
                 </p>
             </div>
-            <div class="flex flex-wrap gap-2">
-                <a href="{{ route('clio.campaigns.analysis', $campaign) }}" class="serv-btn-primary text-sm">{{ __('Painel analítico') }}</a>
-                @can('export', $campaign)
-                    <a href="{{ route('clio.campaigns.export.csv', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('CSV') }}</a>
-                    <a href="{{ route('clio.campaigns.export.pdf', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('PDF') }}</a>
-                @endcan
-                @if ($campaign->city?->hasDataSetup())
-                    <a href="{{ route('clio.campaigns.cross-check', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Cruzamento i-Educar') }}</a>
-                @elseif (Auth::user()->can('linkConsultancy', $campaign))
-                    <a href="{{ route('clio.campaigns.link', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Vincular i-Educar') }}</a>
-                @endif
-                @can('upload', $campaign)
-                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Enviar dados') }}</a>
-                @else
-                    <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-btn-secondary text-sm">{{ __('Inventário') }}</a>
-                @endcan
+            <div class="flex flex-wrap gap-2 shrink-0 items-center">
+                <a
+                    href="{{ route('clio.campaigns.analysis', $campaign) }}"
+                    class="serv-btn-primary text-sm"
+                    data-serv-loading-on-click
+                    data-serv-loading-title="{{ __('Abrindo painel') }}"
+                    data-serv-loading-message="{{ __('Carregando o resultado analítico da coleta. Aguarde…') }}"
+                >{{ __('Painel analítico') }}</a>
+                @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
                 <a href="{{ route('clio.home') }}" class="serv-btn-secondary text-sm">{{ __('Início Clio') }}</a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-8 sm:py-10">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    @php
+        $toneClass = static fn (string $tone): string => 'clio-tone-'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $tileTone = static fn (string $tone): string => 'clio-kpi-tile--'.(in_array($tone, ['emerald', 'amber', 'rose', 'sky'], true) ? $tone : 'slate');
+        $triadePct = (float) ($hub['triade_pct'] ?? 0);
+        $triadeTone = $triadePct >= 80 ? 'emerald' : ($triadePct >= 40 ? 'amber' : 'rose');
+    @endphp
+
+    <div class="clio-page py-8 sm:py-10">
+        <div class="clio-shell">
             @if (session('success'))
-                <div class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-100">
-                    {{ session('success') }}
-                </div>
+                <div class="clio-flash clio-flash--ok">{{ session('success') }}</div>
             @endif
 
-            <div class="grid gap-4 sm:grid-cols-3">
-                <div class="serv-panel p-5">
-                    <p class="serv-eyebrow">{{ __('Perfil') }}</p>
-                    <p class="mt-1 font-display text-lg font-semibold text-serv-navy dark:text-white">{{ $campaign->profileLabel() }}</p>
-                    <p class="mt-1 text-xs text-slate-500">
-                        @if ($campaign->isAnalysisOnly())
-                            {{ __('Sem conexão i-Educar — análise dos relatórios do portal.') }}
-                        @else
-                            {{ __('Com i-Educar — use o cruzamento para ver o gap de escolas (INF-GAP).') }}
-                        @endif
-                    </p>
+            <section aria-labelledby="clio-hub-kpi-heading">
+                <div class="clio-section-head mb-3">
+                    <div>
+                        <h3 id="clio-hub-kpi-heading" class="clio-section-title">{{ __('Indicadores da coleta') }}</h3>
+                        <p class="clio-section-lead">{{ __('Resumo operacional antes de abrir o painel completo.') }}</p>
+                    </div>
                 </div>
-                <div class="serv-panel p-5">
-                    <p class="serv-eyebrow">{{ __('Estado') }}</p>
-                    <p class="mt-1 font-display text-lg font-semibold text-serv-navy dark:text-white">{{ $campaign->statusLabel() }}</p>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('UUID') }}: {{ $campaign->uuid }}</p>
+                <div class="clio-kpi-grid">
+                    <div class="clio-kpi-tile {{ $tileTone('sky') }}">
+                        <p class="clio-kpi-tile__label">{{ __('Escolas') }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass('sky') }}">{{ number_format((int) ($hub['schools_total'] ?? 0)) }}</p>
+                        <p class="clio-kpi-tile__hint">{{ __('No inventário / Acomp') }}</p>
+                    </div>
+                    <div class="clio-kpi-tile {{ $tileTone($triadeTone) }}">
+                        <p class="clio-kpi-tile__label">{{ __('Tríade completa') }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass($triadeTone) }}">{{ number_format($triadePct, 1, ',', '.') }}%</p>
+                        <p class="clio-kpi-tile__hint">
+                            {{ __(':c de :t escolas', [
+                                'c' => (int) ($hub['triade_complete'] ?? 0),
+                                't' => (int) ($hub['schools_total'] ?? 0),
+                            ]) }}
+                        </p>
+                    </div>
+                    <div class="clio-kpi-tile {{ $tileTone('sky') }}">
+                        <p class="clio-kpi-tile__label">{{ __('Arquivos') }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass('sky') }}">{{ number_format((int) $campaign->artifacts_count) }}</p>
+                        <p class="clio-kpi-tile__hint">{{ __('No inventário desta coleta') }}</p>
+                    </div>
+                    <div class="clio-kpi-tile {{ $tileTone(($hub['errors'] ?? 0) > 0 ? 'rose' : 'emerald') }}">
+                        <p class="clio-kpi-tile__label">{{ __('Erros') }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass(($hub['errors'] ?? 0) > 0 ? 'rose' : 'emerald') }}">{{ number_format((int) ($hub['errors'] ?? 0)) }}</p>
+                        <p class="clio-kpi-tile__hint">{{ __('Achados a corrigir') }}</p>
+                    </div>
+                    <div class="clio-kpi-tile {{ $tileTone(($hub['warnings'] ?? 0) > 0 ? 'amber' : 'emerald') }}">
+                        <p class="clio-kpi-tile__label">{{ __('Atenções') }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass(($hub['warnings'] ?? 0) > 0 ? 'amber' : 'emerald') }}">{{ number_format((int) ($hub['warnings'] ?? 0)) }}</p>
+                        <p class="clio-kpi-tile__hint">{{ __('Pontos de revisão') }}</p>
+                    </div>
+                    <div class="clio-kpi-tile {{ $tileTone($campaign->isAnalysisOnly() ? 'amber' : 'emerald') }}">
+                        <p class="clio-kpi-tile__label">{{ __('Perfil') }}</p>
+                        <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass($campaign->isAnalysisOnly() ? 'amber' : 'emerald') }}">{{ $campaign->profileLabel() }}</p>
+                        <p class="clio-kpi-tile__hint">
+                            @if ($campaign->isAnalysisOnly())
+                                {{ __('Sem i-Educar nesta coleta') }}
+                            @else
+                                {{ __('Consultoria com i-Educar') }}
+                            @endif
+                        </p>
+                    </div>
                 </div>
-                <div class="serv-panel p-5">
-                    <p class="serv-eyebrow">{{ __('Inventário') }}</p>
-                    <p class="mt-1 font-display text-lg font-semibold text-serv-navy dark:text-white">
-                        {{ __(':n arquivo(s) · :s escola(s)', ['n' => $campaign->artifacts_count, 's' => $campaign->schools_count]) }}
-                    </p>
-                    <p class="mt-1 text-xs text-slate-500">
-                        {{ __('Tríade completa: :c (:p%)', ['c' => $coverage['schools_triade_complete'] ?? 0, 'p' => $coverage['triade_coverage_pct'] ?? 0]) }}
-                        @if (! empty($coverage['reference_date']))
-                            · {{ __('Ref. :d', ['d' => $coverage['reference_date']]) }}
-                        @endif
-                    </p>
+            </section>
+
+            <section aria-labelledby="clio-hub-actions-heading">
+                <div class="clio-section-head mb-3">
+                    <div>
+                        <h3 id="clio-hub-actions-heading" class="clio-section-title">{{ __('Funções') }}</h3>
+                        <p class="clio-section-lead">{{ __('Atalhos para o fluxo da Matrícula inicial neste município.') }}</p>
+                    </div>
+                </div>
+                <div class="clio-action-grid">
+                    <a
+                        href="{{ route('clio.campaigns.analysis', $campaign) }}"
+                        class="clio-action-card"
+                        data-serv-loading-on-click
+                        data-serv-loading-title="{{ __('Abrindo painel') }}"
+                        data-serv-loading-message="{{ __('Carregando o resultado analítico da coleta. Aguarde…') }}"
+                    >
+                        <p class="clio-action-card__eyebrow">{{ __('Principal') }}</p>
+                        <h4 class="clio-action-card__title">{{ __('Painel analítico') }}</h4>
+                        <p class="clio-action-card__text">
+                            @if (! empty($hub['has_analysis']))
+                                {{ __('Ver indicadores, escolas, distorção, NEE e o que corrigir.') }}
+                            @else
+                                {{ __('Ainda sem análise consolidada — execute após enviar os arquivos.') }}
+                            @endif
+                        </p>
+                    </a>
                     @can('upload', $campaign)
-                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ir para o envio') }} →</a>
+                        <a
+                            href="{{ route('clio.campaigns.upload', $campaign) }}"
+                            class="clio-action-card"
+                            data-serv-loading-on-click
+                            data-serv-loading-title="{{ __('Abrindo envio') }}"
+                            data-serv-loading-message="{{ __('Preparando o inventário de arquivos. Aguarde…') }}"
+                        >
+                            <p class="clio-action-card__eyebrow">{{ __('Dados') }}</p>
+                            <h4 class="clio-action-card__title">{{ __('Enviar / inventário') }}</h4>
+                            <p class="clio-action-card__text">{{ __('CSV, ZIP ou pasta Drive — classificar e interpretar.') }}</p>
+                        </a>
                     @else
-                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="serv-link mt-2 inline-block text-sm font-medium">{{ __('Ver inventário') }} →</a>
+                        <a href="{{ route('clio.campaigns.upload', $campaign) }}" class="clio-action-card">
+                            <p class="clio-action-card__eyebrow">{{ __('Dados') }}</p>
+                            <h4 class="clio-action-card__title">{{ __('Inventário') }}</h4>
+                            <p class="clio-action-card__text">{{ __('Consultar arquivos já classificados nesta coleta.') }}</p>
+                        </a>
+                    @endcan
+                    @if ($campaign->city?->hasDataSetup())
+                        <a href="{{ route('clio.campaigns.cross-check', $campaign) }}" class="clio-action-card">
+                            <p class="clio-action-card__eyebrow">{{ __('Consultoria') }}</p>
+                            <h4 class="clio-action-card__title">{{ __('Cruzamento i-Educar') }}</h4>
+                            <p class="clio-action-card__text">{{ __('Comparar escolas da coleta com o cadastro local (INF-GAP).') }}</p>
+                        </a>
+                    @elseif (Auth::user()->can('linkConsultancy', $campaign))
+                        <a href="{{ route('clio.campaigns.link', $campaign) }}" class="clio-action-card">
+                            <p class="clio-action-card__eyebrow">{{ __('Consultoria') }}</p>
+                            <h4 class="clio-action-card__title">{{ __('Vincular i-Educar') }}</h4>
+                            <p class="clio-action-card__text">{{ __('Ligar esta coleta a um município com base na plataforma.') }}</p>
+                        </a>
+                    @endif
+                    @can('export', $campaign)
+                        <div class="clio-action-card clio-action-card--static">
+                            <p class="clio-action-card__eyebrow">{{ __('Exportar') }}</p>
+                            <h4 class="clio-action-card__title">{{ __('Downloads') }}</h4>
+                            <p class="clio-action-card__text">{{ __('PDF e CSV da análise estão no menu Downloads do cabeçalho.') }}</p>
+                        </div>
                     @endcan
                 </div>
-            </div>
+            </section>
 
             @include('clio.campaigns.partials.drive-panel')
 
-            <section class="serv-panel overflow-hidden" id="arquivos">
+            <section class="clio-panel overflow-hidden" id="arquivos" aria-labelledby="clio-hub-files-heading">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                    <h3 class="font-medium text-serv-navy dark:text-white">{{ __('Arquivos') }}</h3>
+                    <div>
+                        <h3 id="clio-hub-files-heading" class="clio-section-title text-base">{{ __('Arquivos') }}</h3>
+                        <p class="text-xs text-slate-500">{{ __('Últimos enviados nesta coleta.') }}</p>
+                    </div>
                     @can('upload', $campaign)
                         <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerenciar upload') }}</a>
                     @endcan
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60">
+                <div class="clio-table-wrap">
+                    <table class="clio-table">
+                        <thead>
                             <tr>
                                 <th class="px-4 py-2 font-medium">{{ __('Nome') }}</th>
                                 <th class="px-4 py-2 font-medium">{{ __('Tipo') }}</th>
@@ -108,7 +198,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Ainda sem arquivos. Use Enviar dados.') }}</td>
+                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Ainda sem arquivos. Use Enviar / inventário.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

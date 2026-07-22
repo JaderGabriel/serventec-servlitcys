@@ -14,6 +14,51 @@ use Illuminate\Support\Collection;
 final class CampaignAnalysisPresenter
 {
     /**
+     * Situação de funcionamento que tira a escola do escopo operacional da coleta
+     * (não deve parecer «incompleta» / dados em aberto).
+     */
+    public static function isInactiveFunctioning(?string $status): bool
+    {
+        $s = mb_strtolower(trim((string) $status));
+        if ($s === '') {
+            return false;
+        }
+
+        return str_contains($s, 'extint')
+            || str_contains($s, 'paralis')
+            || str_contains($s, 'paraliz')
+            || str_contains($s, 'reforma')
+            || str_contains($s, 'cessad')
+            || str_contains($s, 'desativad')
+            || str_contains($s, 'fora de atividade')
+            || str_contains($s, 'não em atividade')
+            || str_contains($s, 'nao em atividade');
+    }
+
+    /**
+     * Rótulo curto para o chip (usa o texto do Acomp quando reconhecível).
+     */
+    public static function inactiveStatusLabel(?string $functioning): string
+    {
+        $raw = trim((string) $functioning);
+        $s = mb_strtolower($raw);
+        if (str_contains($s, 'extint')) {
+            return __('Extinta');
+        }
+        if (str_contains($s, 'paralis') || str_contains($s, 'paraliz')) {
+            return __('Paralisada');
+        }
+        if (str_contains($s, 'reforma')) {
+            return __('Em reforma');
+        }
+        if ($raw !== '') {
+            return $raw;
+        }
+
+        return __('Fora de atividade');
+    }
+
+    /**
      * @param  array<string, mixed>  $coverage
      * @param  Collection<string, ClioCampaignInference>  $inferences
      * @param  Collection<int, ClioCampaignFinding>  $findings
@@ -122,7 +167,17 @@ final class CampaignAnalysisPresenter
                 $missing[] = __('Profissionais');
             }
 
-            if ($schoolErrors > 0) {
+            $functioning = $school?->functioning_status ?: __('Não informado');
+            $inactive = self::isInactiveFunctioning($school?->functioning_status);
+            $statusNote = null;
+
+            if ($inactive) {
+                $status = self::inactiveStatusLabel($school?->functioning_status);
+                $tone = 'slate';
+                $filter = 'inactive';
+                $statusNote = __('Fora de atividade — a falta de arquivos não é pendência de coleta.');
+                $missing = [];
+            } elseif ($schoolErrors > 0) {
                 $status = __('Com erros');
                 $tone = 'rose';
                 $filter = 'errors';
@@ -145,7 +200,7 @@ final class CampaignAnalysisPresenter
                 'name' => $row['name'],
                 'collection_form' => $school?->collection_form ?: ($school?->functioning_status ?: '—'),
                 'dependency' => $school?->dependency ?: __('Não informado'),
-                'functioning' => $school?->functioning_status ?: __('Não informado'),
+                'functioning' => $functioning,
                 'location' => is_array($school?->meta) ? (string) ($school->meta['location'] ?? '') : '',
                 'acomp_curricular' => is_array($school?->meta) && is_numeric($school->meta['total_curricular'] ?? null)
                     ? (int) $school->meta['total_curricular']
@@ -157,6 +212,8 @@ final class CampaignAnalysisPresenter
                     ? (int) $school->meta['total_ac']
                     : null,
                 'blocked' => $this->isSchoolBlocked($school),
+                'inactive' => $inactive,
+                'status_note' => $statusNote,
                 'triade' => (bool) ($row['triade'] ?? false),
                 'aluno' => (bool) ($row['aluno'] ?? false),
                 'turma' => (bool) ($row['turma'] ?? false),
@@ -169,9 +226,16 @@ final class CampaignAnalysisPresenter
                 'warnings' => $schoolWarnings,
             ];
         })->sort(function (array $a, array $b): int {
-            $rank = ['rose' => 0, 'amber' => 1, 'emerald' => 2, 'slate' => 3];
-            $ra = $rank[$a['tone']] ?? 9;
-            $rb = $rank[$b['tone']] ?? 9;
+            // Ativas com problema primeiro; fora de atividade por último.
+            $rank = [
+                'errors' => 0,
+                'incomplete' => 1,
+                'empty' => 2,
+                'complete' => 3,
+                'inactive' => 4,
+            ];
+            $ra = $rank[$a['filter'] ?? ''] ?? 9;
+            $rb = $rank[$b['filter'] ?? ''] ?? 9;
             if ($ra !== $rb) {
                 return $ra <=> $rb;
             }
@@ -195,7 +259,7 @@ final class CampaignAnalysisPresenter
             [
                 'key' => 'incomplete',
                 'label' => __('Incompletas'),
-                'hint' => __('Falta arquivo da tríade (alunos, turmas ou profissionais).'),
+                'hint' => __('Falta arquivo da tríade (alunos, turmas ou profissionais) — só escolas em atividade.'),
                 'count' => $schoolRows->where('filter', 'incomplete')->count(),
             ],
             [
@@ -208,7 +272,13 @@ final class CampaignAnalysisPresenter
                 'key' => 'attention',
                 'label' => __('Com avisos'),
                 'hint' => __('Têm pontos de atenção (avisos), com ou sem erro.'),
-                'count' => $schoolRows->filter(fn (array $r) => ($r['warnings'] ?? 0) > 0)->count(),
+                'count' => $schoolRows->filter(fn (array $r) => ($r['warnings'] ?? 0) > 0 && empty($r['inactive']))->count(),
+            ],
+            [
+                'key' => 'inactive',
+                'label' => __('Fora de atividade'),
+                'hint' => __('Extintas, paralisadas ou em reforma — não contam como coleta em aberto.'),
+                'count' => $schoolRows->where('filter', 'inactive')->count(),
             ],
         ];
 
@@ -242,6 +312,7 @@ final class CampaignAnalysisPresenter
             'schools_ok' => $okSchools,
             'schools_with_errors' => $schoolRows->where('filter', 'errors')->count(),
             'schools_incomplete' => $schoolRows->where('filter', 'incomplete')->count(),
+            'schools_inactive' => $schoolRows->where('filter', 'inactive')->count(),
         ];
 
         return [
@@ -572,7 +643,13 @@ final class CampaignAnalysisPresenter
             $missing[] = __('Profissionais');
         }
 
-        if ($errors->isNotEmpty()) {
+        $inactive = self::isInactiveFunctioning($school->functioning_status);
+        if ($inactive) {
+            $status = self::inactiveStatusLabel($school->functioning_status);
+            $tone = 'slate';
+            $statusHint = __('Fora de atividade — a falta de arquivos não é pendência de coleta.');
+            $missing = [];
+        } elseif ($errors->isNotEmpty()) {
             $status = __('Com erros');
             $tone = 'rose';
             $statusHint = __('Há apontamentos que pedem correção nesta escola.');
@@ -648,21 +725,27 @@ final class CampaignAnalysisPresenter
                 'label' => __('Alunos'),
                 'ok' => $aluno,
                 'rows' => $rowsAluno,
-                'hint' => $aluno ? __('Arquivo presente') : __('Arquivo em falta'),
+                'hint' => $inactive
+                    ? __('Não exigido — escola fora de atividade')
+                    : ($aluno ? __('Arquivo presente') : __('Arquivo em falta')),
             ],
             [
                 'key' => 'turma',
                 'label' => __('Turmas'),
                 'ok' => $turma,
                 'rows' => $rowsTurma,
-                'hint' => $turma ? __('Arquivo presente') : __('Arquivo em falta'),
+                'hint' => $inactive
+                    ? __('Não exigido — escola fora de atividade')
+                    : ($turma ? __('Arquivo presente') : __('Arquivo em falta')),
             ],
             [
                 'key' => 'profissional',
                 'label' => __('Profissionais'),
                 'ok' => $profissional,
                 'rows' => $rowsProf,
-                'hint' => $profissional ? __('Arquivo presente') : __('Arquivo em falta'),
+                'hint' => $inactive
+                    ? __('Não exigido — escola fora de atividade')
+                    : ($profissional ? __('Arquivo presente') : __('Arquivo em falta')),
             ],
         ];
 
@@ -695,6 +778,7 @@ final class CampaignAnalysisPresenter
             'status' => $status,
             'tone' => $tone,
             'status_hint' => $statusHint,
+            'inactive' => $inactive,
             'triade' => [
                 'ok' => $triade,
                 'pct' => $triadePct,
@@ -880,8 +964,14 @@ final class CampaignAnalysisPresenter
                 [
                     'label' => __('Incompletas'),
                     'value' => number_format($schoolRows->where('filter', 'incomplete')->count()),
-                    'hint' => __('Falta arquivo da tríade'),
+                    'hint' => __('Falta arquivo da tríade (só em atividade)'),
                     'tone' => 'amber',
+                ],
+                [
+                    'label' => __('Fora de atividade'),
+                    'value' => number_format($schoolRows->where('filter', 'inactive')->count()),
+                    'hint' => __('Extintas / paralisadas — sem pendência de coleta'),
+                    'tone' => 'slate',
                 ],
                 [
                     'label' => __('Com erros'),

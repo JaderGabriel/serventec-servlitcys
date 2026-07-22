@@ -141,11 +141,32 @@ class CampaignController extends Controller
         $this->authorize('view', $campaign);
 
         $campaign->load(['city', 'artifacts' => fn ($q) => $q->latest()->limit(50), 'schools']);
-        $campaign->loadCount(['artifacts', 'schools']);
+        $campaign->loadCount([
+            'artifacts',
+            'schools',
+            'findings as findings_errors_count' => fn ($q) => $q->where('severity', \App\Models\Clio\ClioCampaignFinding::SEVERITY_ERROR),
+            'findings as findings_warnings_count' => fn ($q) => $q->where('severity', \App\Models\Clio\ClioCampaignFinding::SEVERITY_WARNING),
+            'inferences',
+        ]);
+
+        $coverage = $parser->coverage($campaign);
 
         return view('clio.campaigns.show', [
             'campaign' => $campaign,
-            'coverage' => $parser->coverage($campaign),
+            'coverage' => $coverage,
+            'hub' => [
+                'triade_pct' => (float) ($coverage['triade_coverage_pct'] ?? 0),
+                'triade_complete' => (int) ($coverage['schools_triade_complete'] ?? 0),
+                'schools_total' => (int) ($coverage['schools_total'] ?? $campaign->schools_count),
+                'reference_date' => $campaign->referenceDateDisplay()
+                    ?? (filled($coverage['reference_date'] ?? null)
+                        ? \Illuminate\Support\Carbon::parse($coverage['reference_date'])->timezone(config('app.timezone'))->format('d/m/Y')
+                        : null),
+                'last_activity' => $campaign->lastActivityDisplay(),
+                'errors' => (int) ($campaign->findings_errors_count ?? 0),
+                'warnings' => (int) ($campaign->findings_warnings_count ?? 0),
+                'has_analysis' => (int) ($campaign->inferences_count ?? 0) > 0 || $campaign->hasReportReady(),
+            ],
         ]);
     }
 }

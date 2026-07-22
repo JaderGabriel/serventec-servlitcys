@@ -48,6 +48,15 @@
 
     <div class="clio-page py-8 sm:py-10">
         <div class="clio-shell clio-shell--narrow">
+            @if (! empty($dashboard['inactive']))
+                <div class="clio-note mb-4" role="status">
+                    <p class="clio-note__title">{{ $dashboard['status'] ?? __('Fora de atividade') }}</p>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        {{ $dashboard['status_hint'] ?? __('Esta unidade não está em atividade — a falta de relações não indica coleta em aberto.') }}
+                    </p>
+                </div>
+            @endif
+
             <section aria-labelledby="clio-school-kpi-heading">
                 <h3 id="clio-school-kpi-heading" class="clio-section-title mb-3">
                     {{ __('Indicadores desta escola') }}
