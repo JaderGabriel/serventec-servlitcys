@@ -23,6 +23,7 @@
                 icon="document-text"
                 :title="__('Relatório PDF com contadores e o que corrigir')"
                 data-serv-loading-on-click
+                data-serv-loading-download
                 data-serv-loading-title="{{ __('Gerando PDF') }}"
                 data-serv-loading-message="{{ __('Montando o relatório da coleta. Aguarde…') }}"
             >
@@ -33,6 +34,7 @@
                 icon="clipboard-document-list"
                 :title="__('Planilha Excel com escolas ativas e demais status')"
                 data-serv-loading-on-click
+                data-serv-loading-download
                 data-serv-loading-title="{{ __('Gerando Excel') }}"
                 data-serv-loading-message="{{ __('Preparando o arquivo de exportação. Aguarde…') }}"
             >

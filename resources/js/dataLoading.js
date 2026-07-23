@@ -328,6 +328,107 @@ function linkPathname(link) {
 }
 
 /**
+ * @param {string|null} disposition
+ * @param {string} fallback
+ */
+function filenameFromContentDisposition(disposition, fallback) {
+    if (!disposition) {
+        return fallback;
+    }
+
+    const utf8 = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(disposition);
+    if (utf8?.[1]) {
+        try {
+            return decodeURIComponent(utf8[1].trim().replace(/^"+|"+$/g, ""));
+        } catch {
+            /* keep fallback */
+        }
+    }
+
+    const plain = /filename\s*=\s*"((?:\\.|[^"])*)"|filename\s*=\s*([^;]+)/i.exec(
+        disposition,
+    );
+    if (plain) {
+        const raw = (plain[1] ?? plain[2] ?? "").trim().replace(/^"+|"+$/g, "");
+        if (raw !== "") {
+            return raw;
+        }
+    }
+
+    return fallback;
+}
+
+/**
+ * @param {string} pathname
+ */
+function isAttachmentExportPath(pathname) {
+    return /\/export\/(pdf|xlsx|csv)(\/|$)/i.test(pathname);
+}
+
+/**
+ * Download via fetch: o browser não navega, então o overlay precisa fechar no finally.
+ *
+ * @param {HTMLAnchorElement} link
+ * @param {string} title
+ * @param {string} message
+ */
+async function downloadHrefWithLoading(link, title, message) {
+    servDataLoadingStart(title, message);
+    let keepLoadingForNavigation = false;
+
+    try {
+        const response = await fetch(link.href, {
+            credentials: "same-origin",
+            headers: {
+                Accept: "*/*",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+
+        const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
+        if (!response.ok || contentType.includes("text/html")) {
+            keepLoadingForNavigation = true;
+            window.location.assign(link.href);
+
+            return;
+        }
+
+        const blob = await response.blob();
+        const pathname = linkPathname(link) || "download";
+        const extMatch = /\.(pdf|xlsx|csv)$/i.exec(pathname);
+        const fallback =
+            (extMatch ? `download.${extMatch[1].toLowerCase()}` : null) ||
+            (contentType.includes("pdf")
+                ? "download.pdf"
+                : contentType.includes("sheet") || contentType.includes("excel")
+                  ? "download.xlsx"
+                  : "download.bin");
+        const filename = filenameFromContentDisposition(
+            response.headers.get("Content-Disposition"),
+            fallback,
+        );
+
+        const objectUrl = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = filename;
+        anchor.rel = "noopener";
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
+    } catch (error) {
+        console.error("serv download", error);
+        keepLoadingForNavigation = true;
+        window.location.assign(link.href);
+    } finally {
+        if (!keepLoadingForNavigation) {
+            servDataLoadingFinish();
+        }
+    }
+}
+
+/**
  * @param {HTMLAnchorElement} link
  */
 function bindLoadingOnLink(link) {
@@ -335,7 +436,7 @@ function bindLoadingOnLink(link) {
         return;
     }
 
-    if (link.target === "_blank" || link.hasAttribute("download")) {
+    if (link.target === "_blank") {
         return;
     }
 
@@ -345,28 +446,51 @@ function bindLoadingOnLink(link) {
     }
 
     const explicit = link.hasAttribute("data-serv-loading-on-click");
+    const forceDownload =
+        link.hasAttribute("data-serv-loading-download") ||
+        (explicit && isAttachmentExportPath(href));
     const match = NAV_LINK_LOADING.find(({ pattern }) => pattern.test(href));
-    if (!explicit && !match) {
+
+    if (link.hasAttribute("download") && !forceDownload && !explicit) {
         return;
     }
 
-    if (!explicit && href === window.location.pathname) {
+    if (!explicit && !match && !forceDownload) {
+        return;
+    }
+
+    if (!explicit && !forceDownload && href === window.location.pathname) {
         return;
     }
 
     link.dataset.servLoadingBound = "1";
     link.addEventListener("click", (event) => {
-        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey
+        ) {
             return;
         }
-        const presetKey = explicit
+
+        const presetKey = explicit || forceDownload
             ? (link.dataset.servLoadingPreset || "clio")
             : match.preset;
         const preset = presetCopy(presetKey);
-        servDataLoadingStart(
-            link.dataset.servLoadingTitle ?? preset.title,
-            link.dataset.servLoadingMessage ?? preset.message,
-        );
+        const title = link.dataset.servLoadingTitle ?? preset.title;
+        const message = link.dataset.servLoadingMessage ?? preset.message;
+
+        if (forceDownload || link.hasAttribute("download")) {
+            event.preventDefault();
+            void downloadHrefWithLoading(link, title, message);
+
+            return;
+        }
+
+        servDataLoadingStart(title, message);
     });
 }
 

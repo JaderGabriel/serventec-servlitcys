@@ -118,7 +118,7 @@
                         [
                             'label' => __('Tríade média'),
                             'value' => $avgTriade !== null ? number_format($avgTriade, 1, ',', '.').'%' : '—',
-                            'hint' => __('Cobertura aluno + turma + profissional'),
+                            'hint' => __('Só escolas em atividade (aluno + turma + profissional)'),
                         ],
                         [
                             'label' => __('Erros na rede'),
@@ -153,7 +153,8 @@
                 <div class="clio-report-grid">
                     @forelse ($campaigns as $campaign)
                         @php
-                            $triade = $campaign->triadeCoveragePct();
+                            $scope = $campaign->schoolScopeStats();
+                            $triade = $scope['triade_pct'];
                             $ready = $campaign->hasReportReady();
                             $errors = (int) $campaign->findings_error_count;
                             $warnings = (int) ($campaign->findings_warning_count ?? 0);
@@ -194,6 +195,7 @@
                                             {{ $triade !== null ? number_format((float) $triade, 1, ',', '.').'%' : '—' }}
                                         </span>
                                     </div>
+                                    <p class="clio-meter__hint">{{ __('Escolas em atividade') }}</p>
                                     <div class="clio-meter__track">
                                         <div class="clio-meter__fill clio-meter__fill--{{ $meterTone($triade) }}"
                                              style="width: {{ $triade !== null ? min(100, max(0, (float) $triade)) : 0 }}%"></div>
@@ -203,7 +205,7 @@
                                 <dl class="clio-mini-stats">
                                     <div class="clio-mini-stat">
                                         <dt class="clio-mini-stat__label">{{ __('Escolas') }}</dt>
-                                        <dd class="clio-mini-stat__value">{{ $campaign->schools_count }}</dd>
+                                        <dd class="clio-mini-stat__value">{{ $scope['active'] }}</dd>
                                     </div>
                                     <div class="clio-mini-stat">
                                         <dt class="clio-mini-stat__label">{{ __('Arquivos') }}</dt>
@@ -216,6 +218,11 @@
                                         </dd>
                                     </div>
                                 </dl>
+                                @if (($scope['other'] ?? 0) > 0)
+                                    <p class="clio-report-card__aside">
+                                        {{ __('+:n demais situações (extinta, paralisada ou reforma)', ['n' => $scope['other']]) }}
+                                    </p>
+                                @endif
 
                                 <div class="clio-report-card__footer">
                                     <a href="{{ $campaign->primaryReportUrl() }}"

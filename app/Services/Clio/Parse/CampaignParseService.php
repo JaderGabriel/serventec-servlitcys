@@ -5,6 +5,7 @@ namespace App\Services\Clio\Parse;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Models\Clio\ClioCampaignSchool;
+use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -106,6 +107,7 @@ final class CampaignParseService
 
     /**
      * Cobertura da tríade e inventário para CLI/UI.
+     * Denominador da %: só escolas em atividade (extinta/paralisada/reforma fora).
      *
      * @return array<string, mixed>
      */
@@ -121,16 +123,30 @@ final class CampaignParseService
             ->all();
 
         $schools = [];
-        $complete = 0;
+        $completeActive = 0;
+        $activeCount = 0;
+        $otherCount = 0;
+        $missingActive = 0;
+
         foreach ($campaign->schools as $school) {
             $kinds = $school->artifacts->pluck('kind')->unique()->all();
             $hasAluno = in_array('relacao_aluno_escola', $kinds, true);
             $hasTurma = in_array('relacao_turma_escola', $kinds, true);
             $hasProf = in_array('relacao_profissional_escola', $kinds, true);
             $triade = $hasAluno && $hasTurma && $hasProf;
-            if ($triade) {
-                $complete++;
+            $inactive = CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
+
+            if ($inactive) {
+                $otherCount++;
+            } else {
+                $activeCount++;
+                if ($triade) {
+                    $completeActive++;
+                } else {
+                    $missingActive++;
+                }
             }
+
             $schools[] = [
                 'inep' => $school->inep_code,
                 'name' => $school->name,
@@ -138,13 +154,14 @@ final class CampaignParseService
                 'turma' => $hasTurma,
                 'profissional' => $hasProf,
                 'triade' => $triade,
+                'inactive' => $inactive,
+                'functioning' => $school->functioning_status,
             ];
         }
 
-        $schoolCount = max(1, $campaign->schools->count());
-        $pct = $campaign->schools->count() === 0
+        $pct = $activeCount === 0
             ? 0.0
-            : round(100 * $complete / $campaign->schools->count(), 1);
+            : round(100 * $completeActive / $activeCount, 1);
 
         return [
             'status' => $campaign->status,
@@ -153,11 +170,14 @@ final class CampaignParseService
             'artifacts_by_kind' => $byKind,
             'parse_stats' => $parseStats,
             'schools_total' => $campaign->schools->count(),
-            'schools_triade_complete' => $complete,
+            'schools_active' => $activeCount,
+            'schools_other' => $otherCount,
+            'schools_triade_complete' => $completeActive,
+            'schools_missing_triade' => $missingActive,
             'triade_coverage_pct' => $pct,
             'has_acomp' => ($byKind['acomp_coleta_1etapa'] ?? 0) > 0,
             'schools' => $schools,
-            'denominator_note' => $schoolCount,
+            'denominator_note' => max(1, $activeCount),
         ];
     }
 

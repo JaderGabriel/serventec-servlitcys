@@ -4,6 +4,7 @@ namespace App\Models\Clio;
 
 use App\Models\City;
 use App\Models\User;
+use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -173,10 +174,95 @@ class ClioCampaign extends Model
     }
 
     /**
-     * Cobertura da tríade (%) a partir de INF-COE (payload da análise).
+     * Escopo operacional: escolas em atividade × demais situações + cobertura da tríade.
+     *
+     * @return array{
+     *   active: int,
+     *   other: int,
+     *   total: int,
+     *   triade_complete: int,
+     *   triade_pct: ?float
+     * }
+     */
+    public function schoolScopeStats(): array
+    {
+        if ($this->relationLoaded('schools')) {
+            $active = 0;
+            $other = 0;
+            $triadeComplete = 0;
+
+            foreach ($this->schools as $school) {
+                if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status)) {
+                    $other++;
+
+                    continue;
+                }
+
+                $active++;
+                $kinds = $school->relationLoaded('artifacts')
+                    ? $school->artifacts->pluck('kind')->unique()->all()
+                    : $school->artifacts()->pluck('kind')->unique()->all();
+
+                if (
+                    in_array('relacao_aluno_escola', $kinds, true)
+                    && in_array('relacao_turma_escola', $kinds, true)
+                    && in_array('relacao_profissional_escola', $kinds, true)
+                ) {
+                    $triadeComplete++;
+                }
+            }
+
+            return [
+                'active' => $active,
+                'other' => $other,
+                'total' => $active + $other,
+                'triade_complete' => $triadeComplete,
+                'triade_pct' => $active > 0
+                    ? round(100 * $triadeComplete / $active, 1)
+                    : ($active + $other === 0 ? null : 0.0),
+            ];
+        }
+
+        $inf = $this->relationLoaded('inferences')
+            ? $this->inferences->firstWhere('code', 'INF-COE')
+            : $this->inferences()->where('code', 'INF-COE')->first();
+
+        $payload = is_array($inf?->payload) ? $inf->payload : [];
+        if ($payload === []) {
+            return [
+                'active' => (int) ($this->schools_count ?? 0),
+                'other' => 0,
+                'total' => (int) ($this->schools_count ?? 0),
+                'triade_complete' => 0,
+                'triade_pct' => null,
+            ];
+        }
+
+        $active = (int) ($payload['schools_active'] ?? 0);
+        $other = (int) ($payload['schools_other'] ?? 0);
+        $triadeComplete = (int) ($payload['schools_triade_complete'] ?? 0);
+        $pct = array_key_exists('triade_coverage_pct', $payload)
+            ? (float) $payload['triade_coverage_pct']
+            : null;
+
+        return [
+            'active' => $active,
+            'other' => $other,
+            'total' => $active + $other,
+            'triade_complete' => $triadeComplete,
+            'triade_pct' => $pct,
+        ];
+    }
+
+    /**
+     * Cobertura da tríade (%) nas escolas em atividade.
      */
     public function triadeCoveragePct(): ?float
     {
+        if ($this->relationLoaded('schools')) {
+            return $this->schoolScopeStats()['triade_pct'];
+        }
+
         $inf = $this->relationLoaded('inferences')
             ? $this->inferences->firstWhere('code', 'INF-COE')
             : $this->inferences()->where('code', 'INF-COE')->first();

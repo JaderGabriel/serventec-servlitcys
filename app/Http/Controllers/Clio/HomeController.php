@@ -36,7 +36,13 @@ class HomeController extends Controller
         $q = trim((string) $request->input('q', ''));
 
         $campaignsQuery = ClioCampaign::query()
-            ->with(['city', 'inferences' => fn ($rel) => $rel->where('code', 'INF-COE')])
+            ->with([
+                'city',
+                'inferences' => fn ($rel) => $rel->where('code', 'INF-COE'),
+                'schools' => fn ($rel) => $rel->with([
+                    'artifacts' => fn ($artifacts) => $artifacts->select('id', 'school_id', 'kind'),
+                ]),
+            ])
             ->withCount([
                 'artifacts',
                 'schools',

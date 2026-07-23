@@ -552,6 +552,10 @@
     @apply text-slate-500;
 }
 
+.clio-meter__hint {
+    @apply text-[10px] leading-tight text-slate-400 dark:text-slate-500;
+}
+
 .clio-meter__value {
     @apply tabular-nums font-semibold text-slate-900 dark:text-white;
 }
@@ -593,6 +597,10 @@
 
 .clio-mini-stat__value--sm {
     @apply text-xs;
+}
+
+.clio-report-card__aside {
+    @apply mt-2 text-[11px] leading-snug text-slate-400 dark:text-slate-500;
 }
 
 /* Distribuições (barras do relatório) */

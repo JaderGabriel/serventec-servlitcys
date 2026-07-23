@@ -1376,10 +1376,13 @@ final class CampaignAnalyzer
 
     private function inferCoerencia(ClioCampaign $campaign): void
     {
-        $missingTriade = 0;
         $coverage = $this->parseService->coverage($campaign);
+        $missingTriade = 0;
 
         foreach ($coverage['schools'] as $row) {
+            if (! empty($row['inactive'])) {
+                continue;
+            }
             if (! ($row['triade'] ?? false)) {
                 $missingTriade++;
                 $school = $campaign->schools->firstWhere('inep_code', $row['inep']);
@@ -1411,12 +1414,15 @@ final class CampaignAnalyzer
         $this->upsertInference(
             $campaign,
             'INF-COE',
-            __('Arquivos: :m escola(s) sem tríade completa · cobertura :p%.', [
+            __('Arquivos (escolas em atividade): :m sem tríade completa · cobertura :p%.', [
                 'm' => $missingTriade,
                 'p' => $coverage['triade_coverage_pct'],
             ]),
             [
                 'schools_missing_triade' => $missingTriade,
+                'schools_active' => (int) ($coverage['schools_active'] ?? 0),
+                'schools_other' => (int) ($coverage['schools_other'] ?? 0),
+                'schools_triade_complete' => (int) ($coverage['schools_triade_complete'] ?? 0),
                 'triade_coverage_pct' => $coverage['triade_coverage_pct'],
                 'has_acomp' => $coverage['has_acomp'],
             ],
