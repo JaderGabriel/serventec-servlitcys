@@ -87,9 +87,10 @@ final class CampaignIngestService
     /**
      * Ingere arquivo único, pasta ou ZIP a partir do filesystem (CLI U5).
      *
+     * @param  array<string, array{id?: string}>  $driveMetaByRelative
      * @return array{stored: int, ignored: int, duplicates: int, expanded: int, artifacts: list<ClioCampaignArtifact>}
      */
-    public function ingestFromPath(ClioCampaign $campaign, string $path): array
+    public function ingestFromPath(ClioCampaign $campaign, string $path, array $driveMetaByRelative = []): array
     {
         $path = rtrim($path);
         if (! file_exists($path)) {
@@ -98,7 +99,14 @@ final class CampaignIngestService
 
         if (is_file($path)) {
             $base = basename($path);
-            $result = $this->ingestAbsoluteFile($campaign, $path, $base, $base, null);
+            $result = $this->ingestAbsoluteFile(
+                $campaign,
+                $path,
+                $base,
+                $base,
+                null,
+                $driveMetaByRelative[$base] ?? [],
+            );
             $expanded = 0;
             $artifacts = $result['artifacts'];
 
@@ -143,7 +151,14 @@ final class CampaignIngestService
 
             $absolute = $file->getPathname();
             $relative = ltrim(str_replace('\\', '/', Str::after($absolute, rtrim($path, DIRECTORY_SEPARATOR))), '/');
-            $result = $this->ingestAbsoluteFile($campaign, $absolute, basename($absolute), $relative, null);
+            $result = $this->ingestAbsoluteFile(
+                $campaign,
+                $absolute,
+                basename($absolute),
+                $relative,
+                null,
+                $driveMetaByRelative[$relative] ?? [],
+            );
             $stored += $result['stored'];
             $ignored += $result['ignored'];
             $duplicates += $result['duplicates'];
@@ -294,6 +309,7 @@ final class CampaignIngestService
     }
 
     /**
+     * @param  array{id?: string}  $driveMeta
      * @return array{stored: int, ignored: int, duplicates: int, artifacts: list<ClioCampaignArtifact>}
      */
     private function ingestAbsoluteFile(
@@ -302,6 +318,7 @@ final class CampaignIngestService
         string $originalName,
         string $relativePath,
         ?int $parentZipId,
+        array $driveMeta = [],
     ): array {
         $classified = $this->classifier->classify($originalName, $relativePath);
 
@@ -320,7 +337,15 @@ final class CampaignIngestService
             ->first();
 
         if ($existing !== null) {
-            return ['stored' => 0, 'ignored' => 0, 'duplicates' => 1, 'artifacts' => []];
+            if (filled($driveMeta['id'] ?? null)) {
+                $meta = is_array($existing->parse_meta) ? $existing->parse_meta : [];
+                if (($meta['drive_file_id'] ?? null) !== $driveMeta['id']) {
+                    $meta['drive_file_id'] = $driveMeta['id'];
+                    $existing->update(['parse_meta' => $meta]);
+                }
+            }
+
+            return ['stored' => 0, 'ignored' => 0, 'duplicates' => 1, 'artifacts' => [$existing]];
         }
 
         $schoolId = $this->resolveSchoolId($campaign, $classified['inep_code'], $relativePath);
@@ -341,6 +366,9 @@ final class CampaignIngestService
         ];
         if ($parentZipId !== null) {
             $meta['parent_zip_id'] = $parentZipId;
+        }
+        if (filled($driveMeta['id'] ?? null)) {
+            $meta['drive_file_id'] = $driveMeta['id'];
         }
 
         $artifact = ClioCampaignArtifact::query()->create([

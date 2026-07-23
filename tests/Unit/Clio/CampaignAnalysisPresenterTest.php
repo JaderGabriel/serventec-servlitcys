@@ -164,13 +164,52 @@ final class CampaignAnalysisPresenterTest extends TestCase
             'functioning_status' => 'Em atividade',
             'collection_form' => 'Em andamento',
             'dependency' => 'Municipal',
-            'meta' => ['total_curricular' => 120],
+            'meta' => [
+                'total_curricular' => 120,
+                'total_aee' => 4,
+                'total_ac' => 2,
+                'location' => 'Urbana',
+                'blocked' => 'Não',
+                'matriculas_a_confirmar' => 1,
+            ],
         ]);
         $artifact = new ClioCampaignArtifact([
             'kind' => 'relacao_aluno_escola',
             'original_name' => 'RelacaoAlunoEscola.csv',
             'parse_status' => 'ok',
             'row_count' => 118,
+            'parse_meta' => [
+                'aggregates' => [
+                    'total' => 118,
+                    'by_etapa_ensino' => ['1º Ano' => 40, '2º Ano' => 78],
+                    'without_etapa' => 0,
+                    'without_turma' => 2,
+                    'by_cor_raca' => ['Parda' => 70, 'Branca' => 48],
+                    'by_sexo' => ['Masculino' => 60, 'Feminino' => 58],
+                    'by_faixa_etaria' => ['6 a 10' => 100, '11 a 14' => 18],
+                    'by_nee' => [],
+                    'nee_flagged' => 0,
+                    'by_transporte' => ['Sim' => 30, 'Não' => 88],
+                    'transporte_flagged' => 30,
+                    'without_transporte' => 0,
+                    'age_grade' => [
+                        'eligible' => 100,
+                        'distorcao' => 12,
+                        'atraso_1' => 8,
+                        'adequado' => 80,
+                        'adiantado' => 0,
+                        'by_etapa' => [
+                            '1º Ano' => ['eligible' => 40, 'distorcao' => 4, 'atraso_1' => 2, 'adequado' => 34, 'pct_distorcao' => 10.0],
+                        ],
+                    ],
+                    'columns' => [
+                        'cor_raca' => true,
+                        'sexo' => true,
+                        'nascimento' => true,
+                        'transporte' => true,
+                    ],
+                ],
+            ],
         ]);
         $school->setRelation('artifacts', collect([$artifact]));
 
@@ -178,6 +217,7 @@ final class CampaignAnalysisPresenterTest extends TestCase
             'severity' => ClioCampaignFinding::SEVERITY_ERROR,
             'code' => 'CLIO-TRI',
             'message' => 'Falta turma',
+            'meta' => ['sample_id' => '12345678901'],
         ]);
 
         $dash = (new CampaignAnalysisPresenter)->presentSchool(
@@ -198,5 +238,14 @@ final class CampaignAnalysisPresenterTest extends TestCase
         $this->assertContains(__('Turmas'), $dash['triade']['missing']);
         $this->assertCount(6, $dash['kpis']);
         $this->assertCount(1, $dash['files']);
+        $this->assertSame('Urbana', $dash['context']['location']);
+        $this->assertSame(120, $dash['context']['acomp_curricular']);
+        $this->assertSame(-2, $dash['context']['delta_curricular']);
+        $this->assertTrue($dash['analytics']['available']);
+        $this->assertTrue($dash['analytics']['matricula']['available']);
+        $this->assertNotEmpty($dash['analytics']['matricula']['por_ano']);
+        $this->assertTrue($dash['analytics']['profile']['available']);
+        $this->assertSame(12.0, $dash['analytics']['metrics']['distortion']['pct']);
+        $this->assertTrue($dash['analytics']['transporte']['available']);
     }
 }

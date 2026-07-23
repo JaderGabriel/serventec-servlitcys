@@ -46,11 +46,24 @@ class CampaignAnalysisController extends Controller
     {
         $this->authorize('analyze', $campaign);
 
-        $result = $analyzer->analyze($campaign);
+        $data = $request->validate([
+            'mode' => ['nullable', 'in:ingested,all'],
+        ]);
+        $mode = (string) ($data['mode'] ?? 'ingested');
+
+        if ($mode === 'all') {
+            app(CampaignParseService::class)->parseCampaign($campaign->fresh() ?? $campaign, reparse: true);
+            $result = $analyzer->analyze($campaign->fresh() ?? $campaign, parseFirst: false);
+            $label = __('Análise completa (reinterpretação de todos os CSV)');
+        } else {
+            $result = $analyzer->analyze($campaign, parseFirst: true);
+            $label = __('Análise dos ficheiros já ingeridos');
+        }
 
         return redirect()
             ->route('clio.campaigns.analysis', $campaign)
-            ->with('success', __('Análise concluída: :i indicadores · :f apontamentos.', [
+            ->with('success', __(':label: :i indicadores · :f apontamentos.', [
+                'label' => $label,
                 'i' => $result['inferences'],
                 'f' => $result['findings'],
             ]));
@@ -82,9 +95,15 @@ class CampaignAnalysisController extends Controller
             })
             ->values();
 
+        $inferences = $campaign->inferences()->get()->keyBy('code');
         $coverage = $parser->coverage($campaign);
         $coverageRow = collect($coverage['schools'] ?? [])->firstWhere('inep', $inep);
-        $dashboard = $presenter->presentSchool($school, is_array($coverageRow) ? $coverageRow : null, $findings);
+        $dashboard = $presenter->presentSchool(
+            $school,
+            is_array($coverageRow) ? $coverageRow : null,
+            $findings,
+            $inferences,
+        );
 
         $siblings = $campaign->schools()
             ->orderBy('name')

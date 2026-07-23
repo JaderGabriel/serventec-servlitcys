@@ -1459,10 +1459,11 @@ final class CampaignAnalyzer
                             'CLIO-DUP-ID',
                             ClioCampaignFinding::SEVERITY_WARNING,
                             __('O mesmo identificador aparece mais de uma vez na Relação de alunos (amostra: :id).', [
-                                'id' => $this->maskIdentifier($id),
+                                'id' => $id,
                             ]),
                             $artifact->school,
                             $artifact,
+                            ['sample_id' => $id],
                         );
                     }
                 } else {
@@ -1693,23 +1694,6 @@ final class CampaignAnalyzer
                 'etapa_ok' => $okEtapa,
             ],
         );
-    }
-
-    private function maskIdentifier(string $id): string
-    {
-        $id = trim($id);
-        if ($id === '') {
-            return '***';
-        }
-        if (preg_match('/^\d{11}$/', $id) === 1) {
-            return '[redacted]';
-        }
-        $len = mb_strlen($id);
-        if ($len <= 4) {
-            return str_repeat('*', $len);
-        }
-
-        return mb_substr($id, 0, 2).str_repeat('*', max(0, $len - 4)).mb_substr($id, -2);
     }
 
     /**

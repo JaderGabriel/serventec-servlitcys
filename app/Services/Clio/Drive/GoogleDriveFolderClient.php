@@ -265,6 +265,144 @@ final class GoogleDriveFolderClient
         ];
     }
 
+    /**
+     * Descarrega um subconjunto de ficheiros já catalogados (lote).
+     *
+     * @param  list<array{id: string, name: string, path: string, mime?: string, size?: ?int, kind: string}>  $files
+     * @return array{dir: string, downloaded: int, skipped: int, bytes: int, by_path: array<string, array{id: string, size: int, status: string, error?: string}>}
+     */
+    public function downloadSelectedToTemp(array $files): array
+    {
+        $maxBytes = max(1, (int) config('clio.drive.max_file_mb', 64)) * 1024 * 1024;
+
+        $dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
+            .DIRECTORY_SEPARATOR.'clio-drive-'.Str::lower(Str::random(12));
+        if (! mkdir($dir, 0700, true) && ! is_dir($dir)) {
+            throw new RuntimeException(__('Não foi possível criar pasta temporária para o Drive.'));
+        }
+
+        $downloaded = 0;
+        $skipped = 0;
+        $bytes = 0;
+        $byPath = [];
+
+        foreach ($files as $file) {
+            $kind = (string) ($file['kind'] ?? 'unknown');
+            if ($kind === 'unknown') {
+                $skipped++;
+                $byPath[(string) $file['path']] = [
+                    'id' => (string) $file['id'],
+                    'size' => 0,
+                    'status' => 'skipped',
+                    'error' => 'unknown',
+                ];
+
+                continue;
+            }
+
+            if (($file['size'] ?? null) !== null && (int) $file['size'] > $maxBytes) {
+                $skipped++;
+                $byPath[(string) $file['path']] = [
+                    'id' => (string) $file['id'],
+                    'size' => (int) $file['size'],
+                    'status' => 'skipped',
+                    'error' => 'too_large',
+                ];
+
+                continue;
+            }
+
+            $relative = $this->sanitizeRelativePath((string) $file['path']);
+            if ($relative === '') {
+                $skipped++;
+                $byPath[(string) ($file['path'] ?? '')] = [
+                    'id' => (string) $file['id'],
+                    'size' => 0,
+                    'status' => 'failed',
+                    'error' => 'bad_path',
+                ];
+
+                continue;
+            }
+
+            $dest = $dir.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative);
+            $parent = dirname($dest);
+            if (! is_dir($parent) && ! mkdir($parent, 0700, true) && ! is_dir($parent)) {
+                $skipped++;
+                $byPath[$relative] = [
+                    'id' => (string) $file['id'],
+                    'size' => 0,
+                    'status' => 'failed',
+                    'error' => 'mkdir',
+                ];
+
+                continue;
+            }
+
+            try {
+                $this->downloadFileBinary((string) $file['id'], $dest);
+            } catch (\Throwable $e) {
+                @unlink($dest);
+                $skipped++;
+                $byPath[$relative] = [
+                    'id' => (string) $file['id'],
+                    'size' => 0,
+                    'status' => 'failed',
+                    'error' => $e->getMessage(),
+                ];
+
+                continue;
+            }
+
+            $size = is_file($dest) ? (int) filesize($dest) : 0;
+            if ($size <= 0 || $this->looksLikeHtmlErrorPage($dest)) {
+                @unlink($dest);
+                $skipped++;
+                $byPath[$relative] = [
+                    'id' => (string) $file['id'],
+                    'size' => 0,
+                    'status' => 'failed',
+                    'error' => 'empty_or_html',
+                ];
+
+                continue;
+            }
+            if ($size > $maxBytes) {
+                @unlink($dest);
+                $skipped++;
+                $byPath[$relative] = [
+                    'id' => (string) $file['id'],
+                    'size' => $size,
+                    'status' => 'skipped',
+                    'error' => 'too_large',
+                ];
+
+                continue;
+            }
+
+            $downloaded++;
+            $bytes += $size;
+            $byPath[$relative] = [
+                'id' => (string) $file['id'],
+                'size' => $size,
+                'status' => 'downloaded',
+            ];
+        }
+
+        if ($downloaded === 0) {
+            $this->deleteDirectory($dir);
+            throw new RuntimeException(__('Nenhum ficheiro Clio foi descarregado neste lote do Drive.'));
+        }
+
+        return [
+            'dir' => $dir,
+            'downloaded' => $downloaded,
+            'skipped' => $skipped,
+            'bytes' => $bytes,
+            'by_path' => $byPath,
+        ];
+    }
+
     public function deleteDirectory(string $dir): void
     {
         if (! is_dir($dir)) {
@@ -334,7 +472,7 @@ final class GoogleDriveFolderClient
                 'name' => $entry['name'],
                 'path' => $path,
                 'mime' => $entry['mime'],
-                'size' => null,
+                'size' => $entry['size'] ?? null,
             ];
         }
 
@@ -392,6 +530,7 @@ final class GoogleDriveFolderClient
                 'id' => $id,
                 'name' => $name,
                 'mime' => $isFolder ? 'application/vnd.google-apps.folder' : $this->mimeFromName($name),
+                'size' => null,
             ];
         }
 
@@ -413,7 +552,7 @@ final class GoogleDriveFolderClient
         do {
             $query = [
                 'q' => sprintf("'%s' in parents and trashed = false", $folderId),
-                'fields' => 'nextPageToken, files(id, name, mimeType)',
+                'fields' => 'nextPageToken, files(id, name, mimeType, size)',
                 'pageSize' => 1000,
                 'supportsAllDrives' => 'true',
                 'includeItemsFromAllDrives' => 'true',
@@ -445,6 +584,7 @@ final class GoogleDriveFolderClient
                     'id' => $id,
                     'name' => $name,
                     'mime' => $mime !== '' ? $mime : $this->mimeFromName($name),
+                    'size' => isset($item['size']) && is_numeric($item['size']) ? (int) $item['size'] : null,
                 ];
             }
         } while ($pageToken);

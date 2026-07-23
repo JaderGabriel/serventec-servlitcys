@@ -27,6 +27,10 @@ return [
         'max_file_mb' => max(1, (int) env('CLIO_DRIVE_MAX_FILE_MB', env('CLIO_UPLOAD_MAX_MB', 64))),
         'max_depth' => max(1, (int) env('CLIO_DRIVE_MAX_DEPTH', 4)),
         'request_timeout' => max(30, (int) env('CLIO_DRIVE_TIMEOUT', 120)),
+        /** Acima deste nº de ficheiros relevantes, a importação corre em lotes com retomada. */
+        'batch_threshold' => max(1, (int) env('CLIO_DRIVE_BATCH_THRESHOLD', 100)),
+        /** Ficheiros por lote de download+ingest (evita timeout HTTP). */
+        'batch_size' => max(1, (int) env('CLIO_DRIVE_BATCH_SIZE', 40)),
     ],
 
     /** Tipos de artefato reconhecidos no classificador de nomes. */

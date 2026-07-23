@@ -42,12 +42,28 @@
                     <form
                         method="post"
                         action="{{ route('clio.campaigns.analyze', $campaign) }}"
+                        class="flex flex-wrap gap-2"
                         data-serv-loading-on-submit
                         data-serv-loading-title="{{ __('Atualizando análise') }}"
                         data-serv-loading-message="{{ __('Reinterpretando os CSV da coleta e montando o painel. Aguarde…') }}"
                     >
                         @csrf
-                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Atualizar análise') }}</button>
+                        <input type="hidden" name="mode" value="ingested" />
+                        <button type="submit" class="serv-btn-primary text-sm">{{ __('Analisar ingeridos') }}</button>
+                    </form>
+                    <form
+                        method="post"
+                        action="{{ route('clio.campaigns.analyze', $campaign) }}"
+                        data-serv-loading-on-submit
+                        data-serv-loading-title="{{ __('Reanalisando tudo') }}"
+                        data-serv-loading-message="{{ __('Reinterpretando todos os CSV e remontando o painel. Aguarde…') }}"
+                    >
+                        @csrf
+                        <input type="hidden" name="mode" value="all" />
+                        <button type="submit" class="serv-btn-secondary text-sm"
+                                onclick="return confirm(@js(__('Reinterpretar todos os ficheiros da coleta? Pode demorar em municípios grandes.')))">
+                            {{ __('Analisar tudo') }}
+                        </button>
                     </form>
                 @endcan
                 @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])

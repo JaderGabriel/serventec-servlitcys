@@ -39,7 +39,7 @@ class CampaignDriveController extends Controller
             $campaign->load('city');
         }
 
-        $result = $driveImport->verify($campaign);
+        $result = $driveImport->catalog($campaign);
 
         $flash = $result['ok'] ? 'success' : 'warning';
         $message = $result['message'];
@@ -55,6 +55,8 @@ class CampaignDriveController extends Controller
         if ($result['warnings'] !== []) {
             $message .= ' — '.implode(' ', $result['warnings']);
         }
+
+        $campaign->refresh();
 
         return back()
             ->with($flash, $message)
@@ -75,13 +77,15 @@ class CampaignDriveController extends Controller
         }
 
         try {
-            $result = $driveImport->import($campaign);
+            $result = $driveImport->importNextBatch($campaign);
         } catch (\Throwable $e) {
             return back()->with('warning', __('Importação Drive falhou: :m', ['m' => $e->getMessage()]));
         }
 
+        $flash = ($result['stored'] > 0 || $result['complete']) ? 'success' : 'warning';
+
         return redirect()
             ->route('clio.campaigns.upload', $campaign)
-            ->with($result['stored'] > 0 ? 'success' : 'warning', $result['message']);
+            ->with($flash, $result['message']);
     }
 }

@@ -616,10 +616,16 @@ final class CampaignAnalysisPresenter
      * @param  Collection<int, \App\Models\Clio\ClioCampaignFinding>  $findings
      * @return array<string, mixed>
      */
+    /**
+     * @param  Collection<int, ClioCampaignFinding>  $findings
+     * @param  Collection<string, ClioCampaignInference>|null  $inferences
+     * @return array<string, mixed>
+     */
     public function presentSchool(
         \App\Models\Clio\ClioCampaignSchool $school,
         ?array $coverageRow,
         Collection $findings,
+        ?Collection $inferences = null,
     ): array {
         $coverageRow = $coverageRow ?? [
             'inep' => $school->inep_code,
@@ -678,11 +684,18 @@ final class CampaignAnalysisPresenter
 
         $meta = is_array($school->meta) ? $school->meta : [];
         $matAcomp = is_numeric($meta['total_curricular'] ?? null) ? (int) $meta['total_curricular'] : null;
+        $aeeAcomp = is_numeric($meta['total_aee'] ?? null) ? (int) $meta['total_aee'] : null;
+        $acAcomp = is_numeric($meta['total_ac'] ?? null) ? (int) $meta['total_ac'] : null;
+        $confirmar = is_numeric($meta['matriculas_a_confirmar'] ?? null) ? (int) $meta['matriculas_a_confirmar'] : null;
+        $blocked = $this->isSchoolBlocked($school);
+        $location = trim((string) ($meta['location'] ?? ''));
 
         $artifacts = $school->artifacts ?? collect();
         $rowsAluno = (int) $artifacts->where('kind', 'relacao_aluno_escola')->sum('row_count');
         $rowsTurma = (int) $artifacts->where('kind', 'relacao_turma_escola')->sum('row_count');
         $rowsProf = (int) $artifacts->where('kind', 'relacao_profissional_escola')->sum('row_count');
+
+        $deltaCurr = $matAcomp !== null ? $rowsAluno - $matAcomp : null;
 
         $kpis = [
             [
@@ -710,20 +723,17 @@ final class CampaignAnalysisPresenter
                 'tone' => $warnings->isEmpty() ? 'emerald' : 'amber',
             ],
             [
-                'label' => __('Linhas de alunos'),
+                'label' => __('Alunos (Relação)'),
                 'value' => number_format($rowsAluno),
                 'hint' => $matAcomp !== null
                     ? __('Acomp curricular: :n', ['n' => number_format($matAcomp)])
                     : __('Na relação de alunos enviada'),
-                'tone' => 'sky',
+                'tone' => $deltaCurr !== null && $deltaCurr !== 0 ? 'amber' : 'sky',
             ],
             [
-                'label' => __('Arquivos recebidos'),
-                'value' => number_format($artifacts->count()),
-                'hint' => __('Turmas :t · Profissionais :p', [
-                    't' => number_format($rowsTurma),
-                    'p' => number_format($rowsProf),
-                ]),
+                'label' => __('Turmas / profissionais'),
+                'value' => number_format($rowsTurma).' / '.number_format($rowsProf),
+                'hint' => __(':n arquivo(s) nesta escola', ['n' => $artifacts->count()]),
                 'tone' => 'sky',
             ],
         ];
@@ -782,6 +792,8 @@ final class CampaignAnalysisPresenter
             ];
         })->values();
 
+        $analytics = $this->buildSchoolAnalytics($school, $inferences ?? collect());
+
         return [
             'kpis' => $kpis,
             'status' => $status,
@@ -795,10 +807,24 @@ final class CampaignAnalysisPresenter
                 'missing' => $missing,
             ],
             'context' => [
+                'inep' => $school->inep_code,
+                'name' => $school->name,
                 'functioning' => $school->functioning_status ?: __('Não informado'),
                 'collection_form' => $school->collection_form ?: __('Não informado'),
                 'dependency' => $school->dependency ?: __('Não informado'),
+                'location' => $location !== '' ? $location : __('Não informado'),
+                'blocked' => $blocked,
+                'blocked_label' => $blocked ? __('Sim') : __('Não'),
+                'acomp_curricular' => $matAcomp,
+                'acomp_aee' => $aeeAcomp,
+                'acomp_ac' => $acAcomp,
+                'matriculas_a_confirmar' => $confirmar,
+                'relacao_alunos' => $rowsAluno,
+                'relacao_turmas' => $rowsTurma,
+                'relacao_profissionais' => $rowsProf,
+                'delta_curricular' => $deltaCurr,
             ],
+            'analytics' => $analytics,
             'files' => $files,
             'glossary' => ClioUserCopy::glossary(),
             'severity_legend' => ClioUserCopy::severityLegend(),
@@ -816,6 +842,336 @@ final class CampaignAnalysisPresenter
                     ? __('Há erros a corrigir antes de considerar esta escola concluída.')
                     : __('Ainda faltam arquivos ou há pontos de atenção nesta escola.')),
         ];
+    }
+
+    /**
+     * Quadro analítico da escola a partir dos aggregates das relações e fatias das inferências municipais.
+     *
+     * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @return array<string, mixed>
+     */
+    private function buildSchoolAnalytics(\App\Models\Clio\ClioCampaignSchool $school, Collection $inferences): array
+    {
+        $agg = new RelationCsvAggregator;
+        $inep = (string) $school->inep_code;
+        $alunoAgg = $this->mergeArtifactAggregates($school, 'relacao_aluno_escola');
+        $turmaAgg = $this->mergeArtifactAggregates($school, 'relacao_turma_escola');
+        $profAgg = $this->mergeArtifactAggregates($school, 'relacao_profissional_escola');
+
+        $matSchool = $this->findInferenceSchoolRow($inferences->get('INF-MAT'), $inep);
+        $turSchool = $this->findInferenceSchoolRow($inferences->get('INF-TUR'), $inep);
+        $traSchool = $this->findInferenceSchoolRow($inferences->get('INF-TRA'), $inep);
+        $jorSchool = $this->findInferenceSchoolRow($inferences->get('INF-JOR'), $inep);
+
+        $meta = is_array($school->meta) ? $school->meta : [];
+        $acompCurr = is_numeric($meta['total_curricular'] ?? null) ? (int) $meta['total_curricular'] : null;
+        $acompAee = is_numeric($meta['total_aee'] ?? null) ? (int) $meta['total_aee'] : null;
+        $acompAc = is_numeric($meta['total_ac'] ?? null) ? (int) $meta['total_ac'] : null;
+        $alunos = (int) ($alunoAgg['total'] ?? 0);
+        $turmas = (int) ($turmaAgg['total'] ?? 0);
+        $profissionais = (int) ($profAgg['total'] ?? 0);
+        $delta = $acompCurr !== null ? $alunos - $acompCurr : null;
+
+        $turmaBuckets = is_array($turmaAgg['by_tipo_bucket'] ?? null) ? $turmaAgg['by_tipo_bucket'] : [];
+        $tipoBars = [
+            ['label' => __('Curricular'), 'count' => (int) ($turmaBuckets['curricular'] ?? 0), 'tone' => 'sky'],
+            ['label' => __('AEE'), 'count' => (int) ($turmaBuckets['aee'] ?? 0), 'tone' => 'emerald'],
+            ['label' => __('Ativ. complementar'), 'count' => (int) ($turmaBuckets['atividade_complementar'] ?? 0), 'tone' => 'amber'],
+            ['label' => __('Outras'), 'count' => (int) ($turmaBuckets['outra'] ?? 0), 'tone' => 'slate'],
+        ];
+        $tipoMax = max(1, ...array_column($tipoBars, 'count'));
+        $tipoBars = array_map(static fn (array $b): array => [
+            ...$b,
+            'pct' => round(100 * $b['count'] / $tipoMax, 1),
+        ], $tipoBars);
+
+        $ageGrade = is_array($alunoAgg['age_grade'] ?? null) ? $alunoAgg['age_grade'] : [];
+        $eligible = (int) ($ageGrade['eligible'] ?? 0);
+        $distorcao = (int) ($ageGrade['distorcao'] ?? 0);
+        $pctDis = $eligible > 0 ? round(100 * $distorcao / $eligible, 1) : null;
+        $etapaDis = [];
+        foreach (is_array($ageGrade['by_etapa'] ?? null) ? $ageGrade['by_etapa'] : [] as $etapa => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $etapaDis[] = [
+                'etapa' => (string) $etapa,
+                'eligible' => (int) ($row['eligible'] ?? 0),
+                'distorcao' => (int) ($row['distorcao'] ?? 0),
+                'atraso_1' => (int) ($row['atraso_1'] ?? 0),
+                'adequado' => (int) ($row['adequado'] ?? 0),
+                'pct' => $row['pct_distorcao'] ?? null,
+            ];
+        }
+
+        $byTurmaAluno = is_array($alunoAgg['by_turma'] ?? null) ? $alunoAgg['by_turma'] : [];
+        $byTurmaProf = is_array($profAgg['by_turma'] ?? null) ? $profAgg['by_turma'] : [];
+        $turmasComAluno = count(array_filter($byTurmaAluno, static fn ($n) => (int) $n > 0));
+        $turmasGe40 = count(array_filter($byTurmaAluno, static fn ($n) => (int) $n >= 40));
+        $maxAlunosTurma = $byTurmaAluno === [] ? 0 : (int) max($byTurmaAluno);
+        $mediaAlunos = $turmasComAluno > 0
+            ? round(array_sum($byTurmaAluno) / $turmasComAluno, 1)
+            : null;
+        $turmasComDocente = count(array_filter($byTurmaProf, static fn ($n) => (int) $n > 0));
+        $turmasSemDocente = max(0, count($byTurmaAluno) - $turmasComDocente);
+
+        $cols = is_array($alunoAgg['columns'] ?? null) ? $alunoAgg['columns'] : [];
+        $hasTra = (bool) ($cols['transporte'] ?? false)
+            || ! empty($alunoAgg['by_transporte'])
+            || ! empty($traSchool);
+
+        $jorTurnoSource = (is_array($jorSchool) && is_array($jorSchool['by_turno'] ?? null) && $this->isCountMap($jorSchool['by_turno']))
+            ? $jorSchool['by_turno']
+            : (is_array($turmaAgg['by_turno'] ?? null) ? $turmaAgg['by_turno'] : []);
+        $jorChSource = (is_array($jorSchool) && is_array($jorSchool['by_ch_band'] ?? null) && $this->isCountMap($jorSchool['by_ch_band']))
+            ? $jorSchool['by_ch_band']
+            : (is_array($turmaAgg['by_ch_band'] ?? null) ? $turmaAgg['by_ch_band'] : []);
+        $jorTurno = $agg->toBars($jorTurnoSource, 8);
+        $jorCh = $agg->toBars($jorChSource, 8);
+
+        $traSource = (is_array($traSchool) && is_array($traSchool['by_transporte'] ?? null) && $this->isCountMap($traSchool['by_transporte']))
+            ? $traSchool['by_transporte']
+            : (is_array($alunoAgg['by_transporte'] ?? null) ? $alunoAgg['by_transporte'] : []);
+        $poderSource = (is_array($traSchool) && is_array($traSchool['by_poder_publico'] ?? null) && $this->isCountMap($traSchool['by_poder_publico']))
+            ? $traSchool['by_poder_publico']
+            : (is_array($alunoAgg['by_poder_publico_transporte'] ?? null) ? $alunoAgg['by_poder_publico_transporte'] : []);
+        $veiculoSource = (is_array($traSchool) && is_array($traSchool['by_veiculo'] ?? null) && $this->isCountMap($traSchool['by_veiculo']))
+            ? $traSchool['by_veiculo']
+            : (is_array($alunoAgg['by_veiculo_transporte'] ?? null) ? $alunoAgg['by_veiculo_transporte'] : []);
+
+        $hasAnyAgg = $alunoAgg !== [] || $turmaAgg !== [] || $profAgg !== [];
+
+        return [
+            'available' => $hasAnyAgg || $matSchool !== null || $turSchool !== null,
+            'matricula' => [
+                'available' => $alunos > 0 || $acompCurr !== null || $matSchool !== null,
+                'totals' => [
+                    [
+                        'label' => __('Alunos (Relação)'),
+                        'value' => number_format($alunos),
+                        'hint' => __('Linhas na Relação de alunos'),
+                        'tone' => 'sky',
+                    ],
+                    [
+                        'label' => __('Curricular (Acomp)'),
+                        'value' => $acompCurr === null ? '—' : number_format($acompCurr),
+                        'hint' => __('Total matrículas - Curricular'),
+                        'tone' => 'emerald',
+                    ],
+                    [
+                        'label' => __('AEE (Acomp)'),
+                        'value' => $acompAee === null ? '—' : number_format($acompAee),
+                        'hint' => __('Total matrículas - AEE'),
+                        'tone' => 'emerald',
+                    ],
+                    [
+                        'label' => __('AC (Acomp)'),
+                        'value' => $acompAc === null ? '—' : number_format($acompAc),
+                        'hint' => __('Atividade complementar'),
+                        'tone' => 'amber',
+                    ],
+                    [
+                        'label' => __('Diferença curricular'),
+                        'value' => $delta === null
+                            ? '—'
+                            : (($delta === 0) ? __('Bate') : (($delta > 0 ? '+' : '').number_format($delta))),
+                        'hint' => __('Relação − Acomp curricular'),
+                        'tone' => $delta === null ? 'slate' : ($delta === 0 ? 'emerald' : 'amber'),
+                    ],
+                    [
+                        'label' => __('Sem turma / sem etapa'),
+                        'value' => number_format((int) ($alunoAgg['without_turma'] ?? 0))
+                            .' / '.number_format((int) ($alunoAgg['without_etapa'] ?? 0)),
+                        'hint' => __('Linhas sem vínculo de turma ou etapa'),
+                        'tone' => ((int) ($alunoAgg['without_turma'] ?? 0) + (int) ($alunoAgg['without_etapa'] ?? 0)) > 0
+                            ? 'amber'
+                            : 'emerald',
+                    ],
+                ],
+                'por_ano' => $agg->toBars(is_array($alunoAgg['by_etapa_ensino'] ?? null) ? $alunoAgg['by_etapa_ensino'] : [], 16),
+            ],
+            'turmas' => [
+                'available' => $turmas > 0 || $turSchool !== null,
+                'totals' => [
+                    [
+                        'label' => __('Turmas'),
+                        'value' => number_format($turmas),
+                        'hint' => __('Linhas na Relação de turmas'),
+                        'tone' => 'sky',
+                    ],
+                    [
+                        'label' => __('Curricular'),
+                        'value' => number_format((int) ($turmaBuckets['curricular'] ?? (is_array($turSchool) ? ($turSchool['curricular'] ?? 0) : 0))),
+                        'hint' => __('Tipo de turma curricular'),
+                        'tone' => 'sky',
+                    ],
+                    [
+                        'label' => __('AEE'),
+                        'value' => number_format((int) ($turmaBuckets['aee'] ?? (is_array($turSchool) ? ($turSchool['aee'] ?? 0) : 0))),
+                        'hint' => __('Atendimento educacional especializado'),
+                        'tone' => 'emerald',
+                    ],
+                    [
+                        'label' => __('Ativ. complementar'),
+                        'value' => number_format((int) ($turmaBuckets['atividade_complementar'] ?? (is_array($turSchool) ? ($turSchool['atividade_complementar'] ?? 0) : 0))),
+                        'hint' => __('Turmas de AC'),
+                        'tone' => 'amber',
+                    ],
+                ],
+                'composicao' => $tipoBars,
+                'por_ano' => $agg->toBars(is_array($turmaAgg['by_etapa_ensino'] ?? null) ? $turmaAgg['by_etapa_ensino'] : [], 16),
+                'por_etapa_agregada' => $agg->toBars(is_array($turmaAgg['by_etapa_agregada'] ?? null) ? $turmaAgg['by_etapa_agregada'] : [], 10),
+                'por_mediacao' => $agg->toBars(is_array($turmaAgg['by_mediacao'] ?? null) ? $turmaAgg['by_mediacao'] : [], 8),
+            ],
+            'profile' => [
+                'available' => $alunos > 0,
+                'scanned' => $alunos,
+                'privacy_note' => __('Identificadores nas amostras de achados aparecem por completo nesta tela (acesso autenticado). Contagens abaixo são agregadas.'),
+                'by_cor_raca' => $agg->toBars(is_array($alunoAgg['by_cor_raca'] ?? null) ? $alunoAgg['by_cor_raca'] : [], 10),
+                'by_sexo' => $agg->toBars(is_array($alunoAgg['by_sexo'] ?? null) ? $alunoAgg['by_sexo'] : [], 6),
+                'by_faixa_etaria' => $agg->toBars(is_array($alunoAgg['by_faixa_etaria'] ?? null) ? $alunoAgg['by_faixa_etaria'] : [], 8),
+                'by_nee' => $agg->toBars(is_array($alunoAgg['by_nee'] ?? null) ? $alunoAgg['by_nee'] : [], 8),
+                'nee_flagged' => (int) ($alunoAgg['nee_flagged'] ?? 0),
+                'by_deficiency' => $agg->toBars(is_array($alunoAgg['by_deficiency'] ?? null) ? $alunoAgg['by_deficiency'] : [], 10),
+                'by_disorder' => $agg->toBars(is_array($alunoAgg['by_disorder'] ?? null) ? $alunoAgg['by_disorder'] : [], 8),
+                'by_ah' => $agg->toBars(is_array($alunoAgg['by_ah'] ?? null) ? $alunoAgg['by_ah'] : [], 4),
+                'deficiency_flagged' => (int) ($alunoAgg['deficiency_flagged'] ?? 0),
+                'disorder_flagged' => (int) ($alunoAgg['disorder_flagged'] ?? 0),
+                'ah_flagged' => (int) ($alunoAgg['ah_flagged'] ?? 0),
+                'by_underreporting' => $agg->toBars(is_array($alunoAgg['by_underreporting'] ?? null) ? $alunoAgg['by_underreporting'] : [], 8),
+                'underreporting_flagged' => (int) ($alunoAgg['underreporting_flagged'] ?? 0),
+                'columns' => $cols,
+            ],
+            'jornada' => [
+                'available' => $jorSchool !== null || ! empty($turmaAgg['by_turno']) || ! empty($turmaAgg['by_ch_band']),
+                'people' => (int) ((is_array($jorSchool) ? ($jorSchool['people'] ?? null) : null) ?? $alunos),
+                'fund_aee_contraturno' => (int) (is_array($jorSchool) ? ($jorSchool['fund_aee_contraturno'] ?? 0) : 0),
+                'curricular_ac' => (int) (is_array($jorSchool) ? ($jorSchool['curricular_ac'] ?? 0) : 0),
+                'infantil_turma_estendida' => (int) (is_array($jorSchool) ? ($jorSchool['infantil_turma_estendida'] ?? 0) : 0),
+                'multi_enrollment' => (int) (is_array($jorSchool) ? ($jorSchool['multi_enrollment'] ?? 0) : 0),
+                'by_turno' => $jorTurno,
+                'by_ch_band' => $jorCh,
+            ],
+            'transporte' => [
+                'available' => $hasTra,
+                'flagged' => (int) ((is_array($traSchool) ? ($traSchool['flagged'] ?? null) : null) ?? ($alunoAgg['transporte_flagged'] ?? 0)),
+                'without' => (int) ((is_array($traSchool) ? ($traSchool['without'] ?? null) : null) ?? ($alunoAgg['without_transporte'] ?? 0)),
+                'pct' => (is_array($traSchool) ? ($traSchool['pct'] ?? null) : null) ?? (
+                    $alunos > 0
+                        ? round(100 * ((int) ($alunoAgg['transporte_flagged'] ?? 0)) / max(1, $alunos), 1)
+                        : null
+                ),
+                'by_transporte' => $agg->toBars($traSource, 6),
+                'by_poder_publico' => $agg->toBars($poderSource, 8),
+                'by_veiculo' => $agg->toBars($veiculoSource, 8),
+            ],
+            'metrics' => [
+                'available' => $eligible > 0 || $turmasComAluno > 0 || $profissionais > 0,
+                'distortion' => [
+                    'pct' => $pctDis,
+                    'eligible' => $eligible,
+                    'distorcao' => $distorcao,
+                    'atraso_1' => (int) ($ageGrade['atraso_1'] ?? 0),
+                    'adequado' => (int) ($ageGrade['adequado'] ?? 0),
+                    'adiantado' => (int) ($ageGrade['adiantado'] ?? 0),
+                    'tone' => $pctDis === null ? 'slate' : ($pctDis >= 20 ? 'rose' : ($pctDis >= 10 ? 'amber' : 'emerald')),
+                    'by_etapa' => $etapaDis,
+                ],
+                'density' => [
+                    'media' => $mediaAlunos,
+                    'turmas_com_aluno' => $turmasComAluno,
+                    'turmas_ge_40' => $turmasGe40,
+                    'max' => $maxAlunosTurma,
+                    'tone' => $turmasGe40 > 0 ? 'amber' : 'emerald',
+                ],
+                'staff' => [
+                    'rows' => $profissionais,
+                    'without_turma' => (int) ($profAgg['without_turma'] ?? 0),
+                    'turmas_com_docente' => $turmasComDocente,
+                    'turmas_sem_docente' => $turmasSemDocente,
+                    'tone' => $turmasSemDocente > 0 || (int) ($profAgg['without_turma'] ?? 0) > 0 ? 'amber' : 'emerald',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mergeArtifactAggregates(\App\Models\Clio\ClioCampaignSchool $school, string $kind): array
+    {
+        $merged = [];
+        foreach ($school->artifacts ?? [] as $artifact) {
+            if (($artifact->kind ?? '') !== $kind) {
+                continue;
+            }
+            $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
+            $agg = is_array($meta['aggregates'] ?? null) ? $meta['aggregates'] : [];
+            if ($agg === []) {
+                continue;
+            }
+            if ($merged === []) {
+                $merged = $agg;
+
+                continue;
+            }
+            foreach ($agg as $key => $value) {
+                if (is_int($value) || is_float($value)) {
+                    $merged[$key] = (int) ($merged[$key] ?? 0) + (int) $value;
+                } elseif (is_array($value) && $this->isCountMap($value)) {
+                    $base = is_array($merged[$key] ?? null) ? $merged[$key] : [];
+                    foreach ($value as $label => $count) {
+                        if (is_array($count)) {
+                            continue;
+                        }
+                        $base[$label] = (int) ($base[$label] ?? 0) + (int) $count;
+                    }
+                    $merged[$key] = $base;
+                } elseif (! isset($merged[$key])) {
+                    $merged[$key] = $value;
+                }
+            }
+        }
+
+        return $merged;
+    }
+
+    /**
+     * @param  array<mixed>  $value
+     */
+    private function isCountMap(array $value): bool
+    {
+        if ($value === []) {
+            return true;
+        }
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function findInferenceSchoolRow(?ClioCampaignInference $inference, string $inep): ?array
+    {
+        if ($inference === null) {
+            return null;
+        }
+        $payload = is_array($inference->payload) ? $inference->payload : [];
+        foreach (is_array($payload['schools'] ?? null) ? $payload['schools'] : [] as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            if ((string) ($row['inep'] ?? '') === $inep) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     /**
