@@ -22,6 +22,14 @@ final class CampaignReportSectionTest extends TestCase
         $this->assertSame(RelationCsvAggregator::BUCKET_AEE, $agg->classifyTipoTurma('Atendimento Educacional Especializado (AEE)'));
         $this->assertSame(RelationCsvAggregator::BUCKET_AC, $agg->classifyTipoTurma('Atividade complementar'));
         $this->assertSame(RelationCsvAggregator::BUCKET_CURRICULAR, $agg->classifyTipoTurma('Curricular'));
+        $this->assertSame(
+            RelationCsvAggregator::BUCKET_CURRICULAR,
+            $agg->classifyTipoTurma('Curricular (etapa de ensino) com Atividade Complementar'),
+        );
+        $this->assertSame(
+            RelationCsvAggregator::BUCKET_CURRICULAR,
+            $agg->classifyTipoTurma('Curricular (etapa de ensino)'),
+        );
     }
 
     #[Test]

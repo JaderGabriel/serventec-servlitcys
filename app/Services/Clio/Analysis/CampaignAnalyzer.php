@@ -733,6 +733,76 @@ final class CampaignAnalyzer
 
     private function inferNee(ClioCampaign $campaign): void
     {
+        $census = app(CampaignNeeCensusBuilder::class)->build($campaign);
+        if ($census['available'] || ($census['people_scanned'] ?? 0) > 0) {
+            $flagged = (int) ($census['flagged'] ?? 0);
+            $scanned = (int) ($census['people_scanned'] ?? 0);
+            $defFlagged = (int) ($census['deficiency_flagged'] ?? 0);
+            $disorderFlagged = (int) ($census['disorder_flagged'] ?? 0);
+            $ahFlagged = (int) ($census['ah_flagged'] ?? 0);
+            $underFlagged = (int) ($census['underreporting_flagged'] ?? 0);
+            $withoutAee = (int) ($census['without_aee'] ?? 0);
+            $aeeWithoutNee = (int) ($census['aee_without_nee'] ?? 0);
+            $byNee = is_array($census['by_nee'] ?? null) ? $census['by_nee'] : [];
+            $byDef = is_array($census['by_deficiency'] ?? null) ? $census['by_deficiency'] : [];
+            $byDisorder = is_array($census['by_disorder'] ?? null) ? $census['by_disorder'] : [];
+            $byAh = is_array($census['by_ah'] ?? null) ? $census['by_ah'] : [];
+            $byUnder = is_array($census['by_underreporting'] ?? null) ? $census['by_underreporting'] : [];
+            $hasNeeCol = (bool) ($census['has_nee_columns'] ?? false);
+
+            if ($hasNeeCol && $underFlagged > 0 && $flagged > 0 && ($underFlagged / max(1, $flagged)) >= 0.15) {
+                $this->addFinding(
+                    $campaign,
+                    'CLIO-NEE-SUB',
+                    ClioCampaignFinding::SEVERITY_WARNING,
+                    __('Possível subnotificação / comorbidade em :n de :s pessoa(s) com NEE (:p%). Revise deficiências × transtornos e tipificação.', [
+                        'n' => $underFlagged,
+                        's' => $flagged,
+                        'p' => round(100 * $underFlagged / max(1, $flagged), 1),
+                    ]),
+                );
+            }
+
+            $this->upsertInference(
+                $campaign,
+                'INF-NEE',
+                $hasNeeCol
+                    ? __('Inclusão: :n pessoa(s) com marcador · NEE sem AEE :w · AEE sem deficiência/TEA/AH :aee · deficiências :d · transtornos :t · AH :ah · alertas :u.', [
+                        'n' => $flagged,
+                        'w' => $withoutAee,
+                        'aee' => $aeeWithoutNee,
+                        'd' => $defFlagged,
+                        't' => $disorderFlagged,
+                        'ah' => $ahFlagged,
+                        'u' => $underFlagged,
+                    ])
+                    : __('Inclusão: colunas NEE/TEA/AH não detectadas nas Relações importadas (:s pessoa(s)).', [
+                        's' => $scanned,
+                    ]),
+                [
+                    'flagged' => $flagged,
+                    'scanned' => $scanned,
+                    'unit' => 'people',
+                    'without_aee' => $withoutAee,
+                    'aee_without_nee' => $aeeWithoutNee,
+                    'by_nee' => $byNee,
+                    'by_deficiency' => $byDef,
+                    'by_disorder' => $byDisorder,
+                    'by_ah' => $byAh,
+                    'deficiency_flagged' => $defFlagged,
+                    'disorder_flagged' => $disorderFlagged,
+                    'ah_flagged' => $ahFlagged,
+                    'by_underreporting' => $byUnder,
+                    'underreporting_flagged' => $underFlagged,
+                    'has_nee_columns' => $hasNeeCol,
+                    'note_def_vs_trs' => __('Contagem por pessoa (Identificação única), como no PDF. Deficiências (DEF-*) e transtornos (TRS-*, ex. TEA) são públicos distintos; AH é categoria própria.'),
+                    'note_sub' => __('Alertas de subnotificação são heurísticos (comorbidades frequentes e tipificação incompleta) — validar com a escola/laudo.'),
+                ],
+            );
+
+            return;
+        }
+
         $flagged = 0;
         $scanned = 0;
         $defFlagged = 0;
@@ -820,6 +890,9 @@ final class CampaignAnalyzer
             [
                 'flagged' => $flagged,
                 'scanned' => $scanned,
+                'unit' => 'rows',
+                'without_aee' => null,
+                'aee_without_nee' => null,
                 'by_nee' => $byNee,
                 'by_deficiency' => $byDef,
                 'by_disorder' => $byDisorder,
@@ -1632,19 +1705,20 @@ final class CampaignAnalyzer
             ];
         }
 
-        usort($etapaRows, static function (array $a, array $b): int {
+        $etapaOrder = new EtapaLabelOrder;
+        usort($etapaRows, static function (array $a, array $b) use ($etapaOrder): int {
             $prio = static fn (?string $f): int => match ($f) {
                 'alunos_sem_turma' => 0,
                 'turma_sem_aluno' => 1,
                 default => 2,
             };
-            $pa = $prio($a['flag']);
-            $pb = $prio($b['flag']);
+            $pa = $prio($a['flag'] ?? null);
+            $pb = $prio($b['flag'] ?? null);
             if ($pa !== $pb) {
                 return $pa <=> $pb;
             }
 
-            return ($b['alunos'] + $b['turmas']) <=> ($a['alunos'] + $a['turmas']);
+            return $etapaOrder->compare((string) ($a['etapa'] ?? ''), (string) ($b['etapa'] ?? ''));
         });
 
         if ($alunosSemTurmaEtapa > 0) {
@@ -1724,7 +1798,11 @@ final class CampaignAnalyzer
     {
         $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
         $agg = $meta['aggregates'] ?? null;
-        if (is_array($agg) && isset($agg['by_etapa_ensino'], $agg['columns'])) {
+        // Agregados sem breakdown DEF/TRS/AH (versões antigas) ou só by_nee inconsistente → reler CSV.
+        $neeAggStale = is_array($agg)
+            && ! empty(($agg['columns']['nee'] ?? false))
+            && ! array_key_exists('deficiency_flagged', $agg);
+        if (is_array($agg) && isset($agg['by_etapa_ensino'], $agg['columns']) && ! $neeAggStale) {
             return $this->normalizeAlunoAgg($agg);
         }
 

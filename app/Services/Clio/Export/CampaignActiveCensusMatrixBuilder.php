@@ -137,7 +137,7 @@ final class CampaignActiveCensusMatrixBuilder
             'ibge' => (string) ($campaign->ibge_municipio ?? ''),
             'schools_active' => $schoolsActive,
             'rows_counted' => $rowsCounted,
-            'note' => __('Exposição do ano atual nas escolas em atividade. Sem comparação com ano anterior. Regular = vínculo curricular; Especial = AEE ou marcador de deficiência/TEA/AH. Parcial/Integral usa Turno/CH da turma quando existir (senão parcial). Rural/Urbana vem da Localização do Acompanhamento.'),
+            'note' => __('Exposição do ano atual nas escolas em atividade. Sem comparação com ano anterior. Regular = vínculo curricular; Especial = AEE ou marcador de deficiência/TEA/AH. Parcial/Integral usa Turno/CH da turma quando existir (senão parcial). Rural/Urbana vem da Localização do Acompanhamento. Turmas «Curricular com Atividade Complementar» entram como vínculo curricular; só a matrícula exclusiva de Atividade Complementar fica de fora.'),
             'infantil' => $infantil,
             'fundamental' => $fundamental,
             'eja' => $eja,
@@ -204,7 +204,8 @@ final class CampaignActiveCensusMatrixBuilder
         }
 
         // Preferir o ano explícito (1º–9º) — evita falso positivo do «9» em «Fundamental de 9 anos».
-        if (preg_match('/\b([1-9])[ºo°]\s*ano\b/u', $blob, $m) === 1) {
+        // Aceita NBSP / espaço entre dígito e ordinal («6 º Ano», «6.º Ano»).
+        if (preg_match('/\b([1-9])\s*[.ºo°]\s*ano\b/u', $blob, $m) === 1) {
             $ano = (int) $m[1];
 
             return $ano <= 5 ? 'anos_iniciais' : 'anos_finais';

@@ -322,6 +322,8 @@ final class NeeConditionClassifier
         return ! in_array($v, [
             'não', 'nao', 'n', '0', 'false', 'não possui', 'nao possui',
             'não informado', 'nao informado', 'ni', '-',
+            'não se aplica', 'nao se aplica', 'não aplicável', 'nao aplicavel',
+            'n/a', 'na', 'n.a.', 'n.a',
         ], true);
     }
 

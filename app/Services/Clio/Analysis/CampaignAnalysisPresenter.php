@@ -300,7 +300,8 @@ final class CampaignAnalysisPresenter
         $acomp = $this->buildAcompSection($campaign, $coverage, $inferences);
         $schoolsOverview = $this->buildSchoolsOverview($campaign, $schoolRows);
         $crossChecks = $this->buildCrossChecks($inferences, $findings);
-        $profile = $this->buildProfileSection($inferences);
+        $neeCensus = app(CampaignNeeCensusBuilder::class)->build($campaign);
+        $profile = $this->buildProfileSection($inferences, $neeCensus);
         $stageMetrics = $this->buildStageMetricsSection($inferences);
         $jornada = $this->buildJornadaSection($inferences, $inactiveIneps);
         $transporte = $this->buildTransporteSection($inferences, $inactiveIneps);
@@ -1033,6 +1034,9 @@ final class CampaignAnalysisPresenter
                 'by_faixa_etaria' => $agg->toBars(is_array($alunoAgg['by_faixa_etaria'] ?? null) ? $alunoAgg['by_faixa_etaria'] : [], 8),
                 'by_nee' => $agg->toBars(is_array($alunoAgg['by_nee'] ?? null) ? $alunoAgg['by_nee'] : [], 8),
                 'nee_flagged' => (int) ($alunoAgg['nee_flagged'] ?? 0),
+                'nee_unit' => 'rows',
+                'nee_without_aee' => null,
+                'nee_aee_without_condition' => null,
                 'by_deficiency' => $agg->toBars(is_array($alunoAgg['by_deficiency'] ?? null) ? $alunoAgg['by_deficiency'] : [], 10),
                 'by_disorder' => $agg->toBars(is_array($alunoAgg['by_disorder'] ?? null) ? $alunoAgg['by_disorder'] : [], 8),
                 'by_ah' => $agg->toBars(is_array($alunoAgg['by_ah'] ?? null) ? $alunoAgg['by_ah'] : [], 4),
@@ -1428,7 +1432,11 @@ final class CampaignAnalysisPresenter
             'acomp_note' => $payload['acomp_by_etapa_note']
                 ?? __('O arquivo geral não desagrega matrículas por ano/etapa.'),
             'checks' => $checks,
-            'etapa_rows' => array_slice($etapaRows, 0, 25),
+            'etapa_rows' => array_slice(
+                (new EtapaLabelOrder)->sortRowsByEtapaKey($etapaRows, 'etapa'),
+                0,
+                25,
+            ),
             'findings' => $related,
         ];
     }
@@ -1437,9 +1445,10 @@ final class CampaignAnalysisPresenter
      * Perfil demográfico / inclusão a partir das Relações de alunos (agregados, sem PII).
      *
      * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @param  array<string, mixed>|null  $neeCensus  censo por pessoa (mesma base do PDF), quando disponível
      * @return array<string, mixed>
      */
-    private function buildProfileSection(Collection $inferences): array
+    private function buildProfileSection(Collection $inferences, ?array $neeCensus = null): array
     {
         $dem = $inferences->get('INF-DEM');
         $nee = $inferences->get('INF-NEE');
@@ -1449,7 +1458,30 @@ final class CampaignAnalysisPresenter
         $traPayload = is_array($tra?->payload) ? $tra->payload : [];
         $cols = is_array($demPayload['columns'] ?? null) ? $demPayload['columns'] : [];
         $agg = new RelationCsvAggregator;
-        $scanned = (int) ($demPayload['scanned'] ?? $neePayload['scanned'] ?? $traPayload['scanned'] ?? 0);
+
+        $liveNee = is_array($neeCensus) && ! empty($neeCensus['available']);
+        if ($liveNee) {
+            $neePayload = array_merge($neePayload, [
+                'flagged' => (int) ($neeCensus['flagged'] ?? 0),
+                'scanned' => (int) ($neeCensus['people_scanned'] ?? 0),
+                'unit' => 'people',
+                'without_aee' => (int) ($neeCensus['without_aee'] ?? 0),
+                'aee_without_nee' => (int) ($neeCensus['aee_without_nee'] ?? 0),
+                'by_nee' => is_array($neeCensus['by_nee'] ?? null) ? $neeCensus['by_nee'] : [],
+                'by_deficiency' => is_array($neeCensus['by_deficiency'] ?? null) ? $neeCensus['by_deficiency'] : [],
+                'by_disorder' => is_array($neeCensus['by_disorder'] ?? null) ? $neeCensus['by_disorder'] : [],
+                'by_ah' => is_array($neeCensus['by_ah'] ?? null) ? $neeCensus['by_ah'] : [],
+                'deficiency_flagged' => (int) ($neeCensus['deficiency_flagged'] ?? 0),
+                'disorder_flagged' => (int) ($neeCensus['disorder_flagged'] ?? 0),
+                'ah_flagged' => (int) ($neeCensus['ah_flagged'] ?? 0),
+                'by_underreporting' => is_array($neeCensus['by_underreporting'] ?? null) ? $neeCensus['by_underreporting'] : [],
+                'underreporting_flagged' => (int) ($neeCensus['underreporting_flagged'] ?? 0),
+                'has_nee_columns' => (bool) ($neeCensus['has_nee_columns'] ?? false),
+                'note_def_vs_trs' => __('Contagem por pessoa (como no PDF). Deficiências (DEF-*) e transtornos (TRS-*) são públicos distintos; AH é categoria própria. «Não se aplica» não conta como marcador.'),
+            ]);
+        }
+
+        $scanned = (int) ($neePayload['scanned'] ?? $demPayload['scanned'] ?? $traPayload['scanned'] ?? 0);
         $hasTra = (bool) ($cols['transporte'] ?? $traPayload['has_transporte_columns'] ?? false);
 
         $coverage = [
@@ -1529,6 +1561,9 @@ final class CampaignAnalysisPresenter
             'by_faixa_etaria' => $agg->toBars(is_array($demPayload['by_faixa_etaria'] ?? null) ? $demPayload['by_faixa_etaria'] : [], 8),
             'by_nee' => $agg->toBars(is_array($neePayload['by_nee'] ?? null) ? $neePayload['by_nee'] : [], 8),
             'nee_flagged' => (int) ($neePayload['flagged'] ?? 0),
+            'nee_unit' => (string) ($neePayload['unit'] ?? 'rows'),
+            'nee_without_aee' => array_key_exists('without_aee', $neePayload) ? (int) $neePayload['without_aee'] : null,
+            'nee_aee_without_condition' => array_key_exists('aee_without_nee', $neePayload) ? (int) $neePayload['aee_without_nee'] : null,
             'by_deficiency' => $agg->toBars(is_array($neePayload['by_deficiency'] ?? null) ? $neePayload['by_deficiency'] : [], 10),
             'by_disorder' => $agg->toBars(is_array($neePayload['by_disorder'] ?? null) ? $neePayload['by_disorder'] : [], 8),
             'by_ah' => $agg->toBars(is_array($neePayload['by_ah'] ?? null) ? $neePayload['by_ah'] : [], 4),

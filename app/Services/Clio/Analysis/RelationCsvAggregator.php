@@ -670,7 +670,7 @@ final class RelationCsvAggregator
     /**
      * @param  list<string|int>  $headerKeys
      */
-    private function headersMatchNee(array $headerKeys): bool
+    public function headersMatchNee(array $headerKeys): bool
     {
         foreach ($headerKeys as $key) {
             if (preg_match('/defici|autis|tea|altas\s*habil|nee|transtorno\s+do\s+espectro/i', (string) $key) === 1) {
@@ -874,15 +874,17 @@ final class RelationCsvAggregator
         ) {
             return self::BUCKET_AEE;
         }
+        // Educacenso: «Curricular … com Atividade Complementar» continua sendo vínculo curricular
+        // (a AC é oferta associada). Tem de vir antes do teste puro de AC.
+        if (str_contains($t, 'curricular')) {
+            return self::BUCKET_CURRICULAR;
+        }
         if (
             str_contains($t, 'atividade complementar')
             || preg_match('/\bac\b/u', $t) === 1
             || $t === 'ac'
         ) {
             return self::BUCKET_AC;
-        }
-        if (str_contains($t, 'curricular')) {
-            return self::BUCKET_CURRICULAR;
         }
 
         return self::BUCKET_OUTRA;
@@ -970,7 +972,7 @@ final class RelationCsvAggregator
      * @param  array<string, int>  $counts
      * @return array<string, int>
      */
-    private function sortDesc(array $counts): array
+    public function sortDesc(array $counts): array
     {
         arsort($counts, SORT_NUMERIC);
 

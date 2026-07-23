@@ -28,6 +28,9 @@ final class EtapaLabelOrder
         $band = 50;
         $ano = 50;
 
+        if ($e === 'não se aplica' || $e === 'nao se aplica') {
+            return [90, 0, $e];
+        }
         if (preg_match('/\baee\b|atendimento educacional/u', $e) === 1) {
             return [80, 0, $e];
         }
@@ -112,7 +115,7 @@ final class EtapaLabelOrder
     private function extractAno(string $e): ?int
     {
         for ($ano = 1; $ano <= 9; $ano++) {
-            if (preg_match('/\b'.$ano.'[ºo°]\s*ano\b/u', $e) === 1) {
+            if (preg_match('/\b'.$ano.'\s*[.ºo°]\s*ano\b/u', $e) === 1) {
                 return $ano;
             }
         }

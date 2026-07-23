@@ -321,14 +321,27 @@
                                 <div>
                                     <h4 class="clio-section-title text-base">{{ __('Inclusão — deficiências e transtornos') }}</h4>
                                     <p class="mt-1 text-xs text-slate-500">
-                                        {{ __(':n aluno(s) com marcador em :t analisados · deficiências :d · transtornos :trs · AH :a · alertas :u.', [
-                                            'n' => $profile['nee_flagged'] ?? 0,
-                                            't' => $profile['scanned'] ?? 0,
-                                            'd' => $profile['deficiency_flagged'] ?? 0,
-                                            'trs' => $profile['disorder_flagged'] ?? 0,
-                                            'a' => $profile['ah_flagged'] ?? 0,
-                                            'u' => $profile['underreporting_flagged'] ?? 0,
-                                        ]) }}
+                                        @if (($profile['nee_unit'] ?? '') === 'people')
+                                            {{ __('Total com marcador: :t · NEE sem matrícula AEE: :a · AEE sem deficiência/TEA/AH: :w · com alerta de subnotificação: :u · em :s pessoa(s) analisada(s). Deficiências :d · transtornos :trs · AH :ah.', [
+                                                't' => $profile['nee_flagged'] ?? 0,
+                                                'a' => $profile['nee_without_aee'] ?? 0,
+                                                'w' => $profile['nee_aee_without_condition'] ?? 0,
+                                                'u' => $profile['underreporting_flagged'] ?? 0,
+                                                's' => $profile['scanned'] ?? 0,
+                                                'd' => $profile['deficiency_flagged'] ?? 0,
+                                                'trs' => $profile['disorder_flagged'] ?? 0,
+                                                'ah' => $profile['ah_flagged'] ?? 0,
+                                            ]) }}
+                                        @else
+                                            {{ __(':n aluno(s) com marcador em :t analisados · deficiências :d · transtornos :trs · AH :a · alertas :u.', [
+                                                'n' => $profile['nee_flagged'] ?? 0,
+                                                't' => $profile['scanned'] ?? 0,
+                                                'd' => $profile['deficiency_flagged'] ?? 0,
+                                                'trs' => $profile['disorder_flagged'] ?? 0,
+                                                'a' => $profile['ah_flagged'] ?? 0,
+                                                'u' => $profile['underreporting_flagged'] ?? 0,
+                                            ]) }}
+                                        @endif
                                     </p>
                                 </div>
                                 <div class="grid gap-4 sm:grid-cols-2">

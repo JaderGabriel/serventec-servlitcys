@@ -82,4 +82,52 @@ final class CampaignActiveCensusMatrixBuilderTest extends TestCase
         $ruralReg = $matrix['fundamental']['values']['ai_parcial']['Rural']['regular'] ?? 0;
         $this->assertSame(0, $ruralReg);
     }
+
+    #[Test]
+    public function matriz_conta_curricular_com_atividade_complementar_como_vinculo_curricular(): void
+    {
+        Storage::fake('local');
+        config(['clio.disk' => 'local']);
+
+        $turmaCsv = implode("\n", [
+            'Código da turma;Tipo de turma;Etapa de ensino;Etapa Agregada;Turno',
+            'T1;Curricular (etapa de ensino) com Atividade Complementar;Ensino fundamental de 9 anos - 6º Ano;Anos finais;Manhã',
+            'T2;Atividade complementar;Atividade complementar;Não se aplica;Tarde',
+        ])."\n";
+        $alunoCsv = implode("\n", [
+            'Identificação única;Nome;Código da turma;Etapa de ensino;Deficiência;Transtorno do espectro autista;Altas habilidades',
+            '1;A;T1;Ensino fundamental de 9 anos - 6º Ano;Não;Não;Não',
+            '2;B;T1;Ensino fundamental de 9 anos - 6º Ano;Não se aplica;Não se aplica;Não se aplica',
+            '3;C;T2;Atividade complementar;Não;Não;Não',
+        ])."\n";
+
+        Storage::disk('local')->put('clio/turma-ac.csv', $turmaCsv);
+        Storage::disk('local')->put('clio/aluno-ac.csv', $alunoCsv);
+
+        $campaign = new ClioCampaign([
+            'municipality_name' => 'Amélia Rodrigues',
+            'uf' => 'BA',
+            'ibge_municipio' => '2901106',
+            'year' => 2026,
+        ]);
+        $school = new ClioCampaignSchool([
+            'inep_code' => '29000000',
+            'name' => 'Escola Teste',
+            'functioning_status' => 'Em Atividade',
+            'meta' => ['location' => 'Urbana'],
+        ]);
+        $school->setRelation('artifacts', collect([
+            new ClioCampaignArtifact(['kind' => 'relacao_turma_escola', 'storage_path' => 'clio/turma-ac.csv']),
+            new ClioCampaignArtifact(['kind' => 'relacao_aluno_escola', 'storage_path' => 'clio/aluno-ac.csv']),
+        ]));
+        $campaign->setRelation('schools', collect([$school]));
+
+        $matrix = (new CampaignActiveCensusMatrixBuilder(new CsvReader, new RelationCsvAggregator))->build($campaign);
+
+        $af = (int) ($matrix['fundamental']['values']['af_parcial']['Urbana']['regular'] ?? 0);
+        $this->assertSame(2, $af, 'Alunos em turma Curricular+AC devem entrar no Fundamental II');
+        $this->assertSame(2, (int) ($matrix['geral']['values']['fund_ii_parcial'] ?? 0));
+        // Matrícula só de AC puro continua fora do GERAL curricular
+        $this->assertSame(2, (int) ($matrix['geral']['values']['geral'] ?? 0));
+    }
 }
