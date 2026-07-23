@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.0.2** |
 | **Tag de deploy** | `20260723b-Harmonia` |
-| **Commit de referência** | `TBD` |
+| **Commit de referência** | `4fc99bac` |
 | **Data de referência** | 2026-07-23 |
 | **Release** | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) |
 | **Marco** | **Harmonia** — Clio PDF/Excel alinhados, Fund. I/II, lotes Drive; tag + GitHub Release |

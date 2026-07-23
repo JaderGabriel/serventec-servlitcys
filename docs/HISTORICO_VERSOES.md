@@ -10,7 +10,7 @@
 | **Data de referência** | **23/07/2026** |
 | **Último marco documentado** | **Clio Harmonia** — PDF/Excel alinhados, Fund. I/II, lotes Drive, escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `TBD` (#**554**) |
+| **Commit de release** | `4fc99bac` (#**554**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -64,7 +64,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.0.2** | `TBD` / `20260723b-Harmonia` → `main` | **554** | 23/07/2026 | **Produção:** Clio — PDF/Excel alinhados, Fund. I/II, distorção ordenada, AEE sem NEE, lotes Drive, painel escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md). |
+| **▶ 8.0.2** | `4fc99bac` / `20260723b-Harmonia` → `main` | **554** | 23/07/2026 | **Produção:** Clio — PDF/Excel alinhados, Fund. I/II, distorção ordenada, AEE sem NEE, lotes Drive, painel escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md). |
 | 8.0.1 | `af850f7` / `20260723-Euterpe` → `main` | **548** | 23/07/2026 | Clio — jornada, NEE/subnotificação, transporte, Excel, matriz PDF, UTF-8 CSV, filtro Consultoria — [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md). |
 | 8.0.0 | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |
 | 7.0.3 | `98bfeee` / `20260709-Calliope` → `main` | **518** | 09/07/2026 | Leitor documentação modular, layout amplo, tabelas com scroll; README 7.x; `product:release-publish` — [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md). |
