@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '8.0.1',
         'release_tag' => '20260723-Euterpe',
-        'commit_short' => 'pending',
-        'commit_number' => 0,
+        'commit_short' => 'af850f7',
+        'commit_number' => 548,
         'revision_date' => '2026-07-23',
         'in_production' => true,
         'production_label' => 'Em produção',

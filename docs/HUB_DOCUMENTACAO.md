@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.0.1** |
 | **Tag de deploy** | `20260723-Euterpe` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `af850f7` |
 | **Data de referência** | 2026-07-23 |
 | **Release** | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) |
 | **Marco** | **Euterpe** — Clio jornada/NEE/transporte, Excel/PDF, UTF-8; tag + GitHub Release |
