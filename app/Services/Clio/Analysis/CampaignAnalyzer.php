@@ -587,8 +587,8 @@ final class CampaignAnalyzer
             $elig = max(1, (int) ($row['eligible'] ?? 0));
             $merged['by_etapa'][$etapa]['pct_distorcao'] = round(100 * ((int) ($row['distorcao'] ?? 0)) / $elig, 1);
         }
-        uasort($merged['by_etapa'], static fn (array $a, array $b): int => ($b['distorcao'] ?? 0) <=> ($a['distorcao'] ?? 0));
-        $merged['by_etapa'] = array_slice($merged['by_etapa'], 0, 20, true);
+        $merged['by_etapa'] = (new EtapaLabelOrder)->sortAssocByLabel($merged['by_etapa']);
+        $merged['by_etapa'] = array_slice($merged['by_etapa'], 0, 40, true);
 
         if ($scanned > 0 && ! $hasNasc) {
             $this->addFinding(

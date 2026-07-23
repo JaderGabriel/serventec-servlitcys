@@ -7,27 +7,39 @@ use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Clio\Support\ClioUserCopy;
+use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Export Excel da coleta — 2 abas: escolas ativas (indicadores) e demais status.
- * Sem PII (só INEP, nomes de escola, totais, códigos).
+ * Export Excel da coleta — alinhado às regras do PDF Clio
+ * (nome cidade/IBGE/data, cores do sistema, distorção ordenada, NEE/AEE, Fund. I/II).
  */
 final class CampaignExcelExporter
 {
+    private const COLOR_NAVY = '0F172A';
+
+    private const COLOR_ACCENT = '1D4ED8';
+
+    private const COLOR_HEADER_FONT = 'FFFFFF';
+
+    private const COLOR_WARN = 'FFF7ED';
+
     public function __construct(
         private CampaignParseService $parser,
         private CampaignAnalysisPresenter $presenter,
+        private CampaignPdfDetailBuilder $detailBuilder,
     ) {}
 
     public function download(ClioCampaign $campaign): StreamedResponse
     {
         $campaign->load([
-            'schools',
-            'artifacts',
+            'schools.artifacts',
+            'artifacts.school',
             'inferences',
             'findings' => fn ($q) => $q->latest('id')->limit(500),
             'findings.school',
@@ -39,13 +51,14 @@ final class CampaignExcelExporter
             $campaign->inferences->keyBy('code'),
             $campaign->findings,
         );
+        $pdfTables = $this->detailBuilder->build($campaign);
 
-        $filename = sprintf(
-            'clio_%s_%d_%s.xlsx',
-            preg_replace('/[^a-z0-9_-]+/i', '_', (string) $campaign->ibge_municipio) ?: 'mun',
-            $campaign->year,
-            now()->format('Ymd_His')
-        );
+        $citySlug = $this->slugPart((string) $campaign->municipality_name) ?: 'municipio';
+        $ibge = preg_replace('/\D+/', '', (string) ($campaign->ibge_municipio ?? '')) ?: 'ibge';
+        $refDate = $campaign->reference_date
+            ? $campaign->reference_date->format('Y-m-d')
+            : (string) ((int) $campaign->year);
+        $filename = sprintf('clio_%s_%s_%s.xlsx', $citySlug, $ibge, $refDate);
 
         $tmp = storage_path('app/temp/clio-export-'.uniqid('', true).'.xlsx');
         $dir = dirname($tmp);
@@ -53,7 +66,7 @@ final class CampaignExcelExporter
             mkdir($dir, 0755, true);
         }
 
-        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard);
+        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables);
 
         $binary = file_get_contents($tmp);
         @unlink($tmp);
@@ -70,9 +83,15 @@ final class CampaignExcelExporter
     /**
      * @param  array<string, mixed>  $coverage
      * @param  array<string, mixed>  $dashboard
+     * @param  array<string, mixed>  $pdfTables
      */
-    private function writeXlsx(string $absolutePath, ClioCampaign $campaign, array $coverage, array $dashboard): void
-    {
+    private function writeXlsx(
+        string $absolutePath,
+        ClioCampaign $campaign,
+        array $coverage,
+        array $dashboard,
+        array $pdfTables,
+    ): void {
         $spreadsheet = new Spreadsheet;
         $active = $spreadsheet->getActiveSheet();
         $active->setTitle(__('Escolas ativas'));
@@ -81,6 +100,18 @@ final class CampaignExcelExporter
         $other = $spreadsheet->createSheet();
         $other->setTitle(__('Demais status'));
         $this->fillOtherSheet($other, $dashboard);
+
+        $dist = $spreadsheet->createSheet();
+        $dist->setTitle(__('Distorção'));
+        $this->fillDistortionSheet($dist, $dashboard, $pdfTables);
+
+        $nee = $spreadsheet->createSheet();
+        $nee->setTitle(__('NEE e AEE'));
+        $this->fillNeeSheet($nee, $pdfTables);
+
+        $expo = $spreadsheet->createSheet();
+        $expo->setTitle(__('Exposição'));
+        $this->fillCensusSheet($expo, $pdfTables['census_matrix'] ?? []);
 
         (new Xlsx($spreadsheet))->save($absolutePath);
     }
@@ -237,20 +268,23 @@ final class CampaignExcelExporter
             __('O que fazer'),
             __('Escola'),
             __('INEP'),
+            __('Identificador amostra'),
         ];
         $this->writeHeaderRow($sheet, $row, $findingHeaders);
         $row++;
 
         foreach ($campaign->findings as $finding) {
             /** @var ClioCampaignFinding $finding */
+            $meta = is_array($finding->meta) ? $finding->meta : [];
             $this->writeDataRow($sheet, $row, [
                 $finding->code,
                 $finding->severity,
                 ClioUserCopy::severityLabel((string) $finding->severity),
-                $this->stripPiiHint($finding->message),
+                $finding->message,
                 $finding->actionHint(),
                 (string) ($finding->school?->name ?? ''),
                 (string) ($finding->school?->inep_code ?? ''),
+                (string) ($meta['sample_id'] ?? ''),
             ]);
             $row++;
         }
@@ -378,30 +412,275 @@ final class CampaignExcelExporter
     }
 
     /**
+     * @param  array<string, mixed>  $dashboard
+     * @param  array<string, mixed>  $pdfTables
+     */
+    private function fillDistortionSheet(Worksheet $sheet, array $dashboard, array $pdfTables): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [
+            __('Etapa'),
+            __('Elegíveis'),
+            __('Distorção'),
+            __('Atraso 1 ano'),
+            __('Adequados'),
+            __('% distorção'),
+            __('Escolas (amostra)'),
+            __('Alunos (amostra)'),
+        ]);
+        $row++;
+
+        $byEtapa = $pdfTables['distortion_by_etapa'] ?? [];
+        if ($byEtapa === []) {
+            $metrics = $dashboard['stage_metrics']['distortion']['by_etapa'] ?? [];
+            foreach ($metrics as $item) {
+                $byEtapa[] = [
+                    'etapa' => $item['etapa'] ?? '',
+                    'eligible' => $item['eligible'] ?? 0,
+                    'distorcao' => $item['distorcao'] ?? 0,
+                    'atraso_1' => $item['atraso_1'] ?? 0,
+                    'adequado' => $item['adequado'] ?? 0,
+                    'pct' => $item['pct'] ?? null,
+                    'escolas' => '',
+                    'alunos' => $item['distorcao'] ?? 0,
+                ];
+            }
+        }
+
+        foreach ($byEtapa as $item) {
+            $this->writeDataRow($sheet, $row, [
+                (string) ($item['etapa'] ?? ''),
+                (string) ($item['eligible'] ?? 0),
+                (string) ($item['distorcao'] ?? 0),
+                (string) ($item['atraso_1'] ?? ''),
+                (string) ($item['adequado'] ?? ''),
+                isset($item['pct']) ? (string) $item['pct'] : '',
+                (string) ($item['escolas'] ?? ''),
+                (string) ($item['alunos'] ?? ''),
+            ]);
+            $row++;
+        }
+
+        $row += 2;
+        $this->writeHeaderRow($sheet, $row, [
+            __('Identificador'),
+            __('Nome'),
+            __('CPF'),
+            __('Escola'),
+            __('INEP'),
+            __('Etapa'),
+            __('Turma'),
+            __('Matrícula'),
+            __('Idade'),
+            __('Esperada'),
+            __('Atraso'),
+        ], self::COLOR_ACCENT);
+        $row++;
+
+        foreach ($pdfTables['distortion_students'] ?? [] as $student) {
+            $this->writeDataRow($sheet, $row, [
+                (string) ($student['id'] ?? ''),
+                (string) ($student['name'] ?? ''),
+                (string) ($student['cpf'] ?? ''),
+                (string) ($student['school'] ?? ''),
+                (string) ($student['inep'] ?? ''),
+                (string) ($student['etapa'] ?? ''),
+                (string) ($student['turma'] ?? ''),
+                (string) ($student['matricula'] ?? ''),
+                (string) ($student['age'] ?? ''),
+                (string) ($student['expected'] ?? ''),
+                (string) ($student['delay'] ?? ''),
+            ]);
+            $row++;
+        }
+
+        $this->autosize($sheet, 11);
+    }
+
+    /**
+     * @param  array<string, mixed>  $pdfTables
+     */
+    private function fillNeeSheet(Worksheet $sheet, array $pdfTables): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [__('Indicador'), __('Valor')]);
+        $row++;
+        foreach ([
+            [__('Total com marcador NEE'), (string) ($pdfTables['nee_total'] ?? 0)],
+            [__('NEE sem matrícula AEE'), (string) ($pdfTables['nee_without_aee'] ?? 0)],
+            [__('AEE sem deficiência/TEA/AH'), (string) ($pdfTables['nee_aee_without_condition'] ?? 0)],
+            [__('Com alerta de subnotificação'), (string) ($pdfTables['nee_underreporting'] ?? 0)],
+        ] as $summary) {
+            $this->writeDataRow($sheet, $row, $summary);
+            $row++;
+        }
+
+        $row += 2;
+        $headers = [
+            __('Identificador'),
+            __('Nome'),
+            __('CPF'),
+            __('Escola'),
+            __('INEP'),
+            __('Deficiências'),
+            __('Transtornos'),
+            __('AH'),
+            __('Subnotificação'),
+            __('Flag AEE'),
+            __('AEE sem NEE'),
+        ];
+        $this->writeHeaderRow($sheet, $row, $headers);
+        $row++;
+
+        foreach ($pdfTables['nee_students'] ?? [] as $person) {
+            $warn = ! empty($person['aee_without_nee']) || empty($person['has_aee']) || ! empty($person['has_underreporting']);
+            $this->writeDataRow($sheet, $row, [
+                (string) ($person['id'] ?? ''),
+                (string) ($person['name'] ?? ''),
+                (string) ($person['cpf'] ?? ''),
+                (string) ($person['school'] ?? ''),
+                (string) ($person['inep'] ?? ''),
+                (string) ($person['deficiencies'] ?? ''),
+                (string) ($person['disorders'] ?? ''),
+                (string) ($person['ah'] ?? ''),
+                (string) ($person['underreporting'] ?? ''),
+                (string) ($person['aee_flag'] ?? ''),
+                ! empty($person['aee_without_nee']) ? '1' : '0',
+            ], $warn ? self::COLOR_WARN : null);
+            $row++;
+        }
+
+        $this->autosize($sheet, count($headers));
+    }
+
+    /**
+     * @param  array<string, mixed>  $matrix
+     */
+    private function fillCensusSheet(Worksheet $sheet, array $matrix): void
+    {
+        $row = 1;
+        if (empty($matrix['available'])) {
+            $this->writeHeaderRow($sheet, $row, [__('Exposição das matrículas')]);
+            $row++;
+            $this->writeDataRow($sheet, $row, [__('Sem dados de exposição para escolas ativas nesta coleta.')]);
+            $this->autosize($sheet, 1);
+
+            return;
+        }
+
+        $this->writeHeaderRow($sheet, $row, [
+            __('Município'),
+            __('UF'),
+            __('IBGE'),
+            __('Ano'),
+            __('Escolas ativas'),
+            __('Linhas contadas'),
+        ]);
+        $row++;
+        $this->writeDataRow($sheet, $row, [
+            (string) ($matrix['municipality'] ?? ''),
+            (string) ($matrix['uf'] ?? ''),
+            (string) ($matrix['ibge'] ?? ''),
+            (string) ($matrix['year'] ?? ''),
+            (string) ($matrix['schools_active'] ?? 0),
+            (string) ($matrix['rows_counted'] ?? 0),
+        ]);
+        $row += 2;
+        $this->writeDataRow($sheet, $row, [
+            (string) ($matrix['note'] ?? ''),
+            __('Fundamental I = anos iniciais (1º–5º); Fundamental II = anos finais (6º–9º).'),
+        ]);
+        $row += 2;
+
+        foreach (['infantil', 'fundamental', 'eja'] as $blockKey) {
+            $block = $matrix[$blockKey] ?? null;
+            if (! is_array($block)) {
+                continue;
+            }
+            $this->writeHeaderRow($sheet, $row, [
+                (string) ($block['title'] ?? $blockKey),
+                __('Modalidade'),
+                ...array_map(
+                    static fn (array $col): string => (string) ($col['label'] ?? ''),
+                    $block['columns'] ?? [],
+                ),
+            ], self::COLOR_ACCENT);
+            $row++;
+
+            $locHeaders = ['', ''];
+            foreach ($block['columns'] ?? [] as $col) {
+                $locHeaders[] = __('Urbana').' / '.__('Rural');
+            }
+            $this->writeDataRow($sheet, $row, $locHeaders);
+            $row++;
+
+            foreach ($block['rows'] ?? [] as $modKey => $modLabel) {
+                $values = [(string) $modLabel, (string) $modKey];
+                foreach ($block['columns'] ?? [] as $col) {
+                    $vals = $block['values'][$col['key']] ?? [];
+                    $u = (int) ($vals['Urbana'][$modKey] ?? 0);
+                    $r = (int) ($vals['Rural'][$modKey] ?? 0);
+                    $values[] = $u.' / '.$r;
+                }
+                $this->writeDataRow($sheet, $row, $values);
+                $row++;
+            }
+            $row++;
+        }
+
+        $geral = $matrix['geral'] ?? [];
+        if (! empty($geral['columns'])) {
+            $this->writeHeaderRow($sheet, $row, array_map(
+                static fn (array $col): string => (string) ($col['label'] ?? ''),
+                $geral['columns'],
+            ));
+            $row++;
+            $geralValues = [];
+            foreach ($geral['columns'] as $col) {
+                $geralValues[] = (string) ((int) ($geral['values'][$col['key']] ?? 0));
+            }
+            $this->writeDataRow($sheet, $row, $geralValues);
+            $row++;
+        }
+
+        $this->autosize($sheet, 12);
+    }
+
+    /**
      * @param  list<string>  $values
      */
-    private function writeHeaderRow(Worksheet $sheet, int $row, array $values): void
+    private function writeHeaderRow(Worksheet $sheet, int $row, array $values, string $fillColor = self::COLOR_NAVY): void
     {
         foreach ($values as $col => $value) {
             $cell = $this->columnLetter($col + 1).$row;
             $sheet->setCellValue($cell, $value);
-            $sheet->getStyle($cell)->getFont()->setBold(true);
+            $style = $sheet->getStyle($cell);
+            $style->getFont()->setBold(true)->getColor()->setRGB(self::COLOR_HEADER_FONT);
+            $style->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB($fillColor);
+            $style->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
         }
     }
 
     /**
      * @param  list<string>  $values
      */
-    private function writeDataRow(Worksheet $sheet, int $row, array $values): void
+    private function writeDataRow(Worksheet $sheet, int $row, array $values, ?string $fillColor = null): void
     {
         foreach ($values as $col => $value) {
-            $sheet->setCellValue($this->columnLetter($col + 1).$row, $value);
+            $cell = $this->columnLetter($col + 1).$row;
+            $sheet->setCellValue($cell, $value);
+            if ($fillColor !== null) {
+                $sheet->getStyle($cell)->getFill()
+                    ->setFillType(Fill::FILL_SOLID)
+                    ->getStartColor()
+                    ->setRGB($fillColor);
+            }
         }
     }
 
     private function autosize(Worksheet $sheet, int $columnCount): void
     {
-        foreach (range(1, $columnCount) as $col) {
+        foreach (range(1, max(1, $columnCount)) as $col) {
             $sheet->getColumnDimension($this->columnLetter($col))->setAutoSize(true);
         }
     }
@@ -418,8 +697,12 @@ final class CampaignExcelExporter
         return $letter;
     }
 
-    private function stripPiiHint(string $message): string
+    private function slugPart(string $value): string
     {
-        return (string) preg_replace('/\b\d{11}\b/', '[redacted]', $message);
+        $ascii = Str::ascii($value);
+        $slug = (string) preg_replace('/[^a-z0-9]+/i', '_', $ascii);
+        $slug = trim($slug, '_');
+
+        return mb_strtolower($slug);
     }
 }

@@ -180,8 +180,9 @@ final class CampaignActiveCensusMatrixBuilder
         if ($blob === '') {
             return null;
         }
-        if (preg_match('/\baee\b|atendimento educacional/u', $blob) === 1) {
-            // Sem etapa curricular: não aloca coluna de etapa.
+        if (preg_match('/\baee\b|atendimento educacional/u', $blob) === 1
+            && preg_match('/\d+[ºo°]\s*ano|anos\s*iniciais|anos\s*finais|fundamental|infantil|creche|eja/u', $blob) !== 1) {
+            // AEE puro sem etapa curricular: não aloca coluna de etapa.
             return null;
         }
         if (preg_match('/\beja\b|jovens e adultos/u', $blob) === 1) {
@@ -194,14 +195,32 @@ final class CampaignActiveCensusMatrixBuilder
         if (preg_match('/creche|ber[cç][aá]rio/u', $blob) === 1) {
             return 'creche';
         }
-        if (preg_match('/pr[eé][\-\s]?escola|infantil/u', $blob) === 1) {
+        // Infantil antes de fundamental genérico; não confundir "Educação Infantil" com EF.
+        if (
+            preg_match('/pr[eé][\-\s]?escola/u', $blob) === 1
+            || (preg_match('/infantil/u', $blob) === 1 && preg_match('/fundamental|\d+[ºo°]\s*ano/u', $blob) !== 1)
+        ) {
             return 'pre_escola';
         }
-        if (preg_match('/anos\s*iniciais|[1-5][ºo]\s*ano|1º ao 5|fundamental.*([1-5])/u', $blob) === 1
-            && preg_match('/anos\s*finais|[6-9]/u', $blob) !== 1) {
+
+        // Preferir o ano explícito (1º–9º) — evita falso positivo do «9» em «Fundamental de 9 anos».
+        if (preg_match('/\b([1-9])[ºo°]\s*ano\b/u', $blob, $m) === 1) {
+            $ano = (int) $m[1];
+
+            return $ano <= 5 ? 'anos_iniciais' : 'anos_finais';
+        }
+        if (preg_match('/anos\s*iniciais|1\s*[ºo°]?\s*ao\s*5/u', $blob) === 1) {
             return 'anos_iniciais';
         }
-        if (preg_match('/anos\s*finais|[6-9][ºo]\s*ano|6º ao 9/u', $blob) === 1) {
+        if (preg_match('/anos\s*finais|6\s*[ºo°]?\s*ao\s*9/u', $blob) === 1) {
+            return 'anos_finais';
+        }
+        // Fundamental I / II (terminologia local)
+        if (preg_match('/fundamental\s*i\b|fund\.?\s*i\b|ef\s*i\b/u', $blob) === 1
+            && preg_match('/fundamental\s*ii|fund\.?\s*ii|ef\s*ii/u', $blob) !== 1) {
+            return 'anos_iniciais';
+        }
+        if (preg_match('/fundamental\s*ii\b|fund\.?\s*ii\b|ef\s*ii\b/u', $blob) === 1) {
             return 'anos_finais';
         }
         if (preg_match('/fundamental/u', $blob) === 1) {
@@ -257,10 +276,10 @@ final class CampaignActiveCensusMatrixBuilder
         return [
             'title' => __('Educação fundamental'),
             'columns' => [
-                ['key' => 'ai_parcial', 'label' => __('Anos Iniciais Parcial'), 'stage' => 'anos_iniciais', 'jornada' => 'parcial'],
-                ['key' => 'ai_integral', 'label' => __('Anos Iniciais Integral'), 'stage' => 'anos_iniciais', 'jornada' => 'integral'],
-                ['key' => 'af_parcial', 'label' => __('Anos Finais Parcial'), 'stage' => 'anos_finais', 'jornada' => 'parcial'],
-                ['key' => 'af_integral', 'label' => __('Anos Finais Integral'), 'stage' => 'anos_finais', 'jornada' => 'integral'],
+                ['key' => 'ai_parcial', 'label' => __('Fundamental I · Parcial'), 'stage' => 'anos_iniciais', 'jornada' => 'parcial'],
+                ['key' => 'ai_integral', 'label' => __('Fundamental I · Integral'), 'stage' => 'anos_iniciais', 'jornada' => 'integral'],
+                ['key' => 'af_parcial', 'label' => __('Fundamental II · Parcial'), 'stage' => 'anos_finais', 'jornada' => 'parcial'],
+                ['key' => 'af_integral', 'label' => __('Fundamental II · Integral'), 'stage' => 'anos_finais', 'jornada' => 'integral'],
             ],
             'rows' => [
                 'regular' => __('Regular'),
@@ -378,18 +397,22 @@ final class CampaignActiveCensusMatrixBuilder
 
         $infantilParcial = $sumStage('creche', 'parcial') + $sumStage('pre_escola', 'parcial');
         $infantilIntegral = $sumStage('creche', 'integral') + $sumStage('pre_escola', 'integral');
-        $fundParcial = $sumStage('anos_iniciais', 'parcial') + $sumStage('anos_finais', 'parcial');
-        $fundIntegral = $sumStage('anos_iniciais', 'integral') + $sumStage('anos_finais', 'integral');
+        $fundIParcial = $sumStage('anos_iniciais', 'parcial');
+        $fundIIntegral = $sumStage('anos_iniciais', 'integral');
+        $fundIiParcial = $sumStage('anos_finais', 'parcial');
+        $fundIiIntegral = $sumStage('anos_finais', 'integral');
         $eja = $sumStage('eja_fundamental', 'parcial') + $sumStage('eja_fundamental', 'integral');
-        $geral = $infantilParcial + $infantilIntegral + $fundParcial + $fundIntegral + $eja;
+        $geral = $infantilParcial + $infantilIntegral + $fundIParcial + $fundIIntegral + $fundIiParcial + $fundIiIntegral + $eja;
 
         return [
             'title' => __('Análise geral'),
             'columns' => [
                 ['key' => 'infantil_parcial', 'label' => __('Educação Infantil Parcial')],
                 ['key' => 'infantil_integral', 'label' => __('Educação Infantil Integral')],
-                ['key' => 'fund_parcial', 'label' => __('Educação Fundamental Parcial')],
-                ['key' => 'fund_integral', 'label' => __('Educação Fundamental Integral')],
+                ['key' => 'fund_i_parcial', 'label' => __('Fundamental I Parcial')],
+                ['key' => 'fund_i_integral', 'label' => __('Fundamental I Integral')],
+                ['key' => 'fund_ii_parcial', 'label' => __('Fundamental II Parcial')],
+                ['key' => 'fund_ii_integral', 'label' => __('Fundamental II Integral')],
                 ['key' => 'eja', 'label' => __('EJA Presencial Fundamental')],
                 ['key' => 'especial', 'label' => __('Educação Especial')],
                 ['key' => 'geral', 'label' => __('GERAL')],
@@ -397,8 +420,13 @@ final class CampaignActiveCensusMatrixBuilder
             'values' => [
                 'infantil_parcial' => $infantilParcial,
                 'infantil_integral' => $infantilIntegral,
-                'fund_parcial' => $fundParcial,
-                'fund_integral' => $fundIntegral,
+                'fund_i_parcial' => $fundIParcial,
+                'fund_i_integral' => $fundIIntegral,
+                'fund_ii_parcial' => $fundIiParcial,
+                'fund_ii_integral' => $fundIiIntegral,
+                // Compatibilidade com consumidores antigos (soma I+II).
+                'fund_parcial' => $fundIParcial + $fundIiParcial,
+                'fund_integral' => $fundIIntegral + $fundIiIntegral,
                 'eja' => $eja,
                 'especial' => $sumEspecial,
                 'geral' => $geral,

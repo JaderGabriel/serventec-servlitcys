@@ -1141,6 +1141,8 @@
                     </section>
                 @endif
 
+                @include('clio.campaigns.partials.census-matrix', ['censusMatrix' => $censusMatrix ?? []])
+
                 {{-- Relatório da rede (Matrícula inicial / Educacenso) --}}
                 @if (! empty($dashboard['report']['available']))
                     @php $report = $dashboard['report']; @endphp

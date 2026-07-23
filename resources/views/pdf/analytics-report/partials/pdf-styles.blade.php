@@ -41,9 +41,9 @@
     .cover-pro__band { background: {{ $primary }}; color: #fff; padding: 0; }
     .cover-pro__band-inner { padding: 22px 32px 20px; }
     .cover-pro__eyebrow { margin: 0 0 6px; font-size: 7.5pt; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.9; }
-    .cover-pro__type { margin: 0 0 4px; font-size: 10pt; font-weight: bold; color: #99f6e4; }
+    .cover-pro__type { margin: 0 0 4px; font-size: 10pt; font-weight: bold; color: #bfdbfe; }
     .cover-pro__city { margin: 0; font-size: 28pt; line-height: 1.1; font-weight: bold; letter-spacing: -0.02em; }
-    .cover-pro__sub { margin: 8px 0 0; font-size: 10pt; color: #ecfdf5; opacity: 0.95; }
+    .cover-pro__sub { margin: 8px 0 0; font-size: 10pt; color: #e2e8f0; opacity: 0.95; }
     .cover-pro__year-pill {
         display: inline-block;
         background: rgba(255,255,255,0.15);
@@ -64,8 +64,8 @@
     .cover-pro__map-frame { border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; margin: 0 0 14px; background: #f1f5f9; max-width: 100%; }
     .cover-pro__map-img { width: 100%; max-width: 100%; height: auto; display: block; }
     .cover-pro__map-caption { margin: 0; padding: 8px 12px; font-size: 8pt; color: #475569; background: #f8fafc; border-top: 1px solid #e2e8f0; }
-    .cover-pro__summary { background: {{ $primaryLight }}; border: 1px solid #5eead4; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
-    .cover-pro__summary-title { margin: 0 0 8px; font-size: 10pt; font-weight: bold; color: #115e59; }
+    .cover-pro__summary { background: {{ $primaryLight }}; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+    .cover-pro__summary-title { margin: 0 0 8px; font-size: 10pt; font-weight: bold; color: {{ $primary }}; }
     .cover-pro__summary-list { margin: 0; padding-left: 16px; font-size: 9.5pt; color: #1e293b; }
     .cover-pro__summary-list li { margin-bottom: 4px; }
     .cover-pro__legal { margin: 0; font-size: 7.5pt; color: #94a3b8; text-align: center; line-height: 1.4; }

@@ -466,7 +466,10 @@ final class RelationCsvAggregator
                         }
                     }
                 }
-                $underFlags = $neeClassifier->assessUnderreporting($classified, false);
+                $underFlags = $neeClassifier->assessUnderreporting(
+                    $classified,
+                    $this->rowLooksLikeAee($csv, $row, $etapa),
+                );
                 if ($underFlags !== []) {
                     $underFlagged++;
                     foreach ($underFlags as $flag) {
@@ -518,7 +521,7 @@ final class RelationCsvAggregator
         $ageGrade['pct_distorcao'] = $eligible > 0
             ? round(100 * ((int) $ageGrade['distorcao']) / $eligible, 1)
             : null;
-        $ageGrade['by_etapa'] = $this->sortDescEtapaAge($ageGrade['by_etapa']);
+        $ageGrade['by_etapa'] = $this->sortEtapaAgePedagogical($ageGrade['by_etapa']);
 
         return [
             'total' => count($rows),
@@ -563,16 +566,19 @@ final class RelationCsvAggregator
     }
 
     /**
+     * Ordena etapas na sequência escolar (1º, 2º, …) e calcula % de distorção.
+     *
      * @param  array<string, array<string, int>>  $byEtapa
      * @return array<string, array<string, int|float|null>>
      */
-    private function sortDescEtapaAge(array $byEtapa): array
+    private function sortEtapaAgePedagogical(array $byEtapa): array
     {
-        uasort($byEtapa, static fn (array $a, array $b): int => ($b['eligible'] ?? 0) <=> ($a['eligible'] ?? 0));
+        $order = new EtapaLabelOrder;
+        $byEtapa = $order->sortAssocByLabel($byEtapa);
         $out = [];
         $i = 0;
         foreach ($byEtapa as $label => $row) {
-            if ($i >= 25) {
+            if ($i >= 40) {
                 break;
             }
             $elig = max(1, (int) ($row['eligible'] ?? 0));
@@ -584,6 +590,16 @@ final class RelationCsvAggregator
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, array<string, int>>  $byEtapa
+     * @return array<string, array<string, int|float|null>>
+     * @deprecated Use sortEtapaAgePedagogical
+     */
+    private function sortDescEtapaAge(array $byEtapa): array
+    {
+        return $this->sortEtapaAgePedagogical($byEtapa);
     }
 
     /**
@@ -870,6 +886,22 @@ final class RelationCsvAggregator
         }
 
         return self::BUCKET_OUTRA;
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     */
+    private function rowLooksLikeAee(CsvReader $csv, array $row, string $etapa): bool
+    {
+        if (preg_match('/\baee\b|atendimento educacional/iu', $etapa) === 1) {
+            return true;
+        }
+        $tipo = trim($csv->value($row, 'Tipo de turma'));
+        if ($tipo === '') {
+            $tipo = trim($csv->value($row, 'Tipo de Turma'));
+        }
+
+        return $this->classifyTipoTurma($tipo) === self::BUCKET_AEE;
     }
 
     /**

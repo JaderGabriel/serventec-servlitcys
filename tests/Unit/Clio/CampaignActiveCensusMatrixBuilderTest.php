@@ -75,6 +75,9 @@ final class CampaignActiveCensusMatrixBuilderTest extends TestCase
         // Fixture Alpha é urbana — contagens urbanas de fundamental regular > 0
         $ai = $matrix['fundamental']['values']['ai_parcial']['Urbana']['regular'] ?? 0;
         $this->assertGreaterThan(0, $ai);
+        $this->assertArrayHasKey('fund_i_parcial', $matrix['geral']['values']);
+        $this->assertArrayHasKey('fund_ii_parcial', $matrix['geral']['values']);
+        $this->assertGreaterThan(0, $matrix['geral']['values']['fund_i_parcial']);
         // Extinta não deve empurrar rural
         $ruralReg = $matrix['fundamental']['values']['ai_parcial']['Rural']['regular'] ?? 0;
         $this->assertSame(0, $ruralReg);

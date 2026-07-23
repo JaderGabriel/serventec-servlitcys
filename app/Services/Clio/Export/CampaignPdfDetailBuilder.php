@@ -5,6 +5,7 @@ namespace App\Services\Clio\Export;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Services\Clio\Analysis\AgeGradeRules;
+use App\Services\Clio\Analysis\EtapaLabelOrder;
 use App\Services\Clio\Analysis\NeeConditionClassifier;
 use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Services\Clio\Parse\CsvReader;
@@ -48,8 +49,10 @@ final class CampaignPdfDetailBuilder
         $neeWithoutAee = 0;
         $neeTotal = 0;
         $neeWithUnder = 0;
+        $aeeWithoutNee = 0;
         $missingTotal = 0;
         $neeClassifier = new NeeConditionClassifier;
+        $etapaOrder = new EtapaLabelOrder;
 
         $alunoArtifacts = $campaign->artifacts
             ->where('kind', 'relacao_aluno_escola')
@@ -142,8 +145,12 @@ final class CampaignPdfDetailBuilder
                         $neeTotal++;
                     }
                     $hasAee = $person['has_aee'];
-                    if ($person['nee_tags'] !== [] && ! $hasAee) {
+                    $hasNeeTags = $person['nee_tags'] !== [];
+                    if ($hasNeeTags && ! $hasAee) {
                         $neeWithoutAee++;
+                    }
+                    if ($hasAee && ! $hasNeeTags) {
+                        $aeeWithoutNee++;
                     }
                     if ($person['underreporting'] !== []) {
                         $neeWithUnder++;
@@ -165,6 +172,11 @@ final class CampaignPdfDetailBuilder
                             static fn (array $f): string => $f['code'].' · '.$f['label'],
                             $person['underreporting'],
                         );
+                        $aeeFlag = match (true) {
+                            $hasAee && ! $hasNeeTags => __('AEE sem deficiência/TEA/AH'),
+                            $hasAee => __('Com AEE'),
+                            default => __('NEE sem matrícula AEE'),
+                        };
                         $neeStudents[] = [
                             'id' => $person['id_raw'],
                             'name' => $person['name'] !== '' ? $person['name'] : '—',
@@ -184,7 +196,9 @@ final class CampaignPdfDetailBuilder
                             'matriculas' => $person['matriculas'] !== [] ? implode(', ', $person['matriculas']) : '—',
                             'turmas' => $person['turmas'] !== [] ? implode(', ', $person['turmas']) : '—',
                             'has_aee' => $hasAee,
-                            'aee_flag' => $hasAee ? __('Com AEE') : __('NEE sem matrícula AEE'),
+                            'has_nee' => $hasNeeTags,
+                            'aee_without_nee' => $hasAee && ! $hasNeeTags,
+                            'aee_flag' => $aeeFlag,
                         ];
                     }
                 }
@@ -211,12 +225,15 @@ final class CampaignPdfDetailBuilder
                 'alunos' => (int) ($scan['alunos'] ?? $dist),
             ];
         }
-        usort($distortionByEtapa, static fn (array $a, array $b): int => ($b['distorcao'] <=> $a['distorcao']) ?: ($b['eligible'] <=> $a['eligible']));
-        $distortionByEtapa = array_slice($distortionByEtapa, 0, 25);
+        $distortionByEtapa = $etapaOrder->sortRowsByEtapaKey($distortionByEtapa, 'etapa');
+        $distortionByEtapa = array_slice($distortionByEtapa, 0, 40);
+        $distortionStudents = $etapaOrder->sortRowsByEtapaKey($distortionStudents, 'etapa');
 
-        // NEE sem AEE / subnotificação primeiro
+        // Atenção: AEE sem NEE e NEE sem AEE primeiro
         usort($neeStudents, static function (array $a, array $b): int {
-            $score = static fn (array $r): int => ((int) empty($r['has_aee']) * 10) + ((int) (! empty($r['has_underreporting'])) * 5);
+            $score = static fn (array $r): int => ((int) (! empty($r['aee_without_nee'])) * 12)
+                + ((int) empty($r['has_aee']) * 10)
+                + ((int) (! empty($r['has_underreporting'])) * 5);
 
             return $score($b) <=> $score($a);
         });
@@ -229,6 +246,7 @@ final class CampaignPdfDetailBuilder
             'missing_demographics' => $missingDemo,
             'nee_students' => $neeStudents,
             'nee_without_aee' => $neeWithoutAee,
+            'nee_aee_without_condition' => $aeeWithoutNee,
             'nee_total' => $neeTotal,
             'nee_underreporting' => $neeWithUnder,
             'missing_demographics_total' => $missingTotal,

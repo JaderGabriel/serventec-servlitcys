@@ -903,6 +903,7 @@ final class CampaignAnalysisPresenter
                 'pct' => $row['pct_distorcao'] ?? null,
             ];
         }
+        $etapaDis = (new EtapaLabelOrder)->sortRowsByEtapaKey($etapaDis, 'etapa');
 
         $byTurmaAluno = is_array($alunoAgg['by_turma'] ?? null) ? $alunoAgg['by_turma'] : [];
         $byTurmaProf = is_array($profAgg['by_turma'] ?? null) ? $profAgg['by_turma'] : [];
@@ -1753,6 +1754,7 @@ final class CampaignAnalysisPresenter
                 'pct' => $row['pct_distorcao'] ?? null,
             ];
         }
+        $etapaRows = (new EtapaLabelOrder)->sortRowsByEtapaKey($etapaRows, 'etapa');
 
         return [
             'available' => $dis !== null || $den !== null || ($doc !== null && isset($docPayload['turmas_sem_docente'])),

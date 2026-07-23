@@ -554,12 +554,13 @@
     @endif
 @endif
 
-@if (! empty($tables['nee_students']) || (int) ($tables['nee_total'] ?? 0) > 0)
+@if (! empty($tables['nee_students']) || (int) ($tables['nee_total'] ?? 0) > 0 || (int) ($tables['nee_aee_without_condition'] ?? 0) > 0)
     <h2>{{ __('Pessoas com NEE — deficiências e transtornos') }}</h2>
     <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
-        {{ __('Total com marcador: :t · sem matrícula AEE: :a · com alerta de subnotificação: :u. Códigos DEF-* = deficiência; TRS-* = transtorno; AH = altas habilidades; SUB-* = possível subnotificação.', [
+        {{ __('Total com marcador: :t · NEE sem matrícula AEE: :a · AEE sem deficiência/TEA/AH: :w · com alerta de subnotificação: :u. Códigos DEF-* = deficiência; TRS-* = transtorno; AH = altas habilidades; SUB-* = possível subnotificação.', [
             't' => (int) ($tables['nee_total'] ?? 0),
             'a' => (int) ($tables['nee_without_aee'] ?? 0),
+            'w' => (int) ($tables['nee_aee_without_condition'] ?? 0),
             'u' => (int) ($tables['nee_underreporting'] ?? 0),
         ]) }}
     </p>
@@ -579,7 +580,13 @@
             </thead>
             <tbody>
                 @foreach ($tables['nee_students'] as $row)
-                    <tr @if (empty($row['has_aee']) || ! empty($row['has_underreporting'])) style="background: {{ empty($row['has_aee']) ? '#fff7ed' : '#fef2f2' }};" @endif>
+                    @php
+                        $neeAlert = empty($row['has_aee']) || ! empty($row['aee_without_nee']) || ! empty($row['has_underreporting']);
+                        $rowBg = ! empty($row['aee_without_nee'])
+                            ? '#fff7ed'
+                            : (empty($row['has_aee']) ? '#fff7ed' : (! empty($row['has_underreporting']) ? '#fef2f2' : null));
+                    @endphp
+                    <tr @if ($neeAlert && $rowBg) style="background: {{ $rowBg }};" @endif>
                         <td>
                             {{ $row['name'] ?? '—' }}
                             @if (! empty($row['id']) && ($row['id'] ?? '') !== '—')
@@ -622,7 +629,7 @@
                             @endif
                         </td>
                         <td>
-                            @if (empty($row['has_aee']))
+                            @if (empty($row['has_aee']) || ! empty($row['aee_without_nee']))
                                 <strong style="color: #c2410c;">{{ $row['aee_flag'] }}</strong>
                             @else
                                 {{ $row['aee_flag'] }}

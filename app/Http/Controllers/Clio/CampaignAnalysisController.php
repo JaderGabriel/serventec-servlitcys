@@ -7,6 +7,7 @@ use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignAnalyzer;
+use App\Services\Clio\Export\CampaignActiveCensusMatrixBuilder;
 use App\Services\Clio\Parse\CampaignParseService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class CampaignAnalysisController extends Controller
         $campaign->load([
             'inferences',
             'findings' => fn ($q) => $q->with('school')->latest('id')->limit(200),
-            'schools',
+            'schools.artifacts',
             'artifacts' => fn ($q) => $q->where('kind', 'acomp_coleta_1etapa'),
         ]);
         $campaign->loadCount(['artifacts', 'schools', 'findings']);
@@ -32,6 +33,7 @@ class CampaignAnalysisController extends Controller
         $coverage = $parser->coverage($campaign);
         $inferences = $campaign->inferences->keyBy('code');
         $dashboard = $presenter->present($campaign, $coverage, $inferences, $campaign->findings);
+        $censusMatrix = app(CampaignActiveCensusMatrixBuilder::class)->build($campaign);
 
         return view('clio.campaigns.analysis', [
             'campaign' => $campaign,
@@ -39,6 +41,7 @@ class CampaignAnalysisController extends Controller
             'inferences' => $inferences,
             'findings' => $campaign->findings,
             'dashboard' => $dashboard,
+            'censusMatrix' => $censusMatrix,
         ]);
     }
 

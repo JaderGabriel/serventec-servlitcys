@@ -13,6 +13,7 @@
             'n' => $matrix['schools_active'] ?? 0,
         ]) }}
         <br>{{ $matrix['note'] ?? '' }}
+        <br>{{ __('Fundamental I = anos iniciais (1º–5º); Fundamental II = anos finais (6º–9º).') }}
     </p>
 
     @foreach (['infantil', 'fundamental', 'eja'] as $blockKey)

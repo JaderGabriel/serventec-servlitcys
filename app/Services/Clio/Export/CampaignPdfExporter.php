@@ -79,18 +79,29 @@ final class CampaignPdfExporter
             'pdfTables' => $pdfTables,
             'generated_at' => $generatedAt,
             'colors' => [
-                'navy' => '#0f2744',
-                'accent' => '#1d4ed8',
+                'primary' => '#0f172a',
+                'secondary' => '#1d4ed8',
+                'primary_light' => '#e2e8f0',
             ],
         ])->setPaper('a4');
 
-        $filename = sprintf(
-            'clio_%s_%d.pdf',
-            preg_replace('/[^a-z0-9_-]+/i', '_', (string) $campaign->ibge_municipio) ?: 'mun',
-            $campaign->year
-        );
+        $citySlug = $this->slugPart((string) $campaign->municipality_name) ?: 'municipio';
+        $ibge = preg_replace('/\D+/', '', (string) ($campaign->ibge_municipio ?? '')) ?: 'ibge';
+        $refDate = $campaign->reference_date
+            ? $campaign->reference_date->format('Y-m-d')
+            : (string) ((int) $campaign->year);
+        $filename = sprintf('clio_%s_%s_%s.pdf', $citySlug, $ibge, $refDate);
 
         return $pdf->download($filename);
+    }
+
+    private function slugPart(string $value): string
+    {
+        $ascii = \Illuminate\Support\Str::ascii($value);
+        $slug = (string) preg_replace('/[^a-z0-9]+/i', '_', $ascii);
+        $slug = trim($slug, '_');
+
+        return mb_strtolower($slug);
     }
 
     /**
