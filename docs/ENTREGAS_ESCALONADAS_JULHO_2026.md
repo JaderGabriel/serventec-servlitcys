@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **8.0.0** · tag **`20260721-Aletheia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **8.0.1** · tag **`20260723-Euterpe`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -15,6 +15,7 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 3 | **7.0.2** | `20260706-Hermes` | 06/07 | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) | pt-BR unificado (UI, menus, documentação) |
 | 4 | **7.0.3** | `20260709-Calliope` | 09/07 | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) | Leitor docs modular; tag + GitHub Release |
 | 5 | **8.0.0** | `20260721-Aletheia` | 21/07 | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) | Clio hub de relatórios; AEE/AC/etapas Educacenso |
+| 6 | **8.0.1** | `20260723-Euterpe` | 23/07 | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) | Clio — jornada, NEE, transporte, Excel/PDF, UTF-8, cadastro Consultoria |
 
 ---
 

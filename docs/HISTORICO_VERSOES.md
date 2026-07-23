@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`8.0.0`** · tag de deploy **`20260721-Aletheia`** · ver [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`8.0.1`** · tag de deploy **`20260723-Euterpe`** · ver [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **8.0.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **8.0.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260721-Aletheia` |
-| **Data de referência** | **21/07/2026** |
-| **Último marco documentado** | **Clio relatórios (Aletheia)** — hub municipal, relatório AEE/AC/etapas — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) |
+| **Tag de deploy (servidor)** | `20260723-Euterpe` |
+| **Data de referência** | **23/07/2026** |
+| **Último marco documentado** | **Clio maturidade operacional (Euterpe)** — jornada, NEE, transporte, Excel/PDF — [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `3951fab` (#**536**) |
+| **Commit de release** | `pending` (#**pending**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -48,6 +48,7 @@ timeline
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
     2026-07-09 : 7.0.3 Calliope — leitor documentação modular e publicação tag+GitHub
+    2026-07-23 : 8.0.1 Euterpe — Clio jornada, NEE, transporte, Excel/PDF, UTF-8
     2026-07-21 : 8.0.0 Aletheia — Clio hub de relatórios, AEE/AC e etapas Educacenso
     2026-07-06 : 7.0.2 Hermes — pt-BR unificado (UI, menus, documentação)
     2026-07-05 : 7.0.1 Moneta — tooltip FUNDEB por UF, warm-map-cache sem lock
@@ -62,7 +63,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.0.0** | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | **Produção:** Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |
+| **▶ 8.0.1** | `pending` / `20260723-Euterpe` → `main` | **pending** | 23/07/2026 | **Produção:** Clio — jornada, NEE/subnotificação, transporte, Excel, matriz PDF, UTF-8 CSV, filtro Consultoria — [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md). |
+| 8.0.0 | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |
 | 7.0.3 | `98bfeee` / `20260709-Calliope` → `main` | **518** | 09/07/2026 | Leitor documentação modular, layout amplo, tabelas com scroll; README 7.x; `product:release-publish` — [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md). |
 | 7.0.2 | `41344e9` / `20260706-Hermes` → `main` | **513** | 06/07/2026 | pt-BR unificado na UI, menus e documentação viva; ROADMAP_INDICE; patches Horizonte pós-7.0.1 — [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md). |
 | 7.0.1 | `04ecf63` / `20260705b-Moneta` → `main` | **506** | 05/07/2026 | Horizonte — tooltip FUNDEB por UF (rank, total, % federal) no mapa nacional; `horizonte:warm-map-cache` sem locks HTTP — [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md). |

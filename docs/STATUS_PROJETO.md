@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **8.0.0** · release `20260721-Aletheia` · **Ramo:** `main` · **Última revisão:** 2026-07-21
+**Versão em produção:** **8.0.1** · release `20260723-Euterpe` · **Ramo:** `main` · **Última revisão:** 2026-07-23
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (8.0.0)
+## Mapa de capacidades (8.0.1)
 
 ```mermaid
 flowchart TB

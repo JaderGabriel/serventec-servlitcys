@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 8.0.0 · **Última revisão:** 2026-07-21
+**Versão do produto:** 8.0.1 · **Última revisão:** 2026-07-23
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **8.0.0**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **8.0.1**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **8.0.0** |
-| **Tag de deploy** | `20260721-Aletheia` |
-| **Commit de referência** | `3951fab` |
-| **Data de referência** | 2026-07-21 |
-| **Release** | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) |
-| **Marco** | **Aletheia** — Clio hub de relatórios; AEE/AC/etapas; tag + GitHub Release |
+| **Versão semântica** | **8.0.1** |
+| **Tag de deploy** | `20260723-Euterpe` |
+| **Commit de referência** | `pending` |
+| **Data de referência** | 2026-07-23 |
+| **Release** | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) |
+| **Marco** | **Euterpe** — Clio jornada/NEE/transporte, Excel/PDF, UTF-8; tag + GitHub Release |
 
 ---
 
@@ -172,8 +172,9 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
-| **7.0.3** | Calliope | 09/07 | — | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) — leitor docs modular; tag+GitHub |
+| **8.0.1** | Euterpe | 23/07 | — | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) — Clio jornada/NEE/transporte; Excel/PDF; UTF-8 |
 | **8.0.0** | Aletheia | 21/07 | — | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) — Clio hub relatórios; AEE/AC/etapas |
+| **7.0.3** | Calliope | 09/07 | — | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) — leitor docs modular; tag+GitHub |
 | **7.0.2** | Hermes | 06/07 | — | [RELEASE_20260706_HERMES.md](RELEASE_20260706_HERMES.md) — pt-BR unificado |
 | **7.0.1** | Moneta | 05/07 b | **506** | [RELEASE_20260705b_MONETA.md](RELEASE_20260705b_MONETA.md) — tooltip FUNDEB UF, warm-map-cache |
 | **7.0.0** | Ploutos | 05/07 | **483** | [RELEASE_20260705_PLUTOS.md](RELEASE_20260705_PLUTOS.md) — SICONFI, Transparência, scoring ampliado |

@@ -1,6 +1,6 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **7.0.3** · tag `20260709-Calliope` · **Última revisão:** 2026-07-21
+**Versão em produção:** **8.0.1** · tag `20260723-Euterpe` · **Última revisão:** 2026-07-23
 
 > **Índice:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 

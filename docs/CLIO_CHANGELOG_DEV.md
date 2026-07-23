@@ -1,6 +1,6 @@
 # Clio — rastreio até o lançamento
 
-**Início do desenvolvimento:** 2026-07-21 · **Versão base:** 7.0.3 Calliope · **Próxima release:** a definir (tag mitológica + bump)
+**Início do desenvolvimento:** 2026-07-21 · **Versão base:** 8.0.1 Euterpe · **Próxima release:** a definir (tag mitológica + bump)
 
 > **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
 
