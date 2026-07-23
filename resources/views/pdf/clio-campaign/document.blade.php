@@ -376,6 +376,9 @@
 
 @if (($toCorrect ?? $criticalFindings ?? collect())->isNotEmpty())
     <h2>{{ __('O que corrigir (erros)') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Mesmas unidades do Tempo de escolarização (escolas em atividade). Itens da Rede ao final desta lista.') }}
+    </p>
     <table class="data">
         <thead>
             <tr>
@@ -404,7 +407,7 @@
 @if (($toReview ?? collect())->isNotEmpty())
     <h2>{{ __('Pontos de atenção (revisar)') }}</h2>
     <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
-        {{ __('Avisos por escola primeiro; itens da rede ao final.') }}
+        {{ __('Avisos das escolas em atividade — o mesmo conjunto do Tempo de escolarização. Itens da Rede ao final desta lista. Unidades extintas, paralisadas ou em reforma estão no final do relatório.') }}
     </p>
     <table class="data">
         <thead>
@@ -666,35 +669,81 @@
 
 @include('pdf.clio-campaign.partials.census-matrix', ['tables' => $pdfTables ?? []])
 
-@if (($dashboard['schools_other'] ?? collect())->isNotEmpty())
+@php
+    $schoolsOther = collect($dashboard['schools_other'] ?? []);
+    $findingsOther = collect($toCorrectOther ?? [])->concat(collect($toReviewOther ?? []));
+@endphp
+@if ($schoolsOther->isNotEmpty() || $findingsOther->isNotEmpty())
     <h2>{{ __('Demais situações de funcionamento') }}</h2>
-    <p class="muted">{{ __('Extintas, paralisadas, em reforma ou fora de atividade — fora do escopo operacional.') }}</p>
-    <table class="data">
-        <thead>
-            <tr>
-                <th>{{ __('INEP') }}</th>
-                <th>{{ __('Escola') }}</th>
-                <th>{{ __('Situação') }}</th>
-                <th>{{ __('Funcionamento') }}</th>
-                <th>{{ __('Tríade') }}</th>
-                <th>{{ __('Erros') }}</th>
-                <th>{{ __('Avisos') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($dashboard['schools_other'] as $school)
+    <p class="muted">
+        {{ __('Estas unidades não entram no relatório operacional acima (Tempo de escolarização, o que corrigir e pontos de atenção) porque estão extintas, paralisadas, em reforma ou fora de atividade. Os totais e avisos abaixo são só informativos — a falta de tríade ou relações aqui não indica coleta em aberto.') }}
+    </p>
+
+    @if ($schoolsOther->isNotEmpty())
+        <h3 style="font-size: 12px; margin-top: 10px;">{{ __('Quantitativo por unidade') }}</h3>
+        <table class="data">
+            <thead>
                 <tr>
-                    <td>{{ $school['inep'] ?? '' }}</td>
-                    <td>{{ $school['name'] ?? '' }}</td>
-                    <td>{{ $school['status'] ?? '—' }}</td>
-                    <td>{{ $school['functioning'] ?? '—' }}</td>
-                    <td>{{ ! empty($school['triade']) ? __('Sim') : __('Não') }}</td>
-                    <td>{{ $school['errors'] ?? '—' }}</td>
-                    <td>{{ $school['warnings'] ?? '—' }}</td>
+                    <th>{{ __('INEP') }}</th>
+                    <th>{{ __('Escola') }}</th>
+                    <th>{{ __('Situação') }}</th>
+                    <th>{{ __('Funcionamento') }}</th>
+                    <th>{{ __('Tríade') }}</th>
+                    <th>{{ __('Erros') }}</th>
+                    <th>{{ __('Avisos') }}</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach ($schoolsOther as $school)
+                    <tr>
+                        <td>{{ $school['inep'] ?? '' }}</td>
+                        <td>{{ $school['name'] ?? '' }}</td>
+                        <td>{{ $school['status'] ?? '—' }}</td>
+                        <td>{{ $school['functioning'] ?? '—' }}</td>
+                        <td>{{ ! empty($school['triade']) ? __('Sim') : __('Não') }}</td>
+                        <td>{{ $school['errors'] ?? '—' }}</td>
+                        <td>{{ $school['warnings'] ?? '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    @if ($findingsOther->isNotEmpty())
+        <h3 style="font-size: 12px; margin-top: 12px;">{{ __('Avisos e erros destas unidades') }}</h3>
+        <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+            {{ __('Detalhe do que o sistema registrou para as demais situações — use só como referência; o foco da Matrícula inicial continua nas escolas em atividade.') }}
+        </p>
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>{{ __('Escola') }}</th>
+                    <th>{{ __('Tipo') }}</th>
+                    <th>{{ __('Mensagem') }}</th>
+                    <th>{{ __('O que fazer') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($findingsOther as $f)
+                    <tr>
+                        <td>
+                            {{ $f->school?->name ?: __('—') }}
+                            @if ($f->school?->inep_code)
+                                <br><span style="font-size: 9px; color: #64748b;">INEP {{ $f->school->inep_code }}</span>
+                            @endif
+                        </td>
+                        <td>
+                            {{ $f->severity === \App\Models\Clio\ClioCampaignFinding::SEVERITY_ERROR
+                                ? __('Erro')
+                                : __('Aviso') }}
+                        </td>
+                        <td>{{ $f->message }}</td>
+                        <td>{{ $f->actionHint() }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 @endif
 </body>
 </html>

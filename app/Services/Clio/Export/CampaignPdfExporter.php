@@ -4,10 +4,12 @@ namespace App\Services\Clio\Export;
 
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
+use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Parse\CampaignParseService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 
 final class CampaignPdfExporter
 {
@@ -33,17 +35,31 @@ final class CampaignPdfExporter
             $campaign->findings,
         );
 
-        $toCorrect = $campaign->findings
-            ->where('severity', ClioCampaignFinding::SEVERITY_ERROR)
+        $inactiveSchoolIds = $campaign->schools
+            ->filter(fn (ClioCampaignSchool $school): bool => CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status))
+            ->pluck('id')
+            ->all();
+
+        $errors = $campaign->findings->where('severity', ClioCampaignFinding::SEVERITY_ERROR);
+        $warnings = $campaign->findings->where('severity', ClioCampaignFinding::SEVERITY_WARNING);
+
+        [$toCorrect, $toCorrectOther] = $this->partitionFindings($errors, $inactiveSchoolIds);
+        [$toReview, $toReviewOther] = $this->partitionFindings($warnings, $inactiveSchoolIds);
+
+        $toCorrect = $toCorrect
             ->sortBy(fn (ClioCampaignFinding $f): int => $f->school_id === null ? 1 : 0)
             ->take(40)
             ->values();
-        // Escolas primeiro; «Rede» (sem escola) por último.
-        $toReview = $campaign->findings
-            ->where('severity', ClioCampaignFinding::SEVERITY_WARNING)
+        $toReview = $toReview
             ->sortBy(fn (ClioCampaignFinding $f): int => $f->school_id === null ? 1 : 0)
-            ->values()
-            ->take(40);
+            ->take(40)
+            ->values();
+        $toCorrectOther = $toCorrectOther
+            ->sortBy(fn (ClioCampaignFinding $f): string => (string) ($f->school?->name ?? ''))
+            ->values();
+        $toReviewOther = $toReviewOther
+            ->sortBy(fn (ClioCampaignFinding $f): string => (string) ($f->school?->name ?? ''))
+            ->values();
 
         $pdfTables = $this->detailBuilder->build($campaign);
 
@@ -57,6 +73,8 @@ final class CampaignPdfExporter
             'inferences' => $campaign->inferences->keyBy('code'),
             'toCorrect' => $toCorrect,
             'toReview' => $toReview,
+            'toCorrectOther' => $toCorrectOther,
+            'toReviewOther' => $toReviewOther,
             'criticalFindings' => $toCorrect,
             'pdfTables' => $pdfTables,
             'generated_at' => $generatedAt,
@@ -73,5 +91,33 @@ final class CampaignPdfExporter
         );
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Mesmo escopo do Tempo de escolarização: escolas em atividade (+ itens da Rede).
+     * Extinta/paralisada/reforma vão para o bloco final do PDF.
+     *
+     * @param  Collection<int, ClioCampaignFinding>  $findings
+     * @param  list<int|string>  $inactiveSchoolIds
+     * @return array{0: Collection<int, ClioCampaignFinding>, 1: Collection<int, ClioCampaignFinding>}
+     */
+    public function partitionFindings(Collection $findings, array $inactiveSchoolIds): array
+    {
+        $inactiveLookup = array_fill_keys(array_map('intval', $inactiveSchoolIds), true);
+
+        $operational = $findings->filter(function (ClioCampaignFinding $finding) use ($inactiveLookup): bool {
+            if ($finding->school_id === null) {
+                return true;
+            }
+
+            return ! isset($inactiveLookup[(int) $finding->school_id]);
+        })->values();
+
+        $other = $findings->filter(function (ClioCampaignFinding $finding) use ($inactiveLookup): bool {
+            return $finding->school_id !== null
+                && isset($inactiveLookup[(int) $finding->school_id]);
+        })->values();
+
+        return [$operational, $other];
     }
 }
