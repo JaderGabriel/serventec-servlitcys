@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 8.0.1 · **Última revisão:** 2026-07-23
+**Versão do produto:** 8.0.2 · **Última revisão:** 2026-07-23
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **8.0.1**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **8.0.2**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **8.0.1** |
-| **Tag de deploy** | `20260723-Euterpe` |
-| **Commit de referência** | `af850f7` |
+| **Versão semântica** | **8.0.2** |
+| **Tag de deploy** | `20260723b-Harmonia` |
+| **Commit de referência** | `TBD` |
 | **Data de referência** | 2026-07-23 |
-| **Release** | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) |
-| **Marco** | **Euterpe** — Clio jornada/NEE/transporte, Excel/PDF, UTF-8; tag + GitHub Release |
+| **Release** | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) |
+| **Marco** | **Harmonia** — Clio PDF/Excel alinhados, Fund. I/II, lotes Drive; tag + GitHub Release |
 
 ---
 
@@ -172,6 +172,7 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **8.0.2** | Harmonia | 23/07 b | — | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) — PDF/Excel alinhados; Fund. I/II; lotes Drive |
 | **8.0.1** | Euterpe | 23/07 | — | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) — Clio jornada/NEE/transporte; Excel/PDF; UTF-8 |
 | **8.0.0** | Aletheia | 21/07 | — | [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md) — Clio hub relatórios; AEE/AC/etapas |
 | **7.0.3** | Calliope | 09/07 | — | [RELEASE_20260709_CALLIOPE.md](RELEASE_20260709_CALLIOPE.md) — leitor docs modular; tag+GitHub |

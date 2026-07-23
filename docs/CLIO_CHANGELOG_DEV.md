@@ -1,6 +1,6 @@
 # Clio — rastreio até o lançamento
 
-**Início do desenvolvimento:** 2026-07-21 · **Versão base:** 8.0.1 Euterpe · **Próxima release:** a definir (tag mitológica + bump)
+**Início do desenvolvimento:** 2026-07-21 · **Versão base:** 8.0.2 Harmonia · **Próxima release:** a definir (tag mitológica + bump)
 
 > **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
 
@@ -15,14 +15,25 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 | Sprint | **S6 concluída** — próximo **S7** (BI) |
 | Menu superior | **Clio** após Horizonte |
 | Docs (leitor) | Secção **9 · Clio — Educacenso** |
-| Rotas | coletas, upload, analise, vincular, cruzamento, export CSV/PDF |
+| Rotas | coletas, upload, analise, vincular, cruzamento, export CSV/PDF/Excel |
 | CLI | `ingest` · `status` · `analyze` · `cross-check` (ops/admin) |
 | Permissões | Ver: admin+usuário · Mutar: só admin · Municipal: sem acesso |
-| Pronto para release? | **MVP+consultoria+export** — falta S7–S8 e nota de release |
+| Pronto para release? | **8.0.2 Harmonia** publicada — falta S7–S8 |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-23 — Harmonia (8.0.2): PDF/Excel, Fund. I/II, lotes Drive
+
+**Entregue**
+
+- Export PDF/Excel: nome `cidade_IBGE_data-ref`, cores navy/azul do sistema
+- Distorção ordenada por sequência escolar; amostra alinhada
+- AEE sem deficiência/TEA/AH como atenção (UI + PDF + Excel)
+- Exposição: Fundamental I e II separados; correção de contadores no «Fundamental de 9 anos»
+- Drive: catálogo com tickets e ingestão em lotes retomáveis
+- Painel da escola: quadro geral + analítica local + IDs integrais
 
 ### 2026-07-23 — PDF: matriz de exposição (escolas ativas, ano atual)
 
