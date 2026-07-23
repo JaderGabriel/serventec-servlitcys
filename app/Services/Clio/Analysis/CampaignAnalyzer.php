@@ -67,6 +67,7 @@ final class CampaignAnalyzer
             $this->inferDocentes($campaign);
             $this->inferNee($campaign);
             $this->inferTransporte($campaign);
+            $this->inferJornada($campaign);
             $this->inferDemografia($campaign);
             $this->inferDistorcao($campaign);
             $this->inferDensidade($campaign);
@@ -734,13 +735,25 @@ final class CampaignAnalyzer
     {
         $flagged = 0;
         $scanned = 0;
+        $defFlagged = 0;
+        $disorderFlagged = 0;
+        $ahFlagged = 0;
+        $underFlagged = 0;
         $byNee = [];
+        $byDef = [];
+        $byDisorder = [];
+        $byAh = [];
+        $byUnder = [];
         $hasNeeCol = false;
 
         foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
             $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
             $scanned += (int) ($agg['total'] ?? 0);
             $flagged += (int) ($agg['nee_flagged'] ?? 0);
+            $defFlagged += (int) ($agg['deficiency_flagged'] ?? 0);
+            $disorderFlagged += (int) ($agg['disorder_flagged'] ?? 0);
+            $ahFlagged += (int) ($agg['ah_flagged'] ?? 0);
+            $underFlagged += (int) ($agg['underreporting_flagged'] ?? 0);
             $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
             if (! empty($cols['nee'])) {
                 $hasNeeCol = true;
@@ -748,6 +761,22 @@ final class CampaignAnalyzer
             $byNee = $this->aggregator->mergeCounts(
                 $byNee,
                 is_array($agg['by_nee'] ?? null) ? $agg['by_nee'] : [],
+            );
+            $byDef = $this->aggregator->mergeCounts(
+                $byDef,
+                is_array($agg['by_deficiency'] ?? null) ? $agg['by_deficiency'] : [],
+            );
+            $byDisorder = $this->aggregator->mergeCounts(
+                $byDisorder,
+                is_array($agg['by_disorder'] ?? null) ? $agg['by_disorder'] : [],
+            );
+            $byAh = $this->aggregator->mergeCounts(
+                $byAh,
+                is_array($agg['by_ah'] ?? null) ? $agg['by_ah'] : [],
+            );
+            $byUnder = $this->aggregator->mergeCounts(
+                $byUnder,
+                is_array($agg['by_underreporting'] ?? null) ? $agg['by_underreporting'] : [],
             );
         }
 
@@ -760,14 +789,30 @@ final class CampaignAnalyzer
             );
         }
 
+        if ($hasNeeCol && $underFlagged > 0 && $flagged > 0 && ($underFlagged / max(1, $flagged)) >= 0.15) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-NEE-SUB',
+                ClioCampaignFinding::SEVERITY_WARNING,
+                __('Possível subnotificação / comorbidade em :n de :s aluno(s) com NEE (:p%). Revise deficiências × transtornos e tipificação.', [
+                    'n' => $underFlagged,
+                    's' => $flagged,
+                    'p' => round(100 * $underFlagged / max(1, $flagged), 1),
+                ]),
+            );
+        }
+
         $this->upsertInference(
             $campaign,
             'INF-NEE',
             $hasNeeCol
-                ? __('Alunos com indício de NEE/TEA/AH: :n de :s (:p%).', [
+                ? __('Inclusão: :n com marcador (:p%) · deficiências :d · transtornos :t · AH :a · alertas de subnotificação :u.', [
                     'n' => $flagged,
-                    's' => $scanned,
                     'p' => $scanned > 0 ? round(100 * $flagged / $scanned, 1) : 0,
+                    'd' => $defFlagged,
+                    't' => $disorderFlagged,
+                    'a' => $ahFlagged,
+                    'u' => $underFlagged,
                 ])
                 : __('Inclusão: colunas NEE/TEA/AH não detectadas nas Relações importadas (:s linhas).', [
                     's' => $scanned,
@@ -776,7 +821,17 @@ final class CampaignAnalyzer
                 'flagged' => $flagged,
                 'scanned' => $scanned,
                 'by_nee' => $byNee,
+                'by_deficiency' => $byDef,
+                'by_disorder' => $byDisorder,
+                'by_ah' => $byAh,
+                'deficiency_flagged' => $defFlagged,
+                'disorder_flagged' => $disorderFlagged,
+                'ah_flagged' => $ahFlagged,
+                'by_underreporting' => $byUnder,
+                'underreporting_flagged' => $underFlagged,
                 'has_nee_columns' => $hasNeeCol,
+                'note_def_vs_trs' => __('Deficiências (DEF-*) e transtornos (TRS-*, ex. TEA) são públicos distintos no Censo; AH é categoria própria.'),
+                'note_sub' => __('Alertas de subnotificação são heurísticos (comorbidades frequentes e tipificação incompleta) — validar com a escola/laudo.'),
             ],
         );
     }
@@ -790,11 +845,115 @@ final class CampaignAnalyzer
         $byTransporte = [];
         $byPoder = [];
         $byVeiculo = [];
+        $byLocationUsers = [];
+        $byLocationUsersActive = [];
+        $byLocationUsersOther = [];
+        $byVeiculoActive = [];
+        $byVeiculoOther = [];
+        $flaggedActive = 0;
+        $scannedActive = 0;
+        $flaggedOther = 0;
+        $scannedOther = 0;
         $hasCol = false;
         $hasPoderCol = false;
         $hasVeiculoCol = false;
+        $schoolsBreakdown = [];
+        $seenArtifactIds = [];
+
+        foreach ($campaign->schools as $school) {
+            $schoolAgg = $this->emptyAlunoAgg();
+            foreach ($school->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+                $seenArtifactIds[(int) $artifact->id] = true;
+                $schoolAgg = $this->mergeAlunoAgg(
+                    $schoolAgg,
+                    $this->resolveAlunoAggregates($artifact, (int) $campaign->year),
+                );
+            }
+
+            $schoolTotal = (int) ($schoolAgg['total'] ?? 0);
+            if ($schoolTotal === 0) {
+                continue;
+            }
+
+            $schoolFlagged = (int) ($schoolAgg['transporte_flagged'] ?? 0);
+            $schoolWithout = (int) ($schoolAgg['without_transporte'] ?? 0);
+            $schoolSemPoder = (int) ($schoolAgg['transporte_sem_poder'] ?? 0);
+            $cols = is_array($schoolAgg['columns'] ?? null) ? $schoolAgg['columns'] : [];
+            if (! empty($cols['transporte'])) {
+                $hasCol = true;
+            }
+            if (! empty($cols['poder_publico_transporte'])) {
+                $hasPoderCol = true;
+            }
+            if (! empty($cols['veiculo_transporte'])) {
+                $hasVeiculoCol = true;
+            }
+
+            $meta = is_array($school->meta) ? $school->meta : [];
+            $location = $this->normalizeSchoolLocation((string) ($meta['location'] ?? ''));
+            $inactive = CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
+            $byVeiculoSchool = is_array($schoolAgg['by_veiculo_transporte'] ?? null)
+                ? $schoolAgg['by_veiculo_transporte']
+                : [];
+            $byPoderSchool = is_array($schoolAgg['by_poder_publico_transporte'] ?? null)
+                ? $schoolAgg['by_poder_publico_transporte']
+                : [];
+            $byUsoSchool = is_array($schoolAgg['by_transporte'] ?? null)
+                ? $schoolAgg['by_transporte']
+                : [];
+
+            $scanned += $schoolTotal;
+            $flagged += $schoolFlagged;
+            $without += $schoolWithout;
+            $semPoder += $schoolSemPoder;
+            $byTransporte = $this->aggregator->mergeCounts($byTransporte, $byUsoSchool);
+            $byPoder = $this->aggregator->mergeCounts($byPoder, $byPoderSchool);
+            $byVeiculo = $this->aggregator->mergeCounts($byVeiculo, $byVeiculoSchool);
+
+            if ($schoolFlagged > 0) {
+                $byLocationUsers[$location] = ($byLocationUsers[$location] ?? 0) + $schoolFlagged;
+            }
+
+            if ($inactive) {
+                $scannedOther += $schoolTotal;
+                $flaggedOther += $schoolFlagged;
+                if ($schoolFlagged > 0) {
+                    $byLocationUsersOther[$location] = ($byLocationUsersOther[$location] ?? 0) + $schoolFlagged;
+                }
+                $byVeiculoOther = $this->aggregator->mergeCounts($byVeiculoOther, $byVeiculoSchool);
+            } else {
+                $scannedActive += $schoolTotal;
+                $flaggedActive += $schoolFlagged;
+                if ($schoolFlagged > 0) {
+                    $byLocationUsersActive[$location] = ($byLocationUsersActive[$location] ?? 0) + $schoolFlagged;
+                }
+                $byVeiculoActive = $this->aggregator->mergeCounts($byVeiculoActive, $byVeiculoSchool);
+            }
+
+            $schoolsBreakdown[] = [
+                'inep' => $school->inep_code,
+                'name' => $school->name,
+                'functioning' => $school->functioning_status,
+                'location' => $location,
+                'inactive' => $inactive,
+                'scanned' => $schoolTotal,
+                'flagged' => $schoolFlagged,
+                'pct' => $schoolTotal > 0 ? round(100 * $schoolFlagged / $schoolTotal, 1) : 0,
+                'without' => $schoolWithout,
+                'sem_poder' => $schoolSemPoder,
+                'by_transporte' => $byUsoSchool,
+                'by_poder_publico' => $byPoderSchool,
+                'by_veiculo' => $byVeiculoSchool,
+                'has_transporte' => ! empty($cols['transporte']),
+                'has_veiculo' => ! empty($cols['veiculo_transporte']),
+                'has_poder' => ! empty($cols['poder_publico_transporte']),
+            ];
+        }
 
         foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+            if (isset($seenArtifactIds[(int) $artifact->id])) {
+                continue;
+            }
             $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
             $scanned += (int) ($agg['total'] ?? 0);
             $flagged += (int) ($agg['transporte_flagged'] ?? 0);
@@ -858,16 +1017,43 @@ final class CampaignAnalyzer
             );
         }
 
+        $ruralUsers = (int) ($byLocationUsersActive[__('Rural')] ?? $byLocationUsers[__('Rural')] ?? 0);
+        if ($hasCol && $flaggedActive > 0 && $ruralUsers > 0 && ($ruralUsers / max(1, $flaggedActive)) >= 0.5) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-TRA-RURAL',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('Nas escolas ativas, :p% dos alunos que usam transporte estão em unidades rurais (:n). Priorize logística e tipo de veículo.', [
+                    'p' => round(100 * $ruralUsers / max(1, $flaggedActive), 1),
+                    'n' => $ruralUsers,
+                ]),
+            );
+        }
+
         $pct = $scanned > 0 ? round(100 * $flagged / $scanned, 1) : 0;
+        $pctActive = $scannedActive > 0 ? round(100 * $flaggedActive / $scannedActive, 1) : 0;
+
+        usort($schoolsBreakdown, static function (array $a, array $b): int {
+            return ($b['flagged'] <=> $a['flagged']) ?: ($b['scanned'] <=> $a['scanned']);
+        });
+
+        $veiculoTipos = count(array_filter(
+            array_keys($byVeiculo),
+            static fn ($k) => (string) $k !== __('Não informado'),
+        ));
 
         $this->upsertInference(
             $campaign,
             'INF-TRA',
             $hasCol
-                ? __('Alunos que usam transporte escolar: :n de :s (:p%).', [
+                ? __('Transporte: :n usam (:p%) · ativas :na (:pa%) · rural :r · urbano :u · tipos de veículo: :v.', [
                     'n' => $flagged,
-                    's' => $scanned,
                     'p' => $pct,
+                    'na' => $flaggedActive,
+                    'pa' => $pctActive,
+                    'r' => (int) ($byLocationUsers[__('Rural')] ?? 0),
+                    'u' => (int) ($byLocationUsers[__('Urbana')] ?? 0),
+                    'v' => $veiculoTipos,
                 ])
                 : __('Transporte escolar: colunas não detectadas nas Relações importadas (:s linhas).', [
                     's' => $scanned,
@@ -881,9 +1067,192 @@ final class CampaignAnalyzer
                 'by_transporte' => $byTransporte,
                 'by_poder_publico' => $byPoder,
                 'by_veiculo' => $byVeiculo,
+                'by_location_users' => $this->aggregator->mergeCounts([], $byLocationUsers),
                 'has_transporte_columns' => $hasCol,
                 'has_poder_publico' => $hasPoderCol,
                 'has_veiculo' => $hasVeiculoCol,
+                'active' => [
+                    'flagged' => $flaggedActive,
+                    'scanned' => $scannedActive,
+                    'pct' => $pctActive,
+                    'by_location_users' => $this->aggregator->mergeCounts([], $byLocationUsersActive),
+                    'by_veiculo' => $byVeiculoActive,
+                ],
+                'other' => [
+                    'flagged' => $flaggedOther,
+                    'scanned' => $scannedOther,
+                    'pct' => $scannedOther > 0 ? round(100 * $flaggedOther / $scannedOther, 1) : 0,
+                    'by_location_users' => $this->aggregator->mergeCounts([], $byLocationUsersOther),
+                    'by_veiculo' => $byVeiculoOther,
+                ],
+                'schools' => array_slice($schoolsBreakdown, 0, 120),
+                'note_location' => __('Rural/urbano vem da Localização da escola no Acompanhamento; o uso e o tipo de veículo vêm da Relação de alunos.'),
+            ],
+        );
+    }
+
+    private function normalizeSchoolLocation(string $raw): string
+    {
+        $s = mb_strtolower(trim($raw));
+        if ($s === '') {
+            return __('Não informado');
+        }
+        if (preg_match('/rural/u', $s) === 1) {
+            return __('Rural');
+        }
+        if (preg_match('/urban/u', $s) === 1) {
+            return __('Urbana');
+        }
+
+        return $raw;
+    }
+
+    /**
+     * Tempo de escolarização / turnos / CH e padrões de jornada (fund+AEE, AC, infantil estendido).
+     */
+    private function inferJornada(ClioCampaign $campaign): void
+    {
+        $people = 0;
+        $fundAee = 0;
+        $currAc = 0;
+        $infantilExt = 0;
+        $multi = 0;
+        $turmas = 0;
+        $byTurno = [];
+        $byChBand = [];
+        $byTurnoCurricular = [];
+        $hasTurnoCol = false;
+        $hasChCol = false;
+        $schoolsBreakdown = [];
+        $disk = (string) config('clio.disk', 'local');
+
+        foreach ($campaign->schools as $school) {
+            $turmaArt = $school->artifacts->firstWhere('kind', 'relacao_turma_escola');
+            $alunoArt = $school->artifacts->firstWhere('kind', 'relacao_aluno_escola');
+            if ($turmaArt === null && $alunoArt === null) {
+                continue;
+            }
+
+            $profiles = [];
+            $schoolByTurno = [];
+            $schoolByCh = [];
+            $schoolHasTurno = false;
+            $schoolHasCh = false;
+            $schoolTurmas = 0;
+
+            if ($turmaArt !== null) {
+                try {
+                    $turmaData = $this->csv->read(Storage::disk($disk)->path($turmaArt->storage_path), 1);
+                    $turmaAgg = $this->aggregator->aggregateTurmas($turmaData['rows'], $this->csv);
+                } catch (Throwable) {
+                    $turmaAgg = $this->emptyTurmaAgg();
+                }
+                $profiles = is_array($turmaAgg['turma_profiles'] ?? null) ? $turmaAgg['turma_profiles'] : [];
+                $schoolByTurno = is_array($turmaAgg['by_turno'] ?? null) ? $turmaAgg['by_turno'] : [];
+                $schoolByCh = is_array($turmaAgg['by_ch_band'] ?? null) ? $turmaAgg['by_ch_band'] : [];
+                $cols = is_array($turmaAgg['columns'] ?? null) ? $turmaAgg['columns'] : [];
+                $schoolHasTurno = ! empty($cols['turno']);
+                $schoolHasCh = ! empty($cols['carga_horaria']);
+                $schoolTurmas = (int) ($turmaAgg['total'] ?? 0);
+                $turmas += $schoolTurmas;
+                $byTurno = $this->aggregator->mergeCounts($byTurno, $schoolByTurno);
+                $byChBand = $this->aggregator->mergeCounts($byChBand, $schoolByCh);
+                if ($schoolHasTurno) {
+                    $hasTurnoCol = true;
+                }
+                if ($schoolHasCh) {
+                    $hasChCol = true;
+                }
+            }
+
+            $pattern = [
+                'people' => 0,
+                'fund_aee_contraturno' => 0,
+                'curricular_ac' => 0,
+                'infantil_turma_estendida' => 0,
+                'multi_enrollment' => 0,
+                'by_turno_curricular' => [],
+                'columns_turno' => $schoolHasTurno,
+                'columns_ch' => $schoolHasCh,
+            ];
+
+            if ($alunoArt !== null && $profiles !== []) {
+                try {
+                    $alunoData = $this->csv->read(Storage::disk($disk)->path($alunoArt->storage_path), 1);
+                    $pattern = $this->aggregator->aggregateEnrollmentDayPatterns(
+                        $alunoData['rows'],
+                        $this->csv,
+                        $profiles,
+                    );
+                } catch (Throwable) {
+                    // mantém zeros
+                }
+            }
+
+            $people += (int) $pattern['people'];
+            $fundAee += (int) $pattern['fund_aee_contraturno'];
+            $currAc += (int) $pattern['curricular_ac'];
+            $infantilExt += (int) $pattern['infantil_turma_estendida'];
+            $multi += (int) $pattern['multi_enrollment'];
+            $byTurnoCurricular = $this->aggregator->mergeCounts(
+                $byTurnoCurricular,
+                is_array($pattern['by_turno_curricular'] ?? null) ? $pattern['by_turno_curricular'] : [],
+            );
+
+            if ($schoolTurmas === 0 && (int) $pattern['people'] === 0) {
+                continue;
+            }
+
+            $schoolsBreakdown[] = [
+                'inep' => $school->inep_code,
+                'name' => $school->name,
+                'functioning' => $school->functioning_status,
+                'turmas' => $schoolTurmas,
+                'people' => (int) $pattern['people'],
+                'fund_aee_contraturno' => (int) $pattern['fund_aee_contraturno'],
+                'curricular_ac' => (int) $pattern['curricular_ac'],
+                'infantil_turma_estendida' => (int) $pattern['infantil_turma_estendida'],
+                'multi_enrollment' => (int) $pattern['multi_enrollment'],
+                'by_turno' => $schoolByTurno,
+                'by_ch_band' => $schoolByCh,
+                'has_turno' => $schoolHasTurno,
+                'has_ch' => $schoolHasCh,
+            ];
+        }
+
+        if (! $hasTurnoCol && ! $hasChCol && $turmas > 0) {
+            $this->addFinding(
+                $campaign,
+                'CLIO-JOR-SEM-COL',
+                ClioCampaignFinding::SEVERITY_INFO,
+                __('As Relações de turmas não trouxeram Turno nem Carga horária — o quadro de funcionamento das turmas fica limitado aos padrões de matrícula (AEE/AC).'),
+            );
+        }
+
+        $this->upsertInference(
+            $campaign,
+            'INF-JOR',
+            __('Jornada: :aee aluno(s) fund. + AEE · :ac com atividade complementar · :inf infantil em turma estendida · :m com mais de uma matrícula.', [
+                'aee' => $fundAee,
+                'ac' => $currAc,
+                'inf' => $infantilExt,
+                'm' => $multi,
+            ]),
+            [
+                'people' => $people,
+                'turmas' => $turmas,
+                'fund_aee_contraturno' => $fundAee,
+                'curricular_ac' => $currAc,
+                'infantil_turma_estendida' => $infantilExt,
+                'multi_enrollment' => $multi,
+                'by_turno' => $byTurno,
+                'by_ch_band' => $byChBand,
+                'by_turno_curricular' => $byTurnoCurricular,
+                'has_turno_columns' => $hasTurnoCol,
+                'has_ch_columns' => $hasChCol,
+                'schools' => array_slice($schoolsBreakdown, 0, 120),
+                'note_fund_aee' => __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.'),
+                'note_infantil' => __('Infantil em turma única com turno/CH estendido — diferente de tempo integral por duas matrículas.'),
             ],
         );
     }
@@ -1440,9 +1809,16 @@ final class CampaignAnalyzer
                 RelationCsvAggregator::BUCKET_AC => 0,
                 RelationCsvAggregator::BUCKET_OUTRA => 0,
             ],
+            'by_turno' => [],
+            'by_ch_band' => [],
             'turma_codes' => [],
+            'turma_profiles' => [],
             'without_etapa' => 0,
             'without_tipo' => 0,
+            'columns' => [
+                'turno' => false,
+                'carga_horaria' => false,
+            ],
         ];
     }
 
@@ -1462,6 +1838,14 @@ final class CampaignAnalyzer
             'by_faixa_etaria' => [],
             'by_nee' => [],
             'nee_flagged' => 0,
+            'by_deficiency' => [],
+            'by_disorder' => [],
+            'by_ah' => [],
+            'deficiency_flagged' => 0,
+            'disorder_flagged' => 0,
+            'ah_flagged' => 0,
+            'by_underreporting' => [],
+            'underreporting_flagged' => 0,
             'by_transporte' => [],
             'transporte_flagged' => 0,
             'without_transporte' => 0,
@@ -1503,6 +1887,8 @@ final class CampaignAnalyzer
     {
         $base = $this->emptyTurmaAgg();
         $codes = is_array($agg['turma_codes'] ?? null) ? $agg['turma_codes'] : [];
+        $cols = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];
+        $profiles = is_array($agg['turma_profiles'] ?? null) ? $agg['turma_profiles'] : [];
 
         return [
             'total' => (int) ($agg['total'] ?? 0),
@@ -1511,9 +1897,17 @@ final class CampaignAnalyzer
             'by_tipo_turma' => is_array($agg['by_tipo_turma'] ?? null) ? $agg['by_tipo_turma'] : [],
             'by_mediacao' => is_array($agg['by_mediacao'] ?? null) ? $agg['by_mediacao'] : [],
             'by_tipo_bucket' => $this->aggregator->mergeBuckets($base['by_tipo_bucket'], is_array($agg['by_tipo_bucket'] ?? null) ? $agg['by_tipo_bucket'] : []),
+            'by_turno' => is_array($agg['by_turno'] ?? null) ? $agg['by_turno'] : [],
+            'by_ch_band' => is_array($agg['by_ch_band'] ?? null) ? $agg['by_ch_band'] : [],
             'turma_codes' => array_values(array_unique(array_map('strval', $codes))),
+            // Perfis só em leitura fresca do CSV (inferJornada); não persistir em parse_meta normalizado.
+            'turma_profiles' => $profiles,
             'without_etapa' => (int) ($agg['without_etapa'] ?? 0),
             'without_tipo' => (int) ($agg['without_tipo'] ?? 0),
+            'columns' => [
+                'turno' => (bool) ($cols['turno'] ?? false),
+                'carga_horaria' => (bool) ($cols['carga_horaria'] ?? false),
+            ],
         ];
     }
 
@@ -1537,6 +1931,14 @@ final class CampaignAnalyzer
             'by_faixa_etaria' => is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : [],
             'by_nee' => is_array($agg['by_nee'] ?? null) ? $agg['by_nee'] : [],
             'nee_flagged' => (int) ($agg['nee_flagged'] ?? 0),
+            'by_deficiency' => is_array($agg['by_deficiency'] ?? null) ? $agg['by_deficiency'] : [],
+            'by_disorder' => is_array($agg['by_disorder'] ?? null) ? $agg['by_disorder'] : [],
+            'by_ah' => is_array($agg['by_ah'] ?? null) ? $agg['by_ah'] : [],
+            'deficiency_flagged' => (int) ($agg['deficiency_flagged'] ?? 0),
+            'disorder_flagged' => (int) ($agg['disorder_flagged'] ?? 0),
+            'ah_flagged' => (int) ($agg['ah_flagged'] ?? 0),
+            'by_underreporting' => is_array($agg['by_underreporting'] ?? null) ? $agg['by_underreporting'] : [],
+            'underreporting_flagged' => (int) ($agg['underreporting_flagged'] ?? 0),
             'by_transporte' => is_array($agg['by_transporte'] ?? null) ? $agg['by_transporte'] : [],
             'transporte_flagged' => (int) ($agg['transporte_flagged'] ?? 0),
             'without_transporte' => (int) ($agg['without_transporte'] ?? 0),
@@ -1600,11 +2002,29 @@ final class CampaignAnalyzer
             is_array($into['by_tipo_bucket'] ?? null) ? $into['by_tipo_bucket'] : $this->emptyTurmaAgg()['by_tipo_bucket'],
             is_array($from['by_tipo_bucket'] ?? null) ? $from['by_tipo_bucket'] : [],
         );
+        $into['by_turno'] = $this->aggregator->mergeCounts(
+            is_array($into['by_turno'] ?? null) ? $into['by_turno'] : [],
+            is_array($from['by_turno'] ?? null) ? $from['by_turno'] : [],
+        );
+        $into['by_ch_band'] = $this->aggregator->mergeCounts(
+            is_array($into['by_ch_band'] ?? null) ? $into['by_ch_band'] : [],
+            is_array($from['by_ch_band'] ?? null) ? $from['by_ch_band'] : [],
+        );
+        $intoCols = is_array($into['columns'] ?? null) ? $into['columns'] : $this->emptyTurmaAgg()['columns'];
+        $fromCols = is_array($from['columns'] ?? null) ? $from['columns'] : [];
+        foreach (array_keys($intoCols) as $key) {
+            if (! empty($fromCols[$key])) {
+                $intoCols[$key] = true;
+            }
+        }
+        $into['columns'] = $intoCols;
         $codes = array_unique(array_merge(
             is_array($into['turma_codes'] ?? null) ? $into['turma_codes'] : [],
             is_array($from['turma_codes'] ?? null) ? $from['turma_codes'] : [],
         ));
         $into['turma_codes'] = array_values($codes);
+        // Não fundir turma_profiles no merge de rede (peso + PII-adjacent codes).
+        $into['turma_profiles'] = [];
 
         return $into;
     }
@@ -1682,6 +2102,41 @@ final class CampaignAnalyzer
                 is_array($from['by_nee'] ?? null) ? $from['by_nee'] : [],
             ),
             'nee_flagged' => (int) ($into['nee_flagged'] ?? 0) + (int) ($from['nee_flagged'] ?? 0),
+            'by_deficiency' => $this->aggregator->mergeCounts(
+                is_array($into['by_deficiency'] ?? null) ? $into['by_deficiency'] : [],
+                is_array($from['by_deficiency'] ?? null) ? $from['by_deficiency'] : [],
+            ),
+            'by_disorder' => $this->aggregator->mergeCounts(
+                is_array($into['by_disorder'] ?? null) ? $into['by_disorder'] : [],
+                is_array($from['by_disorder'] ?? null) ? $from['by_disorder'] : [],
+            ),
+            'by_ah' => $this->aggregator->mergeCounts(
+                is_array($into['by_ah'] ?? null) ? $into['by_ah'] : [],
+                is_array($from['by_ah'] ?? null) ? $from['by_ah'] : [],
+            ),
+            'deficiency_flagged' => (int) ($into['deficiency_flagged'] ?? 0) + (int) ($from['deficiency_flagged'] ?? 0),
+            'disorder_flagged' => (int) ($into['disorder_flagged'] ?? 0) + (int) ($from['disorder_flagged'] ?? 0),
+            'ah_flagged' => (int) ($into['ah_flagged'] ?? 0) + (int) ($from['ah_flagged'] ?? 0),
+            'by_underreporting' => $this->aggregator->mergeCounts(
+                is_array($into['by_underreporting'] ?? null) ? $into['by_underreporting'] : [],
+                is_array($from['by_underreporting'] ?? null) ? $from['by_underreporting'] : [],
+            ),
+            'underreporting_flagged' => (int) ($into['underreporting_flagged'] ?? 0) + (int) ($from['underreporting_flagged'] ?? 0),
+            'by_transporte' => $this->aggregator->mergeCounts(
+                is_array($into['by_transporte'] ?? null) ? $into['by_transporte'] : [],
+                is_array($from['by_transporte'] ?? null) ? $from['by_transporte'] : [],
+            ),
+            'transporte_flagged' => (int) ($into['transporte_flagged'] ?? 0) + (int) ($from['transporte_flagged'] ?? 0),
+            'without_transporte' => (int) ($into['without_transporte'] ?? 0) + (int) ($from['without_transporte'] ?? 0),
+            'transporte_sem_poder' => (int) ($into['transporte_sem_poder'] ?? 0) + (int) ($from['transporte_sem_poder'] ?? 0),
+            'by_poder_publico_transporte' => $this->aggregator->mergeCounts(
+                is_array($into['by_poder_publico_transporte'] ?? null) ? $into['by_poder_publico_transporte'] : [],
+                is_array($from['by_poder_publico_transporte'] ?? null) ? $from['by_poder_publico_transporte'] : [],
+            ),
+            'by_veiculo_transporte' => $this->aggregator->mergeCounts(
+                is_array($into['by_veiculo_transporte'] ?? null) ? $into['by_veiculo_transporte'] : [],
+                is_array($from['by_veiculo_transporte'] ?? null) ? $from['by_veiculo_transporte'] : [],
+            ),
             'without_cor' => (int) ($into['without_cor'] ?? 0) + (int) ($from['without_cor'] ?? 0),
             'without_sexo' => (int) ($into['without_sexo'] ?? 0) + (int) ($from['without_sexo'] ?? 0),
             'without_nascimento' => (int) ($into['without_nascimento'] ?? 0) + (int) ($from['without_nascimento'] ?? 0),

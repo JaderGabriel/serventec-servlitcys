@@ -6,7 +6,8 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Leitor CSV Educacenso portal — separador `;`, UTF-8 com BOM.
+ * Leitor CSV Educacenso portal — separador `;`.
+ * Aceita UTF-8 (com BOM) e Latin-1 / Windows-1252; células saem em UTF-8 válido.
  */
 final class CsvReader
 {
@@ -39,6 +40,7 @@ final class CsvReader
         try {
             $headers = null;
             $lineIndex = 0;
+            $sawNonUtf8 = false;
 
             while (($raw = fgetcsv($handle, 0, self::DELIMITER)) !== false) {
                 $lineIndex++;
@@ -51,7 +53,14 @@ final class CsvReader
                 }
 
                 if ($headers === null) {
-                    $headers = array_map(fn ($h) => $this->normalizeHeader((string) $h), $raw);
+                    $headers = [];
+                    foreach ($raw as $h) {
+                        $cell = (string) $h;
+                        if (! mb_check_encoding($cell, 'UTF-8')) {
+                            $sawNonUtf8 = true;
+                        }
+                        $headers[] = $this->normalizeHeader($cell);
+                    }
                     // Align header offset to first non-empty line if we skipped empties awkwardly
                     break;
                 }
@@ -72,7 +81,11 @@ final class CsvReader
                     if ($header === '') {
                         continue;
                     }
-                    $assoc[$header] = isset($raw[$i]) ? $this->normalizeCell((string) $raw[$i]) : '';
+                    $cell = isset($raw[$i]) ? (string) $raw[$i] : '';
+                    if ($cell !== '' && ! mb_check_encoding($cell, 'UTF-8')) {
+                        $sawNonUtf8 = true;
+                    }
+                    $assoc[$header] = $this->normalizeCell($cell);
                 }
                 $rows[] = $assoc;
             }
@@ -81,12 +94,65 @@ final class CsvReader
                 'headers' => $headers,
                 'rows' => $rows,
                 'header_offset' => $headerOffset,
-                'encoding' => 'UTF-8',
+                'encoding' => $sawNonUtf8 ? 'legacy-to-utf8' : 'UTF-8',
                 'delimiter' => self::DELIMITER,
             ];
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * Normaliza bytes legados (portal Educacenso) para UTF-8 válido para JSON/Eloquent.
+     */
+    public function toUtf8(string $value): string
+    {
+        if ($value === '') {
+            return '';
+        }
+
+        if (mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        foreach (['Windows-1252', 'ISO-8859-1'] as $from) {
+            $converted = @mb_convert_encoding($value, 'UTF-8', $from);
+            if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
+                return $converted;
+            }
+        }
+
+        $fromIconv = @iconv('Windows-1252', 'UTF-8//IGNORE', $value);
+        if (is_string($fromIconv) && $fromIconv !== '') {
+            return $fromIconv;
+        }
+
+        return mb_scrub($value, 'UTF-8');
+    }
+
+    /**
+     * Garante árvore JSON-serializável (UTF-8) — útil ao fundir parse_meta legado.
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    public function deepUtf8(mixed $value): mixed
+    {
+        if (is_string($value)) {
+            return $this->toUtf8($value);
+        }
+
+        if (is_array($value)) {
+            $out = [];
+            foreach ($value as $k => $v) {
+                $key = is_string($k) ? $this->toUtf8($k) : $k;
+                $out[$key] = $this->deepUtf8($v);
+            }
+
+            return $out;
+        }
+
+        return $value;
     }
 
     /**
@@ -131,14 +197,12 @@ final class CsvReader
 
     private function normalizeHeader(string $header): string
     {
-        $header = $this->stripBom($header);
-
-        return trim($header);
+        return trim($this->toUtf8($this->stripBom($header)));
     }
 
     private function normalizeCell(string $cell): string
     {
-        return trim($this->stripBom($cell));
+        return trim($this->toUtf8($this->stripBom($cell)));
     }
 
     private function stripBom(string $value): string

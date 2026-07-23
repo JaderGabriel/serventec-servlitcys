@@ -24,6 +24,47 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-07-23 — PDF: matriz de exposição (escolas ativas, ano atual)
+
+**Entregue**
+
+- Secção no PDF no modelo dos «Resultados finais» (infantil / fundamental / EJA × parcial/integral × urbana/rural × regular/especial)
+- Só **escolas ativas** e **ano da coleta** — sem diferença vs ano anterior
+- Análise geral com GERAL (regular) e coluna informativa de Educação Especial
+
+### 2026-07-23 — Transporte escolar enriquecido (`INF-TRA`)
+
+**Entregue**
+
+- Inferência com **uso**, **rural/urbano** (Localização do Acomp) e **tipo de veículo**
+- Separação **escolas ativas × demais** na UI, PDF e Excel
+- Achado `CLIO-TRA-RURAL` quando ≥50% dos usuários ativos estão em escolas rurais
+
+### 2026-07-23 — NEE: deficiências × transtornos × subnotificação
+
+**Entregue**
+
+- Classificador `NeeConditionClassifier`: códigos **DEF-***, **TRS-*** (TEA), **AH**
+- Heurísticas **SUB-*** (AEE sem condição, TEA↔DI, surdocegueira, múltipla incompleta, deficiência sem tipo)
+- Painel e PDF com colunas separadas + alertas; achado `CLIO-NEE-SUB`
+
+### 2026-07-23 — Tempo de escolarização (`INF-JOR`)
+
+**Entregue**
+
+- Agregação de **Turno** e **Carga horária** nas Relações de turmas (quando as colunas existem)
+- Padrões por pessoa: **fund. + AEE (contraturno)**, **regular + AC**, **infantil em turma estendida** (1 matrícula) — separados de tempo integral por duas matrículas
+- Inferência **INF-JOR** + achado `CLIO-JOR-SEM-COL`
+- Painel, PDF e Excel com secção para escolas ativas e demais situações
+
+### 2026-07-23 — Análise e export: ativas vs demais status
+
+**Entregue**
+
+- Painel analítico com secções separadas (escolas em atividade × demais situações)
+- KPIs/tríade no escopo das ativas; PDF com duas tabelas
+- Export **Excel** (`.xlsx`) com abas «Escolas ativas» e «Demais status» (substitui CSV no menu Downloads)
+
 ### 2026-07-22 — Transporte escolar (`INF-TRA`)
 
 **Entregue**

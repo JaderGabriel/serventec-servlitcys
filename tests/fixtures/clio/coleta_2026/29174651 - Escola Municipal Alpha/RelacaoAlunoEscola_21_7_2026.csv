@@ -1,6 +1,9 @@
-﻿Identificação única;Nome;Data de nascimento;CPF;Cor/Raça;Sexo;Deficiência;Transtorno do espectro autista;Altas habilidades;Código da Matrícula;Código da turma;Etapa de ensino
-ID-A001;ALUNO_001;01/01/2015;***.***.***-**;Parda;F;Não;Não;Não;MAT-1001;TUR-01;Ensino Fundamental de 9 anos - 1º Ano
-ID-A002;ALUNO_002;02/02/2014;***.***.***-**;Branca;M;Sim;Não;Não;MAT-1002;TUR-01;Ensino Fundamental de 9 anos - 2º Ano
-ID-A003;ALUNO_003;03/03/2013;***.***.***-**;Preta;F;Não;Sim;Não;MAT-1003;TUR-02;Ensino Fundamental de 9 anos - 3º Ano
-ID-A004;ALUNO_004;04/04/2016;***.***.***-***;;M;Não;Não;Não;MAT-1004;TUR-02;Ensino Fundamental de 9 anos - 1º Ano
-ID-A005;ALUNO_005;05/05/2015;***.***.***-**;Parda;F;Sim;Não;Não;MAT-2001;TUR-AEE;Atendimento Educacional Especializado
+﻿Identificação única;Nome;Data de nascimento;CPF;Cor/Raça;Sexo;Deficiência;Transtorno do espectro autista;Altas habilidades;Código da Matrícula;Código da turma;Etapa de ensino;Transporte escolar;Poder público responsável pelo transporte escolar;Tipo de veículo
+ID-A001;ALUNO_001;01/01/2015;***.***.***-**;Parda;F;Não;Não;Não;MAT-1001;TUR-01;Ensino Fundamental de 9 anos - 1º Ano;Sim;Municipal;Ônibus
+ID-A002;ALUNO_002;02/02/2014;***.***.***-**;Branca;M;Sim;Não;Não;MAT-1002;TUR-01;Ensino Fundamental de 9 anos - 2º Ano;Sim;Municipal;Van
+ID-A003;ALUNO_003;03/03/2013;***.***.***-**;Preta;F;Não;Sim;Não;MAT-1003;TUR-02;Ensino Fundamental de 9 anos - 3º Ano;Não;;;
+ID-A003;ALUNO_003;03/03/2013;***.***.***-**;Preta;F;Não;Sim;Não;MAT-1003-AC;TUR-AC;Atividade complementar;Não;;;
+ID-A004;ALUNO_004;04/04/2016;***.***.***-***;;M;Não;Não;Não;MAT-1004;TUR-02;Ensino Fundamental de 9 anos - 1º Ano;;;
+ID-A005;ALUNO_005;05/05/2015;***.***.***-**;Parda;F;Sim;Não;Não;MAT-2000;TUR-01;Ensino Fundamental de 9 anos - 1º Ano;Sim;Estadual;Ônibus
+ID-A005;ALUNO_005;05/05/2015;***.***.***-**;Parda;F;Sim;Não;Não;MAT-2001;TUR-AEE;Atendimento Educacional Especializado;Sim;Estadual;Ônibus
+ID-A006;ALUNO_006;06/06/2021;***.***.***-**;Branca;F;Não;Não;Não;MAT-3001;TUR-INF;Educação Infantil - Pré-escola;Não;;;

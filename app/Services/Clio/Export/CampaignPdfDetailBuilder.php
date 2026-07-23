@@ -5,6 +5,7 @@ namespace App\Services\Clio\Export;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Services\Clio\Analysis\AgeGradeRules;
+use App\Services\Clio\Analysis\NeeConditionClassifier;
 use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Services\Clio\Parse\CsvReader;
 use Illuminate\Support\Facades\Storage;
@@ -20,6 +21,7 @@ final class CampaignPdfDetailBuilder
     public function __construct(
         private readonly CsvReader $csv,
         private readonly RelationCsvAggregator $aggregator,
+        private readonly CampaignActiveCensusMatrixBuilder $censusMatrixBuilder,
         private readonly AgeGradeRules $ageRules = new AgeGradeRules,
     ) {}
 
@@ -45,7 +47,9 @@ final class CampaignPdfDetailBuilder
         $neeStudents = [];
         $neeWithoutAee = 0;
         $neeTotal = 0;
+        $neeWithUnder = 0;
         $missingTotal = 0;
+        $neeClassifier = new NeeConditionClassifier;
 
         $alunoArtifacts = $campaign->artifacts
             ->where('kind', 'relacao_aluno_escola')
@@ -71,7 +75,7 @@ final class CampaignPdfDetailBuilder
             }
 
             $aeeTurmas = $this->aeeTurmaCodesForSchool($campaign, $artifact->school_id, $disk);
-            $people = $this->groupPeople($data['rows'], $aeeTurmas, $year);
+                $people = $this->groupPeople($data['rows'], $aeeTurmas, $year, $neeClassifier);
 
             foreach ($people as $person) {
                 foreach ($person['etapas_distorcao'] as $etapa => $info) {
@@ -133,20 +137,49 @@ final class CampaignPdfDetailBuilder
                     }
                 }
 
-                if ($person['nee_tags'] !== []) {
-                    $neeTotal++;
+                if ($person['nee_tags'] !== [] || $person['underreporting'] !== []) {
+                    if ($person['nee_tags'] !== []) {
+                        $neeTotal++;
+                    }
                     $hasAee = $person['has_aee'];
-                    if (! $hasAee) {
+                    if ($person['nee_tags'] !== [] && ! $hasAee) {
                         $neeWithoutAee++;
                     }
+                    if ($person['underreporting'] !== []) {
+                        $neeWithUnder++;
+                    }
                     if (count($neeStudents) < self::SAMPLE_LIMIT) {
+                        $defLabels = array_map(
+                            static fn (array $c): string => $c['code'].' · '.$c['label'],
+                            $person['deficiencies'],
+                        );
+                        $trsLabels = array_map(
+                            static fn (array $c): string => $c['code'].' · '.$c['label'],
+                            $person['disorders'],
+                        );
+                        $ahLabels = array_map(
+                            static fn (array $c): string => $c['code'].' · '.$c['label'],
+                            $person['ah'],
+                        );
+                        $underLabels = array_map(
+                            static fn (array $f): string => $f['code'].' · '.$f['label'],
+                            $person['underreporting'],
+                        );
                         $neeStudents[] = [
                             'id' => $person['id_raw'],
                             'name' => $person['name'] !== '' ? $person['name'] : '—',
                             'cpf' => $person['cpf'] !== '' ? $person['cpf'] : '—',
                             'school' => $schoolName,
                             'inep' => $inep,
-                            'needs' => implode(', ', $person['nee_tags']),
+                            'needs' => implode(', ', $person['nee_tags']) ?: '—',
+                            'deficiencies' => $defLabels !== [] ? implode('; ', $defLabels) : '—',
+                            'disorders' => $trsLabels !== [] ? implode('; ', $trsLabels) : '—',
+                            'ah' => $ahLabels !== [] ? implode('; ', $ahLabels) : '—',
+                            'deficiency_codes' => array_column($person['deficiencies'], 'code'),
+                            'disorder_codes' => array_column($person['disorders'], 'code'),
+                            'underreporting' => $underLabels !== [] ? implode('; ', $underLabels) : '—',
+                            'underreporting_flags' => $person['underreporting'],
+                            'has_underreporting' => $person['underreporting'] !== [],
                             'has_matricula' => $person['matriculas'] !== [],
                             'matriculas' => $person['matriculas'] !== [] ? implode(', ', $person['matriculas']) : '—',
                             'turmas' => $person['turmas'] !== [] ? implode(', ', $person['turmas']) : '—',
@@ -181,8 +214,14 @@ final class CampaignPdfDetailBuilder
         usort($distortionByEtapa, static fn (array $a, array $b): int => ($b['distorcao'] <=> $a['distorcao']) ?: ($b['eligible'] <=> $a['eligible']));
         $distortionByEtapa = array_slice($distortionByEtapa, 0, 25);
 
-        // NEE sem AEE primeiro na tabela
-        usort($neeStudents, static fn (array $a, array $b): int => ((int) $a['has_aee']) <=> ((int) $b['has_aee']));
+        // NEE sem AEE / subnotificação primeiro
+        usort($neeStudents, static function (array $a, array $b): int {
+            $score = static fn (array $r): int => ((int) empty($r['has_aee']) * 10) + ((int) (! empty($r['has_underreporting'])) * 5);
+
+            return $score($b) <=> $score($a);
+        });
+
+        $censusMatrix = $this->censusMatrixBuilder->build($campaign);
 
         return [
             'distortion_by_etapa' => $distortionByEtapa,
@@ -191,7 +230,9 @@ final class CampaignPdfDetailBuilder
             'nee_students' => $neeStudents,
             'nee_without_aee' => $neeWithoutAee,
             'nee_total' => $neeTotal,
+            'nee_underreporting' => $neeWithUnder,
             'missing_demographics_total' => $missingTotal,
+            'census_matrix' => $censusMatrix,
         ];
     }
 
@@ -200,7 +241,7 @@ final class CampaignPdfDetailBuilder
      * @param  array<string, true>  $aeeTurmas
      * @return list<array<string, mixed>>
      */
-    private function groupPeople(array $rows, array $aeeTurmas, int $year): array
+    private function groupPeople(array $rows, array $aeeTurmas, int $year, NeeConditionClassifier $neeClassifier): array
     {
         if ($rows === []) {
             return [];
@@ -209,11 +250,11 @@ final class CampaignPdfDetailBuilder
         $sample = $rows[0];
         $hasCor = $this->hasHeader($sample, ['Cor/Raça', 'Cor/Raca', 'Raça', 'Raca', 'Cor']);
         $hasSexo = $this->hasHeader($sample, ['Sexo', 'Sexo biológico', 'Sexo biologico', 'Gênero', 'Genero']);
+        $hasGranularDefColumns = (bool) ($neeClassifier->classifyRow($sample)['has_granular_def_columns'] ?? false);
 
         /** @var array<string, array<string, mixed>> $byId */
         $byId = [];
 
-        // 1.ª passagem: IDs com matrícula em turma/etapa AEE
         $aeeIds = [];
         foreach ($rows as $row) {
             $id = $this->personKey($row);
@@ -234,6 +275,10 @@ final class CampaignPdfDetailBuilder
                     'matriculas' => [],
                     'turmas' => [],
                     'nee_tags' => [],
+                    'deficiencies' => [],
+                    'disorders' => [],
+                    'ah' => [],
+                    'underreporting' => [],
                     'has_aee' => isset($aeeIds[$id]),
                     'has_cor_col' => $hasCor,
                     'has_sexo_col' => $hasSexo,
@@ -285,8 +330,18 @@ final class CampaignPdfDetailBuilder
                 }
             }
 
-            foreach ($this->detectNeeTagsPublic($row) as $tag) {
+            $classified = $neeClassifier->classifyRow($row);
+            foreach ($classified['tags'] as $tag) {
                 $byId[$id]['nee_tags'][$tag] = $tag;
+            }
+            foreach ($classified['deficiencies'] as $cond) {
+                $byId[$id]['deficiencies'][$cond['code']] = $cond;
+            }
+            foreach ($classified['disorders'] as $cond) {
+                $byId[$id]['disorders'][$cond['code']] = $cond;
+            }
+            foreach ($classified['ah'] as $cond) {
+                $byId[$id]['ah'][$cond['code']] = $cond;
             }
 
             if ($etapa !== '') {
@@ -318,6 +373,31 @@ final class CampaignPdfDetailBuilder
             $person['matriculas'] = array_values($person['matriculas']);
             $person['turmas'] = array_values($person['turmas']);
             $person['nee_tags'] = array_values($person['nee_tags']);
+            $person['deficiencies'] = array_values($person['deficiencies']);
+            $person['disorders'] = array_values($person['disorders']);
+            $person['ah'] = array_values($person['ah']);
+            $merged = [
+                'conditions' => array_merge($person['deficiencies'], $person['disorders'], $person['ah']),
+                'deficiencies' => $person['deficiencies'],
+                'disorders' => $person['disorders'],
+                'ah' => $person['ah'],
+                'codes' => array_merge(
+                    array_column($person['deficiencies'], 'code'),
+                    array_column($person['disorders'], 'code'),
+                    array_column($person['ah'], 'code'),
+                ),
+                'flagged' => $person['nee_tags'] !== [],
+                'has_specific_deficiency' => array_filter(
+                    $person['deficiencies'],
+                    static fn (array $c): bool => $c['code'] !== 'DEF',
+                ) !== [],
+                'has_generic_deficiency' => array_filter(
+                    $person['deficiencies'],
+                    static fn (array $c): bool => $c['code'] === 'DEF',
+                ) !== [],
+                'has_granular_def_columns' => $hasGranularDefColumns,
+            ];
+            $person['underreporting'] = $neeClassifier->assessUnderreporting($merged, (bool) $person['has_aee']);
             $out[] = $person;
         }
 
@@ -451,25 +531,7 @@ final class CampaignPdfDetailBuilder
      */
     private function detectNeeTagsPublic(array $row): array
     {
-        $tags = [];
-        foreach ($row as $key => $value) {
-            $v = trim((string) $value);
-            if ($v === '' || in_array(mb_strtolower($v), ['não', 'nao', 'n', '0', 'false', 'não possui', 'nao possui'], true)) {
-                continue;
-            }
-            $k = (string) $key;
-            if (preg_match('/transtorno\s+do\s+espectro|autis|\btea\b/i', $k) === 1) {
-                $tags['TEA'] = 'TEA';
-            } elseif (preg_match('/altas\s*habil/i', $k) === 1) {
-                $tags['AH'] = 'AH';
-            } elseif (preg_match('/defici/i', $k) === 1) {
-                $tags['Deficiência'] = __('Deficiência');
-            } elseif (preg_match('/\bnee\b|\baee\b/i', $k) === 1 && ! preg_match('/turma|tipo/i', $k)) {
-                $tags['NEE'] = 'NEE';
-            }
-        }
-
-        return array_values($tags);
+        return (new NeeConditionClassifier)->classifyRow($row)['tags'];
     }
 
     private function absolutePath(string $disk, ?string $storagePath): ?string

@@ -21,23 +21,26 @@ final class CampaignParseService
     /** @var list<ArtifactParser> */
     private array $parsers;
 
+    private CsvReader $csv;
+
     /**
      * @param  list<ArtifactParser>|null  $parsers
      */
-    public function __construct(?array $parsers = null)
+    public function __construct(?array $parsers = null, ?CsvReader $csv = null)
     {
+        $this->csv = $csv ?? new CsvReader;
+
         if ($parsers !== null) {
             $this->parsers = $parsers;
 
             return;
         }
 
-        $csv = new CsvReader;
         $this->parsers = [
-            new AcompColeta1EtapaParser($csv),
-            new RelacaoAlunoEscolaParser($csv),
-            new RelacaoTurmaEscolaParser($csv),
-            new RelacaoProfissionalEscolaParser($csv),
+            new AcompColeta1EtapaParser($this->csv),
+            new RelacaoAlunoEscolaParser($this->csv),
+            new RelacaoTurmaEscolaParser($this->csv),
+            new RelacaoProfissionalEscolaParser($this->csv),
         ];
     }
 
@@ -161,11 +164,11 @@ final class CampaignParseService
     private function persistArtifact(ClioCampaign $campaign, ClioCampaignArtifact $artifact, ParseResult $result): void
     {
         $existingMeta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
-        $meta = array_merge($existingMeta, $result->meta, [
+        $meta = $this->csv->deepUtf8(array_merge($existingMeta, $result->meta, [
             'parsed_at' => now()->toIso8601String(),
             'warnings' => $result->warnings,
             'code' => $result->code,
-        ]);
+        ]));
 
         foreach ($result->schools as $schoolData) {
             ClioCampaignSchool::query()->updateOrCreate(
@@ -174,11 +177,11 @@ final class CampaignParseService
                     'inep_code' => $schoolData['inep_code'],
                 ],
                 [
-                    'name' => $schoolData['name'],
-                    'dependency' => $schoolData['dependency'],
-                    'collection_form' => $schoolData['collection_form'],
-                    'functioning_status' => $schoolData['functioning_status'],
-                    'meta' => $schoolData['meta'],
+                    'name' => $this->csv->toUtf8((string) $schoolData['name']),
+                    'dependency' => $this->csv->toUtf8((string) $schoolData['dependency']),
+                    'collection_form' => $this->csv->toUtf8((string) $schoolData['collection_form']),
+                    'functioning_status' => $this->csv->toUtf8((string) $schoolData['functioning_status']),
+                    'meta' => $this->csv->deepUtf8($schoolData['meta']),
                 ],
             );
         }
@@ -215,10 +218,10 @@ final class CampaignParseService
             $artifact->update([
                 'parse_status' => ClioCampaignArtifact::PARSE_OK,
                 'row_count' => (int) ($meta['extracted_files'] ?? 0),
-                'parse_meta' => array_merge($meta, [
+                'parse_meta' => $this->csv->deepUtf8(array_merge($meta, [
                     'parsed_at' => now()->toIso8601String(),
                     'note' => 'zip_expanded',
-                ]),
+                ])),
             ]);
         }
     }

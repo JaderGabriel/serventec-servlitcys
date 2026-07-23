@@ -16,14 +16,23 @@ class CatalogCityController extends Controller
     {
         $this->authorize('createCatalogCity', ClioCampaign::class);
 
-        $consultancyCities = City::query()
-            ->active()
-            ->withDataSetup()
+        $linkedCityIds = ClioCampaign::query()
+            ->whereNotNull('city_id')
+            ->distinct()
+            ->pluck('city_id')
+            ->all();
+
+        $consultancyBase = City::query()->active()->withDataSetup();
+        $hasConsultancySetup = (clone $consultancyBase)->exists();
+
+        $consultancyCities = (clone $consultancyBase)
+            ->when($linkedCityIds !== [], fn ($q) => $q->whereNotIn('id', $linkedCityIds))
             ->orderBy('name')
             ->get(['id', 'name', 'uf', 'ibge_municipio', 'clio_drive_url']);
 
         return view('clio.cities.create', [
             'consultancyCities' => $consultancyCities,
+            'consultancyAllLinked' => $hasConsultancySetup && $consultancyCities->isEmpty(),
         ]);
     }
 
@@ -38,12 +47,24 @@ class CatalogCityController extends Controller
         $isConsultancy = $request->input('setup_mode') === 'consultancy';
 
         if ($isConsultancy) {
+            $linkedCityIds = ClioCampaign::query()
+                ->whereNotNull('city_id')
+                ->distinct()
+                ->pluck('city_id')
+                ->all();
+
+            $cityIdRules = ['required', 'integer', 'exists:cities,id'];
+            if ($linkedCityIds !== []) {
+                $cityIdRules[] = Rule::notIn($linkedCityIds);
+            }
+
             $data = $request->validate([
                 'setup_mode' => ['required', 'in:consultancy'],
-                'city_id' => ['required', 'integer', 'exists:cities,id'],
+                'city_id' => $cityIdRules,
                 'clio_drive_url' => ['nullable', 'string', 'max:1024'],
             ], [
                 'city_id.required' => __('Selecione um município da consultoria.'),
+                'city_id.not_in' => __('Este município já está vinculado ao Clio.'),
             ]);
 
             $city = City::query()->active()->withDataSetup()->findOrFail((int) $data['city_id']);

@@ -2,7 +2,7 @@
 
 namespace Tests\Unit\Clio;
 
-use App\Services\Clio\Export\CampaignCsvExporter;
+use App\Services\Clio\Export\CampaignExcelExporter;
 use App\Services\Clio\Support\ClioUserCopy;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
@@ -13,8 +13,8 @@ final class CampaignCsvExporterTest extends TestCase
     #[Test]
     public function mascara_cpf_nis_de_onze_digitos_nas_mensagens(): void
     {
-        $exporter = app(CampaignCsvExporter::class);
-        $method = new ReflectionMethod(CampaignCsvExporter::class, 'stripPiiHint');
+        $exporter = app(CampaignExcelExporter::class);
+        $method = new ReflectionMethod(CampaignExcelExporter::class, 'stripPiiHint');
 
         $out = $method->invoke($exporter, 'Documento 12345678901 na amostra');
 

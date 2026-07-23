@@ -29,14 +29,14 @@
                 {{ __('PDF da coleta') }}
             </x-dropdown-link>
             <x-dropdown-link
-                :href="route('clio.campaigns.export.csv', $campaign)"
+                :href="route('clio.campaigns.export.xlsx', $campaign)"
                 icon="clipboard-document-list"
-                :title="__('Planilha CSV com contadores e ações')"
+                :title="__('Planilha Excel com escolas ativas e demais status')"
                 data-serv-loading-on-click
-                data-serv-loading-title="{{ __('Gerando CSV') }}"
+                data-serv-loading-title="{{ __('Gerando Excel') }}"
                 data-serv-loading-message="{{ __('Preparando o arquivo de exportação. Aguarde…') }}"
             >
-                {{ __('CSV da coleta') }}
+                {{ __('Excel da coleta') }}
             </x-dropdown-link>
         </x-slot>
     </x-dropdown>

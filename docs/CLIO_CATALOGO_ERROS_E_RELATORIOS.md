@@ -96,6 +96,7 @@ Disponível no painel municipal quando há `INF-MAT` e/ou `INF-TUR` após a aná
 | Etapa agregada e mediação | Relação turma | Anos iniciais/finais, presencial… |
 | Inclusão (heurística) | `INF-NEE` | Sinais NEE/TEA/AH quando há colunas |
 | Transporte escolar | `INF-TRA` | Uso / poder público / veículo quando há colunas |
+| Tempo de escolarização | `INF-JOR` | Turnos/CH das turmas; fund.+AEE, regular+AC, infantil estendido |
 | Por escola | Cruzamento escola × Acomp × relações | Flags: delta curricular, AEE/AC sem turma, alunos sem turma |
 | Apontamentos do relatório | Subconjunto de `CLIO-*` (ver §5.2) | Correção prioritária |
 | Notas de qualidade | Presenter | Limitações dos CSV importados |
@@ -115,8 +116,9 @@ Geradas por `CampaignAnalyzer` (Modo A) e `IeducarGapAnalyzer` (Modo B). Aparece
 | **INF-MAT** | Matrículas | Curricular + AEE + AC (Acomp) × linhas Relação aluno; por etapa | `acomp_*_sum`, `by_etapa_ensino`, `schools` |
 | **INF-TUR** | Turmas | Total e composição curricular/AEE/AC; por etapa/mediação | `by_tipo_bucket`, `by_etapa_*`, `schools` |
 | **INF-DOC** | Profissionais | Vínculos × turmas; turmas sem profissional | `by_turma`, `turmas_sem_docente`, `ratio` |
-| **INF-NEE** | Inclusão / NEE | Alunos com deficiência/TEA/AH | `flagged`, `by_nee`, `has_nee_columns` |
-| **INF-TRA** | Transporte escolar | Uso de transporte; coerência poder público/veículo | `flagged`, `pct`, `by_transporte`, `by_poder_publico`, `by_veiculo` |
+| **INF-NEE** | Inclusão / NEE | Deficiências (DEF-*) × transtornos (TRS-*) × AH; alertas de subnotificação | `by_deficiency`, `by_disorder`, `by_ah`, `by_underreporting`, `flagged` |
+| **INF-TRA** | Transporte escolar | Uso; rural/urbano (Localização da escola); tipo de veículo; ativas × demais | `flagged`, `by_location_users`, `by_veiculo`, `active`, `other`, `schools` |
+| **INF-JOR** | Tempo de escolarização | Turnos/CH; fund.+AEE contraturno ≠ AC; infantil turma estendida ≠ TI por 2 matrículas | `fund_aee_contraturno`, `curricular_ac`, `infantil_turma_estendida`, `by_turno`, `by_ch_band`, `schools` |
 | **INF-DEM** | Perfil demográfico | Cor/Raça, sexo, faixa etária; cobertura de colunas | `by_cor_raca`, `by_sexo`, `by_faixa_etaria`, `columns` |
 | **INF-DIS** | Distorção idade-série | % com atraso ≥2 anos (EF/EM); por etapa | `pct_distorcao`, `by_etapa`, `eligible` |
 | **INF-DEN** | Densidade aluno/turma | Média, turmas vazias, turmas ≥40 | `media_alunos_por_turma`, `turmas_ge_40` |
@@ -151,9 +153,12 @@ A re-análise (Modo A) **preserva** `INF-GAP` e achados `CLIO-GAP-*`.
 | **CLIO-DEM-SEM-COR** | Informação | Rede | Export sem coluna Cor/Raça |
 | **CLIO-DEM-SEM-SEXO** | Informação | Rede | Export sem coluna Sexo |
 | **CLIO-DEM-SEM-NEE** | Informação | Rede | Export sem colunas de deficiência/TEA/AH |
+| **CLIO-NEE-SUB** | Atenção | Rede | ≥15% dos alunos com NEE têm alerta heurístico de subnotificação/comorbidade |
 | **CLIO-TRA-SEM-COL** | Informação | Rede | Export sem colunas de transporte escolar |
 | **CLIO-TRA-VAZIO** | Atenção | Rede | ≥20% das matrículas sem uso de transporte informado |
 | **CLIO-TRA-SEM-PODER** | Atenção | Rede | Usa transporte sem poder público responsável (≥10% dos que usam) |
+| **CLIO-TRA-RURAL** | Informação | Rede | ≥50% dos usuários em escolas ativas estão em unidades rurais |
+| **CLIO-JOR-SEM-COL** | Informação | Rede | Relação de turmas sem Turno nem Carga horária |
 | **CLIO-DEM-COR-VAZIO** | Atenção | Rede | ≥20% das matrículas com Cor/Raça em branco |
 | **CLIO-DIS-SEM-NASC** | Informação | Rede | Sem Data de nascimento para distorção |
 | **CLIO-DIS-ALTA** | Atenção | Rede | Distorção estimada ≥20% no escopo EF/EM |

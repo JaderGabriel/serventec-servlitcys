@@ -27,10 +27,10 @@ final class CampaignDemografiaTest extends TestCase
         $this->assertTrue($agg['columns']['sexo']);
         $this->assertTrue($agg['columns']['nascimento']);
         $this->assertTrue($agg['columns']['nee']);
-        $this->assertSame(5, $agg['total']);
-        $this->assertSame(2, $agg['by_cor_raca']['Parda']);
+        $this->assertSame(8, $agg['total']);
+        $this->assertSame(3, $agg['by_cor_raca']['Parda']);
         $this->assertSame(1, $agg['without_cor']);
-        $this->assertSame(3, $agg['by_sexo'][__('Feminino')] ?? $agg['by_sexo']['Feminino'] ?? 0);
+        $this->assertSame(6, $agg['by_sexo'][__('Feminino')] ?? $agg['by_sexo']['Feminino'] ?? 0);
         $this->assertSame(2, $agg['by_sexo'][__('Masculino')] ?? $agg['by_sexo']['Masculino'] ?? 0);
         $this->assertGreaterThanOrEqual(1, $agg['nee_flagged']);
         $this->assertNotEmpty($agg['by_faixa_etaria']);
@@ -171,7 +171,7 @@ final class CampaignDemografiaTest extends TestCase
         $inferences = collect([
             'INF-TRA' => new ClioCampaignInference([
                 'code' => 'INF-TRA',
-                'summary' => 'Alunos que usam transporte escolar: 2 de 4 (50%).',
+                'summary' => 'Transporte: 2 usam (50%).',
                 'payload' => [
                     'flagged' => 2,
                     'scanned' => 4,
@@ -179,9 +179,44 @@ final class CampaignDemografiaTest extends TestCase
                     'by_transporte' => ['Sim' => 2, 'Não' => 1, 'Não informado' => 1],
                     'by_poder_publico' => ['Municipal' => 1, 'Não informado' => 3],
                     'by_veiculo' => ['Ônibus' => 1, 'Van' => 1],
+                    'by_location_users' => ['Urbana' => 2],
                     'has_transporte_columns' => true,
                     'has_poder_publico' => true,
                     'has_veiculo' => true,
+                    'active' => [
+                        'flagged' => 2,
+                        'scanned' => 4,
+                        'pct' => 50.0,
+                        'by_location_users' => ['Urbana' => 2],
+                        'by_veiculo' => ['Ônibus' => 1, 'Van' => 1],
+                    ],
+                    'other' => [
+                        'flagged' => 0,
+                        'scanned' => 0,
+                        'pct' => 0,
+                        'by_location_users' => [],
+                        'by_veiculo' => [],
+                    ],
+                    'schools' => [
+                        [
+                            'inep' => '29174651',
+                            'name' => 'Alpha',
+                            'functioning' => 'Em Atividade',
+                            'location' => 'Urbana',
+                            'inactive' => false,
+                            'scanned' => 4,
+                            'flagged' => 2,
+                            'pct' => 50.0,
+                            'without' => 1,
+                            'sem_poder' => 0,
+                            'by_transporte' => ['Sim' => 2],
+                            'by_poder_publico' => ['Municipal' => 1],
+                            'by_veiculo' => ['Ônibus' => 1, 'Van' => 1],
+                            'has_transporte' => true,
+                            'has_veiculo' => true,
+                            'has_poder' => true,
+                        ],
+                    ],
                 ],
             ]),
         ]);
@@ -205,5 +240,11 @@ final class CampaignDemografiaTest extends TestCase
         $this->assertNotEmpty($dash['profile']['by_transporte']);
         $this->assertSame(2, $dash['profile']['transporte_flagged']);
         $this->assertContains('INF-TRA', collect($dash['highlights'])->pluck('code')->all());
+        $this->assertTrue($dash['transporte']['available'] ?? false);
+        $this->assertSame(2, $dash['transporte']['flagged']);
+        $this->assertSame(2, $dash['transporte']['active']['flagged']);
+        $this->assertNotEmpty($dash['transporte']['by_location_users']);
+        $this->assertNotEmpty($dash['transporte']['schools_active']);
+        $this->assertSame('Urbana', $dash['transporte']['schools_active'][0]['location']);
     }
 }

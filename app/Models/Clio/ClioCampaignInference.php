@@ -41,6 +41,7 @@ class ClioCampaignInference extends Model
             'INF-DOC' => __('Profissionais'),
             'INF-NEE' => __('Inclusão / NEE'),
             'INF-TRA' => __('Transporte escolar'),
+            'INF-JOR' => __('Tempo de escolarização'),
             'INF-DEM' => __('Perfil demográfico'),
             'INF-DIS' => __('Distorção idade-série'),
             'INF-DEN' => __('Densidade aluno/turma'),

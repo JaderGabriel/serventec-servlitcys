@@ -74,7 +74,7 @@ final class ClioCampaignPipelineTest extends TestCase
         );
 
         $this->actingAs($admin)
-            ->get(route('clio.campaigns.export.csv', $campaign))
+            ->get(route('clio.campaigns.export.xlsx', $campaign))
             ->assertOk()
             ->assertHeader('content-disposition');
 
@@ -85,7 +85,7 @@ final class ClioCampaignPipelineTest extends TestCase
 
         $user = User::factory()->create();
         $this->actingAs($user)
-            ->get(route('clio.campaigns.export.csv', $campaign))
+            ->get(route('clio.campaigns.export.xlsx', $campaign))
             ->assertOk();
 
         $this->actingAs($user)

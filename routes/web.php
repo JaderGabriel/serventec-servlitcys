@@ -101,6 +101,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::post('/coletas/{campaign}/drive', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'updateUrl'])->name('campaigns.drive.update');
             Route::post('/coletas/{campaign}/drive/verificar', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'verify'])->name('campaigns.drive.verify');
             Route::post('/coletas/{campaign}/drive/importar', [\App\Http\Controllers\Clio\CampaignDriveController::class, 'import'])->name('campaigns.drive.import');
+            Route::get('/coletas/{campaign}/export/xlsx', [\App\Http\Controllers\Clio\CampaignExportController::class, 'xlsx'])->name('campaigns.export.xlsx');
             Route::get('/coletas/{campaign}/export/csv', [\App\Http\Controllers\Clio\CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
             Route::get('/coletas/{campaign}/export/pdf', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
             Route::get('/municipios/novo', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');

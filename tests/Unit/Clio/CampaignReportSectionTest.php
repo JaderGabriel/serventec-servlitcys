@@ -30,10 +30,12 @@ final class CampaignReportSectionTest extends TestCase
         $path = base_path('tests/fixtures/clio/coleta_2026/29174651 - Escola Municipal Alpha/RelacaoTurmaEscola_21_7_2026.csv');
         $result = (new RelacaoTurmaEscolaParser(new CsvReader))->parse($path, new \App\Models\Clio\ClioCampaignArtifact);
 
-        $this->assertSame(4, $result->rowCount);
-        $this->assertSame(2, $result->meta['aggregates']['by_tipo_bucket']['curricular']);
+        $this->assertSame(5, $result->rowCount);
+        $this->assertSame(3, $result->meta['aggregates']['by_tipo_bucket']['curricular']);
         $this->assertSame(1, $result->meta['aggregates']['by_tipo_bucket']['aee']);
         $this->assertSame(1, $result->meta['aggregates']['by_tipo_bucket']['atividade_complementar']);
+        $this->assertTrue($result->meta['aggregates']['columns']['turno'] ?? false);
+        $this->assertTrue($result->meta['aggregates']['columns']['carga_horaria'] ?? false);
         $this->assertArrayHasKey('Ensino Fundamental de 9 anos - 1º Ano', $result->meta['aggregates']['by_etapa_ensino']);
     }
 

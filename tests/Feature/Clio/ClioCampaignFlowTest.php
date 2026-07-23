@@ -212,6 +212,66 @@ final class ClioCampaignFlowTest extends TestCase
     }
 
     #[Test]
+    public function select_consultoria_omite_municipios_ja_vinculados_ao_clio(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $linked = City::query()->create([
+            'name' => 'Ja Vinculado Clio',
+            'uf' => 'BA',
+            'ibge_municipio' => '2910801',
+            'country' => 'Brasil',
+            'db_driver' => City::DRIVER_PGSQL,
+            'db_host' => '127.0.0.1',
+            'db_port' => 5432,
+            'db_database' => 'ieducar_linked',
+            'db_username' => 'ieducar',
+            'db_password' => 'secret',
+            'is_active' => true,
+        ]);
+        $available = City::query()->create([
+            'name' => 'Disponivel Consultoria',
+            'uf' => 'BA',
+            'ibge_municipio' => '2910802',
+            'country' => 'Brasil',
+            'db_driver' => City::DRIVER_PGSQL,
+            'db_host' => '127.0.0.1',
+            'db_port' => 5432,
+            'db_database' => 'ieducar_free',
+            'db_username' => 'ieducar',
+            'db_password' => 'secret',
+            'is_active' => true,
+        ]);
+
+        ClioCampaign::query()->create([
+            'city_id' => $linked->id,
+            'municipality_name' => $linked->name,
+            'uf' => 'BA',
+            'ibge_municipio' => $linked->ibge_municipio,
+            'year' => 2026,
+            'stage' => ClioCampaign::STAGE_1,
+            'profile' => ClioCampaign::PROFILE_CONSULTANCY,
+            'status' => ClioCampaign::STATUS_DRAFT,
+            'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('clio.cities.create'))
+            ->assertOk()
+            ->assertDontSee('Ja Vinculado Clio', false)
+            ->assertSee('Disponivel Consultoria', false);
+
+        $this->actingAs($admin)
+            ->from(route('clio.cities.create'))
+            ->post(route('clio.cities.store'), [
+                'setup_mode' => 'consultancy',
+                'city_id' => $linked->id,
+            ])
+            ->assertRedirect(route('clio.cities.create'))
+            ->assertSessionHasErrors('city_id');
+    }
+
+    #[Test]
     public function home_lista_municipio_e_abre_relatorio_quando_analisado(): void
     {
         $admin = User::factory()->admin()->create();

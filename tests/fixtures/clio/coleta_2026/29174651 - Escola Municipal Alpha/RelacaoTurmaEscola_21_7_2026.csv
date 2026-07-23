@@ -1,5 +1,6 @@
-﻿Código da turma;Nome da turma;Tipo de mediação;Tipo de turma;Etapa Agregada;Etapa de ensino
-TUR-01;1º Ano A;Presencial;Curricular;Anos iniciais;Ensino Fundamental de 9 anos - 1º Ano
-TUR-02;3º Ano A;Presencial;Curricular;Anos iniciais;Ensino Fundamental de 9 anos - 3º Ano
-TUR-AEE;AEE Multifuncional;Presencial;Atendimento Educacional Especializado (AEE);Educação Especial;Atendimento Educacional Especializado
-TUR-AC;Oficina de Leitura;Presencial;Atividade complementar;Atividade complementar;Atividade complementar
+﻿Código da turma;Nome da turma;Tipo de mediação;Tipo de turma;Etapa Agregada;Etapa de ensino;Turno;Carga horária semanal
+TUR-01;1º Ano A;Presencial;Curricular;Anos iniciais;Ensino Fundamental de 9 anos - 1º Ano;Manhã;20
+TUR-02;3º Ano A;Presencial;Curricular;Anos iniciais;Ensino Fundamental de 9 anos - 3º Ano;Tarde;20
+TUR-AEE;AEE Multifuncional;Presencial;Atendimento Educacional Especializado (AEE);Educação Especial;Atendimento Educacional Especializado;Tarde;10
+TUR-AC;Oficina de Leitura;Presencial;Atividade complementar;Atividade complementar;Atividade complementar;Tarde;5
+TUR-INF;Infantil Integral;Presencial;Curricular;Educação Infantil;Educação Infantil - Pré-escola;Integral;40

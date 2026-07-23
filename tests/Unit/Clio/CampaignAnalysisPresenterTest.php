@@ -146,6 +146,11 @@ final class CampaignAnalysisPresenterTest extends TestCase
         $this->assertSame('incomplete', $inc['filter']);
         $this->assertSame(1, $dash['counters']['schools_incomplete']);
         $this->assertSame(1, $dash['counters']['schools_inactive']);
+        $this->assertSame(1, $dash['counters']['schools_active']);
+        $this->assertSame(1, $dash['counters']['schools_other']);
+        $this->assertCount(1, $dash['schools_active']);
+        $this->assertCount(1, $dash['schools_other']);
+        $this->assertSame(1, $dash['triade']['total']);
         $this->assertSame('29174651', $dash['schools'][0]['inep']);
         $this->assertSame('29199999', $dash['schools'][1]['inep']);
     }

@@ -68,84 +68,10 @@ final class CampaignAnalysisPresenter
     {
         $schools = collect($coverage['schools'] ?? []);
         $totalSchools = (int) ($coverage['schools_total'] ?? $schools->count());
-        $triadeComplete = (int) ($coverage['schools_triade_complete'] ?? $schools->where('triade', true)->count());
-        $triadePct = (float) ($coverage['triade_coverage_pct'] ?? 0);
-
-        $withAluno = $schools->where('aluno', true)->count();
-        $withTurma = $schools->where('turma', true)->count();
-        $withProf = $schools->where('profissional', true)->count();
 
         $errors = $findings->where('severity', ClioCampaignFinding::SEVERITY_ERROR);
         $warnings = $findings->where('severity', ClioCampaignFinding::SEVERITY_WARNING);
         $infos = $findings->where('severity', ClioCampaignFinding::SEVERITY_INFO);
-
-        $errorSchoolIds = $errors->pluck('school_id')->filter()->unique();
-        $okSchools = $schools->filter(function (array $row) use ($campaign, $errorSchoolIds) {
-            if (! ($row['triade'] ?? false)) {
-                return false;
-            }
-            $school = $campaign->schools->firstWhere('inep_code', $row['inep']);
-            if ($school === null) {
-                return true;
-            }
-
-            return ! $errorSchoolIds->contains($school->id);
-        })->count();
-
-        $mat = $inferences->get('INF-MAT');
-        $matPayload = is_array($mat?->payload) ? $mat->payload : [];
-        $col = $inferences->get('INF-COL');
-        $colBuckets = is_array($col?->payload['buckets'] ?? null) ? $col->payload['buckets'] : [];
-
-        $kpis = [
-            [
-                'label' => __('Escolas na coleta'),
-                'value' => number_format($totalSchools),
-                'hint' => $coverage['has_acomp'] ?? false
-                    ? __('Com relatório de acompanhamento')
-                    : __('Sem Acomp municipal ainda'),
-                'tone' => 'sky',
-            ],
-            [
-                'label' => __('Tríade completa'),
-                'value' => number_format($triadePct, 1, ',', '.').'%',
-                'hint' => __(':ok de :total escolas com aluno, turma e profissional', [
-                    'ok' => $triadeComplete,
-                    'total' => $totalSchools,
-                ]),
-                'tone' => $triadePct >= 80 ? 'emerald' : ($triadePct >= 40 ? 'amber' : 'rose'),
-            ],
-            [
-                'label' => __('Erros a corrigir'),
-                'value' => number_format($errors->count()),
-                'hint' => $errors->isEmpty()
-                    ? __('Nenhum erro crítico listado')
-                    : __('Cada item pede correção antes de fechar a coleta'),
-                'tone' => $errors->isEmpty() ? 'emerald' : 'rose',
-            ],
-            [
-                'label' => __('Pontos de atenção'),
-                'value' => number_format($warnings->count()),
-                'hint' => $warnings->isEmpty()
-                    ? __('Nenhum aviso pendente')
-                    : __('Revisar — podem não bloquear, mas merecem conferência'),
-                'tone' => $warnings->isEmpty() ? 'emerald' : 'amber',
-            ],
-            [
-                'label' => __('Matrículas (Acomp)'),
-                'value' => number_format((int) ($matPayload['acomp_curricular_sum'] ?? 0)),
-                'hint' => __('Curriculares no Acompanhamento · Relação aluno: :n', [
-                    'n' => number_format((int) ($matPayload['relacao_aluno_rows'] ?? 0)),
-                ]),
-                'tone' => 'sky',
-            ],
-            [
-                'label' => __('Escolas em boa forma'),
-                'value' => number_format($okSchools),
-                'hint' => __('Tríade completa e sem erro associado'),
-                'tone' => $okSchools > 0 ? 'emerald' : 'slate',
-            ],
-        ];
 
         $schoolRows = $schools->map(function (array $row) use ($campaign, $errors, $warnings) {
             $school = $campaign->schools->firstWhere('inep_code', $row['inep']);
@@ -243,47 +169,111 @@ final class CampaignAnalysisPresenter
             return strcmp((string) $a['name'], (string) $b['name']);
         })->values();
 
+        $schoolsActive = $schoolRows->where('inactive', false)->values();
+        $schoolsOther = $schoolRows->where('inactive', true)->values();
+        $activeTotal = $schoolsActive->count();
+        $otherTotal = $schoolsOther->count();
+        $activeTriadeComplete = $schoolsActive->where('triade', true)->count();
+        $activeTriadePct = $activeTotal > 0 ? round(100 * $activeTriadeComplete / $activeTotal, 1) : 0.0;
+        $activeWithAluno = $schoolsActive->where('aluno', true)->count();
+        $activeWithTurma = $schoolsActive->where('turma', true)->count();
+        $activeWithProf = $schoolsActive->where('profissional', true)->count();
+        $activeOk = $schoolsActive->filter(function (array $row) {
+            return ($row['triade'] ?? false) && (int) ($row['errors'] ?? 0) === 0;
+        })->count();
+
+        $mat = $inferences->get('INF-MAT');
+        $matPayload = is_array($mat?->payload) ? $mat->payload : [];
+        $col = $inferences->get('INF-COL');
+        $colBuckets = is_array($col?->payload['buckets'] ?? null) ? $col->payload['buckets'] : [];
+
+        $kpis = [
+            [
+                'label' => __('Escolas em atividade'),
+                'value' => number_format($activeTotal),
+                'hint' => $otherTotal > 0
+                    ? __('+:n fora de atividade (extinta/paralisada/reforma)', ['n' => $otherTotal])
+                    : ($coverage['has_acomp'] ?? false
+                        ? __('Com relatório de acompanhamento')
+                        : __('Sem Acomp municipal ainda')),
+                'tone' => 'sky',
+            ],
+            [
+                'label' => __('Tríade completa'),
+                'value' => number_format($activeTriadePct, 1, ',', '.').'%',
+                'hint' => __(':ok de :total escolas ativas com aluno, turma e profissional', [
+                    'ok' => $activeTriadeComplete,
+                    'total' => $activeTotal,
+                ]),
+                'tone' => $activeTriadePct >= 80 ? 'emerald' : ($activeTriadePct >= 40 ? 'amber' : 'rose'),
+            ],
+            [
+                'label' => __('Erros a corrigir'),
+                'value' => number_format($errors->count()),
+                'hint' => $errors->isEmpty()
+                    ? __('Nenhum erro crítico listado')
+                    : __('Cada item pede correção antes de fechar a coleta'),
+                'tone' => $errors->isEmpty() ? 'emerald' : 'rose',
+            ],
+            [
+                'label' => __('Pontos de atenção'),
+                'value' => number_format($warnings->count()),
+                'hint' => $warnings->isEmpty()
+                    ? __('Nenhum aviso pendente')
+                    : __('Revisar — podem não bloquear, mas merecem conferência'),
+                'tone' => $warnings->isEmpty() ? 'emerald' : 'amber',
+            ],
+            [
+                'label' => __('Matrículas (Acomp)'),
+                'value' => number_format((int) ($matPayload['acomp_curricular_sum'] ?? 0)),
+                'hint' => __('Curriculares no Acompanhamento · Relação aluno: :n', [
+                    'n' => number_format((int) ($matPayload['relacao_aluno_rows'] ?? 0)),
+                ]),
+                'tone' => 'sky',
+            ],
+            [
+                'label' => __('Escolas em boa forma'),
+                'value' => number_format($activeOk),
+                'hint' => __('Ativas com tríade completa e sem erro associado'),
+                'tone' => $activeOk > 0 ? 'emerald' : 'slate',
+            ],
+        ];
+
         $schoolFilters = [
             [
                 'key' => 'all',
-                'label' => __('Todas'),
-                'hint' => __('Lista completa da rede nesta coleta.'),
-                'count' => $schoolRows->count(),
+                'label' => __('Todas (ativas)'),
+                'hint' => __('Escolas em atividade nesta coleta.'),
+                'count' => $activeTotal,
             ],
             [
                 'key' => 'errors',
                 'label' => __('Com erros'),
-                'hint' => __('Escolas com pelo menos um erro a corrigir.'),
-                'count' => $schoolRows->where('filter', 'errors')->count(),
+                'hint' => __('Escolas ativas com pelo menos um erro a corrigir.'),
+                'count' => $schoolsActive->where('filter', 'errors')->count(),
             ],
             [
                 'key' => 'incomplete',
                 'label' => __('Incompletas'),
                 'hint' => __('Falta arquivo da tríade (alunos, turmas ou profissionais) — só escolas em atividade.'),
-                'count' => $schoolRows->where('filter', 'incomplete')->count(),
+                'count' => $schoolsActive->where('filter', 'incomplete')->count(),
             ],
             [
                 'key' => 'complete',
                 'label' => __('Completas'),
                 'hint' => __('Tríade ok e sem erro associado.'),
-                'count' => $schoolRows->where('filter', 'complete')->count(),
+                'count' => $schoolsActive->where('filter', 'complete')->count(),
             ],
             [
                 'key' => 'attention',
                 'label' => __('Com avisos'),
                 'hint' => __('Têm pontos de atenção (avisos), com ou sem erro.'),
-                'count' => $schoolRows->filter(fn (array $r) => ($r['warnings'] ?? 0) > 0 && empty($r['inactive']))->count(),
-            ],
-            [
-                'key' => 'inactive',
-                'label' => __('Fora de atividade'),
-                'hint' => __('Extintas, paralisadas ou em reforma — não contam como coleta em aberto.'),
-                'count' => $schoolRows->where('filter', 'inactive')->count(),
+                'count' => $schoolsActive->filter(fn (array $r) => ($r['warnings'] ?? 0) > 0)->count(),
             ],
         ];
 
         $highlights = [];
-        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-TRA', 'INF-DEM', 'INF-DIS', 'INF-DEN', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
+        foreach (['INF-COL', 'INF-ESC', 'INF-MAT', 'INF-TUR', 'INF-DOC', 'INF-NEE', 'INF-TRA', 'INF-JOR', 'INF-DEM', 'INF-DIS', 'INF-DEN', 'INF-COE', 'INF-DUP', 'INF-DELTA', 'INF-XCHK', 'INF-GAP'] as $code) {
             $inf = $inferences->get($code);
             if ($inf === null) {
                 continue;
@@ -297,36 +287,51 @@ final class CampaignAnalysisPresenter
         }
 
         $report = $this->buildMunicipalReport($inferences, $findings);
+        $inactiveIneps = $schoolsOther->pluck('inep')->filter()->all();
+        $reportSchools = collect($report['schools'] ?? []);
+        $report['schools_active'] = $reportSchools
+            ->reject(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->values()
+            ->all();
+        $report['schools_other'] = $reportSchools
+            ->filter(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->values()
+            ->all();
         $acomp = $this->buildAcompSection($campaign, $coverage, $inferences);
         $schoolsOverview = $this->buildSchoolsOverview($campaign, $schoolRows);
         $crossChecks = $this->buildCrossChecks($inferences, $findings);
         $profile = $this->buildProfileSection($inferences);
         $stageMetrics = $this->buildStageMetricsSection($inferences);
+        $jornada = $this->buildJornadaSection($inferences, $inactiveIneps);
+        $transporte = $this->buildTransporteSection($inferences, $inactiveIneps);
 
         $counters = [
             'errors' => $errors->count(),
             'warnings' => $warnings->count(),
             'infos' => $infos->count(),
             'schools_total' => $totalSchools,
-            'schools_triade' => $triadeComplete,
-            'schools_ok' => $okSchools,
-            'schools_with_errors' => $schoolRows->where('filter', 'errors')->count(),
-            'schools_incomplete' => $schoolRows->where('filter', 'incomplete')->count(),
-            'schools_inactive' => $schoolRows->where('filter', 'inactive')->count(),
+            'schools_active' => $activeTotal,
+            'schools_other' => $otherTotal,
+            'schools_triade' => $activeTriadeComplete,
+            'schools_ok' => $activeOk,
+            'schools_with_errors' => $schoolsActive->where('filter', 'errors')->count(),
+            'schools_incomplete' => $schoolsActive->where('filter', 'incomplete')->count(),
+            'schools_inactive' => $otherTotal,
         ];
 
         return [
             'kpis' => $kpis,
             'triade' => [
-                'pct' => $triadePct,
-                'complete' => $triadeComplete,
-                'total' => $totalSchools,
-                'aluno_pct' => $totalSchools > 0 ? round(100 * $withAluno / $totalSchools, 1) : 0,
-                'turma_pct' => $totalSchools > 0 ? round(100 * $withTurma / $totalSchools, 1) : 0,
-                'profissional_pct' => $totalSchools > 0 ? round(100 * $withProf / $totalSchools, 1) : 0,
-                'aluno' => $withAluno,
-                'turma' => $withTurma,
-                'profissional' => $withProf,
+                'pct' => $activeTriadePct,
+                'complete' => $activeTriadeComplete,
+                'total' => $activeTotal,
+                'aluno_pct' => $activeTotal > 0 ? round(100 * $activeWithAluno / $activeTotal, 1) : 0,
+                'turma_pct' => $activeTotal > 0 ? round(100 * $activeWithTurma / $activeTotal, 1) : 0,
+                'profissional_pct' => $activeTotal > 0 ? round(100 * $activeWithProf / $activeTotal, 1) : 0,
+                'aluno' => $activeWithAluno,
+                'turma' => $activeWithTurma,
+                'profissional' => $activeWithProf,
+                'scope' => 'active',
             ],
             'collection_buckets' => [
                 'em_andamento' => (int) ($colBuckets['em_andamento'] ?? 0),
@@ -339,9 +344,13 @@ final class CampaignAnalysisPresenter
             'cross_checks' => $crossChecks,
             'profile' => $profile,
             'stage_metrics' => $stageMetrics,
+            'jornada' => $jornada,
+            'transporte' => $transporte,
             'report' => $report,
             'highlights' => $highlights,
             'schools' => $schoolRows,
+            'schools_active' => $schoolsActive,
+            'schools_other' => $schoolsOther,
             'school_filters' => $schoolFilters,
             'glossary' => ClioUserCopy::glossary(),
             'severity_legend' => ClioUserCopy::severityLegend(),
@@ -1163,6 +1172,18 @@ final class CampaignAnalysisPresenter
             'by_faixa_etaria' => $agg->toBars(is_array($demPayload['by_faixa_etaria'] ?? null) ? $demPayload['by_faixa_etaria'] : [], 8),
             'by_nee' => $agg->toBars(is_array($neePayload['by_nee'] ?? null) ? $neePayload['by_nee'] : [], 8),
             'nee_flagged' => (int) ($neePayload['flagged'] ?? 0),
+            'by_deficiency' => $agg->toBars(is_array($neePayload['by_deficiency'] ?? null) ? $neePayload['by_deficiency'] : [], 10),
+            'by_disorder' => $agg->toBars(is_array($neePayload['by_disorder'] ?? null) ? $neePayload['by_disorder'] : [], 8),
+            'by_ah' => $agg->toBars(is_array($neePayload['by_ah'] ?? null) ? $neePayload['by_ah'] : [], 4),
+            'deficiency_flagged' => (int) ($neePayload['deficiency_flagged'] ?? 0),
+            'disorder_flagged' => (int) ($neePayload['disorder_flagged'] ?? 0),
+            'ah_flagged' => (int) ($neePayload['ah_flagged'] ?? 0),
+            'by_underreporting' => $agg->toBars(is_array($neePayload['by_underreporting'] ?? null) ? $neePayload['by_underreporting'] : [], 8),
+            'underreporting_flagged' => (int) ($neePayload['underreporting_flagged'] ?? 0),
+            'nee_note_def_vs_trs' => (string) ($neePayload['note_def_vs_trs']
+                ?? __('Deficiências (DEF-*) e transtornos (TRS-*, ex. TEA) são públicos distintos no Censo; AH é categoria própria.')),
+            'nee_note_sub' => (string) ($neePayload['note_sub']
+                ?? __('Alertas de subnotificação são heurísticos (comorbidades frequentes e tipificação incompleta) — validar com a escola/laudo.')),
             'by_transporte' => $agg->toBars(is_array($traPayload['by_transporte'] ?? null) ? $traPayload['by_transporte'] : [], 6),
             'by_poder_publico_transporte' => $agg->toBars(is_array($traPayload['by_poder_publico'] ?? null) ? $traPayload['by_poder_publico'] : [], 8),
             'by_veiculo_transporte' => $agg->toBars(is_array($traPayload['by_veiculo'] ?? null) ? $traPayload['by_veiculo'] : [], 8),
@@ -1175,6 +1196,169 @@ final class CampaignAnalysisPresenter
             'has_dis' => $dis !== null,
             'has_den' => $den !== null,
             'has_doc' => $doc !== null,
+        ];
+    }
+
+    /**
+     * Tempo de escolarização: turnos/CH das turmas e padrões de jornada do aluno.
+     *
+     * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @param  list<string>  $inactiveIneps
+     * @return array<string, mixed>
+     */
+    private function buildJornadaSection(Collection $inferences, array $inactiveIneps): array
+    {
+        $jor = $inferences->get('INF-JOR');
+        $payload = is_array($jor?->payload) ? $jor->payload : [];
+        if ($jor === null && $payload === []) {
+            return ['available' => false];
+        }
+
+        $agg = new RelationCsvAggregator;
+        $schools = collect(is_array($payload['schools'] ?? null) ? $payload['schools'] : []);
+        $mapSchool = static function (array $row) use ($agg): array {
+            return [
+                'inep' => (string) ($row['inep'] ?? ''),
+                'name' => (string) ($row['name'] ?? ''),
+                'functioning' => (string) ($row['functioning'] ?? ''),
+                'turmas' => (int) ($row['turmas'] ?? 0),
+                'people' => (int) ($row['people'] ?? 0),
+                'fund_aee_contraturno' => (int) ($row['fund_aee_contraturno'] ?? 0),
+                'curricular_ac' => (int) ($row['curricular_ac'] ?? 0),
+                'infantil_turma_estendida' => (int) ($row['infantil_turma_estendida'] ?? 0),
+                'multi_enrollment' => (int) ($row['multi_enrollment'] ?? 0),
+                'by_turno' => $agg->toBars(is_array($row['by_turno'] ?? null) ? $row['by_turno'] : [], 6),
+                'by_ch_band' => $agg->toBars(is_array($row['by_ch_band'] ?? null) ? $row['by_ch_band'] : [], 6),
+                'has_turno' => (bool) ($row['has_turno'] ?? false),
+                'has_ch' => (bool) ($row['has_ch'] ?? false),
+                'highlight' => ((int) ($row['fund_aee_contraturno'] ?? 0) > 0)
+                    || ((int) ($row['curricular_ac'] ?? 0) > 0)
+                    || ((int) ($row['infantil_turma_estendida'] ?? 0) > 0),
+            ];
+        };
+
+        $schoolsActive = $schools
+            ->reject(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->map($mapSchool)
+            ->sortByDesc(fn (array $r) => ($r['fund_aee_contraturno'] * 1000) + ($r['curricular_ac'] * 100) + $r['infantil_turma_estendida'] + $r['turmas'])
+            ->values()
+            ->all();
+        $schoolsOther = $schools
+            ->filter(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->map($mapSchool)
+            ->values()
+            ->all();
+
+        return [
+            'available' => true,
+            'summary' => $jor?->summary,
+            'people' => (int) ($payload['people'] ?? 0),
+            'turmas' => (int) ($payload['turmas'] ?? 0),
+            'fund_aee_contraturno' => (int) ($payload['fund_aee_contraturno'] ?? 0),
+            'curricular_ac' => (int) ($payload['curricular_ac'] ?? 0),
+            'infantil_turma_estendida' => (int) ($payload['infantil_turma_estendida'] ?? 0),
+            'multi_enrollment' => (int) ($payload['multi_enrollment'] ?? 0),
+            'has_turno_columns' => (bool) ($payload['has_turno_columns'] ?? false),
+            'has_ch_columns' => (bool) ($payload['has_ch_columns'] ?? false),
+            'by_turno' => $agg->toBars(is_array($payload['by_turno'] ?? null) ? $payload['by_turno'] : [], 8),
+            'by_ch_band' => $agg->toBars(is_array($payload['by_ch_band'] ?? null) ? $payload['by_ch_band'] : [], 6),
+            'by_turno_curricular' => $agg->toBars(is_array($payload['by_turno_curricular'] ?? null) ? $payload['by_turno_curricular'] : [], 8),
+            'note_fund_aee' => (string) ($payload['note_fund_aee']
+                ?? __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.')),
+            'note_infantil' => (string) ($payload['note_infantil']
+                ?? __('Infantil em turma única com turno/CH estendido — diferente de tempo integral por duas matrículas.')),
+            'schools_active' => $schoolsActive,
+            'schools_other' => $schoolsOther,
+        ];
+    }
+
+    /**
+     * Transporte escolar: uso, rural/urbano, tipo de veículo — ativas × demais.
+     *
+     * @param  Collection<string, ClioCampaignInference>  $inferences
+     * @param  list<string>  $inactiveIneps
+     * @return array<string, mixed>
+     */
+    private function buildTransporteSection(Collection $inferences, array $inactiveIneps): array
+    {
+        $tra = $inferences->get('INF-TRA');
+        $payload = is_array($tra?->payload) ? $tra->payload : [];
+        if ($tra === null && $payload === []) {
+            return ['available' => false];
+        }
+
+        $hasCol = (bool) ($payload['has_transporte_columns'] ?? false);
+        $agg = new RelationCsvAggregator;
+        $active = is_array($payload['active'] ?? null) ? $payload['active'] : [];
+        $other = is_array($payload['other'] ?? null) ? $payload['other'] : [];
+
+        $mapSchool = static function (array $row) use ($agg): array {
+            $flagged = (int) ($row['flagged'] ?? 0);
+
+            return [
+                'inep' => (string) ($row['inep'] ?? ''),
+                'name' => (string) ($row['name'] ?? ''),
+                'functioning' => (string) ($row['functioning'] ?? ''),
+                'location' => (string) ($row['location'] ?? __('Não informado')),
+                'scanned' => (int) ($row['scanned'] ?? 0),
+                'flagged' => $flagged,
+                'pct' => $row['pct'] ?? 0,
+                'without' => (int) ($row['without'] ?? 0),
+                'sem_poder' => (int) ($row['sem_poder'] ?? 0),
+                'by_transporte' => $agg->toBars(is_array($row['by_transporte'] ?? null) ? $row['by_transporte'] : [], 4),
+                'by_poder_publico' => $agg->toBars(is_array($row['by_poder_publico'] ?? null) ? $row['by_poder_publico'] : [], 6),
+                'by_veiculo' => $agg->toBars(is_array($row['by_veiculo'] ?? null) ? $row['by_veiculo'] : [], 6),
+                'has_transporte' => (bool) ($row['has_transporte'] ?? false),
+                'has_veiculo' => (bool) ($row['has_veiculo'] ?? false),
+                'highlight' => $flagged > 0,
+                'highlight_rural' => $flagged > 0 && preg_match('/rural/iu', (string) ($row['location'] ?? '')) === 1,
+            ];
+        };
+
+        $schools = collect(is_array($payload['schools'] ?? null) ? $payload['schools'] : []);
+        $schoolsActive = $schools
+            ->reject(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->map($mapSchool)
+            ->sortByDesc(fn (array $r) => ($r['flagged'] * 1000) + $r['scanned'])
+            ->values()
+            ->all();
+        $schoolsOther = $schools
+            ->filter(fn (array $r) => in_array((string) ($r['inep'] ?? ''), $inactiveIneps, true))
+            ->map($mapSchool)
+            ->values()
+            ->all();
+
+        return [
+            'available' => $hasCol || (int) ($payload['flagged'] ?? 0) > 0 || $tra !== null,
+            'summary' => $tra?->summary,
+            'has_transporte_columns' => $hasCol,
+            'has_poder_publico' => (bool) ($payload['has_poder_publico'] ?? false),
+            'has_veiculo' => (bool) ($payload['has_veiculo'] ?? false),
+            'flagged' => (int) ($payload['flagged'] ?? 0),
+            'scanned' => (int) ($payload['scanned'] ?? 0),
+            'pct' => $payload['pct'] ?? null,
+            'by_transporte' => $agg->toBars(is_array($payload['by_transporte'] ?? null) ? $payload['by_transporte'] : [], 6),
+            'by_poder_publico' => $agg->toBars(is_array($payload['by_poder_publico'] ?? null) ? $payload['by_poder_publico'] : [], 8),
+            'by_veiculo' => $agg->toBars(is_array($payload['by_veiculo'] ?? null) ? $payload['by_veiculo'] : [], 8),
+            'by_location_users' => $agg->toBars(is_array($payload['by_location_users'] ?? null) ? $payload['by_location_users'] : [], 6),
+            'active' => [
+                'flagged' => (int) ($active['flagged'] ?? 0),
+                'scanned' => (int) ($active['scanned'] ?? 0),
+                'pct' => $active['pct'] ?? null,
+                'by_location_users' => $agg->toBars(is_array($active['by_location_users'] ?? null) ? $active['by_location_users'] : [], 6),
+                'by_veiculo' => $agg->toBars(is_array($active['by_veiculo'] ?? null) ? $active['by_veiculo'] : [], 8),
+            ],
+            'other' => [
+                'flagged' => (int) ($other['flagged'] ?? 0),
+                'scanned' => (int) ($other['scanned'] ?? 0),
+                'pct' => $other['pct'] ?? null,
+                'by_location_users' => $agg->toBars(is_array($other['by_location_users'] ?? null) ? $other['by_location_users'] : [], 6),
+                'by_veiculo' => $agg->toBars(is_array($other['by_veiculo'] ?? null) ? $other['by_veiculo'] : [], 8),
+            ],
+            'note_location' => (string) ($payload['note_location']
+                ?? __('Rural/urbano vem da Localização da escola no Acompanhamento; o uso e o tipo de veículo vêm da Relação de alunos.')),
+            'schools_active' => $schoolsActive,
+            'schools_other' => $schoolsOther,
         ];
     }
 
@@ -1269,6 +1453,7 @@ final class CampaignAnalysisPresenter
             'INF-DOC' => __('Profissionais'),
             'INF-NEE' => __('Inclusão / NEE'),
             'INF-TRA' => __('Transporte escolar'),
+            'INF-JOR' => __('Tempo de escolarização'),
             'INF-DEM' => __('Perfil demográfico'),
             'INF-DIS' => __('Distorção idade-série'),
             'INF-DEN' => __('Densidade aluno/turma'),
@@ -1289,8 +1474,9 @@ final class CampaignAnalysisPresenter
             'INF-MAT' => __('Totais de matrícula do Acompanhamento (curricular/AEE/AC) e das relações de alunos.'),
             'INF-TUR' => __('Turmas por etapa, mediação e tipo (curricular, AEE, atividade complementar).'),
             'INF-DOC' => __('Volume de profissionais/vínculos nas relações enviadas.'),
-            'INF-NEE' => __('Sinais de atendimento educacional especializado / NEE.'),
-            'INF-TRA' => __('Uso de transporte escolar e coerência com poder público / veículo, quando o export traz as colunas.'),
+            'INF-NEE' => __('Sinais de deficiência, transtornos (TEA) e AH; alertas de possível subnotificação/comorbidade.'),
+            'INF-TRA' => __('Uso de transporte, rural/urbano (Localização da escola), tipo de veículo e poder público — com separação ativas × demais.'),
+            'INF-JOR' => __('Turnos e CH das turmas; destaca fund.+AEE em contraturno, regular+AC e infantil em turma estendida (sem confundir com tempo integral por duas matrículas).'),
             'INF-DEM' => __('Cor/Raça, sexo e faixa etária agregados a partir das Relações de alunos.'),
             'INF-DIS' => __('Proporção de alunos com 2 ou mais anos acima da idade esperada para a série (estimativa INEP).'),
             'INF-DEN' => __('Média de alunos por turma e turmas vazias ou muito cheias.'),

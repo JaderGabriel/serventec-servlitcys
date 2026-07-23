@@ -159,7 +159,7 @@
                         <div class="clio-action-card clio-action-card--static">
                             <p class="clio-action-card__eyebrow">{{ __('Exportar') }}</p>
                             <h4 class="clio-action-card__title">{{ __('Downloads') }}</h4>
-                            <p class="clio-action-card__text">{{ __('PDF e CSV da análise estão no menu Downloads do cabeçalho.') }}</p>
+                            <p class="clio-action-card__text">{{ __('PDF e Excel da análise estão no menu Downloads do cabeçalho.') }}</p>
                         </div>
                     @endcan
                 </div>

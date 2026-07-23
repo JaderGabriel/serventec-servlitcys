@@ -45,6 +45,14 @@ final class RelationCsvAggregator
         $withoutEtapa = 0;
         $withoutTipo = 0;
         $turmaCodes = [];
+        $byTurno = [];
+        $byChBand = [];
+        $profiles = [];
+        $headerKeys = array_keys($rows[0] ?? []);
+        $turnoHeader = $this->findTurnoHeader($headerKeys);
+        $chHeader = $this->findCargaHorariaHeader($headerKeys);
+        $hasTurno = $turnoHeader !== null;
+        $hasCh = $chHeader !== null;
 
         foreach ($rows as $row) {
             $etapa = trim($csv->value($row, 'Etapa de ensino'));
@@ -71,11 +79,37 @@ final class RelationCsvAggregator
                 $mediacao = __('Não informado');
             }
 
+            $bucket = $this->classifyTipoTurma($tipo);
+            $turno = $hasTurno ? trim($csv->value($row, $turnoHeader)) : '';
+            if ($hasTurno) {
+                $turnoLabel = $turno !== '' ? $this->normalizeTurno($turno) : __('Não informado');
+                $byTurno[$turnoLabel] = ($byTurno[$turnoLabel] ?? 0) + 1;
+            }
+            $chHours = $hasCh ? $this->parseCargaHoraria(trim($csv->value($row, $chHeader))) : null;
+            if ($hasCh) {
+                $band = $this->cargaHorariaBand($chHours);
+                $byChBand[$band] = ($byChBand[$band] ?? 0) + 1;
+            }
+            $extended = $this->isExtendedHours($turno, $chHours);
+
+            if ($codigo !== '') {
+                $profiles[$codigo] = [
+                    'bucket' => $bucket,
+                    'turno' => $turno !== '' ? $this->normalizeTurno($turno) : '',
+                    'ch_hours' => $chHours,
+                    'extended' => $extended,
+                    'etapa' => $etapa,
+                    'agregada' => $agregada,
+                    'infantil' => $this->isInfantilEtapa($etapa, $agregada),
+                    'fundamental' => $this->isFundamentalEtapa($etapa, $agregada),
+                ];
+            }
+
             $byEtapa[$etapa] = ($byEtapa[$etapa] ?? 0) + 1;
             $byAgregada[$agregada] = ($byAgregada[$agregada] ?? 0) + 1;
             $byTipo[$tipo] = ($byTipo[$tipo] ?? 0) + 1;
             $byMediacao[$mediacao] = ($byMediacao[$mediacao] ?? 0) + 1;
-            $buckets[$this->classifyTipoTurma($tipo)]++;
+            $buckets[$bucket]++;
         }
 
         return [
@@ -85,9 +119,157 @@ final class RelationCsvAggregator
             'by_tipo_turma' => $this->sortDesc($byTipo),
             'by_mediacao' => $this->sortDesc($byMediacao),
             'by_tipo_bucket' => $buckets,
+            'by_turno' => $this->sortDesc($byTurno),
+            'by_ch_band' => $this->sortCargaBands($byChBand),
             'turma_codes' => array_keys($turmaCodes),
+            'turma_profiles' => $profiles,
             'without_etapa' => $withoutEtapa,
             'without_tipo' => $withoutTipo,
+            'columns' => [
+                'turno' => $hasTurno,
+                'carga_horaria' => $hasCh,
+            ],
+        ];
+    }
+
+    /**
+     * Perfis de jornada por pessoa (Identificação única), sem PII no retorno.
+     *
+     * @param  list<array<string, string>>  $alunoRows
+     * @param  array<string, array<string, mixed>>  $turmaProfiles
+     * @return array{
+     *   people: int,
+     *   fund_aee_contraturno: int,
+     *   curricular_ac: int,
+     *   infantil_turma_estendida: int,
+     *   multi_enrollment: int,
+     *   by_turno_curricular: array<string, int>,
+     *   columns_turno: bool,
+     *   columns_ch: bool
+     * }
+     */
+    public function aggregateEnrollmentDayPatterns(array $alunoRows, CsvReader $csv, array $turmaProfiles): array
+    {
+        $byPerson = [];
+        foreach ($alunoRows as $row) {
+            $id = trim($csv->value($row, 'Identificação única'));
+            if ($id === '') {
+                $id = trim($csv->value($row, 'Código da Matrícula'));
+            }
+            if ($id === '') {
+                $id = trim($csv->value($row, 'Código da matrícula'));
+            }
+            if ($id === '') {
+                continue;
+            }
+            $turma = trim($csv->value($row, 'Código da turma'));
+            $etapa = trim($csv->value($row, 'Etapa de ensino'));
+            if (! isset($byPerson[$id])) {
+                $byPerson[$id] = [
+                    'turmas' => [],
+                    'etapas' => [],
+                ];
+            }
+            if ($turma !== '') {
+                $byPerson[$id]['turmas'][$turma] = $turma;
+            }
+            if ($etapa !== '') {
+                $byPerson[$id]['etapas'][] = $etapa;
+            }
+        }
+
+        $fundAee = 0;
+        $currAc = 0;
+        $infantilExt = 0;
+        $multi = 0;
+        $byTurnoCurricular = [];
+        $hasTurno = false;
+        $hasCh = false;
+
+        foreach ($turmaProfiles as $profile) {
+            if (($profile['turno'] ?? '') !== '') {
+                $hasTurno = true;
+            }
+            if (($profile['ch_hours'] ?? null) !== null) {
+                $hasCh = true;
+            }
+        }
+
+        foreach ($byPerson as $person) {
+            $turmaCodes = array_values($person['turmas']);
+            if (count($turmaCodes) > 1) {
+                $multi++;
+            }
+
+            $buckets = [];
+            $turnos = [];
+            $hasFundCurricular = false;
+            $hasInfantilCurricular = false;
+            $infantilExtended = false;
+            $curricularTurno = '';
+
+            foreach ($turmaCodes as $code) {
+                $profile = $turmaProfiles[$code] ?? null;
+                if ($profile === null) {
+                    continue;
+                }
+                $bucket = (string) ($profile['bucket'] ?? self::BUCKET_OUTRA);
+                $buckets[$bucket] = true;
+                $turno = (string) ($profile['turno'] ?? '');
+                if ($turno !== '') {
+                    $turnos[$turno] = true;
+                }
+                if ($bucket === self::BUCKET_CURRICULAR) {
+                    if (! empty($profile['fundamental']) || $this->etapasIncludeFundamental($person['etapas'])) {
+                        $hasFundCurricular = true;
+                    }
+                    if (! empty($profile['infantil']) || $this->etapasIncludeInfantil($person['etapas'])) {
+                        $hasInfantilCurricular = true;
+                        if (! empty($profile['extended'])) {
+                            $infantilExtended = true;
+                        }
+                    }
+                    $curricularTurno = $turno !== '' ? $turno : $curricularTurno;
+                }
+            }
+
+            if ($curricularTurno !== '') {
+                $byTurnoCurricular[$curricularTurno] = ($byTurnoCurricular[$curricularTurno] ?? 0) + 1;
+            }
+
+            $hasCurricular = isset($buckets[self::BUCKET_CURRICULAR]);
+            $hasAee = isset($buckets[self::BUCKET_AEE]);
+            $hasAc = isset($buckets[self::BUCKET_AC]);
+
+            // Fundamental regular + AEE: jornada tipicamente em contraturno (mesmo sem coluna Turno).
+            if ($hasFundCurricular && $hasAee) {
+                $fundAee++;
+            }
+            // Regular + atividade complementar (não confundir com AEE).
+            if ($hasCurricular && $hasAc) {
+                $currAc++;
+            }
+            // Infantil em uma única matrícula curricular com turma de funcionamento estendido.
+            if (
+                $hasInfantilCurricular
+                && $infantilExtended
+                && ! $hasAee
+                && ! $hasAc
+                && count($turmaCodes) === 1
+            ) {
+                $infantilExt++;
+            }
+        }
+
+        return [
+            'people' => count($byPerson),
+            'fund_aee_contraturno' => $fundAee,
+            'curricular_ac' => $currAc,
+            'infantil_turma_estendida' => $infantilExt,
+            'multi_enrollment' => $multi,
+            'by_turno_curricular' => $this->sortDesc($byTurnoCurricular),
+            'columns_turno' => $hasTurno,
+            'columns_ch' => $hasCh,
         ];
     }
 
@@ -131,6 +313,10 @@ final class RelationCsvAggregator
         $bySexo = [];
         $byIdade = [];
         $byNee = [];
+        $byDef = [];
+        $byDisorder = [];
+        $byAh = [];
+        $byUnder = [];
         $byTurma = [];
         $byTransporte = [];
         $byPoderPublicoTra = [];
@@ -144,8 +330,13 @@ final class RelationCsvAggregator
         $transporteFlagged = 0;
         $transporteSemPoder = 0;
         $neeFlagged = 0;
+        $defFlagged = 0;
+        $disorderFlagged = 0;
+        $ahFlagged = 0;
+        $underFlagged = 0;
         $refYear = $referenceYear ?? (int) date('Y');
         $ageRules = new AgeGradeRules;
+        $neeClassifier = new NeeConditionClassifier;
         $ageGrade = [
             'eligible' => 0,
             'distorcao' => 0,
@@ -246,11 +437,41 @@ final class RelationCsvAggregator
             }
 
             if ($hasNee) {
-                $neeTags = $this->detectNeeTags($row);
-                if ($neeTags !== []) {
+                $classified = $neeClassifier->classifyRow($row);
+                $neeTags = $classified['tags'];
+                if ($classified['flagged']) {
                     $neeFlagged++;
                     foreach ($neeTags as $tag) {
                         $byNee[$tag] = ($byNee[$tag] ?? 0) + 1;
+                    }
+                    if ($classified['deficiencies'] !== []) {
+                        $defFlagged++;
+                        foreach ($classified['deficiencies'] as $cond) {
+                            $label = $cond['code'].' · '.$cond['label'];
+                            $byDef[$label] = ($byDef[$label] ?? 0) + 1;
+                        }
+                    }
+                    if ($classified['disorders'] !== []) {
+                        $disorderFlagged++;
+                        foreach ($classified['disorders'] as $cond) {
+                            $label = $cond['code'].' · '.$cond['label'];
+                            $byDisorder[$label] = ($byDisorder[$label] ?? 0) + 1;
+                        }
+                    }
+                    if ($classified['ah'] !== []) {
+                        $ahFlagged++;
+                        foreach ($classified['ah'] as $cond) {
+                            $label = $cond['code'].' · '.$cond['label'];
+                            $byAh[$label] = ($byAh[$label] ?? 0) + 1;
+                        }
+                    }
+                }
+                $underFlags = $neeClassifier->assessUnderreporting($classified, false);
+                if ($underFlags !== []) {
+                    $underFlagged++;
+                    foreach ($underFlags as $flag) {
+                        $ulabel = $flag['code'].' · '.$flag['label'];
+                        $byUnder[$ulabel] = ($byUnder[$ulabel] ?? 0) + 1;
                     }
                 }
             }
@@ -310,6 +531,14 @@ final class RelationCsvAggregator
             'by_faixa_etaria' => $this->sortAgeBands($byIdade),
             'by_nee' => $this->sortDesc($byNee),
             'nee_flagged' => $neeFlagged,
+            'by_deficiency' => $this->sortDesc($byDef),
+            'by_disorder' => $this->sortDesc($byDisorder),
+            'by_ah' => $this->sortDesc($byAh),
+            'deficiency_flagged' => $defFlagged,
+            'disorder_flagged' => $disorderFlagged,
+            'ah_flagged' => $ahFlagged,
+            'by_underreporting' => $this->sortDesc($byUnder),
+            'underreporting_flagged' => $underFlagged,
             'by_transporte' => $this->sortYesNoFirst($byTransporte),
             'transporte_flagged' => $transporteFlagged,
             'without_transporte' => $withoutTransporte,
@@ -594,25 +823,7 @@ final class RelationCsvAggregator
      */
     private function detectNeeTags(array $row): array
     {
-        $tags = [];
-        foreach ($row as $key => $value) {
-            $v = trim((string) $value);
-            if ($v === '' || in_array(mb_strtolower($v), ['não', 'nao', 'n', '0', 'false', 'não possui', 'nao possui'], true)) {
-                continue;
-            }
-            $k = (string) $key;
-            if (preg_match('/transtorno\s+do\s+espectro|autis|\btea\b/i', $k) === 1) {
-                $tags['TEA'] = 'TEA';
-            } elseif (preg_match('/altas\s*habil/i', $k) === 1) {
-                $tags['AH'] = 'AH';
-            } elseif (preg_match('/defici/i', $k) === 1) {
-                $tags['Deficiência'] = __('Deficiência');
-            } elseif (preg_match('/\bnee\b|\baee\b/i', $k) === 1 && ! preg_match('/turma|tipo/i', $k)) {
-                $tags['NEE'] = 'NEE';
-            }
-        }
-
-        return array_values($tags);
+        return (new NeeConditionClassifier)->classifyRow($row)['tags'];
     }
 
     /**
@@ -732,5 +943,178 @@ final class RelationCsvAggregator
         arsort($counts, SORT_NUMERIC);
 
         return $counts;
+    }
+
+    /**
+     * @param  list<string|int>  $headerKeys
+     */
+    private function findTurnoHeader(array $headerKeys): ?string
+    {
+        foreach ($headerKeys as $key) {
+            $k = (string) $key;
+            if (preg_match('/^turno$/iu', $k) === 1) {
+                return $k;
+            }
+        }
+        foreach ($headerKeys as $key) {
+            $k = (string) $key;
+            if (preg_match('/turno|hor[aá]rio\s*de\s*funcionamento/iu', $k) === 1) {
+                return $k;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  list<string|int>  $headerKeys
+     */
+    private function findCargaHorariaHeader(array $headerKeys): ?string
+    {
+        foreach ($headerKeys as $key) {
+            $k = (string) $key;
+            if (preg_match('/carga\s*hor[aá]ria|ch\s*semanal|dura[cç][aã]o\s*(semanal|semanal\s*da\s*turma)?/iu', $k) === 1) {
+                return $k;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeTurno(string $raw): string
+    {
+        $s = mb_strtolower(trim($raw));
+        if ($s === '') {
+            return __('Não informado');
+        }
+        if (preg_match('/integral|tempo\s*integral|manh[aã].*tarde|tarde.*manh[aã]|estendid/u', $s) === 1) {
+            return __('Integral');
+        }
+        if (preg_match('/manh[aã]|matut/u', $s) === 1) {
+            return __('Manhã');
+        }
+        if (preg_match('/tarde|vespert/u', $s) === 1) {
+            return __('Tarde');
+        }
+        if (preg_match('/noite|noturn/u', $s) === 1) {
+            return __('Noite');
+        }
+        if (preg_match('/intermedi/u', $s) === 1) {
+            return __('Intermediário');
+        }
+
+        return $raw;
+    }
+
+    private function parseCargaHoraria(string $raw): ?float
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+        if (preg_match('/(\d+(?:[.,]\d+)?)/u', $raw, $m) !== 1) {
+            return null;
+        }
+        $n = (float) str_replace(',', '.', $m[1]);
+        if ($n < 0 || $n > 168) {
+            return null;
+        }
+
+        return $n;
+    }
+
+    private function cargaHorariaBand(?float $hours): string
+    {
+        if ($hours === null) {
+            return __('Não informado');
+        }
+        if ($hours >= 35) {
+            return __('35h+ (tempo integral)');
+        }
+        if ($hours >= 21) {
+            return __('21–34h');
+        }
+
+        return __('Até 20h');
+    }
+
+    /**
+     * Turma com funcionamento estendido (turno integral ou CH semanal ≥ 35h).
+     */
+    private function isExtendedHours(string $turnoRaw, ?float $chHours): bool
+    {
+        $t = mb_strtolower(trim($turnoRaw));
+        if ($t !== '' && preg_match('/integral|tempo\s*integral|estendid|manh[aã].*tarde|tarde.*manh[aã]/u', $t) === 1) {
+            return true;
+        }
+
+        return $chHours !== null && $chHours >= 35.0;
+    }
+
+    private function isInfantilEtapa(string $etapa, string $agregada): bool
+    {
+        $blob = mb_strtolower($etapa.' '.$agregada);
+
+        return preg_match('/infantil|creche|pr[eé][\-\s]?escola|ber[cç][aá]rio/u', $blob) === 1;
+    }
+
+    private function isFundamentalEtapa(string $etapa, string $agregada): bool
+    {
+        $blob = mb_strtolower($etapa.' '.$agregada);
+
+        return preg_match('/fundamental|anos\s*iniciais|anos\s*finais/u', $blob) === 1
+            && preg_match('/infantil|eja|m[eé]dio/u', $blob) !== 1;
+    }
+
+    /**
+     * @param  list<string>  $etapas
+     */
+    private function etapasIncludeFundamental(array $etapas): bool
+    {
+        foreach ($etapas as $etapa) {
+            if ($this->isFundamentalEtapa($etapa, '')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<string>  $etapas
+     */
+    private function etapasIncludeInfantil(array $etapas): bool
+    {
+        foreach ($etapas as $etapa) {
+            if ($this->isInfantilEtapa($etapa, '')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<string, int>
+     */
+    private function sortCargaBands(array $counts): array
+    {
+        $order = [
+            __('Até 20h'),
+            __('21–34h'),
+            __('35h+ (tempo integral)'),
+            __('Não informado'),
+        ];
+        $sorted = [];
+        foreach ($order as $label) {
+            if (isset($counts[$label])) {
+                $sorted[$label] = $counts[$label];
+                unset($counts[$label]);
+            }
+        }
+        arsort($counts, SORT_NUMERIC);
+
+        return $sorted + $counts;
     }
 }

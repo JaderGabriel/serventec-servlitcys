@@ -105,7 +105,11 @@
                 <div x-show="mode === 'consultancy'" x-cloak class="space-y-4 border-t border-slate-200 pt-5 dark:border-slate-700">
                     @if ($consultancyCities->isEmpty())
                         <p class="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-                            {{ __('Nenhum município com i-Educar activo. Cadastre-o em Municípios da plataforma e volte aqui.') }}
+                            @if (! empty($consultancyAllLinked))
+                                {{ __('Todos os municípios com i-Educar activo já estão vinculados ao Clio. Abra a coleta existente ou cadastre um novo na plataforma.') }}
+                            @else
+                                {{ __('Nenhum município com i-Educar activo. Cadastre-o em Municípios da plataforma e volte aqui.') }}
+                            @endif
                         </p>
                         <a href="{{ route('cities.create') }}" class="serv-link text-sm font-medium">{{ __('Cadastrar município na consultoria') }} →</a>
                     @else
@@ -129,7 +133,7 @@
                             </select>
                             @error('city_id')<p class="mt-1 text-sm text-rose-600">{{ $message }}</p>@enderror
                             <p class="mt-2 text-xs text-slate-500">
-                                {{ __('Credenciais i-Educar já estão na ficha do município.') }}
+                                {{ __('Só aparecem municípios com i-Educar que ainda não têm coleta no Clio. Credenciais já estão na ficha.') }}
                                 <a href="{{ route('cities.index') }}" class="serv-link font-medium">{{ __('Gerir municípios') }}</a>
                             </p>
                         </div>
