@@ -5060,7 +5060,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return url.toString();
         },
 
-        async fetchHorizonteJson(url, { retries = 3, retryDelayMs = 1800 } = {}) {
+        async fetchHorizonteJson(url, { retries = 1, retryDelayMs = 1200 } = {}) {
             const retryStatuses = new Set([502, 503, 504, 429]);
             let lastError = null;
 
@@ -5079,18 +5079,37 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                             const retryAfterHeader = Number(
                                 response.headers.get("Retry-After") ?? "",
                             );
-                            const waitMs =
+                            // Cap para não amplificar thundering herd enquanto o lock monta o mapa.
+                            const waitMs = Math.min(
+                                5000,
                                 Number.isFinite(retryAfterHeader) &&
-                                retryAfterHeader > 0
+                                    retryAfterHeader > 0
                                     ? retryAfterHeader * 1000
-                                    : retryDelayMs * (attempt + 1);
-                            this.loadingMessage = `A preparar mapa (${attempt + 1}/${retries})…`;
+                                    : retryDelayMs * (attempt + 1),
+                            );
+                            this.loadingMessage =
+                                response.status === 503
+                                    ? `Mapa em construção — nova tentativa (${attempt + 1}/${retries})…`
+                                    : `A preparar mapa (${attempt + 1}/${retries})…`;
                             await new Promise((resolve) =>
                                 window.setTimeout(resolve, waitMs),
                             );
                             continue;
                         }
-                        throw new Error(`HTTP ${response.status}`);
+                        let detail = "";
+                        try {
+                            const body = await response.clone().json();
+                            if (body && typeof body.message === "string") {
+                                detail = body.message;
+                            }
+                        } catch {
+                            /* corpo não-JSON */
+                        }
+                        throw new Error(
+                            detail !== ""
+                                ? detail
+                                : `HTTP ${response.status}`,
+                        );
                     }
 
                     return await response.json();
@@ -5100,12 +5119,16 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         error instanceof Error ? error.message : String(error ?? "");
                     const retriable =
                         attempt < retries &&
+                        !message.includes("Mapa em construção") &&
                         (message.includes("HTTP 5") ||
                             message.toLowerCase().includes("network"));
                     if (retriable) {
                         this.loadingMessage = `Ligação instável — nova tentativa (${attempt + 1}/${retries})…`;
                         await new Promise((resolve) =>
-                            window.setTimeout(resolve, retryDelayMs * (attempt + 1)),
+                            window.setTimeout(
+                                resolve,
+                                Math.min(5000, retryDelayMs * (attempt + 1)),
+                            ),
                         );
                         continue;
                     }
@@ -5176,7 +5199,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             try {
                 const data = await this.fetchHorizonteJson(
                     this.dataUrl("regional", scoped),
-                    { retries: 2, retryDelayMs: 1000 },
+                    { retries: 1, retryDelayMs: 1500 },
                 );
                 if (!Array.isArray(data.markers) || data.markers.length === 0) {
                     throw new Error(
