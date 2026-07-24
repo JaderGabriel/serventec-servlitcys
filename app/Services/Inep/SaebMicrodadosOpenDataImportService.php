@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Models\City;
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Collection;
 
 /**
@@ -87,11 +88,9 @@ final class SaebMicrodadosOpenDataImportService
                 ];
             }
 
-            $canonicalPath = tempnam(sys_get_temp_dir(), 'saeb_canonical_');
-            if ($canonicalPath === false) {
-                throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
-            }
-            $canonicalPath .= '.csv';
+            $tmp = AppTemp::tempnam('saeb_canonical_', 'saeb');
+            $canonicalPath = $tmp.'.csv';
+            @unlink($tmp);
 
             $stats = $this->converter->streamToCanonicalCsv($csvPath, $canonicalPath, $allowedIbge, $cities);
 
@@ -199,11 +198,9 @@ final class SaebMicrodadosOpenDataImportService
 
         try {
             $downloaded = $this->downloader->downloadCsvToTemp($url);
-            $canonicalPath = tempnam(sys_get_temp_dir(), 'saeb_canonical_url_');
-            if ($canonicalPath === false) {
-                throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
-            }
-            $canonicalPath .= '.csv';
+            $tmp = AppTemp::tempnam('saeb_canonical_url_', 'saeb');
+            $canonicalPath = $tmp.'.csv';
+            @unlink($tmp);
 
             $stats = $this->converter->streamToCanonicalCsv($downloaded, $canonicalPath, $allowedIbge, $cities);
 

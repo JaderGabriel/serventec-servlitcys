@@ -3,6 +3,7 @@
 namespace App\Services\Clio\Drive;
 
 use App\Services\Clio\Ingest\ArtifactClassifier;
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -194,11 +195,7 @@ final class GoogleDriveFolderClient
         $maxFiles = (int) config('clio.drive.max_files', 500);
         $maxBytes = max(1, (int) config('clio.drive.max_file_mb', 64)) * 1024 * 1024;
 
-        $dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-            .DIRECTORY_SEPARATOR.'clio-drive-'.Str::lower(Str::random(12));
-        if (! mkdir($dir, 0700, true) && ! is_dir($dir)) {
-            throw new RuntimeException(__('Não foi possível criar pasta temporária para o Drive.'));
-        }
+        $dir = AppTemp::directory('clio-drive-', 'clio', 0700);
 
         $downloaded = 0;
         $skipped = 0;
@@ -275,11 +272,7 @@ final class GoogleDriveFolderClient
     {
         $maxBytes = max(1, (int) config('clio.drive.max_file_mb', 64)) * 1024 * 1024;
 
-        $dir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR)
-            .DIRECTORY_SEPARATOR.'clio-drive-'.Str::lower(Str::random(12));
-        if (! mkdir($dir, 0700, true) && ! is_dir($dir)) {
-            throw new RuntimeException(__('Não foi possível criar pasta temporária para o Drive.'));
-        }
+        $dir = AppTemp::directory('clio-drive-', 'clio', 0700);
 
         $downloaded = 0;
         $skipped = 0;

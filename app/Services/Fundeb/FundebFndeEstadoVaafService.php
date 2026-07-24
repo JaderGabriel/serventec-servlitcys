@@ -2,6 +2,7 @@
 
 namespace App\Services\Fundeb;
 
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 
@@ -273,8 +274,9 @@ class FundebFndeEstadoVaafService
             return null;
         }
 
-        $tmpPdf = tempnam(sys_get_temp_dir(), 'fnde_vaaf_');
-        if ($tmpPdf === false) {
+        try {
+            $tmpPdf = AppTemp::tempnam('fnde_vaaf_', 'fundeb');
+        } catch (\Throwable) {
             return null;
         }
 
@@ -293,8 +295,9 @@ class FundebFndeEstadoVaafService
             return null;
         }
 
-        $out = tempnam(sys_get_temp_dir(), 'fnde_vaaf_txt_');
-        if ($out === false) {
+        try {
+            $out = AppTemp::tempnam('fnde_vaaf_txt_', 'fundeb');
+        } catch (\Throwable) {
             return null;
         }
 

@@ -7,6 +7,7 @@ use App\Repositories\Ieducar\CadunicoPrevisaoRepository;
 use App\Support\Analytics\CadunicoPrevisaoExportRowsBuilder;
 use App\Support\Analytics\CadunicoPrevisaoExportWriter;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Filesystem\AppTemp;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -57,7 +58,7 @@ final class CadunicoPrevisaoExportService
      */
     private function xlsxResponse(array $rows, string $slug): StreamedResponse
     {
-        $tmp = storage_path('app/temp/cadunico-'.uniqid('', true).'.xlsx');
+        $tmp = AppTemp::path('cadunico-'.uniqid('', true).'.xlsx', 'exports');
         CadunicoPrevisaoExportWriter::writeXlsx($tmp, $rows);
         $binary = file_get_contents($tmp);
         @unlink($tmp);

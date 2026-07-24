@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Support\Analytics\ComparativoExportRowsBuilder;
 use App\Support\Analytics\ComparativoExportWriter;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Filesystem\AppTemp;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -63,7 +64,7 @@ final class ComparativoExportService
      */
     private function xlsxResponse(array $rows, string $slug): StreamedResponse
     {
-        $tmp = storage_path('app/temp/comparativo-'.uniqid('', true).'.xlsx');
+        $tmp = AppTemp::path('comparativo-'.uniqid('', true).'.xlsx', 'exports');
         ComparativoExportWriter::writeXlsx($tmp, $rows);
         $binary = file_get_contents($tmp);
         @unlink($tmp);

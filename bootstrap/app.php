@@ -359,5 +359,26 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone)
                 ->runInBackground();
         }
+
+        if (filter_var(config('tmp.schedule.enabled', true), FILTER_VALIDATE_BOOL)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $purgeTime = (string) config('tmp.schedule.time', '03:15');
+            $schedule->command('tmp:purge')
+                ->dailyAt($purgeTime)
+                ->name('app-tmp-purge')
+                ->withoutOverlapping(120)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
+
+        if (filter_var(config('clio.enabled', true), FILTER_VALIDATE_BOOL)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $schedule->command('clio:prune-artifacts')
+                ->weeklyOn(0, '04:00')
+                ->name('clio-prune-artifacts')
+                ->withoutOverlapping(180)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
     })
     ->create();

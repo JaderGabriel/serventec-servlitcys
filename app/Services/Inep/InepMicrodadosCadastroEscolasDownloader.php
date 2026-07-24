@@ -2,6 +2,7 @@
 
 namespace App\Services\Inep;
 
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -96,10 +97,7 @@ class InepMicrodadosCadastroEscolasDownloader
     {
         $url = $this->resolveZipUrl($year);
 
-        $tmpZip = tempnam(sys_get_temp_dir(), 'inep_microdados_');
-        if ($tmpZip === false) {
-            throw new \RuntimeException('Não foi possível criar arquivo temporário.');
-        }
+        $tmpZip = AppTemp::tempnam('inep_microdados_', 'inep');
 
         try {
             $response = Http::timeout(600)

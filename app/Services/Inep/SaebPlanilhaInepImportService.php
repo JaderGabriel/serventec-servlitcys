@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Models\City;
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -332,10 +333,7 @@ final class SaebPlanilhaInepImportService
 
     private function tempCsvPath(int $year): string
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'saeb_planilha_'.$year.'_');
-        if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
-        }
+        $tmp = AppTemp::tempnam('saeb_planilha_'.$year.'_', 'saeb');
         $path = $tmp.'.csv';
         @unlink($tmp);
 
@@ -344,10 +342,7 @@ final class SaebPlanilhaInepImportService
 
     private function canonicalOutputPath(): string
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'saeb_planilhas_merge_');
-        if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
-        }
+        $tmp = AppTemp::tempnam('saeb_planilhas_merge_', 'saeb');
         $path = $tmp.'.csv';
         @unlink($tmp);
 

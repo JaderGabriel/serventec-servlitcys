@@ -9,6 +9,7 @@ use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Clio\Support\ClioUserCopy;
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -71,11 +72,7 @@ final class CampaignExcelExporter
             : (string) ((int) $campaign->year);
         $filename = sprintf('clio_%s_%s_%s.xlsx', $citySlug, $ibge, $refDate);
 
-        $tmp = storage_path('app/temp/clio-export-'.uniqid('', true).'.xlsx');
-        $dir = dirname($tmp);
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
+        $tmp = AppTemp::path('clio-export-'.uniqid('', true).'.xlsx', 'exports');
 
         $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables, $diagnostico, $schoolTime, $insights);
 

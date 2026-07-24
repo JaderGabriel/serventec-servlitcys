@@ -2,6 +2,7 @@
 
 namespace App\Services\Inep;
 
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -235,10 +236,7 @@ final class SaebMicrodadosInepDownloader
             throw new \RuntimeException(__('Não foi possível criar o directório de extracção.'));
         }
 
-        $tmpZip = tempnam(sys_get_temp_dir(), 'saeb_microdados_');
-        if ($tmpZip === false) {
-            throw new \RuntimeException(__('Não foi possível criar arquivo temporário para o ZIP.'));
-        }
+        $tmpZip = AppTemp::tempnam('saeb_microdados_', 'saeb');
 
         try {
             $this->getWithSinkRespectingSsl($url, $tmpZip, $timeout, 'servlitcys/1.0 (SAEB microdados INEP)');
@@ -292,11 +290,9 @@ final class SaebMicrodadosInepDownloader
     public function downloadCsvToTemp(string $url): string
     {
         $timeout = max(60, min(3600, (int) config('ieducar.saeb.microdados_download_timeout_seconds', 900)));
-        $tmp = tempnam(sys_get_temp_dir(), 'saeb_opendata_');
-        if ($tmp === false) {
-            throw new \RuntimeException(__('Não foi possível criar arquivo temporário.'));
-        }
+        $tmp = AppTemp::tempnam('saeb_opendata_', 'saeb');
         $path = $tmp.'.csv';
+        @unlink($tmp);
 
         try {
             $this->getWithSinkRespectingSsl($url, $path, $timeout, 'servlitcys/1.0 (SAEB dados abertos)');

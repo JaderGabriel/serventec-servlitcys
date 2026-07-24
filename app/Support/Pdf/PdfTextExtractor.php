@@ -2,6 +2,7 @@
 
 namespace App\Support\Pdf;
 
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Facades\Process;
 
 /**
@@ -15,8 +16,9 @@ final class PdfTextExtractor
             return '';
         }
 
-        $tmp = tempnam(sys_get_temp_dir(), 'sl_pdf_');
-        if ($tmp === false) {
+        try {
+            $tmp = AppTemp::tempnam('sl_pdf_', 'pdf');
+        } catch (\Throwable) {
             return self::extractFromStreams($binary);
         }
 
@@ -36,7 +38,11 @@ final class PdfTextExtractor
         }
 
         if (self::pdftotextAvailable()) {
-            $out = tempnam(sys_get_temp_dir(), 'sl_pdf_txt_');
+            try {
+                $out = AppTemp::tempnam('sl_pdf_txt_', 'pdf');
+            } catch (\Throwable) {
+                $out = false;
+            }
             if ($out !== false) {
                 try {
                     $result = Process::run(['pdftotext', '-layout', $pdfPath, $out]);

@@ -4,6 +4,7 @@ namespace App\Support\Horizonte;
 
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Brazil\MunicipalityNomeUfKey;
+use App\Support\Filesystem\AppTemp;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -92,8 +93,9 @@ final class FndePnaeEntidadesSuspensasParser
      */
     private static function readRows(string $binary): array
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'pnae_');
-        if ($tmp === false) {
+        try {
+            $tmp = AppTemp::tempnam('pnae_', 'fundeb');
+        } catch (\Throwable) {
             return [];
         }
 
