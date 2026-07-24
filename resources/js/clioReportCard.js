@@ -256,6 +256,7 @@ export default function clioReportCard(seriesUrl) {
                     },
                     options: chartOptions(),
                 });
+                this.error = null;
                 await new Promise((resolve) =>
                     requestAnimationFrame(() => requestAnimationFrame(resolve)),
                 );
@@ -263,10 +264,16 @@ export default function clioReportCard(seriesUrl) {
                     this.destroyChart();
                     return;
                 }
-                this._chart.resize();
-                this._chart.update("none");
+                try {
+                    this._chart.resize();
+                    this._chart.update("none");
+                } catch (resizeErr) {
+                    // Gráfico já está desenhado; falha de resize/update não deve alarmar o utilizador.
+                    console.warn("[Clio] resize/update da série no card", resizeErr);
+                }
             } catch (error) {
                 console.warn("[Clio] falha ao desenhar série no card", error);
+                this.destroyChart();
                 this.error = "Não foi possível desenhar o gráfico.";
             }
         },
