@@ -79,4 +79,62 @@ final class CampaignIngestServiceTest extends TestCase
         $this->assertSame(ClioCampaign::STATUS_INGESTING, $campaign->status);
         $this->assertGreaterThanOrEqual(1, $campaign->schools()->count());
     }
+
+    #[Test]
+    public function duplicata_com_parse_failed_volta_a_pending_para_reprocessar(): void
+    {
+        Storage::fake('local');
+        config(['clio.enabled' => true, 'clio.disk' => 'local']);
+
+        $admin = User::factory()->admin()->create();
+        $city = City::query()->create([
+            'name' => 'Itamari Teste',
+            'uf' => 'BA',
+            'ibge_municipio' => '2915000',
+            'is_active' => true,
+        ]);
+        $campaign = ClioCampaign::query()->create([
+            'city_id' => $city->id,
+            'municipality_name' => $city->name,
+            'uf' => 'BA',
+            'ibge_municipio' => $city->ibge_municipio,
+            'year' => 2026,
+            'stage' => ClioCampaign::STAGE_1,
+            'profile' => ClioCampaign::PROFILE_ANALYSIS_ONLY,
+            'status' => ClioCampaign::STATUS_DRAFT,
+            'created_by' => $admin->id,
+        ]);
+
+        $csv = "Data de Referência,UF,Código da escola,Nome da escola\n21/07/2026,BA,29123456,Escola Teste\n";
+        $tmpDir = sys_get_temp_dir().'/clio_ingest_'.uniqid();
+        mkdir($tmpDir);
+        $path = $tmpDir.'/Relatorio_Acomp_Coleta_1Etapa_21072026.csv';
+        file_put_contents($path, $csv);
+
+        try {
+            $ingest = app(CampaignIngestService::class);
+            $first = $ingest->ingestFromPath($campaign, $tmpDir);
+            $this->assertSame(1, $first['stored']);
+            $artifact = $first['artifacts'][0];
+            $artifact->update([
+                'parse_status' => ClioCampaignArtifact::PARSE_FAILED,
+                'parse_meta' => array_merge(is_array($artifact->parse_meta) ? $artifact->parse_meta : [], [
+                    'code' => 'EDU-REL-COLS',
+                ]),
+            ]);
+
+            $second = $ingest->ingestFromPath($campaign, $tmpDir);
+            $this->assertSame(1, $second['duplicates']);
+            $this->assertSame(0, $second['stored']);
+            $retried = $second['artifacts'][0]->fresh();
+            $this->assertSame(ClioCampaignArtifact::PARSE_PENDING, $retried->parse_status);
+
+            $stats = app(\App\Services\Clio\Parse\CampaignParseService::class)->parseCampaign($campaign->fresh());
+            $this->assertGreaterThanOrEqual(1, $stats['parsed']);
+            $this->assertSame(ClioCampaignArtifact::PARSE_OK, $retried->fresh()->parse_status);
+        } finally {
+            @unlink($path);
+            @rmdir($tmpDir);
+        }
+    }
 }

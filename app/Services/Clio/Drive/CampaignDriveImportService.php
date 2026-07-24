@@ -239,12 +239,29 @@ final class CampaignDriveImportService
             $result = $this->ingest->ingestFromPath($campaign, $download['dir'], $driveMeta);
             $parsed = 0;
             if ($parse) {
+                // Duplicatas failed→pending (ingest) + garantir reparse das falhas deste lote.
+                $batchArtifactIds = collect($result['artifacts'])->pluck('id')->filter()->all();
+                if ($batchArtifactIds !== []) {
+                    ClioCampaignArtifact::query()
+                        ->whereIn('id', $batchArtifactIds)
+                        ->where('parse_status', ClioCampaignArtifact::PARSE_FAILED)
+                        ->update(['parse_status' => ClioCampaignArtifact::PARSE_PENDING]);
+                }
                 $parseStats = $this->parser->parseCampaign($campaign->fresh() ?? $campaign);
                 $parsed = (int) ($parseStats['parsed'] ?? 0);
             }
 
             $artifactsByDriveId = [];
+            $artifactIds = collect($result['artifacts'])->pluck('id')->filter()->values()->all();
+            $freshArtifacts = $artifactIds === []
+                ? collect()
+                : ClioCampaignArtifact::query()
+                    ->where('campaign_id', $campaign->id)
+                    ->whereIn('id', $artifactIds)
+                    ->get()
+                    ->keyBy('id');
             foreach ($result['artifacts'] as $artifact) {
+                $artifact = $freshArtifacts->get($artifact->id) ?? $artifact->fresh() ?? $artifact;
                 $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
                 $driveId = (string) ($meta['drive_file_id'] ?? '');
                 if ($driveId !== '') {

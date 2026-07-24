@@ -188,16 +188,6 @@
                                     @endif
                                 </div>
 
-                                @php $files = $campaign->fileProcessingSummary(); @endphp
-                                <div class="clio-file-pulse clio-file-pulse--{{ $files['tone'] }}" title="{{ $files['acomp']['name'] ?? __('Relatório Acomp. Coleta 1ª etapa') }}">
-                                    <span class="clio-file-pulse__dot" aria-hidden="true"></span>
-                                    <span class="clio-file-pulse__text">{{ $files['label'] }}</span>
-                                    <span class="clio-file-pulse__sep" aria-hidden="true">·</span>
-                                    <span class="clio-file-pulse__acomp clio-file-pulse__acomp--{{ $files['acomp']['tone'] }}">
-                                        {{ $files['acomp']['label'] }}
-                                    </span>
-                                </div>
-
                                 <div class="clio-meter">
                                     <div class="clio-meter__row">
                                         <span class="clio-meter__label">{{ __('Cobertura da tríade') }}</span>
@@ -245,6 +235,39 @@
                                         @endcan
                                     @endif
                                     <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-link text-sm ml-auto">{{ __('Central') }}</a>
+                                </div>
+
+                                @php $files = $campaign->fileProcessingSummary(); @endphp
+                                <div class="clio-file-pulse clio-file-pulse--{{ $files['tone'] }}" title="{{ $files['acomp']['name'] ?? __('Relatório Acomp. Coleta 1ª etapa') }}">
+                                    <span class="clio-file-pulse__item clio-file-pulse__item--{{ $files['tone'] }}">
+                                        <span class="clio-file-pulse__icon" aria-hidden="true">
+                                            @if ($files['tone'] === 'ok')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
+                                            @elseif ($files['tone'] === 'error')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>
+                                            @elseif ($files['tone'] === 'warn')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.63-1.515 2.63H3.72c-1.347 0-2.188-1.463-1.515-2.63L8.485 2.495ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>
+                                            @else
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 3.5A1.5 1.5 0 0 1 4.5 2h6.879a1.5 1.5 0 0 1 1.06.44l4.122 4.12A1.5 1.5 0 0 1 17 7.622V16.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 16.5v-13Z"/></svg>
+                                            @endif
+                                        </span>
+                                        <span class="clio-file-pulse__text">{{ $files['label'] }}</span>
+                                    </span>
+                                    <span class="clio-file-pulse__sep" aria-hidden="true">·</span>
+                                    <span class="clio-file-pulse__item clio-file-pulse__item--{{ $files['acomp']['tone'] }}">
+                                        <span class="clio-file-pulse__icon" aria-hidden="true">
+                                            @if ($files['acomp']['tone'] === 'ok')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>
+                                            @elseif ($files['acomp']['tone'] === 'error')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>
+                                            @elseif ($files['acomp']['tone'] === 'warn')
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.63-1.515 2.63H3.72c-1.347 0-2.188-1.463-1.515-2.63L8.485 2.495ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>
+                                            @else
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4.75 2A1.75 1.75 0 0 0 3 3.75v12.5c0 .966.784 1.75 1.75 1.75h10.5A1.75 1.75 0 0 0 17 16.25V7.56a1.75 1.75 0 0 0-.513-1.238L12.68 2.513A1.75 1.75 0 0 0 11.44 2H4.75Z"/></svg>
+                                            @endif
+                                        </span>
+                                        <span class="clio-file-pulse__acomp">{{ $files['acomp']['label'] }}</span>
+                                    </span>
                                 </div>
                             </div>
                         </article>

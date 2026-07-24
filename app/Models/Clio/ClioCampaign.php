@@ -255,6 +255,109 @@ class ClioCampaign extends Model
     }
 
     /**
+     * Inventário da Central: arquivo geral primeiro, depois escolas (INEP) com a tríade agrupada.
+     *
+     * @return array{
+     *   municipal: list<ClioCampaignArtifact>,
+     *   schools: list<array{
+     *     school_id: ?int,
+     *     inep: string,
+     *     name: string,
+     *     tone: string,
+     *     artifacts: list<ClioCampaignArtifact>
+     *   }>,
+     *   total: int
+     * }
+     */
+    public function filesInventory(): array
+    {
+        $artifacts = $this->relationLoaded('artifacts')
+            ? $this->artifacts
+            : $this->artifacts()->with('school')->get();
+
+        $municipalKinds = ['acomp_coleta_1etapa', 'pacote_zip', 'migracao_txt'];
+        $triadeKinds = [
+            'relacao_aluno_escola',
+            'relacao_turma_escola',
+            'relacao_profissional_escola',
+        ];
+
+        $municipal = $artifacts
+            ->filter(function (ClioCampaignArtifact $a) use ($municipalKinds, $triadeKinds): bool {
+                if (in_array($a->kind, $municipalKinds, true)) {
+                    return true;
+                }
+
+                return $a->school_id === null && ! in_array($a->kind, $triadeKinds, true);
+            })
+            ->sortBy(fn (ClioCampaignArtifact $a): array => [$a->kindSortKey(), $a->id])
+            ->values()
+            ->all();
+
+        $bySchool = [];
+        foreach ($artifacts as $artifact) {
+            if (in_array($artifact->kind, $municipalKinds, true) && $artifact->school_id === null) {
+                continue;
+            }
+            if (! in_array($artifact->kind, $triadeKinds, true) && $artifact->school_id === null) {
+                continue;
+            }
+
+            $school = $artifact->school;
+            $key = $artifact->school_id !== null
+                ? 'id:'.$artifact->school_id
+                : 'inep:'.(string) ($school?->inep_code ?? 'orphan-'.$artifact->id);
+
+            if (! isset($bySchool[$key])) {
+                $bySchool[$key] = [
+                    'school_id' => $artifact->school_id,
+                    'inep' => (string) ($school?->inep_code ?? '—'),
+                    'name' => (string) ($school?->name ?? __('Sem escola vinculada')),
+                    'artifacts' => [],
+                ];
+            }
+            $bySchool[$key]['artifacts'][] = $artifact;
+        }
+
+        $schools = [];
+        foreach ($bySchool as $group) {
+            $sorted = collect($group['artifacts'])
+                ->sortBy(fn (ClioCampaignArtifact $a): array => [$a->kindSortKey(), $a->id])
+                ->values()
+                ->all();
+            $tones = array_map(fn (ClioCampaignArtifact $a): string => $a->parseStatusTone(), $sorted);
+            $tone = match (true) {
+                in_array('error', $tones, true) => 'error',
+                in_array('warn', $tones, true) => 'warn',
+                $tones !== [] && count(array_filter($tones, fn (string $t): bool => $t === 'ok')) === count($tones) => 'ok',
+                default => 'muted',
+            };
+            $schools[] = [
+                'school_id' => $group['school_id'],
+                'inep' => $group['inep'],
+                'name' => $group['name'],
+                'tone' => $tone,
+                'artifacts' => $sorted,
+            ];
+        }
+
+        usort($schools, static function (array $a, array $b): int {
+            $byName = strcasecmp($a['name'], $b['name']);
+            if ($byName !== 0) {
+                return $byName;
+            }
+
+            return strcmp($a['inep'], $b['inep']);
+        });
+
+        return [
+            'municipal' => $municipal,
+            'schools' => $schools,
+            'total' => $artifacts->count(),
+        ];
+    }
+
+    /**
      * Data de referência do Acomp (portal), formatada para UI pt-BR.
      */
     public function referenceDateDisplay(): ?string

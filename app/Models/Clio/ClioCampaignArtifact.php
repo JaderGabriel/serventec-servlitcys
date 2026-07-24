@@ -64,4 +64,39 @@ class ClioCampaignArtifact extends Model
             default => __('Desconhecido'),
         };
     }
+
+    public function parseStatusLabel(): string
+    {
+        return match ($this->parse_status) {
+            self::PARSE_OK => __('Ok'),
+            self::PARSE_WARNING => __('Aviso'),
+            self::PARSE_FAILED => __('Falhou'),
+            self::PARSE_PENDING => __('Pendente'),
+            default => (string) $this->parse_status,
+        };
+    }
+
+    public function parseStatusTone(): string
+    {
+        return match ($this->parse_status) {
+            self::PARSE_OK => 'ok',
+            self::PARSE_WARNING => 'warn',
+            self::PARSE_FAILED => 'error',
+            self::PARSE_PENDING => 'warn',
+            default => 'muted',
+        };
+    }
+
+    public function kindSortKey(): int
+    {
+        return match ($this->kind) {
+            'acomp_coleta_1etapa' => 0,
+            'pacote_zip' => 1,
+            'migracao_txt' => 2,
+            'relacao_aluno_escola' => 10,
+            'relacao_turma_escola' => 11,
+            'relacao_profissional_escola' => 12,
+            default => 50,
+        };
+    }
 }

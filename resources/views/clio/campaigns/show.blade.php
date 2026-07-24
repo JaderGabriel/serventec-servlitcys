@@ -171,40 +171,97 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                     <div>
                         <h3 id="clio-hub-files-heading" class="clio-section-title text-base">{{ __('Arquivos') }}</h3>
-                        <p class="text-xs text-slate-500">{{ __('Últimos enviados nesta coleta.') }}</p>
+                        <p class="text-xs text-slate-500">{{ __('Arquivo geral primeiro; depois a tríade por escola (INEP).') }}</p>
                     </div>
                     @can('upload', $campaign)
                         <a href="{{ route('clio.campaigns.upload', $campaign) }}#inventario" class="serv-link text-sm">{{ __('Gerenciar upload') }}</a>
                     @endcan
                 </div>
-                <div class="clio-table-wrap">
-                    <table class="clio-table">
-                        <thead>
-                            <tr>
-                                <th class="px-4 py-2 font-medium">{{ __('Nome') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Tipo') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Interpretação') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Linhas') }}</th>
-                                <th class="px-4 py-2 font-medium">{{ __('Tamanho') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                            @forelse ($campaign->artifacts as $artifact)
-                                <tr>
-                                    <td class="px-4 py-2 font-mono text-xs">{{ $artifact->original_name }}</td>
-                                    <td class="px-4 py-2">{{ $artifact->kindLabel() }}</td>
-                                    <td class="px-4 py-2">{{ $artifact->parse_status }}</td>
-                                    <td class="px-4 py-2 tabular-nums">{{ $artifact->row_count ?? '—' }}</td>
-                                    <td class="px-4 py-2 tabular-nums">{{ number_format($artifact->size_bytes / 1024, 1) }} KB</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Ainda sem arquivos. Use Enviar / inventário.') }}</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+
+                @php
+                    $inventory = $filesInventory ?? ['municipal' => [], 'schools' => [], 'total' => 0];
+                    $statusToneClass = static fn (string $tone): string => match ($tone) {
+                        'ok' => 'clio-file-status clio-file-status--ok',
+                        'warn' => 'clio-file-status clio-file-status--warn',
+                        'error' => 'clio-file-status clio-file-status--error',
+                        default => 'clio-file-status clio-file-status--muted',
+                    };
+                @endphp
+
+                @if (($inventory['total'] ?? 0) === 0)
+                    <p class="px-4 py-8 text-center text-sm text-slate-500">{{ __('Ainda sem arquivos. Use Enviar / inventário.') }}</p>
+                @else
+                    <div class="clio-files-inventory">
+                        @if (! empty($inventory['municipal']))
+                            <div class="clio-files-group">
+                                <div class="clio-files-group__head">
+                                    <span class="clio-files-group__rail clio-files-group__rail--municipal" aria-hidden="true"></span>
+                                    <div class="min-w-0">
+                                        <p class="clio-files-group__title">{{ __('Arquivo geral da coleta') }}</p>
+                                        <p class="clio-files-group__meta">{{ __('Acompanhamento municipal (sem INEP de escola)') }}</p>
+                                    </div>
+                                </div>
+                                <ul class="clio-files-list">
+                                    @foreach ($inventory['municipal'] as $artifact)
+                                        <li class="clio-files-row">
+                                            <span class="{{ $statusToneClass($artifact->parseStatusTone()) }}" title="{{ $artifact->parseStatusLabel() }}">
+                                                <span class="clio-file-status__dot" aria-hidden="true"></span>
+                                                {{ $artifact->parseStatusLabel() }}
+                                            </span>
+                                            <div class="clio-files-row__main min-w-0">
+                                                <p class="clio-files-row__name" title="{{ $artifact->original_name }}">{{ $artifact->original_name }}</p>
+                                                <p class="clio-files-row__kind">{{ $artifact->kindLabel() }}</p>
+                                            </div>
+                                            <span class="clio-files-row__stat tabular-nums">{{ $artifact->row_count ?? '—' }}</span>
+                                            <span class="clio-files-row__stat tabular-nums">{{ number_format($artifact->size_bytes / 1024, 1) }} KB</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        @foreach ($inventory['schools'] as $group)
+                            <div class="clio-files-group">
+                                <div class="clio-files-group__head">
+                                    <span class="clio-files-group__rail clio-files-group__rail--{{ $group['tone'] }}" aria-hidden="true"></span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="clio-files-group__title truncate">{{ $group['name'] }}</p>
+                                        <p class="clio-files-group__meta">
+                                            <span class="font-mono">{{ __('INEP :c', ['c' => $group['inep']]) }}</span>
+                                            <span aria-hidden="true">·</span>
+                                            {{ __(':n arquivo(s) da tríade', ['n' => count($group['artifacts'])]) }}
+                                        </p>
+                                    </div>
+                                    <span class="{{ $statusToneClass($group['tone']) }}">
+                                        <span class="clio-file-status__dot" aria-hidden="true"></span>
+                                        @switch($group['tone'])
+                                            @case('ok') {{ __('Tríade ok') }} @break
+                                            @case('error') {{ __('Com falha') }} @break
+                                            @case('warn') {{ __('Atenção') }} @break
+                                            @default {{ __('Sem status') }}
+                                        @endswitch
+                                    </span>
+                                </div>
+                                <ul class="clio-files-list">
+                                    @foreach ($group['artifacts'] as $artifact)
+                                        <li class="clio-files-row">
+                                            <span class="{{ $statusToneClass($artifact->parseStatusTone()) }}" title="{{ $artifact->parseStatusLabel() }}">
+                                                <span class="clio-file-status__dot" aria-hidden="true"></span>
+                                                {{ $artifact->parseStatusLabel() }}
+                                            </span>
+                                            <div class="clio-files-row__main min-w-0">
+                                                <p class="clio-files-row__name" title="{{ $artifact->original_name }}">{{ $artifact->original_name }}</p>
+                                                <p class="clio-files-row__kind">{{ $artifact->kindLabel() }}</p>
+                                            </div>
+                                            <span class="clio-files-row__stat tabular-nums">{{ $artifact->row_count ?? '—' }}</span>
+                                            <span class="clio-files-row__stat tabular-nums">{{ number_format($artifact->size_bytes / 1024, 1) }} KB</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </section>
         </div>
     </div>

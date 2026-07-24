@@ -159,7 +159,11 @@ class CampaignController extends Controller
     {
         $this->authorize('view', $campaign);
 
-        $campaign->load(['city', 'artifacts' => fn ($q) => $q->latest()->limit(50), 'schools']);
+        $campaign->load([
+            'city',
+            'artifacts' => fn ($q) => $q->with('school')->orderBy('id'),
+            'schools' => fn ($q) => $q->orderBy('name'),
+        ]);
         $campaign->loadCount([
             'artifacts',
             'schools',
@@ -173,6 +177,7 @@ class CampaignController extends Controller
         return view('clio.campaigns.show', [
             'campaign' => $campaign,
             'coverage' => $coverage,
+            'filesInventory' => $campaign->filesInventory(),
             'hub' => [
                 'triade_pct' => (float) ($coverage['triade_coverage_pct'] ?? 0),
                 'triade_complete' => (int) ($coverage['schools_triade_complete'] ?? 0),

@@ -337,12 +337,21 @@ final class CampaignIngestService
             ->first();
 
         if ($existing !== null) {
-            if (filled($driveMeta['id'] ?? null)) {
-                $meta = is_array($existing->parse_meta) ? $existing->parse_meta : [];
-                if (($meta['drive_file_id'] ?? null) !== $driveMeta['id']) {
-                    $meta['drive_file_id'] = $driveMeta['id'];
-                    $existing->update(['parse_meta' => $meta]);
-                }
+            $meta = is_array($existing->parse_meta) ? $existing->parse_meta : [];
+            $dirty = false;
+            if (filled($driveMeta['id'] ?? null) && ($meta['drive_file_id'] ?? null) !== $driveMeta['id']) {
+                $meta['drive_file_id'] = $driveMeta['id'];
+                $dirty = true;
+            }
+            // Reimport do mesmo SHA: falha anterior deve voltar a pending para o parse tentar de novo
+            // (ex.: CSV com vírgula após correção do CsvReader).
+            if ($existing->parse_status === ClioCampaignArtifact::PARSE_FAILED) {
+                $existing->parse_status = ClioCampaignArtifact::PARSE_PENDING;
+                $dirty = true;
+            }
+            if ($dirty) {
+                $existing->parse_meta = $meta;
+                $existing->save();
             }
 
             return ['stored' => 0, 'ignored' => 0, 'duplicates' => 1, 'artifacts' => [$existing]];
