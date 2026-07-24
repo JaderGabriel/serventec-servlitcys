@@ -33,6 +33,9 @@ final class ClioBiInsightComposer
         $schoolHours = $snapshot['school_time_hours'] ?? null;
         $schoolHasCh = (bool) ($snapshot['school_time_has_ch'] ?? false);
         $schoolAvailable = (bool) ($snapshot['school_time_available'] ?? false);
+        $withoutCor = (int) ($snapshot['without_cor'] ?? 0);
+        $demScanned = (int) ($snapshot['dem_scanned'] ?? 0);
+        $alunosSemTurma = (int) ($snapshot['alunos_sem_turma'] ?? 0);
 
         if (is_numeric($triade)) {
             $sev = ((float) $triade) >= 90 ? 'info' : (((float) $triade) >= 70 ? 'warning' : 'error');
@@ -62,6 +65,19 @@ final class ClioBiInsightComposer
             ];
         }
 
+        if ($alunosSemTurma > 0) {
+            $insights[] = [
+                'code' => 'ENTURMACAO',
+                'severity' => 'warning',
+                'title' => __('Ausência de enturmação'),
+                'body' => __('Há :n matrícula(s) na Relação de alunos sem Código da turma. Vincule cada aluno a uma turma antes do fechamento no Educacenso.', [
+                    'n' => $this->int($alunosSemTurma),
+                ]),
+                'metric_value' => $this->int($alunosSemTurma),
+                'sort' => 25,
+            ];
+        }
+
         if (is_numeric($distPct)) {
             $sev = ((float) $distPct) >= 20 ? 'warning' : 'info';
             $insights[] = [
@@ -73,6 +89,26 @@ final class ClioBiInsightComposer
                 ]),
                 'metric_value' => $this->pct((float) $distPct).'%',
                 'sort' => 30,
+            ];
+        }
+
+        if ($withoutCor > 0) {
+            $pctCor = $demScanned > 0 ? round(100 * $withoutCor / $demScanned, 1) : null;
+            $insights[] = [
+                'code' => 'COR_RACA',
+                'severity' => ($pctCor !== null && $pctCor >= 20) ? 'warning' : 'info',
+                'title' => __('Cor/Raça não declarada'),
+                'body' => __('Há :n aluno(s) com Cor/Raça vazia ou «Não declarado»:pct. Complete no Educacenso para o perfil demográfico e as leituras de equidade ficarem confiáveis.', [
+                    'n' => $this->int($withoutCor),
+                    'pct' => $pctCor !== null
+                        ? __(' (:p% das :t pessoas lidas)', [
+                            'p' => $this->pct($pctCor),
+                            't' => $this->int($demScanned),
+                        ])
+                        : '',
+                ]),
+                'metric_value' => $this->int($withoutCor),
+                'sort' => 35,
             ];
         }
 

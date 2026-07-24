@@ -8,6 +8,7 @@ use App\Models\Bi\BiClioInsight;
 use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Analysis\EtapaLabelOrder;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Services\Clio\Bi\ClioBiDashboardComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
@@ -28,6 +29,7 @@ final class CampaignInsightsPdfExporter
         private readonly CampaignSchoolTimeComposer $schoolTime,
         private readonly HorizonteMunicipioEnrollmentSeriesService $enrollmentSeries,
         private readonly EtapaLabelOrder $etapaOrder,
+        private readonly RelationCsvAggregator $aggregator = new RelationCsvAggregator,
     ) {}
 
     public function download(ClioCampaign $campaign): Response
@@ -48,7 +50,8 @@ final class CampaignInsightsPdfExporter
             ? $this->dashboard->charts((int) $campaign->id, $bi, $inferences)
             : [];
 
-        $chartTables = $this->chartTables($charts, $bi);
+        $corRacaTable = $this->corRacaTable($inferences['INF-DEM'] ?? []);
+        $chartTables = $this->chartTables($charts, $bi, $corRacaTable);
 
         $insights = BiClioInsight::query()
             ->where('campaign_id', $campaign->id)
@@ -75,7 +78,10 @@ final class CampaignInsightsPdfExporter
                 'turmas' => (int) $r->qt_turmas,
             ])
             ->all();
-        $etapaGroups = $this->etapaOrder->groupEnrollmentRows($etapaRows);
+        $etapaGroups = $this->enrichEtapaGroupsWithDistortion(
+            $this->etapaOrder->groupEnrollmentRows($etapaRows),
+            $inferences['INF-DIS'] ?? [],
+        );
 
         $ibge = (string) ($campaign->ibge_municipio ?: $campaign->city?->ibge_municipio ?? '');
         $series = $this->enrollmentSeries->forIbge($ibge, 5, 'municipal', allowConsultoriaActive: true);
@@ -121,12 +127,77 @@ final class CampaignInsightsPdfExporter
     }
 
     /**
+     * @param  list<array<string, mixed>>  $groups
+     * @param  array<string, mixed>  $disPayload
+     * @return list<array<string, mixed>>
+     */
+    private function enrichEtapaGroupsWithDistortion(array $groups, array $disPayload): array
+    {
+        $byEtapa = is_array($disPayload['by_etapa'] ?? null) ? $disPayload['by_etapa'] : [];
+
+        foreach ($groups as &$group) {
+            $rows = is_array($group['rows'] ?? null) ? $group['rows'] : [];
+            foreach ($rows as &$row) {
+                $etapa = (string) ($row['etapa'] ?? '');
+                $info = is_array($byEtapa[$etapa] ?? null) ? $byEtapa[$etapa] : [];
+                $eligible = (int) ($info['eligible'] ?? 0);
+                $dist = (int) ($info['distorcao'] ?? 0);
+                $pct = $info['pct_distorcao'] ?? null;
+                if ($pct === null && $eligible > 0) {
+                    $pct = round(100 * $dist / $eligible, 1);
+                }
+                $row['eligible'] = $eligible;
+                $row['distorcao'] = $dist;
+                $row['pct_distorcao'] = is_numeric($pct) ? (float) $pct : null;
+                $row['has_distortion_scope'] = $eligible > 0;
+            }
+            unset($row);
+            $group['rows'] = $rows;
+        }
+        unset($group);
+
+        return $groups;
+    }
+
+    /**
+     * @param  array<string, mixed>  $demPayload
+     * @return array{available: bool, scanned: int, rows: list<array{label: string, value: int, pct: float|null}>}
+     */
+    private function corRacaTable(array $demPayload): array
+    {
+        $byCor = is_array($demPayload['by_cor_raca'] ?? null) ? $demPayload['by_cor_raca'] : [];
+        $scanned = (int) ($demPayload['scanned'] ?? 0);
+        $bars = $this->aggregator->toBars($byCor, 12);
+        $rows = [];
+        foreach ($bars as $bar) {
+            $value = (int) ($bar['count'] ?? 0);
+            if ($value <= 0) {
+                continue;
+            }
+            $rows[] = [
+                'label' => (string) ($bar['label'] ?? '—'),
+                'value' => $value,
+                'pct' => isset($bar['pct']) && is_numeric($bar['pct']) ? (float) $bar['pct'] : null,
+            ];
+        }
+
+        return [
+            'available' => $rows !== [],
+            'scanned' => $scanned,
+            'rows' => $rows,
+        ];
+    }
+
+    /**
      * Tabelas para DomPDF (SVG denso fica ilegível com muitas categorias).
+     * Etapas/distorção ficam na secção consolidada «Matrículas por etapa».
+     * Cor/Raça é inserida imediatamente após a tipificação NEE.
      *
      * @param  array<string, array<string, mixed>>  $charts
-     * @return list<array{title: string, rows: list<array{label: string, value: int|float}>}>
+     * @param  array{available: bool, scanned: int, rows: list<array{label: string, value: int, pct: float|null}>}  $corRaca
+     * @return list<array<string, mixed>>
      */
-    private function chartTables(array $charts, ?BiClioCampaign $bi): array
+    private function chartTables(array $charts, ?BiClioCampaign $bi, array $corRaca): array
     {
         $candidates = [];
 
@@ -144,18 +215,20 @@ final class CampaignInsightsPdfExporter
                 }
             }
             if ($matValues !== []) {
-                $candidates[] = ChartPayload::bar(__('Matrículas por tipo'), __('Alunos'), $matLabels, $matValues);
+                $candidates[] = [
+                    'key' => 'matriculas_tipo',
+                    'chart' => ChartPayload::bar(__('Matrículas por tipo'), __('Alunos'), $matLabels, $matValues),
+                ];
             }
         }
 
         foreach ([
-            'etapas',
             'localizacao',
             'triade_parts',
             'qualidade',
             'inclusao',
+            'aee_gap',
             'densidade',
-            'distorcao_etapas',
             'turmas_tipo',
             'jornada_turno',
             'docentes',
@@ -163,30 +236,62 @@ final class CampaignInsightsPdfExporter
             if (isset($charts[$key]) && is_array($charts[$key])) {
                 $asBar = $this->asBarChart($charts[$key]);
                 if ($asBar !== null) {
-                    $candidates[] = $asBar;
+                    $candidates[] = ['key' => $key, 'chart' => $asBar];
                 }
             }
         }
 
         $out = [];
-        foreach ($candidates as $chart) {
+        $corInserted = false;
+        foreach ($candidates as $item) {
+            $chart = $item['chart'] ?? null;
+            $key = (string) ($item['key'] ?? '');
             if (! is_array($chart)) {
                 continue;
             }
-            $preserveOrder = ($chart['preserve_order'] ?? false) === true;
-            $limit = $preserveOrder ? 40 : 12;
-            $rows = $this->chartToRows($chart, $limit, $preserveOrder);
+            $rows = $this->chartToRows($chart, 12, false);
             if ($rows === []) {
                 continue;
             }
             $out[] = [
                 'title' => (string) ($chart['title'] ?? __('Indicador')),
                 'rows' => $rows,
-                'preserve_order' => $preserveOrder,
             ];
-            if (count($out) >= 6) {
+
+            if ($key === 'inclusao' && ($corRaca['available'] ?? false) && ! $corInserted) {
+                $out[] = [
+                    'title' => __('Distribuição de alunos por Cor/Raça'),
+                    'note' => __('Agregado da Relação de alunos (:n pessoas lidas), sem identificação pessoal.', [
+                        'n' => number_format((int) ($corRaca['scanned'] ?? 0), 0, ',', '.'),
+                    ]),
+                    'show_pct' => true,
+                    'rows' => array_map(static fn (array $r): array => [
+                        'label' => $r['label'],
+                        'value' => $r['value'],
+                        'pct' => $r['pct'],
+                    ], $corRaca['rows']),
+                ];
+                $corInserted = true;
+            }
+
+            if (count($out) >= 10) {
                 break;
             }
+        }
+
+        if (! $corInserted && ($corRaca['available'] ?? false)) {
+            $out[] = [
+                'title' => __('Distribuição de alunos por Cor/Raça'),
+                'note' => __('Agregado da Relação de alunos (:n pessoas lidas), sem identificação pessoal.', [
+                    'n' => number_format((int) ($corRaca['scanned'] ?? 0), 0, ',', '.'),
+                ]),
+                'show_pct' => true,
+                'rows' => array_map(static fn (array $r): array => [
+                    'label' => $r['label'],
+                    'value' => $r['value'],
+                    'pct' => $r['pct'],
+                ], $corRaca['rows']),
+            ];
         }
 
         return $out;

@@ -179,7 +179,9 @@
 
 @if (! empty($etapaGroups))
     <h2>{{ __('Matrículas por etapa') }}</h2>
-    <p class="note">{{ __('Totais agregados da coleta (dataset BI), na sequência de escolarização — sem identificação de alunos.') }}</p>
+    <p class="note">
+        {{ __('Alunos e turmas na sequência de escolarização, com distorção idade-série (escopo EF/EM, critério INEP ≥2 anos). Segmentos sem idade/série definida não entram no % de distorção.') }}
+    </p>
     @foreach ($etapaGroups as $group)
         <p style="font-size: 10px; font-weight: 700; margin: 10px 0 3px;">{{ $group['title'] ?? '' }}</p>
         @if (! empty($group['hint']))
@@ -191,6 +193,9 @@
                     <th>{{ __('Etapa') }}</th>
                     <th>{{ __('Alunos') }}</th>
                     <th>{{ __('Turmas') }}</th>
+                    <th>{{ __('No escopo') }}</th>
+                    <th>{{ __('Distorção') }}</th>
+                    <th>{{ __('%') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -199,6 +204,27 @@
                         <td>{{ $row['etapa_label'] ?? $row['etapa'] ?? '—' }}</td>
                         <td>{{ number_format((int) ($row['alunos'] ?? 0), 0, ',', '.') }}</td>
                         <td>{{ number_format((int) ($row['turmas'] ?? 0), 0, ',', '.') }}</td>
+                        <td>
+                            @if (! empty($row['has_distortion_scope']))
+                                {{ number_format((int) ($row['eligible'] ?? 0), 0, ',', '.') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if (! empty($row['has_distortion_scope']))
+                                {{ number_format((int) ($row['distorcao'] ?? 0), 0, ',', '.') }}
+                            @else
+                                —
+                            @endif
+                        </td>
+                        <td>
+                            @if (! empty($row['has_distortion_scope']) && $row['pct_distorcao'] !== null)
+                                {{ number_format((float) $row['pct_distorcao'], 1, ',', '.') }}%
+                            @else
+                                —
+                            @endif
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -208,15 +234,21 @@
 
 @if (! empty($chartTables))
     <h2>{{ __('Visualizações') }}</h2>
-    <p class="note">{{ __('Categorias do painel Clio em tabela. Etapas seguem a sequência pedagógica; demais indicadores listam as maiores magnitudes.') }}</p>
+    <p class="note">{{ __('Indicadores do painel Clio em tabela (sem repetir a secção de etapas).') }}</p>
     @foreach ($chartTables as $block)
         <div class="chart-block">
             <p style="font-size: 10px; font-weight: 700; margin: 0 0 4px;">{{ $block['title'] ?? __('Indicador') }}</p>
+            @if (! empty($block['note']))
+                <p class="note" style="margin-top: 0;">{{ $block['note'] }}</p>
+            @endif
             <table class="data">
                 <thead>
                     <tr>
                         <th>{{ __('Categoria') }}</th>
-                        <th style="width: 22%;">{{ __('Valor') }}</th>
+                        <th style="width: 18%;">{{ __('Valor') }}</th>
+                        @if (! empty($block['show_pct']))
+                            <th style="width: 14%;">{{ __('%') }}</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -224,6 +256,15 @@
                         <tr>
                             <td>{{ $row['label'] ?? '—' }}</td>
                             <td>{{ number_format((float) ($row['value'] ?? 0), 0, ',', '.') }}</td>
+                            @if (! empty($block['show_pct']))
+                                <td>
+                                    @if (isset($row['pct']) && $row['pct'] !== null)
+                                        {{ number_format((float) $row['pct'], 1, ',', '.') }}%
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            @endif
                         </tr>
                     @endforeach
                 </tbody>
@@ -350,38 +391,6 @@
     <p class="note" style="margin-top: 6px;">
         {{ __('A óptica é do aluno: a carga horária da turma é ponderada pelo número de alunos vinculados. Curricular, AEE e atividade complementar aparecem em colunas distintas porque representam experiências escolares diferentes na mesma semana.') }}
     </p>
-@endif
-
-@php
-    $corUndeclared = is_array($diagnosticoGeral['cor_raca_undeclared'] ?? null)
-        ? $diagnosticoGeral['cor_raca_undeclared']
-        : ['total' => 0, 'schools' => []];
-@endphp
-@if ((int) ($corUndeclared['total'] ?? 0) > 0)
-    <h2>{{ __('Cor/Raça não declarada') }}</h2>
-    <p class="note">
-        {{ __('Pessoas com Cor/Raça vazia ou «Não declarado» na Relação de alunos, por escola. Total da rede: :n.', [
-            'n' => number_format((int) $corUndeclared['total'], 0, ',', '.'),
-        ]) }}
-    </p>
-    <table class="data">
-        <thead>
-            <tr>
-                <th style="width: 14%;">{{ __('INEP') }}</th>
-                <th>{{ __('Escola') }}</th>
-                <th style="width: 18%;">{{ __('Pessoas') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($corUndeclared['schools'] as $row)
-                <tr>
-                    <td style="font-family: DejaVu Sans Mono, monospace; font-size: 9px;">{{ $row['inep'] !== '' ? $row['inep'] : '—' }}</td>
-                    <td>{{ $row['name'] }}</td>
-                    <td>{{ number_format((int) $row['count'], 0, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
 @endif
 
 @include('pdf.clio-campaign.partials.diagnostico-geral', ['diagnosticoGeral' => $diagnosticoGeral ?? []])

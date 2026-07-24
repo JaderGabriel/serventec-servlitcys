@@ -44,6 +44,7 @@ final class ClioBiRefreshService
         $dis = $this->payload($inferences->get('INF-DIS'));
         $den = $this->payload($inferences->get('INF-DEN'));
         $doc = $this->payload($inferences->get('INF-DOC'));
+        $dem = $this->payload($inferences->get('INF-DEM'));
         $tra = $this->payload($inferences->get('INF-TRA'));
         $gap = $this->payload($inferences->get('INF-GAP'));
         $coe = $this->payload($inferences->get('INF-COE'));
@@ -80,6 +81,9 @@ final class ClioBiRefreshService
             'tra_rural_pct_active' => $this->ruralPct($tra),
             'gap_clio_only' => (int) ($gap['only_clio'] ?? $gap['clio_only'] ?? 0),
             'gap_ieducar_only' => (int) ($gap['only_ieducar'] ?? $gap['ieducar_only'] ?? 0),
+            'without_cor' => (int) ($dem['without_cor'] ?? 0),
+            'dem_scanned' => (int) ($dem['scanned'] ?? 0),
+            'alunos_sem_turma' => (int) ($den['alunos_sem_turma'] ?? $mat['without_turma'] ?? 0),
         ];
 
         DB::transaction(function () use ($campaign, $mat, $dis, $den, $doc, $nee, $stats, $triadePct, $errors, $warnings, $inferences, $snapshot): void {

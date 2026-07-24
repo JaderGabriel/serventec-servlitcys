@@ -2,12 +2,35 @@
 @php
     $diag = $diagnosticoGeral ?? ['available' => false, 'rows' => [], 'totals' => []];
     $totals = is_array($diag['totals'] ?? null) ? $diag['totals'] : [];
+    $networkNotices = is_array($diag['network_notices'] ?? null) ? $diag['network_notices'] : [];
+    $corUndeclared = is_array($diag['cor_raca_undeclared'] ?? null) ? $diag['cor_raca_undeclared'] : ['total' => 0, 'schools' => []];
 @endphp
 @if (! empty($diag['available']))
     <h2>{{ __('Diagnóstico Geral') }}</h2>
     <p style="font-size: 10px; color: #64748b; margin-bottom: 8px;">
-        {{ __('Escolas em atividade: código INEP, localidade e alertas (erros e avisos), incluindo alunos sem declaração de Cor/Raça.') }}
+        {{ __('Escolas em atividade: código INEP, localidade e alertas/pendências gerenciais (tríade, enturmação, distorção idade-série, Cor/Raça, NEE/AEE e demais apontamentos).') }}
     </p>
+
+    @foreach ($networkNotices as $notice)
+        @php
+            $sev = $notice['severity'] ?? 'warning';
+            $bg = $sev === 'error' ? '#fff1f2' : '#fff7ed';
+            $fg = $sev === 'error' ? '#9f1239' : '#9a3412';
+            $icon = $sev === 'error' ? '●' : '▲';
+        @endphp
+        <p style="font-size: 9.5px; margin: 0 0 6px; padding: 6px 8px; border-radius: 3px; background: {{ $bg }}; color: {{ $fg }}; border-left: 3px solid {{ $fg }};">
+            <strong>{{ $icon }}</strong> {{ $notice['message'] ?? '' }}
+        </p>
+    @endforeach
+
+    @if ((int) ($corUndeclared['total'] ?? 0) > 0 && $networkNotices === [])
+        <p style="font-size: 9.5px; margin: 0 0 6px; padding: 6px 8px; border-radius: 3px; background: #fff7ed; color: #9a3412; border-left: 3px solid #9a3412;">
+            <strong>▲</strong>
+            {{ __('Cor/Raça não declarada: :n aluno(s) na rede. Complete no Educacenso para o indicador demográfico ficar confiável.', [
+                'n' => number_format((int) $corUndeclared['total'], 0, ',', '.'),
+            ]) }}
+        </p>
+    @endif
 
     <table class="data" style="margin-bottom: 8px;">
         <thead>
@@ -60,18 +83,21 @@
                                 $chipBg = match ($sev) {
                                     'error' => '#fff1f2',
                                     'warning' => '#fff7ed',
+                                    'info' => '#ecfeff',
                                     'ok' => '#ecfdf5',
                                     default => '#f8fafc',
                                 };
                                 $chipFg = match ($sev) {
                                     'error' => '#9f1239',
                                     'warning' => '#9a3412',
+                                    'info' => '#0e7490',
                                     'ok' => '#047857',
                                     default => '#475569',
                                 };
                                 $icon = match ($sev) {
                                     'error' => '●',
                                     'warning' => '▲',
+                                    'info' => 'ℹ',
                                     'ok' => '✓',
                                     default => '•',
                                 };
@@ -119,6 +145,12 @@
                 <tr>
                     <td>{{ __('Escolas sem lançamento') }}</td>
                     <td>{{ (int) $totals['without_data'] }}</td>
+                </tr>
+            @endif
+            @if ((int) ($corUndeclared['total'] ?? 0) > 0)
+                <tr>
+                    <td>{{ __('Alunos com Cor/Raça não declarada') }}</td>
+                    <td style="color: #c2410c; font-weight: 700;">{{ number_format((int) $corUndeclared['total'], 0, ',', '.') }}</td>
                 </tr>
             @endif
         </tbody>
