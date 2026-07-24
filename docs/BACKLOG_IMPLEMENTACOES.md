@@ -8,6 +8,8 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 **Decisões já tomadas (não repetir aqui):** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md).
 
+**Plano transversal pós-8.2 (testes / segurança / performance / docs):** [ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md](ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md) — fases A–E com ordem de PRs; cruza com IDs `INF-*` deste backlog.
+
 ---
 
 ## Legenda de prioridade

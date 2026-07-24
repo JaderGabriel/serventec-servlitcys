@@ -17,6 +17,7 @@ Mapa único do que está **feito**, **em andamento** e **planeado**, com ligaç�
 | **Este índice** | Navegação entre roadmaps e panorama actual | Orientação rápida |
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits, linha do tempo | Deploy e auditoria |
 | [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) | Entregas por mês civil | Revisão de release |
+| [ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md](ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md) | Melhorias futuras (qualidade, segurança, perf., docs) | Planejar sprints técnicos pós-8.2 |
 
 ```mermaid
 flowchart TD

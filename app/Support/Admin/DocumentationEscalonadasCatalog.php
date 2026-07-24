@@ -19,15 +19,15 @@ final class DocumentationEscalonadasCatalog
                 'id' => '202607',
                 'label' => __('Julho/2026'),
                 'path' => 'docs/ENTREGAS_ESCALONADAS_JULHO_2026.md',
-                'version_range' => '7.0.0 → 7.0.2',
-                'hint' => '7.0.0 → 7.0.2',
+                'version_range' => '7.0.0 → 8.2.0',
+                'hint' => '7.0.0 → 8.2.0',
             ],
             [
                 'id' => '202606',
                 'label' => __('Junho/2026'),
                 'path' => 'docs/ENTREGAS_ESCALONADAS_JUNHO_2026.md',
-                'version_range' => '3.5.0 → 4.4.2',
-                'hint' => '3.5.0 → 4.4.2',
+                'version_range' => '3.5.0 → 6.5.0',
+                'hint' => '3.5.0 → 6.5.0',
             ],
             [
                 'id' => '202605',
@@ -44,6 +44,11 @@ final class DocumentationEscalonadasCatalog
         return 'docs/ENTREGAS_ESCALONADAS.md';
     }
 
+    public static function futureImprovementsPath(): string
+    {
+        return 'docs/ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md';
+    }
+
     public static function isEscalonadasPath(string $path): bool
     {
         $path = str_replace('\\', '/', trim($path));
@@ -56,7 +61,7 @@ final class DocumentationEscalonadasCatalog
      */
     public static function listedPaths(): array
     {
-        $paths = [self::indexPath()];
+        $paths = [self::indexPath(), self::futureImprovementsPath()];
         foreach (self::monthlyDocuments() as $month) {
             $paths[] = $month['path'];
         }
@@ -166,6 +171,11 @@ final class DocumentationEscalonadasCatalog
                     'label' => __('Índice — entregas'),
                     'path' => self::indexPath(),
                     'hint' => __('Por mês e release'),
+                ],
+                [
+                    'label' => __('Melhorias futuras'),
+                    'path' => self::futureImprovementsPath(),
+                    'hint' => __('Testes, segurança, performance, docs'),
                 ],
             ],
             'submenus' => [[

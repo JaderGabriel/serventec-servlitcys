@@ -72,6 +72,14 @@ Ver [HORIZONTE.md](HORIZONTE.md) §9.2 e [ROADMAP_INDICE.md](ROADMAP_INDICE.md) 
 | Geo INEP escolas | HOR-01 | [HORIZONTE.md](HORIZONTE.md) §11.3 |
 | IDHM + SIDRA ampliado | HOR-05, HOR-06 | [HORIZONTE.md](HORIZONTE.md) §11.4 |
 
+### Melhorias futuras (qualidade, segurança, performance, docs)
+
+Plano transversal pós-**8.2.0**, com fases A–E e ordem de PRs:
+
+→ **[ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md](ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md)**
+
+Quick wins sugeridos: estabilizar suite de testes (A1–A2), SSRF SAEB (B1), worker com fila `clio` (C3/D3).
+
 ---
 
-*Índice de roadmaps: [ROADMAP_INDICE.md](ROADMAP_INDICE.md).*
+*Índice de roadmaps: [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · Entregas: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).*
