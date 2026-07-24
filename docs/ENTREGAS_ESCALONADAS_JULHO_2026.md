@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **8.2.1** · tag **`20260724d-Eunomia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **8.2.2** · tag **`20260724e-Metis`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -22,6 +22,7 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 10 | **8.1.0** | `20260724b-Asclepius` | 24/07 | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) | Clio — Diagnóstico Geral; PDF gestor; tempo escolar; jornada |
 | 11 | **8.2.0** | `20260724c-Hygieia` | 24/07 | [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md) | Clio — série SVG PDF gestor; reanálise lote; Censo 2025; NEE/Excel |
 | 12 | **8.2.1** | `20260724d-Eunomia` | 24/07 | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) | Estabilização A–D — testes/CI, segurança, performance, docs 8.2 |
+| 13 | **8.2.2** | `20260724e-Metis` | 24/07 | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) | Fase E — cobertura Jobs + POSTs admin; run-tests.phpunit |
 
 ---
 

@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **8.2.1** · release `20260724d-Eunomia` · **Ramo:** `main` · **Última revisão:** 2026-07-24
+**Versão em produção:** **8.2.2** · release `20260724e-Metis` · **Ramo:** `main` · **Última revisão:** 2026-07-24
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (8.2.1)
+## Mapa de capacidades (8.2.2)
 
 ```mermaid
 flowchart TB

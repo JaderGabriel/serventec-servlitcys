@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 8.2.1 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **8.2.1**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial + BI), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **8.2.2**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial + BI), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **8.2.1** |
-| **Tag de deploy** | `20260724d-Eunomia` |
-| **Commit de referência** | `ad7deaf` |
+| **Versão semântica** | **8.2.2** |
+| **Tag de deploy** | `20260724e-Metis` |
+| **Commit de referência** | `pending` |
 | **Data de referência** | 2026-07-24 |
-| **Release** | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) |
-| **Marco** | **Eunomia** — estabilização A–D (qualidade, segurança, performance, docs) |
+| **Release** | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) |
+| **Marco** | **Metis** — cobertura Fase E (Jobs + POSTs admin) |
 
 ---
 
@@ -172,6 +172,7 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **8.2.2** | Metis | 24/07 e | — | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) — cobertura Fase E (Jobs + POSTs admin) |
 | **8.2.1** | Eunomia | 24/07 d | — | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) — estabilização A–D (testes, segurança, perf, docs) |
 | **8.2.0** | Hygieia | 24/07 c | — | [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md) — série SVG PDF gestor; reanálise lote; Censo 2025 |
 | **8.1.0** | Asclepius | 24/07 b | — | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) — Diagnóstico Geral; PDF gestor; tempo escolar; jornada |

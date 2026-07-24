@@ -24,10 +24,10 @@ return [
     */
 
     'product' => [
-        'version' => '8.2.1',
-        'release_tag' => '20260724d-Eunomia',
-        'commit_short' => 'ad7deaf',
-        'commit_number' => 608,
+        'version' => '8.2.2',
+        'release_tag' => '20260724e-Metis',
+        'commit_short' => 'pending',
+        'commit_number' => 0,
         'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',
