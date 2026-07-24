@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.2.1** |
 | **Tag de deploy** | `20260724d-Eunomia` |
-| **Commit de referência** | `14f2944` |
+| **Commit de referência** | `ad7deaf` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) |
 | **Marco** | **Eunomia** — estabilização A–D (qualidade, segurança, performance, docs) |

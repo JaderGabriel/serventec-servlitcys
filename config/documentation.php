@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '8.2.1',
         'release_tag' => '20260724d-Eunomia',
-        'commit_short' => '14f2944',
+        'commit_short' => 'ad7deaf',
         'commit_number' => 608,
         'revision_date' => '2026-07-24',
         'in_production' => true,
