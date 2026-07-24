@@ -47,7 +47,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | ID | Prioridade | Trabalho | Critério de done | Relacionado |
 |----|------------|----------|------------------|-------------|
 | **B1** | P1 | `SafeOutboundUrl` em todos os `Http::get` SAEB / Pedagogical sync admin | **Concluído** (2026-07-24) — Inep + `PedagogicalSyncController` | [SEGURANCA.md](SEGURANCA.md) |
-| **B2** | P1 | Throttle (+ logging) em `/relatorio/{publicId}`; rever necessidade de token na API SAEB pública | Rate limit ativo; decisão documentada para API | — |
+| **B2** | P1 | Throttle (+ logging) em `/relatorio/{publicId}`; rever necessidade de token na API SAEB pública | **Concluído** (2026-07-24) — throttle+log; API sem token documentada | — |
 | **B3** | P1 | Validação `mimes` / extensões em upload Clio e CadÚnico CSV | Requests rejeitam tipos inválidos | — |
 | **B4** | P2 | Produção: `SESSION_ENCRYPT` + `SESSION_SECURE_COOKIE`; reduzir `$fillable` sensível em `User` | Checklist de deploy + modelo endurecido | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) |
 | **B5** | P2 | `SafeOutboundUrl`: falhar fechado quando DNS não resolve | Teste unitário cobre o edge case | — |

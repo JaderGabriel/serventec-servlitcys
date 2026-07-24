@@ -146,7 +146,8 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Conta inactiva | `EnsureUserIsActive` + terminação de sessão | Admin pode reativar |
 | Último admin | Não pode ser excluído | Protecção em `UserController` |
 | Auditoria | `AdminUserAuditLogger` em acções sensíveis | Rasto em log/BD conforme implementação |
-| API SAEB pública | Throttle em `routes/api.php` | Conteúdo tratado como público pós-import |
+| API SAEB pública | **Sem token** (decisão 2026-07-24); throttle `120/min` + `IEDUCAR_SAEB_PUBLIC_API` | Conteúdo público pós-import; token só se houver PII/payloads sensíveis |
+| Relatório público PDF | Throttle `60/min` + log de acesso | QR / verificação sem auth; abuso mitigado por rate limit |
 
 **Docs:** [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md), [SEGURANCA.md](SEGURANCA.md).
 

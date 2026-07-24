@@ -89,6 +89,8 @@ Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários re
 
 - Rotas admin protegidas por `auth`, `verified`, `admin` e `legal.consent` onde aplicável.
 - Login e reset com **throttle** (5/min).
+- Superfície pública `/relatorio/{publicId}`: throttle `60/min`, log `analytics.report.public.*` (IP / `public_id`), formato `publicId` restrito.
+- API SAEB `/api/saeb/municipio/{ibge}`: **sem token** — conteúdo tratado como público pós-import; throttle `120/min` + flag `IEDUCAR_SAEB_PUBLIC_API`. Reavaliar token só se passar a expor PII ou payloads sensíveis.
 - SQL dinâmico em i-Educar limitado a nomes de colunas/tabelas resolvidos por schema da cidade (não a input HTTP directo).
 - Testes unitários: `ContainedPathResolverTest`, `SafeOutboundUrlTest`, CadÚnico/Misocial, FUNDEB metodologia.
 

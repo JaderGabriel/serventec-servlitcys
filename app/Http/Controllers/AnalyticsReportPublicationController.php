@@ -8,6 +8,7 @@ use App\Support\Analytics\AnalyticsReportBibliography;
 use App\Support\Analytics\AnalyticsReportQrCodeBuilder;
 use App\Support\Dashboard\IeducarFilterState;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -23,6 +24,13 @@ class AnalyticsReportPublicationController extends Controller
             ->with(['city', 'user'])
             ->where('public_id', $publicId)
             ->firstOrFail();
+
+        Log::info('analytics.report.public.view', [
+            'public_id' => $publicId,
+            'export_id' => $export->id,
+            'ip' => $request->ip(),
+            'user_id' => $request->user()?->id,
+        ]);
 
         $user = $request->user();
         if ($user !== null) {
@@ -56,7 +64,7 @@ class AnalyticsReportPublicationController extends Controller
         ]);
     }
 
-    public function download(string $publicId): StreamedResponse
+    public function download(Request $request, string $publicId): StreamedResponse
     {
         $export = AnalyticsReportExport::query()
             ->with('city')
@@ -71,6 +79,13 @@ class AnalyticsReportPublicationController extends Controller
         if (! $disk->exists((string) $export->file_path)) {
             abort(404, __('Arquivo PDF não encontrado.'));
         }
+
+        Log::info('analytics.report.public.download', [
+            'public_id' => $publicId,
+            'export_id' => $export->id,
+            'ip' => $request->ip(),
+            'user_id' => $request->user()?->id,
+        ]);
 
         $cityName = $export->city?->name ?? 'municipio';
         $filename = 'serventec-'.str($cityName)->slug().'-'.($export->completed_at?->format('Y-m-d') ?? 'relatorio').'.pdf';

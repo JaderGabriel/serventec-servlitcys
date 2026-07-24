@@ -51,10 +51,14 @@ Route::get('/privacidade', [PrivacyPolicyController::class, 'show'])
 Route::post('/legal/consentimento-visitante', [LegalConsentController::class, 'storeGuest'])
     ->name('legal.consent.guest');
 
-Route::get('/relatorio/{publicId}', [AnalyticsReportPublicationController::class, 'show'])
-    ->name('analytics.report.public');
-Route::get('/relatorio/{publicId}/pdf', [AnalyticsReportPublicationController::class, 'download'])
-    ->name('analytics.report.public.download');
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/relatorio/{publicId}', [AnalyticsReportPublicationController::class, 'show'])
+        ->where('publicId', '[A-Za-z0-9_-]{8,64}')
+        ->name('analytics.report.public');
+    Route::get('/relatorio/{publicId}/pdf', [AnalyticsReportPublicationController::class, 'download'])
+        ->where('publicId', '[A-Za-z0-9_-]{8,64}')
+        ->name('analytics.report.public.download');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/first-access', [FirstAccessProfileController::class, 'edit'])->name('profile.first-access');
