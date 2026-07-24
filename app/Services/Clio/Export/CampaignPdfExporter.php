@@ -23,6 +23,7 @@ final class CampaignPdfExporter
     {
         $campaign->load([
             'schools',
+            'schools.artifacts',
             'artifacts.school',
             'inferences',
             'findings.school',
@@ -62,6 +63,7 @@ final class CampaignPdfExporter
             ->values();
 
         $pdfTables = $this->detailBuilder->build($campaign);
+        $diagnosticoGeral = app(DiagnosticoGeralComposer::class)->compose($campaign);
 
         $generatedAt = now()->timezone(config('app.timezone'))->format('d/m/Y H:i');
 
@@ -77,6 +79,7 @@ final class CampaignPdfExporter
             'toReviewOther' => $toReviewOther,
             'criticalFindings' => $toCorrect,
             'pdfTables' => $pdfTables,
+            'diagnosticoGeral' => $diagnosticoGeral,
             'generated_at' => $generatedAt,
             'colors' => [
                 'primary' => '#0f172a',

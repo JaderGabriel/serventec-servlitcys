@@ -106,6 +106,8 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::get('/coletas/{campaign}/export/xlsx', [\App\Http\Controllers\Clio\CampaignExportController::class, 'xlsx'])->name('campaigns.export.xlsx');
             Route::get('/coletas/{campaign}/export/csv', [\App\Http\Controllers\Clio\CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
             Route::get('/coletas/{campaign}/export/pdf', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
+            Route::get('/coletas/{campaign}/export/pdf-gestor', [\App\Http\Controllers\Clio\CampaignExportController::class, 'pdfGestor'])->name('campaigns.export.pdf-gestor');
+            Route::get('/coletas/{campaign}/serie-matriculas', [\App\Http\Controllers\Clio\CampaignController::class, 'enrollmentSeries'])->name('campaigns.enrollment-series');
             Route::get('/municipios/novo', [\App\Http\Controllers\Clio\CatalogCityController::class, 'create'])->name('cities.create');
             Route::post('/municipios/novo', [\App\Http\Controllers\Clio\CatalogCityController::class, 'store'])->name('cities.store');
         });

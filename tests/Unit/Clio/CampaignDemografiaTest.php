@@ -234,17 +234,14 @@ final class CampaignDemografiaTest extends TestCase
             collect(),
         );
 
-        $this->assertTrue($dash['profile']['available']);
-        $tra = collect($dash['profile']['coverage'])->firstWhere('key', 'transporte');
-        $this->assertTrue($tra['available']);
-        $this->assertNotEmpty($dash['profile']['by_transporte']);
-        $this->assertSame(2, $dash['profile']['transporte_flagged']);
-        $this->assertContains('INF-TRA', collect($dash['highlights'])->pluck('code')->all());
+        // Transporte vive na secção própria (INF-TRA); o perfil demográfico exige INF-DEM/NEE/DIS/DEN.
         $this->assertTrue($dash['transporte']['available'] ?? false);
         $this->assertSame(2, $dash['transporte']['flagged']);
         $this->assertSame(2, $dash['transporte']['active']['flagged']);
+        $this->assertNotEmpty($dash['transporte']['by_transporte']);
         $this->assertNotEmpty($dash['transporte']['by_location_users']);
         $this->assertNotEmpty($dash['transporte']['schools_active']);
         $this->assertSame('Urbana', $dash['transporte']['schools_active'][0]['location']);
+        $this->assertContains('INF-TRA', collect($dash['highlights'])->pluck('code')->all());
     }
 }

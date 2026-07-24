@@ -1253,7 +1253,9 @@ final class CampaignAnalyzer
         $multi = 0;
         $turmas = 0;
         $byTurno = [];
+        $byTurnoOutros = [];
         $byChBand = [];
+        $byChExact = [];
         $byTurnoCurricular = [];
         $hasTurnoCol = false;
         $hasChCol = false;
@@ -1269,7 +1271,9 @@ final class CampaignAnalyzer
 
             $profiles = [];
             $schoolByTurno = [];
+            $schoolByTurnoOutros = [];
             $schoolByCh = [];
+            $schoolByChExact = [];
             $schoolHasTurno = false;
             $schoolHasCh = false;
             $schoolTurmas = 0;
@@ -1283,14 +1287,18 @@ final class CampaignAnalyzer
                 }
                 $profiles = is_array($turmaAgg['turma_profiles'] ?? null) ? $turmaAgg['turma_profiles'] : [];
                 $schoolByTurno = is_array($turmaAgg['by_turno'] ?? null) ? $turmaAgg['by_turno'] : [];
+                $schoolByTurnoOutros = is_array($turmaAgg['by_turno_outros'] ?? null) ? $turmaAgg['by_turno_outros'] : [];
                 $schoolByCh = is_array($turmaAgg['by_ch_band'] ?? null) ? $turmaAgg['by_ch_band'] : [];
+                $schoolByChExact = is_array($turmaAgg['by_ch_exact'] ?? null) ? $turmaAgg['by_ch_exact'] : [];
                 $cols = is_array($turmaAgg['columns'] ?? null) ? $turmaAgg['columns'] : [];
                 $schoolHasTurno = ! empty($cols['turno']);
                 $schoolHasCh = ! empty($cols['carga_horaria']);
                 $schoolTurmas = (int) ($turmaAgg['total'] ?? 0);
                 $turmas += $schoolTurmas;
                 $byTurno = $this->aggregator->mergeCounts($byTurno, $schoolByTurno);
+                $byTurnoOutros = $this->aggregator->mergeCounts($byTurnoOutros, $schoolByTurnoOutros);
                 $byChBand = $this->aggregator->mergeCounts($byChBand, $schoolByCh);
+                $byChExact = $this->aggregator->mergeCounts($byChExact, $schoolByChExact);
                 if ($schoolHasTurno) {
                     $hasTurnoCol = true;
                 }
@@ -1363,6 +1371,10 @@ final class CampaignAnalyzer
             );
         }
 
+        $rebucketed = $this->aggregator->rebucketTurnoCounts($byTurno, $byTurnoOutros);
+        $rebucketedCh = $this->aggregator->rebucketCargaCounts($byChBand, $byChExact);
+        $schoolTime = app(\App\Services\Clio\Analysis\CampaignSchoolTimeComposer::class)->compose($campaign);
+
         $this->upsertInference(
             $campaign,
             'INF-JOR',
@@ -1379,16 +1391,54 @@ final class CampaignAnalyzer
                 'curricular_ac' => $currAc,
                 'infantil_turma_estendida' => $infantilExt,
                 'multi_enrollment' => $multi,
-                'by_turno' => $byTurno,
-                'by_ch_band' => $byChBand,
+                'by_turno' => $rebucketed['by_turno'],
+                'by_turno_outros' => $rebucketed['by_turno_outros'],
+                'by_ch_band' => $rebucketedCh['by_ch_band'],
+                'by_ch_exact' => $rebucketedCh['by_ch_exact'],
                 'by_turno_curricular' => $byTurnoCurricular,
                 'has_turno_columns' => $hasTurnoCol,
                 'has_ch_columns' => $hasChCol,
+                'school_time' => $this->schoolTimePayload($schoolTime),
                 'schools' => array_slice($schoolsBreakdown, 0, 120),
                 'note_fund_aee' => __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.'),
                 'note_infantil' => __('Infantil em turma única com turno/CH estendido — diferente de tempo integral por duas matrículas.'),
             ],
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $schoolTime
+     * @return array<string, mixed>
+     */
+    private function schoolTimePayload(array $schoolTime): array
+    {
+        $wanted = ['infantil', 'fundamental_1', 'fundamental_2', 'medio', 'eja', 'profissional'];
+        $segments = [];
+        foreach (is_array($schoolTime['segments'] ?? null) ? $schoolTime['segments'] : [] as $seg) {
+            if (! is_array($seg)) {
+                continue;
+            }
+            $key = (string) ($seg['key'] ?? '');
+            if (! in_array($key, $wanted, true)) {
+                continue;
+            }
+            $segments[] = [
+                'key' => $key,
+                'label' => (string) ($seg['label'] ?? $key),
+                'turmas' => (int) ($seg['turmas'] ?? 0),
+                'alunos' => (int) ($seg['alunos'] ?? 0),
+                'horas_aluno_semana' => $seg['horas_aluno_semana'] ?? null,
+                'ch_media_turma' => $seg['ch_media_turma'] ?? null,
+            ];
+        }
+
+        return [
+            'available' => (bool) ($schoolTime['available'] ?? false),
+            'has_ch' => (bool) ($schoolTime['has_ch'] ?? false),
+            'note' => (string) ($schoolTime['note'] ?? ''),
+            'network' => is_array($schoolTime['network'] ?? null) ? $schoolTime['network'] : [],
+            'segments' => $segments,
+        ];
     }
 
     /**
@@ -1945,7 +1995,9 @@ final class CampaignAnalyzer
                 RelationCsvAggregator::BUCKET_OUTRA => 0,
             ],
             'by_turno' => [],
+            'by_turno_outros' => [],
             'by_ch_band' => [],
+            'by_ch_exact' => [],
             'turma_codes' => [],
             'turma_profiles' => [],
             'without_etapa' => 0,
@@ -2141,9 +2193,17 @@ final class CampaignAnalyzer
             is_array($into['by_turno'] ?? null) ? $into['by_turno'] : [],
             is_array($from['by_turno'] ?? null) ? $from['by_turno'] : [],
         );
+        $into['by_turno_outros'] = $this->aggregator->mergeCounts(
+            is_array($into['by_turno_outros'] ?? null) ? $into['by_turno_outros'] : [],
+            is_array($from['by_turno_outros'] ?? null) ? $from['by_turno_outros'] : [],
+        );
         $into['by_ch_band'] = $this->aggregator->mergeCounts(
             is_array($into['by_ch_band'] ?? null) ? $into['by_ch_band'] : [],
             is_array($from['by_ch_band'] ?? null) ? $from['by_ch_band'] : [],
+        );
+        $into['by_ch_exact'] = $this->aggregator->mergeCounts(
+            is_array($into['by_ch_exact'] ?? null) ? $into['by_ch_exact'] : [],
+            is_array($from['by_ch_exact'] ?? null) ? $from['by_ch_exact'] : [],
         );
         $intoCols = is_array($into['columns'] ?? null) ? $into['columns'] : $this->emptyTurmaAgg()['columns'];
         $fromCols = is_array($from['columns'] ?? null) ? $from['columns'] : [];

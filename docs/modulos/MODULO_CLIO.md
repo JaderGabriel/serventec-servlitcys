@@ -1,6 +1,6 @@
 # Módulo — Clio (coletas Educacenso 1ª etapa)
 
-**Versão do produto:** 8.0.2 · **Última revisão:** 2026-07-24 · **Estado:** S6 (export / RX) — S1–S6 estável; patches pós-Harmonia
+**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 estável; Asclepius (Diagnóstico + PDF gestor)
 
 > **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio` · **Roadmap vivo:** [ROADMAP_CLIO.md](../ROADMAP_CLIO.md)
 
@@ -38,7 +38,7 @@
 | Painel analítico | `/clio/coletas/{uuid}/analise` |
 | Vincular i-Educar | `/clio/coletas/{uuid}/vincular-ieducar` (admin) |
 | Cruzamento | `/clio/coletas/{uuid}/cruzamento` |
-| Export | `/clio/coletas/{uuid}/export/csv` · `…/export/pdf` |
+| Export | `/clio/coletas/{uuid}/export/csv` · `…/export/pdf` · `…/export/pdf-gestor` · Excel |
 | Aba Censo | Consultoria → **Censo** → bloco Clio |
 | Painel RX | Bloco ranking coletas do exercício |
 | Documentação | Menu lateral **9 · Clio — Educacenso** |
@@ -57,7 +57,7 @@
 | Análise | `clio:campaign-analyze {uuid}` | S4 |
 | Vincular / gap | `…/vincular-ieducar`, `…/cruzamento` | S5 |
 | Cruzamento CLI | `clio:campaign-cross-check {uuid}` | S5 |
-| Export CSV/PDF | `…/export/csv`, `…/export/pdf` | S6 |
+| Export CSV/PDF/Excel/PDF gestor | `…/export/csv`, `…/export/pdf`, `…/export/pdf-gestor` | S6+ |
 | Bloco RX | `/dashboard/rx` | S6 |
 
 Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.

@@ -101,17 +101,37 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
     }
 
     #[Test]
-    public function carga_horaria_usa_valores_exactos_ordenados(): void
+    public function carga_horaria_usa_faixas_pedagogicas(): void
     {
         $agg = new RelationCsvAggregator;
-        $bars = $agg->enrichCargaBars([
-            ['label' => '40 h/semana', 'count' => 2, 'pct' => 20],
-            ['label' => '20 h/semana', 'count' => 6, 'pct' => 60],
-            ['label' => 'Não informado', 'count' => 2, 'pct' => 20],
+
+        $integral = $agg->cargaHorariaBandMeta(40.0);
+        $this->assertSame('integral', $integral['key']);
+        $this->assertSame('≥ 35 h', $integral['short']);
+
+        $rebucketed = $agg->rebucketCargaCounts([
+            '20 h/semana' => 10,
+            '22 h/semana' => 4,
+            '40 h/semana' => 3,
+            'Não informado' => 2,
+            '8 h/semana' => 1,
         ]);
-        $this->assertSame('20 h', $bars[0]['short']);
-        $this->assertSame('40 h', $bars[1]['short']);
-        $this->assertNull($bars[2]['hours']);
+
+        $this->assertGreaterThan(0, $rebucketed['by_ch_band']['20–24 h — parcial típica'] ?? 0);
+        $this->assertSame(3, $rebucketed['by_ch_band']['≥ 35 h — tempo integral'] ?? 0);
+        $this->assertSame(2, $rebucketed['by_ch_band']['Não informado'] ?? 0);
+        $this->assertArrayHasKey('20 h/semana', $rebucketed['by_ch_exact']);
+        $this->assertArrayHasKey('40 h/semana', $rebucketed['by_ch_exact']);
+
+        $bars = $agg->enrichCargaBars($agg->toBars($rebucketed['by_ch_band'], 8));
+        $byBand = collect($bars)->keyBy('band');
+        $this->assertTrue($byBand->has('parcial'));
+        $this->assertTrue($byBand->has('integral'));
+        $this->assertTrue($byBand->has('reduzida'));
+        $this->assertSame(14, (int) ($byBand['parcial']['count'] ?? 0));
+        $shorts = array_column($bars, 'short');
+        $this->assertContains('20–24 h', $shorts);
+        $this->assertContains('≥ 35 h', $shorts);
     }
 
     #[Test]
@@ -122,5 +142,40 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
         $this->assertSame('Manhã', $meta['label']);
         $this->assertSame('amber', $meta['tone']);
         $this->assertSame(['seg', 'ter', 'qua', 'qui', 'sex'], $meta['days']);
+        $this->assertFalse($meta['is_other']);
+    }
+
+    #[Test]
+    public function turno_infere_periodo_por_horario_e_detalha_outros(): void
+    {
+        $agg = new RelationCsvAggregator;
+
+        $manha = $agg->turnoDisplayMeta('07:00 às 11:30');
+        $this->assertSame('Manhã', $manha['label']);
+        $this->assertSame('manha', $manha['bucket']);
+
+        $tarde = $agg->turnoDisplayMeta('13h às 17h');
+        $this->assertSame('Tarde', $tarde['label']);
+
+        $outros = $agg->turnoDisplayMeta('Plantão sob demanda');
+        $this->assertSame('Outros', $outros['label']);
+        $this->assertTrue($outros['is_other']);
+
+        $rebucketed = $agg->rebucketTurnoCounts([
+            'Manhã' => 10,
+            'Plantão sob demanda' => 3,
+            '07:00 às 11:30' => 2,
+        ]);
+        $this->assertSame(12, $rebucketed['by_turno']['Manhã'] ?? 0);
+        $this->assertSame(3, $rebucketed['by_turno']['Outros'] ?? 0);
+        $this->assertArrayHasKey('Plantão sob demanda', $rebucketed['by_turno_outros']);
+
+        $bars = $agg->enrichTurnoBars(
+            $agg->toBars($rebucketed['by_turno'], 8),
+            $rebucketed['by_turno_outros'],
+        );
+        $outrosBar = collect($bars)->firstWhere('is_other', true);
+        $this->assertNotNull($outrosBar);
+        $this->assertNotEmpty($outrosBar['details']);
     }
 }

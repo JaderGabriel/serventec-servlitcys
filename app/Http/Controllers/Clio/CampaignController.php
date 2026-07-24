@@ -193,4 +193,24 @@ class CampaignController extends Controller
             ],
         ]);
     }
+
+    public function enrollmentSeries(
+        ClioCampaign $campaign,
+        Request $request,
+        \App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService $series,
+    ): \Illuminate\Http\JsonResponse {
+        $this->authorize('view', $campaign);
+
+        $ibge = (string) ($campaign->ibge_municipio ?: $campaign->city?->ibge_municipio ?? '');
+        $payload = $series->forIbge(
+            $ibge,
+            $request->integer('years') ?: 5,
+            $request->string('dependencia')->toString() ?: 'municipal',
+            allowConsultoriaActive: true,
+        );
+
+        $status = (int) ($payload['status'] ?? ($payload['ok'] ?? false ? 200 : 404));
+
+        return response()->json($payload, $payload['ok'] ?? false ? 200 : max(400, $status));
+    }
 }

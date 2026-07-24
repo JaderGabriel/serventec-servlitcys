@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **8.0.4** · tag **`20260724a-Theia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **8.1.0** · tag **`20260724b-Asclepius`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -19,6 +19,7 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 7 | **8.0.2** | `20260723b-Harmonia` | 23/07 | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) | Clio — PDF/Excel alinhados, Fund. I/II, lotes Drive, painel escola |
 | 8 | **8.0.3** | `20260724-Pythia` | 24/07 | [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) | Clio — S7 BI, insights gestores, medidores CLI-IND-01…10 |
 | 9 | **8.0.4** | `20260724a-Theia` | 24/07 | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) | Clio — painel Insights nativo Chart.js; UX análise/home |
+| 10 | **8.1.0** | `20260724b-Asclepius` | 24/07 | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) | Clio — Diagnóstico Geral; PDF gestor; tempo escolar; jornada |
 
 ---
 

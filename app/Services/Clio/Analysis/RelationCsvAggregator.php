@@ -46,7 +46,9 @@ final class RelationCsvAggregator
         $withoutTipo = 0;
         $turmaCodes = [];
         $byTurno = [];
+        $byTurnoOutros = [];
         $byChBand = [];
+        $byChExact = [];
         $profiles = [];
         $headerKeys = array_keys($rows[0] ?? []);
         $turnoHeader = $this->findTurnoHeader($headerKeys);
@@ -82,20 +84,32 @@ final class RelationCsvAggregator
             $bucket = $this->classifyTipoTurma($tipo);
             $turno = $hasTurno ? trim($csv->value($row, $turnoHeader)) : '';
             if ($hasTurno) {
-                $turnoLabel = $turno !== '' ? $this->normalizeTurno($turno) : __('Não informado');
+                $meta = $this->turnoDisplayMeta($turno);
+                $turnoLabel = (string) ($meta['label'] ?? __('Não informado'));
                 $byTurno[$turnoLabel] = ($byTurno[$turnoLabel] ?? 0) + 1;
+                if (! empty($meta['is_other']) && $turno !== '') {
+                    $detail = (string) ($meta['detail'] ?? $meta['raw_compact'] ?? $turno);
+                    $byTurnoOutros[$detail] = ($byTurnoOutros[$detail] ?? 0) + 1;
+                }
             }
             $chHours = $hasCh ? $this->parseCargaHoraria(trim($csv->value($row, $chHeader))) : null;
             if ($hasCh) {
-                $band = $this->cargaHorariaLabel($chHours);
-                $byChBand[$band] = ($byChBand[$band] ?? 0) + 1;
+                $bandMeta = $this->cargaHorariaBandMeta($chHours);
+                $byChBand[$bandMeta['label']] = ($byChBand[$bandMeta['label']] ?? 0) + 1;
+                if ($chHours !== null) {
+                    $exact = $this->cargaHorariaLabel($chHours);
+                    $byChExact[$exact] = ($byChExact[$exact] ?? 0) + 1;
+                }
             }
             $extended = $this->isExtendedHours($turno, $chHours);
 
             if ($codigo !== '') {
+                $turnoMeta = $turno !== '' ? $this->turnoDisplayMeta($turno) : null;
                 $profiles[$codigo] = [
                     'bucket' => $bucket,
-                    'turno' => $turno !== '' ? $this->normalizeTurno($turno) : '',
+                    'turno' => $turnoMeta !== null ? (string) ($turnoMeta['label'] ?? '') : '',
+                    'turno_raw' => $turno,
+                    'turno_bucket' => $turnoMeta !== null ? (string) ($turnoMeta['bucket'] ?? '') : '',
                     'ch_hours' => $chHours,
                     'extended' => $extended,
                     'etapa' => $etapa,
@@ -120,7 +134,9 @@ final class RelationCsvAggregator
             'by_mediacao' => $this->sortDesc($byMediacao),
             'by_tipo_bucket' => $buckets,
             'by_turno' => $this->sortDesc($byTurno),
-            'by_ch_band' => $this->sortCargaBands($byChBand),
+            'by_turno_outros' => $this->sortDesc($byTurnoOutros),
+            'by_ch_band' => $this->sortCargaBandLabels($byChBand),
+            'by_ch_exact' => $this->sortCargaBands($byChExact),
             'turma_codes' => array_keys($turmaCodes),
             'turma_profiles' => $profiles,
             'without_etapa' => $withoutEtapa,
@@ -1023,15 +1039,19 @@ final class RelationCsvAggregator
     }
 
     /**
-     * Metadados de exibição do turno (rótulo curto, tom, dias abreviados).
+     * Metadados de exibição do turno (rótulo canónico, tom, dias, detalhe de «Outros»).
      *
      * @return array{
+     *   bucket: string,
      *   label: string,
      *   short: string,
      *   tone: string,
      *   icon: string,
      *   days: list<string>,
-     *   schedule: ?string
+     *   schedule: ?string,
+     *   is_other: bool,
+     *   detail: ?string,
+     *   raw_compact: string
      * }
      */
     public function turnoDisplayMeta(string $raw): array
@@ -1040,77 +1060,254 @@ final class RelationCsvAggregator
         $s = mb_strtolower($original);
         $days = $this->extractWeekdayAbbrevs($s);
         $schedule = $this->extractScheduleHint($s);
+        $rawCompact = $original !== '' ? $this->compactTurnoLabel($original) : '';
 
+        $bucket = 'nao_informado';
         $label = __('Não informado');
         $short = __('N/I');
         $tone = 'slate';
         $icon = 'question';
+        $isOther = false;
+        $detail = null;
 
         if ($s !== '') {
-            if (preg_match('/integral|tempo\s*integral|manh[aã].*tarde|tarde.*manh[aã]|estendid/u', $s) === 1) {
-                $label = __('Integral');
-                $short = __('Int.');
-                $tone = 'violet';
-                $icon = 'sun-double';
-            } elseif (preg_match('/manh[aã]|matut/u', $s) === 1) {
-                $label = __('Manhã');
-                $short = __('Manhã');
-                $tone = 'amber';
-                $icon = 'sun';
-            } elseif (preg_match('/tarde|vespert/u', $s) === 1) {
-                $label = __('Tarde');
-                $short = __('Tarde');
-                $tone = 'orange';
-                $icon = 'sunset';
-            } elseif (preg_match('/noite|noturn/u', $s) === 1) {
-                $label = __('Noite');
-                $short = __('Noite');
-                $tone = 'indigo';
-                $icon = 'moon';
-            } elseif (preg_match('/intermedi/u', $s) === 1) {
-                $label = __('Intermediário');
-                $short = __('Inter.');
-                $tone = 'sky';
-                $icon = 'clock';
-            } else {
-                $label = $this->compactTurnoLabel($original);
-                $short = $this->truncateLabel($label, 18);
-                $tone = 'slate';
-                $icon = 'calendar';
+            $canonical = $this->resolveTurnoBucket($s, $schedule);
+            $bucket = $canonical;
+
+            switch ($canonical) {
+                case 'integral':
+                    $label = __('Integral');
+                    $short = __('Int.');
+                    $tone = 'violet';
+                    $icon = 'sun-double';
+                    break;
+                case 'manha':
+                    $label = __('Manhã');
+                    $short = __('Manhã');
+                    $tone = 'amber';
+                    $icon = 'sun';
+                    break;
+                case 'tarde':
+                    $label = __('Tarde');
+                    $short = __('Tarde');
+                    $tone = 'orange';
+                    $icon = 'sunset';
+                    break;
+                case 'noite':
+                    $label = __('Noite');
+                    $short = __('Noite');
+                    $tone = 'indigo';
+                    $icon = 'moon';
+                    break;
+                case 'intermediario':
+                    $label = __('Intermediário');
+                    $short = __('Inter.');
+                    $tone = 'sky';
+                    $icon = 'clock';
+                    break;
+                case 'outros':
+                    $label = __('Outros');
+                    $short = __('Outros');
+                    $tone = 'slate';
+                    $icon = 'calendar';
+                    $isOther = true;
+                    $detail = $rawCompact !== '' ? $rawCompact : $original;
+                    break;
+                default:
+                    break;
             }
         }
 
         return [
+            'bucket' => $bucket,
             'label' => $label,
             'short' => $short,
             'tone' => $tone,
             'icon' => $icon,
             'days' => $days,
             'schedule' => $schedule,
+            'is_other' => $isOther,
+            'detail' => $detail,
+            'raw_compact' => $rawCompact,
+        ];
+    }
+
+    /**
+     * Resolve o balde canónico do turno (texto + horário quando necessário).
+     */
+    private function resolveTurnoBucket(string $lower, ?string $schedule): string
+    {
+        if (preg_match('/^outros$/iu', $lower) === 1) {
+            return 'outros';
+        }
+        if (preg_match('/integral|tempo\s*integral|manh[aã].*tarde|tarde.*manh[aã]|estendid|dia\s*todo|per[ií]odo\s*integral/u', $lower) === 1) {
+            return 'integral';
+        }
+        if (preg_match('/intermedi/u', $lower) === 1) {
+            return 'intermediario';
+        }
+        if (preg_match('/manh[aã]|matut/u', $lower) === 1) {
+            return 'manha';
+        }
+        if (preg_match('/tarde|vespert/u', $lower) === 1) {
+            return 'tarde';
+        }
+        if (preg_match('/noite|noturn/u', $lower) === 1) {
+            return 'noite';
+        }
+
+        $fromHours = $this->inferPeriodFromSchedule($lower, $schedule);
+        if ($fromHours !== null) {
+            return $fromHours;
+        }
+
+        return 'outros';
+    }
+
+    /**
+     * Infere Manhã/Tarde/Noite/Integral a partir de intervalos horários no texto.
+     */
+    private function inferPeriodFromSchedule(string $lower, ?string $schedule): ?string
+    {
+        $blob = $schedule !== null ? mb_strtolower($schedule) : $lower;
+        if (preg_match_all('/\b(\d{1,2})(?:[:h\.](\d{2}))?\b/u', $blob, $matches, PREG_SET_ORDER) < 1) {
+            return null;
+        }
+
+        $hours = [];
+        foreach ($matches as $m) {
+            $h = (int) $m[1];
+            if ($h > 23) {
+                continue;
+            }
+            $hours[] = $h;
+        }
+        if ($hours === []) {
+            return null;
+        }
+
+        $start = $hours[0];
+        $end = $hours[count($hours) - 1];
+        $span = $end >= $start ? ($end - $start) : (24 - $start + $end);
+
+        // Dois períodos no mesmo dia ou jornada longa → integral.
+        if ($span >= 7 || ($start <= 11 && $end >= 14)) {
+            return 'integral';
+        }
+        if ($start >= 18 || ($start <= 5 && $end <= 8)) {
+            return 'noite';
+        }
+        if ($start >= 12) {
+            return 'tarde';
+        }
+        if ($start >= 5 && $start <= 11) {
+            return 'manha';
+        }
+
+        return null;
+    }
+
+    /**
+     * Reagrupa contagens de turno em rótulos canónicos e extrai detalhe de «Outros».
+     * Útil para análises antigas (textos livres) e para unificar fontes.
+     *
+     * @param  array<string, int>  $byTurno
+     * @param  array<string, int>  $byTurnoOutros
+     * @return array{by_turno: array<string, int>, by_turno_outros: array<string, int>}
+     */
+    public function rebucketTurnoCounts(array $byTurno, array $byTurnoOutros = []): array
+    {
+        $canonical = [];
+        $outros = $byTurnoOutros;
+
+        foreach ($byTurno as $label => $count) {
+            $n = (int) $count;
+            if ($n <= 0) {
+                continue;
+            }
+            $meta = $this->turnoDisplayMeta((string) $label);
+            $canonLabel = (string) ($meta['label'] ?? __('Não informado'));
+            $canonical[$canonLabel] = ($canonical[$canonLabel] ?? 0) + $n;
+            if (! empty($meta['is_other'])) {
+                $detail = (string) ($meta['detail'] ?? $label);
+                if ($detail === '' || strcasecmp($detail, (string) __('Outros')) === 0) {
+                    continue;
+                }
+                $outros[$detail] = ($outros[$detail] ?? 0) + $n;
+            }
+        }
+
+        return [
+            'by_turno' => $this->sortDesc($canonical),
+            'by_turno_outros' => $this->sortDesc($outros),
         ];
     }
 
     /**
      * @param  list<array{label: string, count: int|float, pct: float|int}>  $bars
+     * @param  array<string, int>  $outrosDetail
      * @return list<array<string, mixed>>
      */
-    public function enrichTurnoBars(array $bars): array
+    public function enrichTurnoBars(array $bars, array $outrosDetail = []): array
     {
         $out = [];
+        $canonicalOrder = [
+            __('Manhã') => 1,
+            __('Intermediário') => 2,
+            __('Tarde') => 3,
+            __('Noite') => 4,
+            __('Integral') => 5,
+            __('Outros') => 6,
+            __('Não informado') => 7,
+        ];
+
         foreach ($bars as $bar) {
             if (! is_array($bar)) {
                 continue;
             }
             $meta = $this->turnoDisplayMeta((string) ($bar['label'] ?? ''));
-            $out[] = array_merge($bar, [
+            $row = array_merge($bar, [
                 'label' => $meta['label'],
                 'short' => $meta['short'],
                 'tone' => $meta['tone'],
                 'icon' => $meta['icon'],
                 'days' => $meta['days'],
                 'schedule' => $meta['schedule'],
+                'bucket' => $meta['bucket'],
+                'is_other' => (bool) $meta['is_other'],
+                'details' => [],
             ]);
+
+            if ($row['is_other'] || $meta['bucket'] === 'outros') {
+                $details = [];
+                foreach ($this->toBars($outrosDetail, 30) as $detailBar) {
+                    $details[] = [
+                        'label' => (string) ($detailBar['label'] ?? ''),
+                        'count' => (int) ($detailBar['count'] ?? 0),
+                        'pct' => (float) ($detailBar['pct'] ?? 0),
+                    ];
+                }
+                $row['details'] = $details;
+                $row['label'] = __('Outros');
+                $row['short'] = __('Outros');
+                $row['is_other'] = true;
+                $row['bucket'] = 'outros';
+                $row['tone'] = 'slate';
+                $row['icon'] = 'calendar';
+            }
+
+            $out[] = $row;
         }
+
+        usort($out, static function (array $a, array $b) use ($canonicalOrder): int {
+            $oa = $canonicalOrder[(string) ($a['label'] ?? '')] ?? 50;
+            $ob = $canonicalOrder[(string) ($b['label'] ?? '')] ?? 50;
+            if ($oa !== $ob) {
+                return $oa <=> $ob;
+            }
+
+            return ((int) ($b['count'] ?? 0)) <=> ((int) ($a['count'] ?? 0));
+        });
 
         return $out;
     }
@@ -1128,41 +1325,26 @@ final class RelationCsvAggregator
             }
             $label = (string) ($bar['label'] ?? '');
             $hours = $this->hoursFromCargaLabel($label);
-            $tone = 'slate';
-            $icon = 'clock';
-            $hint = __('Carga horária semanal da turma');
-            if ($hours === null) {
-                $tone = 'slate';
-                $icon = 'question';
-                $hint = __('Valor não informado ou ilegível');
-            } elseif ($hours >= 35) {
-                $tone = 'violet';
-                $icon = 'sun-double';
-                $hint = __('Faixa típica de tempo integral (≥ 35 h)');
-            } elseif ($hours >= 25) {
-                $tone = 'sky';
-                $icon = 'clock';
-                $hint = __('Jornada ampliada (25–34 h)');
-            } elseif ($hours >= 20) {
-                $tone = 'emerald';
-                $icon = 'clock';
-                $hint = __('Jornada parcial típica (~20–24 h)');
-            } else {
-                $tone = 'amber';
-                $icon = 'clock';
-                $hint = __('Carga abaixo de 20 h/semana');
-            }
-
+            $meta = $this->cargaBandMetaFromLabelOrHours($label, $hours);
             $out[] = array_merge($bar, [
-                'hours' => $hours,
-                'short' => $hours === null ? __('N/I') : __(':n h', ['n' => $this->formatHours($hours)]),
-                'tone' => $tone,
-                'icon' => $icon,
-                'hint' => $hint,
+                'label' => $meta['label'],
+                'short' => $meta['short'],
+                'tone' => $meta['tone'],
+                'icon' => $meta['icon'],
+                'hint' => $meta['hint'],
+                'hours' => $meta['hours_anchor'],
+                'band' => $meta['key'],
+                'range' => $meta['range'],
             ]);
         }
 
-        usort($out, function (array $a, array $b): int {
+        usort($out, static function (array $a, array $b): int {
+            if (($a['band'] ?? '') === 'ni' && ($b['band'] ?? '') !== 'ni') {
+                return 1;
+            }
+            if (($b['band'] ?? '') === 'ni' && ($a['band'] ?? '') !== 'ni') {
+                return -1;
+            }
             $ha = $a['hours'];
             $hb = $b['hours'];
             if ($ha === null && $hb === null) {
@@ -1181,6 +1363,273 @@ final class RelationCsvAggregator
         return $out;
     }
 
+    /**
+     * Valores exactos de CH (detalhe sob as faixas).
+     *
+     * @param  list<array{label: string, count: int|float, pct: float|int}>  $bars
+     * @return list<array<string, mixed>>
+     */
+    public function enrichCargaExactBars(array $bars): array
+    {
+        $out = [];
+        foreach ($bars as $bar) {
+            if (! is_array($bar)) {
+                continue;
+            }
+            $label = (string) ($bar['label'] ?? '');
+            $hours = $this->hoursFromCargaLabel($label);
+            if ($hours === null || $this->isCargaBandLabel($label)) {
+                continue;
+            }
+            $band = $this->cargaHorariaBandMeta($hours);
+            $out[] = array_merge($bar, [
+                'hours' => $hours,
+                'short' => __(':n h', ['n' => $this->formatHours($hours)]),
+                'band_label' => $band['short'],
+                'tone' => $band['tone'],
+            ]);
+        }
+
+        usort($out, static function (array $a, array $b): int {
+            return ((float) ($a['hours'] ?? 0)) <=> ((float) ($b['hours'] ?? 0));
+        });
+
+        return $out;
+    }
+
+    /**
+     * Reagrupa contagens de CH em faixas pedagógicas + valores exactos.
+     *
+     * @param  array<string, int>  $byCh
+     * @param  array<string, int>  $byChExact
+     * @return array{by_ch_band: array<string, int>, by_ch_exact: array<string, int>}
+     */
+    public function rebucketCargaCounts(array $byCh, array $byChExact = []): array
+    {
+        $bands = [];
+        $exact = [];
+        $sourceLooksExact = $byChExact === [] && $this->cargaMapLooksExact($byCh);
+
+        foreach ($byCh as $label => $count) {
+            $n = (int) $count;
+            if ($n <= 0) {
+                continue;
+            }
+            $label = (string) $label;
+            $hours = $this->hoursFromCargaLabel($label);
+            $meta = $this->cargaBandMetaFromLabelOrHours($label, $hours);
+            $bands[$meta['label']] = ($bands[$meta['label']] ?? 0) + $n;
+
+            if ($sourceLooksExact && $hours !== null && ! $this->isCargaBandLabel($label)) {
+                $exactLabel = $this->cargaHorariaLabel($hours);
+                $exact[$exactLabel] = ($exact[$exactLabel] ?? 0) + $n;
+            }
+        }
+
+        foreach ($byChExact as $label => $count) {
+            $n = (int) $count;
+            if ($n <= 0) {
+                continue;
+            }
+            $label = (string) $label;
+            $hours = $this->hoursFromCargaLabel($label);
+            if ($hours === null) {
+                continue;
+            }
+            $exactLabel = $this->cargaHorariaLabel($hours);
+            $exact[$exactLabel] = ($exact[$exactLabel] ?? 0) + $n;
+            if ($byCh === []) {
+                $meta = $this->cargaHorariaBandMeta($hours);
+                $bands[$meta['label']] = ($bands[$meta['label']] ?? 0) + $n;
+            }
+        }
+
+        return [
+            'by_ch_band' => $this->sortCargaBandLabels($bands),
+            'by_ch_exact' => $this->sortCargaBands($exact),
+        ];
+    }
+
+    /**
+     * Faixa pedagógica da carga horária semanal.
+     *
+     * @return array{
+     *   key: string,
+     *   label: string,
+     *   short: string,
+     *   range: string,
+     *   tone: string,
+     *   icon: string,
+     *   hint: string,
+     *   hours_anchor: float|null
+     * }
+     */
+    public function cargaHorariaBandMeta(?float $hours): array
+    {
+        if ($hours === null) {
+            return [
+                'key' => 'ni',
+                'label' => __('Não informado'),
+                'short' => __('N/I'),
+                'range' => '—',
+                'tone' => 'slate',
+                'icon' => 'question',
+                'hint' => __('Sem Carga horária semanal legível no export'),
+                'hours_anchor' => null,
+            ];
+        }
+        if ($hours >= 35.0) {
+            return [
+                'key' => 'integral',
+                'label' => __('≥ 35 h — tempo integral'),
+                'short' => __('≥ 35 h'),
+                'range' => '≥ 35',
+                'tone' => 'violet',
+                'icon' => 'sun-double',
+                'hint' => __('Faixa típica de tempo integral (≥ 35 h/semana)'),
+                'hours_anchor' => 35.0,
+            ];
+        }
+        if ($hours >= 25.0) {
+            return [
+                'key' => 'ampliada',
+                'label' => __('25–34 h — jornada ampliada'),
+                'short' => __('25–34 h'),
+                'range' => '25–34',
+                'tone' => 'sky',
+                'icon' => 'clock',
+                'hint' => __('Jornada ampliada, abaixo do limiar usual de integral'),
+                'hours_anchor' => 25.0,
+            ];
+        }
+        if ($hours >= 20.0) {
+            return [
+                'key' => 'parcial',
+                'label' => __('20–24 h — parcial típica'),
+                'short' => __('20–24 h'),
+                'range' => '20–24',
+                'tone' => 'emerald',
+                'icon' => 'clock',
+                'hint' => __('Jornada parcial mais comum na rede (cerca de 4 h/dia)'),
+                'hours_anchor' => 20.0,
+            ];
+        }
+        if ($hours >= 15.0) {
+            return [
+                'key' => 'curta',
+                'label' => __('15–19 h — parcial curta'),
+                'short' => __('15–19 h'),
+                'range' => '15–19',
+                'tone' => 'amber',
+                'icon' => 'clock',
+                'hint' => __('Parcial abaixo da jornada típica de ~20 h'),
+                'hours_anchor' => 15.0,
+            ];
+        }
+
+        return [
+            'key' => 'reduzida',
+            'label' => __('Até 14 h — carga reduzida'),
+            'short' => __('≤ 14 h'),
+            'range' => '≤ 14',
+            'tone' => 'orange',
+            'icon' => 'clock',
+            'hint' => __('Carga reduzida — frequente em AEE, complementar ou turmas especiais'),
+            'hours_anchor' => 7.0,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   key: string,
+     *   label: string,
+     *   short: string,
+     *   range: string,
+     *   tone: string,
+     *   icon: string,
+     *   hint: string,
+     *   hours_anchor: float|null
+     * }
+     */
+    private function cargaBandMetaFromLabelOrHours(string $label, ?float $hours): array
+    {
+        $s = mb_strtolower(trim($label));
+        if ($s === '' || str_contains($s, 'não informado') || str_contains($s, 'nao informado') || $s === 'n/i') {
+            return $this->cargaHorariaBandMeta(null);
+        }
+        if (str_contains($s, '≥ 35') || str_contains($s, '>= 35') || str_contains($s, '35h+') || str_contains($s, 'tempo integral')) {
+            return $this->cargaHorariaBandMeta(35.0);
+        }
+        if ((str_contains($s, '25') && str_contains($s, '34')) || str_contains($s, 'ampliada')) {
+            return $this->cargaHorariaBandMeta(25.0);
+        }
+        if ((str_contains($s, '20') && str_contains($s, '24')) || str_contains($s, 'parcial típica') || str_contains($s, 'parcial tipica')) {
+            return $this->cargaHorariaBandMeta(20.0);
+        }
+        if ((str_contains($s, '15') && str_contains($s, '19')) || str_contains($s, 'parcial curta')) {
+            return $this->cargaHorariaBandMeta(15.0);
+        }
+        if (
+            str_contains($s, 'até 14')
+            || str_contains($s, 'ate 14')
+            || str_contains($s, '≤ 14')
+            || str_contains($s, '<= 14')
+            || str_contains($s, 'carga reduzida')
+        ) {
+            return $this->cargaHorariaBandMeta(7.0);
+        }
+        if (str_contains($s, 'até 20') || str_contains($s, 'ate 20')) {
+            return $this->cargaHorariaBandMeta(20.0);
+        }
+
+        return $this->cargaHorariaBandMeta($hours);
+    }
+
+    private function isCargaBandLabel(string $label): bool
+    {
+        $s = mb_strtolower(trim($label));
+        if ($s === '') {
+            return false;
+        }
+
+        return str_contains($s, 'tempo integral')
+            || str_contains($s, 'jornada ampliada')
+            || str_contains($s, 'parcial típica')
+            || str_contains($s, 'parcial tipica')
+            || str_contains($s, 'parcial curta')
+            || str_contains($s, 'carga reduzida')
+            || str_contains($s, '≥ 35')
+            || str_contains($s, '25–34')
+            || str_contains($s, '20–24')
+            || str_contains($s, '15–19')
+            || str_contains($s, 'até 14')
+            || str_contains($s, 'ate 14');
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     */
+    private function cargaMapLooksExact(array $counts): bool
+    {
+        if ($counts === []) {
+            return false;
+        }
+        $exactish = 0;
+        foreach (array_keys($counts) as $label) {
+            $label = (string) $label;
+            if ($this->isCargaBandLabel($label)) {
+                return false;
+            }
+            $hours = $this->hoursFromCargaLabel($label);
+            $lower = mb_strtolower($label);
+            if ($hours !== null || str_contains($lower, 'não informado') || str_contains($lower, 'nao informado')) {
+                $exactish++;
+            }
+        }
+
+        return $exactish > 0;
+    }
+
     private function compactTurnoLabel(string $raw): string
     {
         $compact = preg_replace('/\s+/u', ' ', trim($raw)) ?? trim($raw);
@@ -1197,7 +1646,7 @@ final class RelationCsvAggregator
             $compact = (string) preg_replace($pattern, $repl, $compact);
         }
 
-        return $this->truncateLabel($compact, 42);
+        return $this->truncateLabel($compact, 56);
     }
 
     private function truncateLabel(string $label, int $max): string
@@ -1368,6 +1817,37 @@ final class RelationCsvAggregator
      * @param  array<string, int>  $counts
      * @return array<string, int>
      */
+    /**
+     * @param  array<string, int>  $counts
+     * @return array<string, int>
+     */
+    private function sortCargaBandLabels(array $counts): array
+    {
+        $order = [];
+        foreach ($counts as $label => $n) {
+            $meta = $this->cargaBandMetaFromLabelOrHours((string) $label, $this->hoursFromCargaLabel((string) $label));
+            $order[] = [
+                'label' => (string) $label,
+                'n' => (int) $n,
+                'sort' => $meta['hours_anchor'] ?? 999.0,
+                'ni' => $meta['key'] === 'ni',
+            ];
+        }
+        usort($order, static function (array $a, array $b): int {
+            if ($a['ni'] !== $b['ni']) {
+                return $a['ni'] ? 1 : -1;
+            }
+
+            return $a['sort'] <=> $b['sort'];
+        });
+        $out = [];
+        foreach ($order as $row) {
+            $out[$row['label']] = $row['n'];
+        }
+
+        return $out;
+    }
+
     private function sortCargaBands(array $counts): array
     {
         $items = [];

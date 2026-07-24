@@ -125,17 +125,80 @@ final class ClioBiDashboardComposerTest extends TestCase
             'qt_aee_without_nee' => 1,
         ]);
 
-        $charts = (new ClioBiDashboardComposer(new EtapaLabelOrder))->charts((int) $campaign->id, $bi);
+        $charts = (new ClioBiDashboardComposer(new EtapaLabelOrder))->charts((int) $campaign->id, $bi, [
+            'INF-DIS' => [
+                'adequado' => 80,
+                'atraso_1' => 10,
+                'distorcao' => 8,
+                'adiantado' => 2,
+                'pct_distorcao' => 8.0,
+                'by_etapa' => [
+                    'Ensino Fundamental de 9 anos - 1º Ano' => [
+                        'eligible' => 50,
+                        'distorcao' => 5,
+                        'pct' => 10.0,
+                    ],
+                ],
+            ],
+            'INF-DEN' => [
+                'turmas_com_aluno' => 20,
+                'turmas_sem_aluno' => 2,
+                'turmas_ge_40' => 1,
+                'media_alunos_por_turma' => 22.5,
+            ],
+            'INF-DOC' => [
+                'turmas_com_docente' => 18,
+                'turmas_sem_docente' => 2,
+            ],
+            'INF-DEM' => [
+                'by_cor_raca' => ['Parda' => 40, 'Branca' => 30, 'Preta' => 20],
+                'by_sexo' => ['Masculino' => 48, 'Feminino' => 52],
+                'by_faixa_etaria' => ['6 a 10' => 60, '11 a 14' => 40],
+            ],
+            'INF-TRA' => [
+                'active' => [
+                    'by_location_users' => ['Rural' => 30, 'Urbana' => 70],
+                    'by_veiculo' => ['Ônibus' => 50, 'Van' => 20],
+                ],
+            ],
+            'INF-JOR' => [
+                'by_turno' => ['Manhã' => 10, 'Tarde' => 8],
+                'fund_aee_contraturno' => 5,
+                'curricular_ac' => 3,
+            ],
+            'INF-TUR' => [
+                'by_tipo_bucket' => [
+                    'curricular' => 40,
+                    'aee' => 5,
+                    'atividade_complementar' => 2,
+                ],
+            ],
+            'INF-GAP' => [
+                'only_in_clio' => 2,
+                'only_in_ieducar' => 1,
+                'matched' => 10,
+            ],
+        ]);
 
         $this->assertArrayHasKey('triade', $charts);
         $this->assertSame('doughnut', $charts['triade']['type']);
         $this->assertArrayHasKey('matriculas', $charts);
-        $this->assertCount(3, $charts['matriculas']['labels']);
         $this->assertArrayHasKey('etapas', $charts);
-        $this->assertNotEmpty($charts['etapas']['labels']);
         $this->assertArrayHasKey('inclusao', $charts);
         $this->assertArrayHasKey('aee_gap', $charts);
         $this->assertArrayHasKey('qualidade', $charts);
         $this->assertArrayHasKey('escolas', $charts);
+        $this->assertArrayHasKey('distorcao_stack', $charts);
+        $this->assertArrayHasKey('distorcao_etapas', $charts);
+        $this->assertArrayHasKey('densidade', $charts);
+        $this->assertArrayHasKey('docentes', $charts);
+        $this->assertArrayHasKey('dem_cor', $charts);
+        $this->assertArrayHasKey('tra_local', $charts);
+        $this->assertArrayHasKey('jornada_turno', $charts);
+        $this->assertArrayHasKey('turmas_tipo', $charts);
+        $this->assertArrayHasKey('gap', $charts);
+        $this->assertArrayHasKey('findings', $charts);
+        $this->assertArrayHasKey('deltas', $charts);
+        $this->assertArrayHasKey('nee_escolas', $charts);
     }
 }

@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 8.0.4 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **8.0.4**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial + BI), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **8.1.0**, linha **8.x** (Clio — relatórios Educacenso Matrícula inicial + BI), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,12 +14,12 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **8.0.4** |
-| **Tag de deploy** | `20260724a-Theia` |
-| **Commit de referência** | `c0a7d791` |
+| **Versão semântica** | **8.1.0** |
+| **Tag de deploy** | `20260724b-Asclepius` |
+| **Commit de referência** | `PENDING` |
 | **Data de referência** | 2026-07-24 |
-| **Release** | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) |
-| **Marco** | **Theia** — painel Insights nativo Chart.js; UX análise/home Clio |
+| **Release** | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) |
+| **Marco** | **Asclepius** — Diagnóstico Geral; PDF do gestor; tempo escolar; jornada |
 
 ---
 
@@ -172,7 +172,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
-| **8.0.4** | Theia | 24/07 | — | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) — painel Insights nativo; UX análise/home |
+| **8.1.0** | Asclepius | 24/07 b | — | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) — Diagnóstico Geral; PDF gestor; tempo escolar; jornada |
+| **8.0.4** | Theia | 24/07 a | — | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) — painel Insights nativo; UX análise/home |
 | **8.0.3** | Pythia | 24/07 | — | [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) — BI `bi_clio_*`; insights; medidores IND |
 | **8.0.2** | Harmonia | 23/07 b | — | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) — PDF/Excel alinhados; Fund. I/II; lotes Drive |
 | **8.0.1** | Euterpe | 23/07 | — | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) — Clio jornada/NEE/transporte; Excel/PDF; UTF-8 |

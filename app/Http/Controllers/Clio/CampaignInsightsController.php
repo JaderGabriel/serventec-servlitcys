@@ -24,8 +24,18 @@ class CampaignInsightsController extends Controller
             ->orderBy('id')
             ->get();
 
+        $inferences = [];
+        if ($bi instanceof BiClioCampaign) {
+            $campaign->loadMissing('inferences');
+            foreach ($campaign->inferences as $inf) {
+                if (is_array($inf->payload)) {
+                    $inferences[(string) $inf->code] = $inf->payload;
+                }
+            }
+        }
+
         $charts = $bi instanceof BiClioCampaign
-            ? $dashboard->charts((int) $campaign->id, $bi)
+            ? $dashboard->charts((int) $campaign->id, $bi, $inferences)
             : [];
 
         $municipality = $campaign->municipality_name ?? $campaign->city?->name ?? '';

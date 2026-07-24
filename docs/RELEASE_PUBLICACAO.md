@@ -1,6 +1,6 @@
 # Publicação de releases — tag Git + GitHub Release
 
-**Versão do produto:** 8.0.4 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24
 
 > **Índice:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) §6
 

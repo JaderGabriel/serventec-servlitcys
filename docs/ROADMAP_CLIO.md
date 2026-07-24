@@ -1,6 +1,6 @@
 # Roadmap Clio — status, indicadores e melhorias
 
-**Versão do produto:** 8.0.4 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Theia
+**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Asclepius
 
 > **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
@@ -31,7 +31,7 @@ flowchart TD
 | Perfis | Só coleta (`analysis_only`) · Consultoria (`consultancy` + cruzamento i-Educar) |
 | Acesso | Ver: admin + usuário · Mutar: só admin · Municipal: sem acesso |
 | Sprint código | **S7 concluída** (BI + medidores) · próximo **S8** (promote i-Educar) |
-| Release base | **8.0.2 Harmonia** (+ patches em `main` sem bump) |
+| Release base | **8.1.0 Asclepius** (Diagnóstico Geral + PDF gestor + jornada) |
 
 ### 1.2 Capacidade por sprint
 
@@ -53,10 +53,12 @@ flowchart TD
 | Home do exercício | `/clio` | Estável — KPIs + pulse de ficheiros |
 | Lista / central da coleta | `/clio/coletas`, hub | Estável — inventário geral → tríade por escola (INEP + status) |
 | Upload / Drive | upload · Verificar/Importar | Estável — lotes; retry de parse em falhas |
-| Análise municipal | `/clio/coletas/{uuid}/analise` | Estável — medidores, relatório da rede, matriz, NEE, jornada, transporte |
+| Análise municipal | `/clio/coletas/{uuid}/analise` | Estável — medidores, relatório da rede, matriz, NEE, jornada (faixas CH + Outros), transporte, Diagnóstico Geral |
 | Detalhe escola | `…/escolas/{inep}` | Estável — medidores locais + distorção por etapa |
 | Cruzamento | `…/cruzamento` | Estável — preserva `INF-GAP` na reanálise |
-| Exports | CSV / PDF / Excel | Estável — ativas × demais; PII só no PDF interno |
+| Insights / BI | `…/insights` | Estável — Chart.js sobre `bi_clio_*` |
+| Exports | CSV / PDF detalhado / **PDF gestor** / Excel | Estável — Diagnóstico Geral no PDF e na aba Excel; PII só no PDF interno |
+| Home — card | `/clio` | Estável — slider cobertura ↔ série histórica |
 | RX / aba Censo | ranking do exercício | Estável |
 
 ### 1.4 Patches relevantes pós-Harmonia (indicadores / qualidade)
@@ -68,7 +70,8 @@ flowchart TD
 | Home — status ficheiros | Pulse ok/falha/pendente + Acomp | `4ba91144` |
 | Central — inventário | Geral primeiro; tríade por escola; INEP; cores de parse | `7178000f` |
 | Drive — reparse | Duplicata `failed` → `pending` + reparse do lote | `7178000f` |
-| Análise — glossário distorção | Legenda das colunas «Distorção por etapa / ano» | local / próximo push |
+| Análise — glossário distorção | Legenda das colunas «Distorção por etapa / ano» | local |
+| **Asclepius (8.1.0)** | Diagnóstico Geral; PDF gestor; tempo escolar; faixas CH; Outros em turnos; série no card | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) |
 
 Checklist de código: [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md). Rastreio: [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md).
 
@@ -115,16 +118,19 @@ Indicadores que o Clio **já calcula e expõe** de forma estável (UI, inferênc
 |-----------|--------|------------------|
 | NEE / TEA / AH | `INF-NEE` | Contagem por pessoa (não por linha); DEF / TRS / AH; subnotificação `SUB-*` |
 | NEE sem AEE | relatório / PDF | Destaque operacional |
-| Tempo de escolarização | `INF-JOR` | Turno/CH; fund.+AEE; regular+AC; infantil estendida |
+| Tempo de escolarização | `INF-JOR` | Turnos canónicos + Outros; CH em faixas pedagógicas; fund.+AEE; regular+AC; infantil estendida |
+| Tempo escolar semanal | composer | CH ponderada por alunos × segmentos (PDF gestor / Insights) |
 | Transporte | `INF-TRA` | Uso; rural/urbano (Acomp); veículo; ativas × demais |
 | Demografia | `INF-DEM` | Cor/Raça, sexo, faixa etária (quando colunas existem) |
+| **Diagnóstico Geral** | findings + parse_meta | Escolas ativas × erros/avisos + Cor/Raça; PDF + Excel |
 
 ### 2.5 Export e BI
 
 | Canal | Indicadores típicos | PII |
 |-------|---------------------|-----|
-| **Excel / CSV** | Contadores, INF-*, escolas ativas × demais, o que corrigir | Sem PII no CSV |
-| **PDF** | Mesmos + distorção por etapa (+ amostra), NEE, matriz, nome/CPF | Uso interno |
+| **Excel / CSV** | Contadores, INF-*, Diagnóstico Geral, escolas ativas × demais, o que corrigir | Sem PII no CSV |
+| **PDF detalhado** | Mesmos + distorção (+ amostra), NEE, matriz, Diagnóstico Geral, nome/CPF | Uso interno |
+| **PDF do gestor** | KPIs BI, insights (sem `error`), etapas, série, tempo escolar, Diagnóstico Geral | Sem PII operacional |
 | **Power BI / painel nativo (`bi_clio_*`)** | KPIs, etapas, inclusão, qualidade | Sem PII — UI `/insights` |
 
 ---

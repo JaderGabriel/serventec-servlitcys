@@ -50,7 +50,7 @@
 }
 
 .clio-shell {
-    @apply max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-8;
+    @apply mx-auto max-w-[96rem] space-y-8 px-4 sm:px-6 lg:px-8;
 }
 
 .clio-shell--narrow {
@@ -404,9 +404,9 @@
 .clio-tone-rose { @apply text-rose-700 dark:text-rose-300; }
 .clio-tone-slate { @apply text-slate-900 dark:text-white; }
 
-/* Cartão de relatório (home) */
+/* Cartão de relatório (home) — cards mais largos para caber os 4 rótulos */
 .clio-report-grid {
-    @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-3;
+    @apply grid gap-5 sm:grid-cols-2 2xl:grid-cols-3;
 }
 
 .clio-report-card {
@@ -452,6 +452,84 @@
     @apply mt-3 flex flex-wrap items-center gap-1.5;
 }
 
+.clio-card-slide-toggle {
+    @apply ml-auto inline-flex items-center gap-1 rounded-md border border-teal-200/90 bg-teal-50/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-teal-800 transition hover:bg-teal-100/90 dark:border-teal-800/60 dark:bg-teal-950/40 dark:text-teal-200 dark:hover:bg-teal-900/50;
+}
+
+.clio-card-slide-toggle__icon {
+    @apply inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center;
+}
+
+.clio-card-slide-toggle__icon svg {
+    @apply h-3.5 w-3.5;
+}
+
+.clio-card-slide-toggle__label {
+    @apply leading-none;
+}
+
+.clio-report-card__stage {
+    @apply mt-3 min-h-[7.5rem];
+}
+
+.clio-report-card__panel--series {
+    @apply flex flex-col gap-2;
+}
+
+.clio-card-series__head {
+    @apply min-w-0;
+}
+
+.clio-card-series__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-xs font-semibold text-slate-800 dark:text-slate-100;
+}
+
+.clio-card-series__sub {
+    @apply mt-0.5 text-[10px] text-slate-500 dark:text-slate-400;
+}
+
+.clio-card-series__chart-wrap {
+    @apply relative h-[7.25rem] w-full overflow-hidden rounded-md bg-slate-50/80 dark:bg-slate-900/40;
+}
+
+.clio-card-series__chart-wrap canvas {
+    @apply h-full w-full;
+}
+
+.clio-card-series__chart-wrap.is-loading canvas {
+    @apply opacity-30;
+}
+
+.clio-card-series__loading {
+    @apply absolute inset-0 flex items-center justify-center gap-2 text-[10px] font-medium text-slate-500;
+}
+
+.clio-card-series__spinner {
+    @apply h-3.5 w-3.5 animate-spin rounded-full border-2 border-teal-500/30 border-t-teal-600;
+}
+
+.clio-card-series__error {
+    @apply text-[10px] font-medium text-rose-600 dark:text-rose-400;
+}
+
+.clio-card-series__stages {
+    @apply grid grid-cols-3 gap-1.5 sm:grid-cols-5;
+}
+
+.clio-card-series__stage {
+    @apply rounded-md bg-slate-50 px-1.5 py-1 text-center dark:bg-slate-900/50;
+}
+
+.clio-card-series__stage-value {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-[11px] font-semibold tabular-nums text-slate-800 dark:text-slate-100;
+}
+
+.clio-card-series__stage-label {
+    @apply mt-0.5 text-[8px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400;
+}
+
 .clio-file-pulse {
     @apply mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-slate-100/80 pt-2.5 text-[10px] font-normal leading-tight tracking-wide text-slate-400 dark:border-slate-800/80 dark:text-slate-500;
 }
@@ -494,7 +572,7 @@
 }
 
 .clio-report-card__footer {
-    @apply mt-auto pt-3 grid grid-cols-4 gap-1.5 border-t border-slate-100 dark:border-slate-800;
+    @apply mt-auto grid grid-cols-4 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800;
 }
 
 .clio-card-action-wrap {
@@ -506,12 +584,12 @@
 }
 
 .clio-card-action {
-    @apply inline-flex min-w-0 w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-2 text-center transition
+    @apply inline-flex min-w-0 w-full flex-col items-center justify-center gap-1 rounded-lg border px-1.5 py-2.5 text-center transition
         focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900;
 }
 
 .clio-card-action__icon {
-    @apply flex h-5 w-5 items-center justify-center;
+    @apply flex h-5 w-5 shrink-0 items-center justify-center;
 }
 
 .clio-card-action__icon svg {
@@ -519,7 +597,7 @@
 }
 
 .clio-card-action__label {
-    @apply max-w-full truncate text-[10px] font-semibold leading-tight tracking-wide;
+    @apply whitespace-nowrap text-[11px] font-semibold leading-none tracking-wide;
 }
 
 .clio-card-action--report {
@@ -556,23 +634,291 @@
     @apply cursor-not-allowed opacity-45 hover:border-inherit hover:bg-inherit dark:hover:bg-inherit;
 }
 
-@media (min-width: 420px) {
+@media (min-width: 520px) {
     .clio-card-action {
-        @apply flex-row gap-1 px-1.5 py-2;
+        @apply flex-row gap-1.5 px-2 py-2.5;
     }
 
     .clio-card-action__label {
-        @apply text-[11px];
+        @apply text-xs;
     }
 }
 
-/* Painel BI nativo (/insights) */
-.clio-bi-dash {
-    @apply space-y-3;
+/* —— Módulo Clio Insights / BI ——
+ * Identidade própria (teal/ink) distinta da home (azul/ouro) e da análise (relatório).
+ */
+:root {
+    --clio-bi-teal: 13 148 136;
+    --clio-bi-teal-bright: 45 212 191;
+    --clio-bi-ink: 15 23 42;
+    --clio-bi-paper: 240 253 250;
+    --clio-bi-surface: 255 255 255;
+    --clio-bi-line: 204 251 241;
+    --clio-bi-mint: 16 185 129;
+    --clio-bi-rose: 225 29 72;
 }
 
-.clio-bi-dash__head {
+.dark {
+    --clio-bi-paper: 2 12 14;
+    --clio-bi-surface: 15 23 42;
+    --clio-bi-line: 19 78 74;
+}
+
+.clio-bi-page {
+    position: relative;
+    isolation: isolate;
+    padding: 1.5rem 0 3rem;
+    min-height: 60vh;
+}
+
+.clio-bi-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 70% 45% at 0% 0%, rgb(var(--clio-bi-teal) / 0.1), transparent 55%),
+        radial-gradient(ellipse 50% 40% at 100% 8%, rgb(15 118 110 / 0.07), transparent 50%),
+        linear-gradient(180deg, rgb(var(--clio-bi-paper)) 0%, transparent 42%);
+}
+
+.dark .clio-bi-page::before {
+    background:
+        radial-gradient(ellipse 65% 40% at 5% 0%, rgb(var(--clio-bi-teal) / 0.22), transparent 55%),
+        radial-gradient(ellipse 45% 35% at 100% 5%, rgb(45 212 191 / 0.08), transparent 45%),
+        linear-gradient(180deg, rgb(2 12 14) 0%, transparent 40%);
+}
+
+.clio-bi-shell {
+    @apply mx-auto max-w-[96rem] space-y-8 px-4 sm:px-6 lg:px-8;
+}
+
+.clio-bi-masthead {
+    @apply flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between;
+}
+
+.clio-bi-eyebrow {
+    @apply mb-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-teal-700 dark:text-teal-300;
+}
+
+.clio-bi-eyebrow__mark {
+    @apply inline-block h-1.5 w-1.5 rounded-full bg-teal-500 shadow-[0_0_0_3px_rgb(45_212_191_/_0.35)];
+    animation: clio-bi-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes clio-bi-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.clio-bi-masthead__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply flex flex-wrap items-center gap-2.5 text-2xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-3xl;
+}
+
+.clio-bi-masthead__badge {
+    @apply inline-flex items-center rounded-md border border-teal-300/80 bg-teal-50 px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-teal-800
+        dark:border-teal-700 dark:bg-teal-950/60 dark:text-teal-200;
+}
+
+.clio-bi-masthead__sub {
+    @apply mt-1.5 flex flex-wrap items-center gap-x-1.5 text-sm text-slate-600 dark:text-slate-400;
+}
+
+.clio-bi-masthead__place {
+    @apply font-semibold text-slate-800 dark:text-slate-200;
+}
+
+.clio-bi-masthead__dot {
+    @apply text-slate-400;
+}
+
+.clio-bi-nav {
+    @apply flex flex-wrap items-center gap-1 rounded-xl border border-teal-200/80 bg-white/80 p-1 shadow-sm backdrop-blur-sm
+        dark:border-teal-900/60 dark:bg-slate-900/70;
+}
+
+.clio-bi-nav__link {
+    @apply rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 transition
+        hover:bg-teal-50 hover:text-teal-900
+        dark:text-slate-300 dark:hover:bg-teal-950/50 dark:hover:text-teal-100;
+}
+
+.clio-bi-nav__link--current {
+    @apply bg-teal-600 text-white shadow-sm hover:bg-teal-600 hover:text-white
+        dark:bg-teal-500 dark:text-slate-950 dark:hover:bg-teal-500 dark:hover:text-slate-950;
+}
+
+.clio-bi-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1rem;
+    border: 1px solid rgb(var(--clio-bi-line) / 0.95);
+    background: linear-gradient(135deg, rgb(255 255 255) 0%, rgb(240 253 250) 55%, rgb(236 254 255 / 0.9) 100%);
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04), 0 18px 40px -24px rgb(13 148 136 / 0.45);
+    animation: clio-bi-rise 0.55s ease-out both;
+}
+
+.dark .clio-bi-hero {
+    border-color: rgb(19 78 74 / 0.8);
+    background: linear-gradient(135deg, rgb(15 23 42 / 0.95) 0%, rgb(2 44 34 / 0.55) 100%);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 20px 48px -28px rgb(45 212 191 / 0.35);
+}
+
+.clio-bi-hero__glow {
+    position: absolute;
+    inset: -20% 40% auto -10%;
+    height: 70%;
+    background: radial-gradient(circle, rgb(45 212 191 / 0.22), transparent 70%);
+    pointer-events: none;
+}
+
+.clio-bi-hero__grid {
+    position: absolute;
+    inset: 0;
+    opacity: 0.35;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgb(13 148 136 / 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(13 148 136 / 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+    mask-image: linear-gradient(180deg, #000 20%, transparent 90%);
+}
+
+.dark .clio-bi-hero__grid {
+    opacity: 0.2;
+}
+
+.clio-bi-hero__body {
+    @apply relative z-[1] flex flex-col gap-4 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6;
+}
+
+.clio-bi-hero__kicker {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-300;
+}
+
+.clio-bi-hero__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl;
+}
+
+.clio-bi-hero__meta {
+    @apply mt-1.5 text-xs text-slate-500 dark:text-slate-400;
+}
+
+.clio-bi-btn {
+    @apply inline-flex items-center justify-center rounded-lg px-3.5 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900;
+}
+
+.clio-bi-btn--primary {
+    @apply bg-teal-600 text-white shadow-sm hover:bg-teal-500 dark:bg-teal-500 dark:text-slate-950 dark:hover:bg-teal-400;
+}
+
+.clio-bi-btn--ghost {
+    @apply border border-teal-300/90 bg-white/80 text-teal-900 hover:bg-teal-50
+        dark:border-teal-700 dark:bg-slate-900/60 dark:text-teal-100 dark:hover:bg-teal-950/40;
+}
+
+.clio-bi-block {
+    @apply space-y-4;
+    animation: clio-bi-rise 0.6s ease-out both;
+}
+
+.clio-bi-block:nth-of-type(2) { animation-delay: 0.06s; }
+.clio-bi-block:nth-of-type(3) { animation-delay: 0.12s; }
+.clio-bi-block:nth-of-type(4) { animation-delay: 0.18s; }
+
+@keyframes clio-bi-rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.clio-bi-block--canvas {
+    @apply rounded-2xl border border-teal-200/70 bg-white/70 p-4 shadow-sm backdrop-blur-sm
+        dark:border-teal-900/50 dark:bg-slate-900/40 sm:p-5;
+}
+
+.clio-bi-block--feed {
+    @apply rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50 sm:p-5;
+}
+
+.clio-bi-block__eyebrow {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-300;
+}
+
+.clio-bi-block__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-lg font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-bi-block__lead {
+    @apply mt-0.5 text-xs text-slate-500 dark:text-slate-400;
+}
+
+.clio-bi-block__head {
     @apply space-y-0.5;
+}
+
+.clio-bi-kpi-grid {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+    .clio-bi-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .clio-bi-kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.clio-bi-kpi {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.875rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+    background: #fff;
+    padding: 1rem 1rem 0.9rem 1.1rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.dark .clio-bi-kpi {
+    border-color: rgb(51 65 85 / 0.9);
+    background: rgb(15 23 42 / 0.65);
+}
+
+.clio-bi-kpi::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgb(var(--clio-bi-teal));
+}
+
+.clio-bi-kpi--teal::before { background: rgb(13 148 136); }
+.clio-bi-kpi--mint::before { background: rgb(16 185 129); }
+.clio-bi-kpi--ink::before { background: rgb(71 85 105); }
+.clio-bi-kpi--rose::before { background: rgb(225 29 72); }
+
+.clio-bi-kpi__label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400;
+}
+
+.clio-bi-kpi__value {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white;
+}
+
+.clio-bi-kpi__hint {
+    @apply mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400;
 }
 
 .clio-bi-dash__grid {
@@ -585,6 +931,231 @@
 
 .clio-bi-dash__cell--wide {
     @apply lg:col-span-2;
+}
+
+.clio-bi-dash__cell--enter {
+    animation: clio-bi-rise 0.5s ease-out both;
+}
+
+.clio-bi-dash__cell--enter:nth-child(1) { animation-delay: 0.05s; }
+.clio-bi-dash__cell--enter:nth-child(2) { animation-delay: 0.1s; }
+.clio-bi-dash__cell--enter:nth-child(3) { animation-delay: 0.15s; }
+.clio-bi-dash__cell--enter:nth-child(4) { animation-delay: 0.2s; }
+.clio-bi-dash__cell--enter:nth-child(5) { animation-delay: 0.25s; }
+
+.clio-bi-feed {
+    @apply m-0 list-none space-y-3 p-0;
+}
+
+.clio-bi-feed__item {
+    @apply relative flex gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5
+        dark:border-slate-800 dark:bg-slate-950/40;
+}
+
+.clio-bi-feed__rail {
+    @apply mt-1 h-full min-h-[2.5rem] w-1 shrink-0 rounded-full bg-teal-400;
+}
+
+.clio-bi-feed__item--warn .clio-bi-feed__rail { @apply bg-amber-400; }
+.clio-bi-feed__item--error .clio-bi-feed__rail { @apply bg-rose-500; }
+.clio-bi-feed__item--info .clio-bi-feed__rail { @apply bg-teal-400; }
+
+.clio-bi-feed__body {
+    @apply min-w-0 flex-1;
+}
+
+.clio-bi-feed__meta {
+    @apply mb-1.5 flex flex-wrap items-center gap-2;
+}
+
+.clio-bi-feed__chip {
+    @apply inline-flex rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-[11px] font-bold tabular-nums text-teal-900
+        dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-100;
+}
+
+.clio-bi-feed__item--warn .clio-bi-feed__chip {
+    @apply border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100;
+}
+
+.clio-bi-feed__item--error .clio-bi-feed__chip {
+    @apply border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100;
+}
+
+.clio-bi-feed__code {
+    @apply text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500;
+}
+
+.clio-bi-feed__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-sm font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-bi-feed__text {
+    @apply mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-300;
+}
+
+.clio-bi-feed__empty {
+    @apply rounded-xl border border-dashed border-slate-200 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400;
+}
+
+.clio-bi-footnote {
+    @apply rounded-xl border border-teal-200/60 bg-teal-50/50 px-4 py-3 dark:border-teal-900/40 dark:bg-teal-950/20;
+}
+
+.clio-bi-footnote__title {
+    @apply text-xs font-semibold uppercase tracking-wide text-teal-800 dark:text-teal-200;
+}
+
+.clio-bi-footnote__text {
+    @apply mt-1 text-xs leading-relaxed text-teal-900/80 dark:text-teal-100/80;
+}
+
+.clio-bi-empty {
+    @apply rounded-2xl border border-teal-200/80 bg-white/90 px-6 py-12 text-center shadow-sm
+        dark:border-teal-900/50 dark:bg-slate-900/50;
+}
+
+.clio-bi-empty__kicker {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-teal-700 dark:text-teal-300;
+}
+
+.clio-bi-empty__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-2 text-lg font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-bi-empty__lead {
+    @apply mx-auto mt-2 max-w-md text-sm text-slate-500 dark:text-slate-400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clio-bi-eyebrow__mark,
+    .clio-bi-hero,
+    .clio-bi-block,
+    .clio-bi-dash__cell--enter {
+        animation: none !important;
+    }
+}
+
+/* —— Central da coleta: decisão + fluxo —— */
+.clio-hub-masthead {
+    @apply flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between;
+}
+
+.clio-hub-nav {
+    @apply flex flex-wrap items-center gap-1.5;
+}
+
+.clio-hub-nav__link {
+    @apply inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition
+        hover:border-sky-300 hover:bg-sky-50 hover:text-sky-900
+        dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:bg-sky-950/40;
+}
+
+.clio-hub-nav__link--current {
+    @apply border-sky-600 bg-sky-600 text-white hover:border-sky-600 hover:bg-sky-600 hover:text-white
+        dark:border-sky-500 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-500;
+}
+
+.clio-hub-nav__link--muted {
+    @apply border-transparent bg-transparent text-slate-500 shadow-none hover:bg-slate-100 dark:hover:bg-slate-800;
+}
+
+.clio-hub-decide {
+    @apply flex flex-col gap-4 rounded-2xl border p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6;
+    box-shadow: var(--clio-shadow);
+}
+
+.clio-hub-decide--sky {
+    @apply border-sky-200/90 bg-gradient-to-br from-sky-50 via-white to-slate-50
+        dark:border-sky-900/50 dark:from-sky-950/40 dark:via-slate-900/60 dark:to-slate-950;
+}
+
+.clio-hub-decide--amber {
+    @apply border-amber-200/90 bg-gradient-to-br from-amber-50 via-white to-slate-50
+        dark:border-amber-900/50 dark:from-amber-950/30 dark:via-slate-900/60 dark:to-slate-950;
+}
+
+.clio-hub-decide--rose {
+    @apply border-rose-200/90 bg-gradient-to-br from-rose-50 via-white to-slate-50
+        dark:border-rose-900/50 dark:from-rose-950/30 dark:via-slate-900/60 dark:to-slate-950;
+}
+
+.clio-hub-decide--emerald {
+    @apply border-emerald-200/90 bg-gradient-to-br from-emerald-50 via-white to-slate-50
+        dark:border-emerald-900/50 dark:from-emerald-950/30 dark:via-slate-900/60 dark:to-slate-950;
+}
+
+.clio-hub-decide__kicker {
+    @apply text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400;
+}
+
+.clio-hub-decide__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-1 text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl;
+}
+
+.clio-hub-decide__lead {
+    @apply mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300;
+}
+
+.clio-hub-decide__actions {
+    @apply flex shrink-0 flex-wrap items-center gap-2;
+}
+
+.clio-hub-flow {
+    @apply m-0 grid list-none gap-3 p-0 sm:grid-cols-2 xl:grid-cols-4;
+}
+
+.clio-hub-step {
+    @apply relative flex gap-3 rounded-xl border border-slate-200/90 bg-white p-4 shadow-sm
+        dark:border-slate-700/80 dark:bg-slate-900/50;
+}
+
+.clio-hub-step--current {
+    @apply border-sky-300 ring-1 ring-sky-200/80 dark:border-sky-700 dark:ring-sky-900/50;
+}
+
+.clio-hub-step--done {
+    @apply border-emerald-200/80 dark:border-emerald-900/40;
+}
+
+.clio-hub-step__num {
+    @apply flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700
+        dark:bg-slate-800 dark:text-slate-200;
+}
+
+.clio-hub-step--current .clio-hub-step__num {
+    @apply bg-sky-600 text-white dark:bg-sky-500 dark:text-slate-950;
+}
+
+.clio-hub-step--done .clio-hub-step__num {
+    @apply bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950;
+}
+
+.clio-hub-step__label {
+    @apply text-[10px] font-semibold uppercase tracking-[0.16em] text-sky-700 dark:text-sky-300;
+}
+
+.clio-hub-step__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply mt-0.5 text-sm font-semibold text-slate-900 dark:text-white;
+}
+
+.clio-hub-step__text {
+    @apply mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400;
+}
+
+.clio-hub-step__cta {
+    @apply mt-2 inline-flex text-xs font-semibold text-sky-700 underline-offset-2 hover:underline dark:text-sky-300;
+}
+
+.clio-hub-step__cta--btn {
+    @apply cursor-pointer border-0 bg-transparent p-0 text-left;
+}
+
+.clio-hub-step__cta--disabled {
+    @apply cursor-not-allowed text-slate-400 no-underline dark:text-slate-500;
 }
 
 /* Inventário de arquivos (Central da coleta) */
@@ -944,6 +1515,23 @@
 
 .clio-day-chip--time {
     @apply normal-case tracking-normal font-medium;
+}
+
+.clio-shift-card--other {
+    @apply ring-1 ring-slate-200/80 dark:ring-slate-700/80;
+}
+
+.clio-turno-outros {
+    @apply rounded-lg border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-900/40;
+}
+
+.clio-turno-outros__title {
+    font-family: Outfit, 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    @apply text-sm font-semibold text-slate-800 dark:text-slate-100;
+}
+
+.clio-turno-outros__lead {
+    @apply mt-1 mb-3 text-xs text-slate-500 dark:text-slate-400;
 }
 
 /* Stack de buckets (coleta) */

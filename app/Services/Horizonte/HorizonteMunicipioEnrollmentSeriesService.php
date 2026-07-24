@@ -32,7 +32,12 @@ final class HorizonteMunicipioEnrollmentSeriesService
      *     chart?: array<string, mixed>
      * }
      */
-    public function forIbge(string $ibgeRaw, ?int $years = null, ?string $dependencia = null): array
+    public function forIbge(
+        string $ibgeRaw,
+        ?int $years = null,
+        ?string $dependencia = null,
+        bool $allowConsultoriaActive = false,
+    ): array
     {
         $ibge = FundebMunicipioReferenceRepository::normalizeIbge($ibgeRaw);
         if ($ibge === null) {
@@ -43,7 +48,7 @@ final class HorizonteMunicipioEnrollmentSeriesService
             ];
         }
 
-        if ($this->isConsultoriaActive($ibge)) {
+        if (! $allowConsultoriaActive && $this->isConsultoriaActive($ibge)) {
             return [
                 'ok' => false,
                 'status' => 403,

@@ -25,7 +25,8 @@ final class CampaignJornadaTest extends TestCase
         $this->assertSame(5, $agg['total']);
         $this->assertArrayHasKey('Manhã', $agg['by_turno']);
         $this->assertArrayHasKey('Integral', $agg['by_turno']);
-        $this->assertArrayHasKey('35h+ (tempo integral)', $agg['by_ch_band']);
+        $this->assertArrayHasKey('≥ 35 h — tempo integral', $agg['by_ch_band']);
+        $this->assertNotEmpty($agg['by_ch_exact'] ?? []);
         $this->assertTrue($agg['turma_profiles']['TUR-INF']['extended']);
         $this->assertTrue($agg['turma_profiles']['TUR-INF']['infantil']);
         $this->assertSame(RelationCsvAggregator::BUCKET_AEE, $agg['turma_profiles']['TUR-AEE']['bucket']);
@@ -75,7 +76,7 @@ final class CampaignJornadaTest extends TestCase
                 'has_turno_columns' => true,
                 'has_ch_columns' => true,
                 'by_turno' => ['Manhã' => 1, 'Tarde' => 3, 'Integral' => 1],
-                'by_ch_band' => ['Até 20h' => 4, '35h+ (tempo integral)' => 1],
+                'by_ch_band' => ['≤ 14 h — parcial curta' => 4, '≥ 35 h — tempo integral' => 1],
                 'schools' => [
                     [
                         'inep' => '29174651',

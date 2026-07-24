@@ -676,6 +676,8 @@
     @endif
 @endif
 
+@include('pdf.clio-campaign.partials.diagnostico-geral', ['diagnosticoGeral' => $diagnosticoGeral ?? []])
+
 <h2>{{ __('Escolas em atividade — cobertura da tríade') }}</h2>
 <table class="data">
     <thead>

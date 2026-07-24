@@ -159,7 +159,10 @@
                             $errors = (int) $campaign->findings_error_count;
                             $warnings = (int) ($campaign->findings_warning_count ?? 0);
                         @endphp
-                        <article class="clio-report-card">
+                        <article
+                            class="clio-report-card"
+                            x-data="clioReportCard(@js(route('clio.campaigns.enrollment-series', $campaign)))"
+                        >
                             <div class="clio-report-card__rail clio-report-card__rail--{{ $railTone($campaign) }}" aria-hidden="true"></div>
                             <div class="clio-report-card__body">
                                 <div class="flex items-start justify-between gap-2">
@@ -186,45 +189,100 @@
                                     @elseif ($warnings > 0)
                                         <span class="clio-chip clio-chip--warn">{{ __(':n aviso(s)', ['n' => $warnings]) }}</span>
                                     @endif
-                                </div>
-
-                                <div class="clio-meter">
-                                    <div class="clio-meter__row">
-                                        <span class="clio-meter__label">{{ __('Cobertura da tríade') }}</span>
-                                        <span class="clio-meter__value">
-                                            {{ $triade !== null ? number_format((float) $triade, 1, ',', '.').'%' : '—' }}
+                                    <button
+                                        type="button"
+                                        class="clio-card-slide-toggle"
+                                        @click="togglePanel()"
+                                        :title="toggleTitle"
+                                        :aria-pressed="isSeries.toString()"
+                                    >
+                                        <span class="clio-card-slide-toggle__icon" aria-hidden="true">
+                                            <svg x-show="!isSeries" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3.5A1.5 1.5 0 0 1 4.5 2h11A1.5 1.5 0 0 1 17 3.5v2.879a1.5 1.5 0 0 1-.44 1.06l-3.621 3.62a1.5 1.5 0 0 0-.44 1.061V16.5A1.5 1.5 0 0 1 11 18h-2a1.5 1.5 0 0 1-1.5-1.5v-4.38a1.5 1.5 0 0 0-.44-1.06L3.44 7.44A1.5 1.5 0 0 1 3 6.378V3.5Zm1.5-.5a.5.5 0 0 0-.5.5v2.879a.5.5 0 0 0 .147.353l3.62 3.621A2.5 2.5 0 0 1 8.5 11.62V16.5a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 .5-.5v-4.88a2.5 2.5 0 0 1 .733-1.767l3.62-3.621A.5.5 0 0 0 16 6.379V3.5a.5.5 0 0 0-.5-.5h-11Z" clip-rule="evenodd"/></svg>
+                                            <svg x-show="isSeries" x-cloak viewBox="0 0 20 20" fill="currentColor"><path d="M15.5 2A1.5 1.5 0 0 1 17 3.5v13a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 3 16.5v-13A1.5 1.5 0 0 1 4.5 2h11ZM6.25 12.5a.75.75 0 0 0-1.5 0v2.5a.75.75 0 0 0 1.5 0v-2.5Zm3.5-4a.75.75 0 0 0-1.5 0v6.5a.75.75 0 0 0 1.5 0V8.5Zm3.5-2.5a.75.75 0 0 0-1.5 0v9a.75.75 0 0 0 1.5 0v-9Z"/></svg>
                                         </span>
-                                    </div>
-                                    <p class="clio-meter__hint">{{ __('Escolas em atividade') }}</p>
-                                    <div class="clio-meter__track">
-                                        <div class="clio-meter__fill clio-meter__fill--{{ $meterTone($triade) }}"
-                                             style="width: {{ $triade !== null ? min(100, max(0, (float) $triade)) : 0 }}%"></div>
-                                    </div>
+                                        <span class="clio-card-slide-toggle__label" x-text="toggleLabel"></span>
+                                    </button>
                                 </div>
 
-                                <dl class="clio-mini-stats">
-                                    <div class="clio-mini-stat">
-                                        <dt class="clio-mini-stat__label">{{ __('Escolas') }}</dt>
-                                        <dd class="clio-mini-stat__value">{{ $scope['active'] }}</dd>
+                                <div class="clio-report-card__stage">
+                                    <div class="clio-report-card__panel" x-show="!isSeries">
+                                        <div class="clio-meter">
+                                            <div class="clio-meter__row">
+                                                <span class="clio-meter__label">{{ __('Cobertura da tríade') }}</span>
+                                                <span class="clio-meter__value">
+                                                    {{ $triade !== null ? number_format((float) $triade, 1, ',', '.').'%' : '—' }}
+                                                </span>
+                                            </div>
+                                            <p class="clio-meter__hint">{{ __('Escolas em atividade') }}</p>
+                                            <div class="clio-meter__track">
+                                                <div class="clio-meter__fill clio-meter__fill--{{ $meterTone($triade) }}"
+                                                     style="width: {{ $triade !== null ? min(100, max(0, (float) $triade)) : 0 }}%"></div>
+                                            </div>
+                                        </div>
+
+                                        <dl class="clio-mini-stats">
+                                            <div class="clio-mini-stat">
+                                                <dt class="clio-mini-stat__label">{{ __('Escolas') }}</dt>
+                                                <dd class="clio-mini-stat__value">{{ $scope['active'] }}</dd>
+                                            </div>
+                                            <div class="clio-mini-stat">
+                                                <dt class="clio-mini-stat__label">{{ __('Arquivos') }}</dt>
+                                                <dd class="clio-mini-stat__value">{{ $campaign->artifacts_count }}</dd>
+                                            </div>
+                                            <div class="clio-mini-stat">
+                                                <dt class="clio-mini-stat__label">{{ __('Ref.') }}</dt>
+                                                <dd class="clio-mini-stat__value clio-mini-stat__value--sm">
+                                                    {{ $campaign->reference_date ? $campaign->reference_date->format('d/m') : '—' }}
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                        @if (($scope['other'] ?? 0) > 0)
+                                            <p class="clio-report-card__aside">
+                                                {{ __('+:n demais situações (extinta, paralisada ou reforma)', ['n' => $scope['other']]) }}
+                                            </p>
+                                        @endif
                                     </div>
-                                    <div class="clio-mini-stat">
-                                        <dt class="clio-mini-stat__label">{{ __('Arquivos') }}</dt>
-                                        <dd class="clio-mini-stat__value">{{ $campaign->artifacts_count }}</dd>
+
+                                    <div class="clio-report-card__panel clio-report-card__panel--series" x-show="isSeries" x-cloak>
+                                        <div class="clio-card-series__head">
+                                            <p class="clio-card-series__title">{{ __('Matrículas — Censo INEP') }}</p>
+                                            <p class="clio-card-series__sub" x-show="latestSummary">
+                                                <span x-text="latestSummary?.ano ?? ''"></span>
+                                                <template x-if="latestSummary?.total != null">
+                                                    <span> · <span x-text="formatCounter(latestSummary.total)"></span> {{ __('matrículas') }}</span>
+                                                </template>
+                                                <span> · {{ __('rede municipal') }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="clio-card-series__chart-wrap" :class="{ 'is-loading': loading }">
+                                            <canvas x-ref="seriesCanvas" aria-label="{{ __('Série histórica de matrículas') }}"></canvas>
+                                            <div class="clio-card-series__loading" x-show="loading" x-cloak>
+                                                <span class="clio-card-series__spinner" aria-hidden="true"></span>
+                                                <span>{{ __('A carregar…') }}</span>
+                                            </div>
+                                        </div>
+                                        <p class="clio-card-series__error" x-show="error" x-text="error" x-cloak></p>
+                                        <dl class="clio-card-series__stages" x-show="!loading && !error && stageCounters.length" x-cloak>
+                                            <template x-for="item in stageCounters" :key="item.key">
+                                                <div class="clio-card-series__stage">
+                                                    <dd class="clio-card-series__stage-value" x-text="formatCounter(item.value)"></dd>
+                                                    <dt class="clio-card-series__stage-label" x-text="item.label"></dt>
+                                                </div>
+                                            </template>
+                                        </dl>
                                     </div>
-                                    <div class="clio-mini-stat">
-                                        <dt class="clio-mini-stat__label">{{ __('Ref.') }}</dt>
-                                        <dd class="clio-mini-stat__value clio-mini-stat__value--sm">
-                                            {{ $campaign->reference_date ? $campaign->reference_date->format('d/m') : '—' }}
-                                        </dd>
-                                    </div>
-                                </dl>
-                                @if (($scope['other'] ?? 0) > 0)
-                                    <p class="clio-report-card__aside">
-                                        {{ __('+:n demais situações (extinta, paralisada ou reforma)', ['n' => $scope['other']]) }}
-                                    </p>
-                                @endif
+                                </div>
 
                                 <div class="clio-report-card__footer" role="group" aria-label="{{ __('Acções da coleta') }}">
+                                    <a href="{{ route('clio.campaigns.show', $campaign) }}"
+                                       class="clio-card-action clio-card-action--central"
+                                       title="{{ __('Central da coleta — arquivos e processamento') }}">
+                                        <span class="clio-card-action__icon" aria-hidden="true">
+                                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm0 5.25a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
+                                        </span>
+                                        <span class="clio-card-action__label">{{ __('Central') }}</span>
+                                    </a>
+
                                     <a href="{{ $campaign->primaryReportUrl() }}"
                                        class="clio-card-action clio-card-action--report {{ $ready ? 'clio-card-action--ready' : '' }}"
                                        title="{{ $ready ? __('Abrir relatório analítico') : __('Abrir coleta') }}">
@@ -281,15 +339,6 @@
                                             <span class="clio-card-action__label">{{ __('Exportar') }}</span>
                                         </span>
                                     @endif
-
-                                    <a href="{{ route('clio.campaigns.show', $campaign) }}"
-                                       class="clio-card-action clio-card-action--central"
-                                       title="{{ __('Central da coleta — arquivos e processamento') }}">
-                                        <span class="clio-card-action__icon" aria-hidden="true">
-                                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm0 5.25a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
-                                        </span>
-                                        <span class="clio-card-action__label">{{ __('Central') }}</span>
-                                    </a>
                                 </div>
 
                                 @php $files = $campaign->fileProcessingSummary(); @endphp

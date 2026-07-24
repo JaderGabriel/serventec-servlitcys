@@ -33,6 +33,7 @@ final class CampaignExcelExporter
         private CampaignParseService $parser,
         private CampaignAnalysisPresenter $presenter,
         private CampaignPdfDetailBuilder $detailBuilder,
+        private DiagnosticoGeralComposer $diagnosticoGeral,
     ) {}
 
     public function download(ClioCampaign $campaign): StreamedResponse
@@ -41,7 +42,6 @@ final class CampaignExcelExporter
             'schools.artifacts',
             'artifacts.school',
             'inferences',
-            'findings' => fn ($q) => $q->latest('id')->limit(500),
             'findings.school',
         ]);
         $coverage = $this->parser->coverage($campaign);
@@ -52,6 +52,7 @@ final class CampaignExcelExporter
             $campaign->findings,
         );
         $pdfTables = $this->detailBuilder->build($campaign);
+        $diagnostico = $this->diagnosticoGeral->compose($campaign);
 
         $citySlug = $this->slugPart((string) $campaign->municipality_name) ?: 'municipio';
         $ibge = preg_replace('/\D+/', '', (string) ($campaign->ibge_municipio ?? '')) ?: 'ibge';
@@ -66,7 +67,7 @@ final class CampaignExcelExporter
             mkdir($dir, 0755, true);
         }
 
-        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables);
+        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables, $diagnostico);
 
         $binary = file_get_contents($tmp);
         @unlink($tmp);
@@ -84,6 +85,7 @@ final class CampaignExcelExporter
      * @param  array<string, mixed>  $coverage
      * @param  array<string, mixed>  $dashboard
      * @param  array<string, mixed>  $pdfTables
+     * @param  array<string, mixed>  $diagnostico
      */
     private function writeXlsx(
         string $absolutePath,
@@ -91,11 +93,16 @@ final class CampaignExcelExporter
         array $coverage,
         array $dashboard,
         array $pdfTables,
+        array $diagnostico,
     ): void {
         $spreadsheet = new Spreadsheet;
         $active = $spreadsheet->getActiveSheet();
         $active->setTitle(__('Escolas ativas'));
         $this->fillActiveSheet($active, $campaign, $coverage, $dashboard);
+
+        $diag = $spreadsheet->createSheet();
+        $diag->setTitle(__('Diagnóstico Geral'));
+        $this->fillDiagnosticoSheet($diag, $diagnostico);
 
         $other = $spreadsheet->createSheet();
         $other->setTitle(__('Demais status'));
@@ -645,6 +652,96 @@ final class CampaignExcelExporter
         }
 
         $this->autosize($sheet, 12);
+    }
+
+    /**
+     * @param  array<string, mixed>  $diagnostico
+     */
+    private function fillDiagnosticoSheet(Worksheet $sheet, array $diagnostico): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [
+            __('INEP'),
+            __('Escola'),
+            __('Localidade'),
+            __('Erros'),
+            __('Avisos'),
+            __('Alertas / pendências'),
+        ]);
+        $row++;
+
+        if (empty($diagnostico['available']) || empty($diagnostico['rows'])) {
+            $this->writeDataRow($sheet, $row, [
+                '',
+                __('Nenhuma escola em atividade nesta coleta.'),
+                '',
+                '',
+                '',
+                '',
+            ]);
+            $this->autosize($sheet, 6);
+
+            return;
+        }
+
+        foreach ($diagnostico['rows'] as $schoolRow) {
+            if (! is_array($schoolRow)) {
+                continue;
+            }
+            $alerts = [];
+            foreach (is_array($schoolRow['alerts'] ?? null) ? $schoolRow['alerts'] : [] as $alert) {
+                if (! is_array($alert)) {
+                    continue;
+                }
+                $sev = (string) ($alert['severity'] ?? '');
+                $prefix = match ($sev) {
+                    ClioCampaignFinding::SEVERITY_ERROR => '[ERRO] ',
+                    ClioCampaignFinding::SEVERITY_WARNING => '[AVISO] ',
+                    'ok' => '[OK] ',
+                    default => '',
+                };
+                $alerts[] = $prefix.(string) ($alert['message'] ?? '');
+            }
+
+            $fill = null;
+            if ((int) ($schoolRow['error_count'] ?? 0) > 0) {
+                $fill = 'FFF1F2';
+            } elseif ((int) ($schoolRow['warning_count'] ?? 0) > 0) {
+                $fill = self::COLOR_WARN;
+            } elseif (($schoolRow['status'] ?? '') === 'ok') {
+                $fill = 'ECFDF5';
+            }
+
+            $this->writeDataRow($sheet, $row, [
+                (string) ($schoolRow['inep'] ?? ''),
+                (string) ($schoolRow['name'] ?? ''),
+                (string) ($schoolRow['location'] ?? ''),
+                (string) ((int) ($schoolRow['error_count'] ?? 0)),
+                (string) ((int) ($schoolRow['warning_count'] ?? 0)),
+                implode("\n", $alerts),
+            ], $fill);
+            $sheet->getStyle('F'.$row)->getAlignment()->setWrapText(true);
+            $row++;
+        }
+
+        $row += 1;
+        $totals = is_array($diagnostico['totals'] ?? null) ? $diagnostico['totals'] : [];
+        $this->writeHeaderRow($sheet, $row, [__('Totalizador'), __('Quantidade')], self::COLOR_ACCENT);
+        $row++;
+        foreach ([
+            [__('Escolas em atividade'), (int) ($totals['schools'] ?? 0)],
+            [__('Total de erros'), (int) ($totals['errors'] ?? 0)],
+            [__('Total de avisos'), (int) ($totals['warnings'] ?? 0)],
+            [__('Escolas com alertas'), (int) ($totals['with_alerts'] ?? 0)],
+            [__('Escolas sem pendências'), (int) ($totals['ok'] ?? 0)],
+            [__('Escolas sem lançamento'), (int) ($totals['without_data'] ?? 0)],
+        ] as [$label, $value]) {
+            $this->writeDataRow($sheet, $row, [(string) $label, (string) $value]);
+            $row++;
+        }
+
+        $this->autosize($sheet, 6);
+        $sheet->getColumnDimension('F')->setWidth(72);
     }
 
     /**

@@ -37,6 +37,7 @@ import createSchoolUnitsMap from "./schoolUnitsMap.js";
 import createCadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
 import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
 import createHorizonteMap from "./horizonteMap.js";
+import clioReportCard from "./clioReportCard.js";
 import rxCadastroPulse from "./rxCadastroPulse.js";
 import "./notification-bell.js";
 import "./documentationSearch.js";
@@ -2290,6 +2291,7 @@ registerDataLoadingStore(Alpine);
 registerAnalyticsPageHeader(Alpine);
 registerScrollToTopData(Alpine);
 Alpine.data("rxCadastroPulse", rxCadastroPulse);
+Alpine.data("clioReportCard", clioReportCard);
 
 Alpine.start();
 

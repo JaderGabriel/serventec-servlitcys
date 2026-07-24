@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
-**Versão em produção (`main`):** **8.0.4** · tag **`20260724a-Theia`** · [release](docs/RELEASE_20260724a_THEIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **8.1.0** · tag **`20260724b-Asclepius`** · [release](docs/RELEASE_20260724b_ASCLEPIUS.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 

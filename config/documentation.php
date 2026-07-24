@@ -24,10 +24,10 @@ return [
     */
 
     'product' => [
-        'version' => '8.0.4',
-        'release_tag' => '20260724a-Theia',
-        'commit_short' => 'c0a7d791',
-        'commit_number' => 561,
+        'version' => '8.1.0',
+        'release_tag' => '20260724b-Asclepius',
+        'commit_short' => 'PENDING',
+        'commit_number' => 0,
         'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',

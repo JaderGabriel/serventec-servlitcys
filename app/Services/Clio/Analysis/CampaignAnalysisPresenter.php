@@ -303,7 +303,7 @@ final class CampaignAnalysisPresenter
         $neeCensus = app(CampaignNeeCensusBuilder::class)->build($campaign);
         $profile = $this->buildProfileSection($inferences, $neeCensus);
         $stageMetrics = $this->buildStageMetricsSection($inferences);
-        $jornada = $this->buildJornadaSection($inferences, $inactiveIneps);
+        $jornada = $this->buildJornadaSection($campaign, $inferences, $inactiveIneps);
         $transporte = $this->buildTransporteSection($inferences, $inactiveIneps);
 
         $counters = [
@@ -969,7 +969,12 @@ final class CampaignAnalysisPresenter
             ? $jorSchool['by_ch_band']
             : (is_array($turmaAgg['by_ch_band'] ?? null) ? $turmaAgg['by_ch_band'] : []);
         $jorTurno = $agg->enrichTurnoBars($agg->toBars($jorTurnoSource, 8));
-        $jorCh = $agg->enrichCargaBars($agg->toBars($jorChSource, 8));
+        $jorChRe = $agg->rebucketCargaCounts(
+            $jorChSource,
+            is_array($turmaAgg['by_ch_exact'] ?? null) ? $turmaAgg['by_ch_exact'] : [],
+        );
+        $jorCh = $agg->enrichCargaBars($agg->toBars($jorChRe['by_ch_band'], 8));
+        $jorChExact = $agg->enrichCargaExactBars($agg->toBars($jorChRe['by_ch_exact'], 16));
 
         $traSource = (is_array($traSchool) && is_array($traSchool['by_transporte'] ?? null) && $this->isCountMap($traSchool['by_transporte']))
             ? $traSchool['by_transporte']
@@ -1096,6 +1101,7 @@ final class CampaignAnalysisPresenter
                 'multi_enrollment' => (int) (is_array($jorSchool) ? ($jorSchool['multi_enrollment'] ?? 0) : 0),
                 'by_turno' => $jorTurno,
                 'by_ch_band' => $jorCh,
+                'by_ch_exact' => $jorChExact,
             ],
             'transporte' => [
                 'available' => $hasTra,
@@ -1704,7 +1710,7 @@ final class CampaignAnalysisPresenter
      * @param  list<string>  $inactiveIneps
      * @return array<string, mixed>
      */
-    private function buildJornadaSection(Collection $inferences, array $inactiveIneps): array
+    private function buildJornadaSection(ClioCampaign $campaign, Collection $inferences, array $inactiveIneps): array
     {
         $jor = $inferences->get('INF-JOR');
         $payload = is_array($jor?->payload) ? $jor->payload : [];
@@ -1713,6 +1719,20 @@ final class CampaignAnalysisPresenter
         }
 
         $agg = new RelationCsvAggregator;
+        $rebucketed = $agg->rebucketTurnoCounts(
+            is_array($payload['by_turno'] ?? null) ? $payload['by_turno'] : [],
+            is_array($payload['by_turno_outros'] ?? null) ? $payload['by_turno_outros'] : [],
+        );
+        $turnoBars = $agg->enrichTurnoBars(
+            $agg->toBars($rebucketed['by_turno'], 8),
+            $rebucketed['by_turno_outros'],
+        );
+        $turnoOutrosDetails = $agg->toBars($rebucketed['by_turno_outros'], 30);
+        $rebucketedCh = $agg->rebucketCargaCounts(
+            is_array($payload['by_ch_band'] ?? null) ? $payload['by_ch_band'] : [],
+            is_array($payload['by_ch_exact'] ?? null) ? $payload['by_ch_exact'] : [],
+        );
+
         $schools = collect(is_array($payload['schools'] ?? null) ? $payload['schools'] : []);
         $mapSchool = static function (array $row) use ($agg): array {
             return [
@@ -1747,6 +1767,11 @@ final class CampaignAnalysisPresenter
             ->values()
             ->all();
 
+        $schoolTime = $this->presentSchoolTime(
+            is_array($payload['school_time'] ?? null) ? $payload['school_time'] : null,
+            $campaign,
+        );
+
         return [
             'available' => true,
             'summary' => $jor?->summary,
@@ -1758,17 +1783,74 @@ final class CampaignAnalysisPresenter
             'multi_enrollment' => (int) ($payload['multi_enrollment'] ?? 0),
             'has_turno_columns' => (bool) ($payload['has_turno_columns'] ?? false),
             'has_ch_columns' => (bool) ($payload['has_ch_columns'] ?? false),
-            'by_turno' => $agg->enrichTurnoBars($agg->toBars(is_array($payload['by_turno'] ?? null) ? $payload['by_turno'] : [], 12)),
-            'by_ch_band' => $agg->enrichCargaBars($agg->toBars(is_array($payload['by_ch_band'] ?? null) ? $payload['by_ch_band'] : [], 16)),
+            'by_turno' => $turnoBars,
+            'by_turno_outros' => $turnoOutrosDetails,
+            'by_ch_band' => $agg->enrichCargaBars($agg->toBars($rebucketedCh['by_ch_band'], 8)),
+            'by_ch_exact' => $agg->enrichCargaExactBars($agg->toBars($rebucketedCh['by_ch_exact'], 24)),
             'by_turno_curricular' => $agg->enrichTurnoBars($agg->toBars(is_array($payload['by_turno_curricular'] ?? null) ? $payload['by_turno_curricular'] : [], 8)),
-            'note_ch' => __('Valores exactos de «Carga horária semanal» encontrados no export — não são faixas inventadas.'),
-            'note_turno' => __('Turnos normalizados (Manhã/Tarde/Noite/Integral). Dias e horários abreviados quando o texto original os traz.'),
+            'school_time' => $schoolTime,
+            'note_ch' => __('Carga horária agrupada em faixas pedagógicas (parcial, ampliada, integral). Os valores exactos do export ficam no detalhe.'),
+            'note_turno' => __('Turnos agrupados em Manhã, Intermediário, Tarde, Noite e Integral. Textos livres e horários não classificados entram em «Outros», com detalhe abaixo.'),
             'note_fund_aee' => (string) ($payload['note_fund_aee']
                 ?? __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.')),
             'note_infantil' => (string) ($payload['note_infantil']
                 ?? __('Infantil em turma única com turno/CH estendido — diferente de tempo integral por duas matrículas.')),
             'schools_active' => $schoolsActive,
             'schools_other' => $schoolsOther,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $fromPayload
+     * @return array<string, mixed>
+     */
+    private function presentSchoolTime(?array $fromPayload, ClioCampaign $campaign): array
+    {
+        $wanted = ['infantil', 'fundamental_1', 'fundamental_2', 'medio', 'eja', 'profissional'];
+        $source = $fromPayload;
+        if (! is_array($source) || empty($source['available'])) {
+            $composed = app(CampaignSchoolTimeComposer::class)->compose($campaign);
+            $source = [
+                'available' => (bool) ($composed['available'] ?? false),
+                'has_ch' => (bool) ($composed['has_ch'] ?? false),
+                'note' => (string) ($composed['note'] ?? ''),
+                'network' => is_array($composed['network'] ?? null) ? $composed['network'] : [],
+                'segments' => array_values(array_filter(
+                    is_array($composed['segments'] ?? null) ? $composed['segments'] : [],
+                    static fn ($seg): bool => is_array($seg) && in_array((string) ($seg['key'] ?? ''), $wanted, true),
+                )),
+            ];
+        }
+
+        $segments = [];
+        foreach (is_array($source['segments'] ?? null) ? $source['segments'] : [] as $seg) {
+            if (! is_array($seg)) {
+                continue;
+            }
+            $key = (string) ($seg['key'] ?? '');
+            if ($key !== '' && ! in_array($key, $wanted, true)) {
+                continue;
+            }
+            $segments[] = [
+                'key' => $key,
+                'label' => (string) ($seg['label'] ?? $key),
+                'turmas' => (int) ($seg['turmas'] ?? 0),
+                'alunos' => (int) ($seg['alunos'] ?? 0),
+                'horas_aluno_semana' => isset($seg['horas_aluno_semana']) && is_numeric($seg['horas_aluno_semana'])
+                    ? (float) $seg['horas_aluno_semana']
+                    : null,
+                'ch_media_turma' => isset($seg['ch_media_turma']) && is_numeric($seg['ch_media_turma'])
+                    ? (float) $seg['ch_media_turma']
+                    : null,
+            ];
+        }
+
+        return [
+            'available' => (bool) ($source['available'] ?? false) && $segments !== [],
+            'has_ch' => (bool) ($source['has_ch'] ?? false),
+            'note' => (string) ($source['note'] ?? ''),
+            'network' => is_array($source['network'] ?? null) ? $source['network'] : [],
+            'segments' => $segments,
         ];
     }
 

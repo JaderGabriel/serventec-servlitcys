@@ -33,6 +33,17 @@
                     {{ __('PDF da coleta') }}
                 </x-dropdown-link>
                 <x-dropdown-link
+                    :href="route('clio.campaigns.export.pdf-gestor', $campaign)"
+                    icon="chart-bar"
+                    :title="__('PDF gerencial com indicadores, gráficos e tempo escolar')"
+                    data-serv-loading-on-click
+                    data-serv-loading-download
+                    data-serv-loading-title="{{ __('Gerando PDF gestor') }}"
+                    data-serv-loading-message="{{ __('Montando o painel gerencial. Aguarde…') }}"
+                >
+                    {{ __('PDF do gestor') }}
+                </x-dropdown-link>
+                <x-dropdown-link
                     :href="route('clio.campaigns.export.xlsx', $campaign)"
                     icon="clipboard-document-list"
                     :title="__('Planilha Excel com escolas ativas e demais status')"
@@ -71,6 +82,17 @@
                     data-serv-loading-message="{{ __('Montando o relatório da coleta. Aguarde…') }}"
                 >
                     {{ __('PDF da coleta') }}
+                </x-dropdown-link>
+                <x-dropdown-link
+                    :href="route('clio.campaigns.export.pdf-gestor', $campaign)"
+                    icon="chart-bar"
+                    :title="__('PDF gerencial com indicadores, gráficos e tempo escolar')"
+                    data-serv-loading-on-click
+                    data-serv-loading-download
+                    data-serv-loading-title="{{ __('Gerando PDF gestor') }}"
+                    data-serv-loading-message="{{ __('Montando o painel gerencial. Aguarde…') }}"
+                >
+                    {{ __('PDF do gestor') }}
                 </x-dropdown-link>
                 <x-dropdown-link
                     :href="route('clio.campaigns.export.xlsx', $campaign)"

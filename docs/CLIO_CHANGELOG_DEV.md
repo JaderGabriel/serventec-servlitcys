@@ -1,6 +1,6 @@
 # Clio — rastreio até o lançamento
 
-**Início do desenvolvimento:** 2026-07-21 · **Versão base:** 8.0.2 Harmonia · **Próxima release:** a definir (tag mitológica + bump)
+**Início do desenvolvimento:** 2026-07-21 · **Versão actual:** 8.1.0 Asclepius · **Próxima:** S8 promote (tag a definir)
 
 > **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
 
@@ -12,17 +12,28 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 | Campo | Valor |
 |-------|--------|
-| Sprint | **S6 concluída** — próximo **S7** (BI) |
+| Sprint | **S7 concluída** — próximo **S8** (promote i-Educar) |
 | Menu superior | **Clio** após Horizonte |
 | Docs (leitor) | Secção **9 · Clio — Educacenso** |
-| Rotas | coletas, upload, analise, vincular, cruzamento, export CSV/PDF/Excel |
-| CLI | `ingest` · `status` · `analyze` · `cross-check` (ops/admin) |
+| Rotas | coletas, upload, analise, insights, vincular, cruzamento, export CSV/PDF/PDF-gestor/Excel |
+| CLI | `ingest` · `status` · `analyze` · `cross-check` · `bi:refresh-clio-campaigns` |
 | Permissões | Ver: admin+usuário · Mutar: só admin · Municipal: sem acesso |
-| Pronto para release? | **8.0.2 Harmonia** publicada — falta S7–S8 |
+| Pronto para release? | **8.1.0 Asclepius** — falta S8 |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-24 — Asclepius (8.1.0): Diagnóstico Geral, PDF gestor, jornada
+
+**Entregue**
+
+- Quadro **Diagnóstico Geral** (escolas ativas × erros/avisos + Cor/Raça) em PDF detalhado, PDF gestor e aba Excel
+- **PDF do gestor** (`CampaignInsightsPdfExporter`) — KPIs BI, insights, etapas, série, tempo escolar
+- Home: slider cobertura ↔ série histórica de matrículas (`enrollment-series`)
+- Tempo escolar semanal (`CampaignSchoolTimeComposer`) — CH ponderada × segmentos
+- Jornada: turnos canónicos + detalhe «Outros»; CH em faixas pedagógicas + valores exactos
+- Testes alinhados (jornada/demografia) + unitários Diagnóstico / SchoolTime smoke
 
 ### 2026-07-23 — Harmonia (8.0.2): PDF/Excel, Fund. I/II, lotes Drive
 
