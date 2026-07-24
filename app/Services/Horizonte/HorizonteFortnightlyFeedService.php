@@ -1001,15 +1001,14 @@ final class HorizonteFortnightlyFeedService
             $this->debugLog($options, (string) ($result['message'] ?? ''));
 
             return array_merge(['key' => 'siconfi_sync'], $result);
-
-            return $result;
         } catch (\Throwable $e) {
             Log::warning('horizonte.siconfi_sync_failed', ['message' => $e->getMessage()]);
 
             return [
-                'success' => true,
-                'skipped' => true,
-                'message' => __('SICONFI: importação indisponível neste passo.'),
+                'key' => 'siconfi_sync',
+                'success' => false,
+                'partial' => true,
+                'message' => __('SICONFI: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'imported' => 0,
             ];
         }
@@ -1034,9 +1033,10 @@ final class HorizonteFortnightlyFeedService
             Log::warning('horizonte.transparency_sync_failed', ['message' => $e->getMessage()]);
 
             return [
-                'success' => true,
-                'skipped' => true,
-                'message' => __('Transparência: importação indisponível neste passo.'),
+                'key' => 'transparency_sync',
+                'success' => false,
+                'partial' => true,
+                'message' => __('Transparência: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'imported' => 0,
             ];
         }
@@ -1059,9 +1059,10 @@ final class HorizonteFortnightlyFeedService
             Log::warning('horizonte.sge_registry_failed', ['message' => $e->getMessage()]);
 
             return [
-                'success' => true,
-                'skipped' => true,
-                'message' => __('SGE: registo externo indisponível — mapa continua com catálogo ServLITCYS e dados públicos.'),
+                'key' => 'sge_registry',
+                'success' => false,
+                'partial' => true,
+                'message' => __('SGE: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'matched' => 0,
             ];
         }
@@ -1086,9 +1087,10 @@ final class HorizonteFortnightlyFeedService
             Log::warning('horizonte.municipal_alerts_failed', ['message' => $e->getMessage()]);
 
             return [
-                'success' => true,
-                'skipped' => true,
-                'message' => __('Alertas MEC/FNDE: importação indisponível — modal mostra «Não verificado».'),
+                'key' => 'municipal_alerts',
+                'success' => false,
+                'partial' => true,
+                'message' => __('Alertas MEC/FNDE: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'matched' => 0,
             ];
         }
@@ -1107,9 +1109,6 @@ final class HorizonteFortnightlyFeedService
                 || ($phase['indexed'] ?? 0) > 0
                 || ($phase['matched'] ?? 0) > 0
                 || ($phase['ufs'] ?? 0) > 0) {
-                return true;
-            }
-            if (($phase['skipped'] ?? false) && ! in_array($phase['key'] ?? '', ['sge_registry', 'municipal_alerts'], true)) {
                 return true;
             }
         }
