@@ -1,6 +1,6 @@
 # servlitcys
 
-Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
+Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade), **Clio** (coletas Educacenso 1ª etapa) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
 **Versão em produção (`main`):** **8.2.0** · tag **`20260724c-Hygieia`** · [release](docs/RELEASE_20260724c_HYGIEIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
@@ -42,7 +42,7 @@ flowchart LR
 | Pergunta | Onde ler |
 |----------|----------|
 | O que está implementado? | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
-| Módulos (Analytics, Horizonte, RX, FUNDEB…) | [docs/modulos/README.md](docs/modulos/README.md) |
+| Módulos (Analytics, Horizonte, Clio, RX, FUNDEB…) | [docs/modulos/README.md](docs/modulos/README.md) · Clio: [docs/modulos/MODULO_CLIO.md](docs/modulos/MODULO_CLIO.md) |
 | Roadmaps e backlog | [docs/ROADMAP_INDICE.md](docs/ROADMAP_INDICE.md) · [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
 | Diagramas e fluxos (deploy, FUNDEB, releases) | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
 | Índice completo da documentação | [docs/README.md](docs/README.md) |
@@ -254,6 +254,7 @@ Leitor na aplicação (`/admin/documentacao` ou `/documentacao`): menu lateral *
 | Estado atual | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
 | Índice de módulos | [docs/modulos/README.md](docs/modulos/README.md) |
 | Horizonte (técnico) | [docs/HORIZONTE.md](docs/HORIZONTE.md) |
+| Clio (Educacenso 1ª etapa) | [docs/modulos/MODULO_CLIO.md](docs/modulos/MODULO_CLIO.md) |
 | Arquitetura e fluxos | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
 | Design system (UI) | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) |
 | Decisões técnicas | [docs/PONDERACOES_TECNICAS.md](docs/PONDERACOES_TECNICAS.md) |
@@ -269,6 +270,7 @@ Leitor na aplicação (`/admin/documentacao` ou `/documentacao`): menu lateral *
 | Análise `/dashboard/analytics` | `admin`, `user`, `municipal` (este só municípios vinculados) |
 | RX `/dashboard/rx` | `admin`, `user` |
 | Horizonte `/dashboard/horizonte` | perfis com `canViewHorizonte()` |
+| Clio `/clio` | perfis com `canViewClio()` (`CLIO_ENABLED`) |
 | Documentação | `/admin/documentacao` (admin) · `/documentacao` (usuário/municipal com permissão) |
 | CRUD de cidades, sync, Pulse, dados públicos | `role=admin` |
 | Gestão de usuários | `admin` (todos); `user` (só perfil user); `municipal` (só municipal no âmbito) |
@@ -277,18 +279,19 @@ Leitor na aplicação (`/admin/documentacao` ou `/documentacao`): menu lateral *
 
 Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
-## Histórico de versões (linha 7.x)
+## Histórico de versões (linha 8.x)
 
 | Versão | Tag | Data | Destaque |
 |--------|-----|------|----------|
-| **▶ 7.0.3** | `20260709-Calliope` | 09/07 | Leitor docs modular; tag+GitHub — [RELEASE](docs/RELEASE_20260709_CALLIOPE.md) |
-| 7.0.2 | `20260706-Hermes` | 06/07 | pt-BR unificado (UI, menus, documentação) — [RELEASE](docs/RELEASE_20260706_HERMES.md) |
-| 7.0.1 | `20260705b-Moneta` | 05/07 | Tooltip FUNDEB por UF; warm-map-cache estável — [RELEASE](docs/RELEASE_20260705b_MONETA.md) |
-| 7.0.0 | `20260705-Ploutos` | 05/07 | SICONFI, Transparência, scoring ampliado, modal Horizonte — [RELEASE](docs/RELEASE_20260705_PLUTOS.md) |
+| **▶ 8.2.0** | `20260724c-Hygieia` | 24/07 | Clio PDF série SVG, reanálise em lote, Censo 2025 — [RELEASE](docs/RELEASE_20260724c_HYGIEIA.md) |
+| 8.1.0 | `20260724b-Asclepius` | 24/07 | Clio Diagnóstico Geral, PDF gestor, tempo escolar — [RELEASE](docs/RELEASE_20260724b_ASCLEPIUS.md) |
+| 8.0.0 | `20260721-Aletheia` | 21/07 | Clio hub de relatórios — [RELEASE](docs/RELEASE_20260721_ALETHEIA.md) |
+| 7.0.3 | `20260709-Calliope` | 09/07 | Leitor docs modular — [RELEASE](docs/RELEASE_20260709_CALLIOPE.md) |
+| 7.0.0 | `20260705-Ploutos` | 05/07 | SICONFI, Transparência, scoring ampliado — [RELEASE](docs/RELEASE_20260705_PLUTOS.md) |
 | 6.5.0 | `20260702c-Jord` | 02/07 | Malha IBGE, Contornos, Educacenso nacional — [RELEASE](docs/RELEASE_20260702c_JORD.md) |
-| 5.0.0 | `20260619-Horizonte` | 19/06 | Mapa de oportunidade municipal — [RELEASE](docs/RELEASE_20260619_HORIZONTE.md) |
+| 5.1.0 | `20260619b-Prospeccao` | 19/06 | Horizonte comercial + feed quinzenal — [RELEASE](docs/RELEASE_20260619b_PROSPECCAO.md) |
 
-Linha completa (2.x→7.x), tags Git e convenção de releases: **[docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md)** · entregas por mês: **[docs/ENTREGAS_ESCALONADAS.md](docs/ENTREGAS_ESCALONADAS.md)**.
+Linha completa (2.x→8.x), tags Git e convenção de releases: **[docs/HISTORICO_VERSOES.md](docs/HISTORICO_VERSOES.md)** · entregas por mês: **[docs/ENTREGAS_ESCALONADAS.md](docs/ENTREGAS_ESCALONADAS.md)** · melhorias A–E: **[docs/ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md](docs/ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md)**.
 
 ## Licença
 
