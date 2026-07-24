@@ -43,14 +43,23 @@ import { registerScrollToTopData } from "./scroll-to-top.js";
  * Alpine data factory que só descarrega o módulo na primeira utilização
  * (code-split: horizonte / clio / mapas analytics ficam fora do bundle principal).
  *
- * @param {() => Promise<{ default: Function }>} importer
+ * O Vite pode resolver o dynamic import para a factory directa (`.then(e => e.t)`)
+ * em vez de um módulo `{ default }` — aceitar ambas as formas.
+ *
+ * @param {() => Promise<Function|{ default: Function }>} importer
  */
 function lazyAlpineData(importer) {
     return (...args) => ({
         async init() {
-            const { default: factory } = await importer();
+            const mod = await importer();
+            const factory =
+                typeof mod === "function" ? mod : mod?.default;
             const instance =
                 typeof factory === "function" ? factory(...args) : factory;
+            if (instance == null || typeof instance !== "object") {
+                console.error("lazyAlpineData: factory inválida", mod);
+                return;
+            }
             const nestedInit =
                 typeof instance.init === "function" ? instance.init : null;
             const descriptors = Object.getOwnPropertyDescriptors(instance);
