@@ -66,13 +66,13 @@ final class ClioParsersTest extends TestCase
             $this->artifact()
         );
         $this->assertSame(ParseResult::STATUS_OK, $aluno->status);
-        $this->assertSame(5, $aluno->rowCount);
+        $this->assertSame(8, $aluno->rowCount);
 
         $turma = (new RelacaoTurmaEscolaParser($csv))->parse(
             $base.'/RelacaoTurmaEscola_21_7_2026.csv',
             $this->artifact()
         );
-        $this->assertSame(4, $turma->rowCount);
+        $this->assertSame(5, $turma->rowCount);
         $this->assertSame(1, $turma->meta['aggregates']['by_tipo_bucket']['aee']);
 
         $prof = (new RelacaoProfissionalEscolaParser($csv))->parse(

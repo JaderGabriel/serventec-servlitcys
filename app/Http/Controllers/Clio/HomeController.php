@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Clio;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clio\ClioCampaign;
+use App\Models\Clio\ClioCampaignArtifact;
 use App\Models\Clio\ClioCampaignFinding;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -38,6 +39,7 @@ class HomeController extends Controller
         $campaignsQuery = ClioCampaign::query()
             ->with([
                 'city',
+                'acompArtifact',
                 'inferences' => fn ($rel) => $rel->where('code', 'INF-COE'),
                 'schools' => fn ($rel) => $rel->with([
                     'artifacts' => fn ($artifacts) => $artifacts->select('id', 'school_id', 'kind'),
@@ -45,6 +47,18 @@ class HomeController extends Controller
             ])
             ->withCount([
                 'artifacts',
+                'artifacts as artifacts_ok_count' => fn ($rel) => $rel->whereIn('parse_status', [
+                    ClioCampaignArtifact::PARSE_OK,
+                    ClioCampaignArtifact::PARSE_WARNING,
+                ]),
+                'artifacts as artifacts_failed_count' => fn ($rel) => $rel->where(
+                    'parse_status',
+                    ClioCampaignArtifact::PARSE_FAILED,
+                ),
+                'artifacts as artifacts_pending_count' => fn ($rel) => $rel->where(
+                    'parse_status',
+                    ClioCampaignArtifact::PARSE_PENDING,
+                ),
                 'schools',
                 'findings as findings_error_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_ERROR),
                 'findings as findings_warning_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_WARNING),

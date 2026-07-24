@@ -452,6 +452,58 @@
     @apply mt-3 flex flex-wrap items-center gap-1.5;
 }
 
+.clio-file-pulse {
+    @apply mt-2.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] leading-snug text-slate-500 dark:text-slate-400;
+}
+
+.clio-file-pulse__dot {
+    @apply inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 dark:bg-slate-600;
+}
+
+.clio-file-pulse--ok .clio-file-pulse__dot {
+    @apply bg-emerald-500;
+}
+
+.clio-file-pulse--warn .clio-file-pulse__dot {
+    @apply bg-amber-500;
+}
+
+.clio-file-pulse--error .clio-file-pulse__dot {
+    @apply bg-rose-500;
+}
+
+.clio-file-pulse--muted .clio-file-pulse__dot {
+    @apply bg-slate-300 dark:bg-slate-600;
+}
+
+.clio-file-pulse__text {
+    @apply truncate;
+}
+
+.clio-file-pulse__sep {
+    @apply text-slate-300 dark:text-slate-600;
+}
+
+.clio-file-pulse__acomp {
+    @apply font-medium truncate;
+}
+
+.clio-file-pulse__acomp--ok {
+    @apply text-emerald-700/80 dark:text-emerald-300/80;
+}
+
+.clio-file-pulse__acomp--warn {
+    @apply text-amber-700/80 dark:text-amber-300/80;
+}
+
+.clio-file-pulse__acomp--error {
+    @apply text-rose-700 dark:text-rose-300;
+}
+
+.clio-file-pulse__acomp--muted {
+    @apply text-slate-400 dark:text-slate-500 font-normal;
+}
+
 .clio-report-card__footer {
     @apply mt-auto pt-4 flex flex-wrap items-center gap-2 border-t border-slate-100 dark:border-slate-800;
 }

@@ -6,12 +6,15 @@ use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Leitor CSV Educacenso portal — separador `;`.
+ * Leitor CSV Educacenso portal — detecta automaticamente `;` ou `,` por ficheiro.
  * Aceita UTF-8 (com BOM) e Latin-1 / Windows-1252; células saem em UTF-8 válido.
  */
 final class CsvReader
 {
     public const DELIMITER = ';';
+
+    /** @var list<string> */
+    private const DELIMITER_CANDIDATES = [';', ','];
 
     /**
      * @return array{
@@ -32,6 +35,8 @@ final class CsvReader
             throw new RuntimeException(__('CSV Clio não legível: :path', ['path' => $absolutePath]));
         }
 
+        $delimiter = $this->detectDelimiter($absolutePath, $headerOffset);
+
         $handle = fopen($absolutePath, 'rb');
         if ($handle === false) {
             throw new RuntimeException(__('Não foi possível abrir CSV Clio.'));
@@ -42,7 +47,7 @@ final class CsvReader
             $lineIndex = 0;
             $sawNonUtf8 = false;
 
-            while (($raw = fgetcsv($handle, 0, self::DELIMITER)) !== false) {
+            while (($raw = fgetcsv($handle, 0, $delimiter)) !== false) {
                 $lineIndex++;
                 if ($this->isEmptyRow($raw)) {
                     continue;
@@ -61,7 +66,6 @@ final class CsvReader
                         }
                         $headers[] = $this->normalizeHeader($cell);
                     }
-                    // Align header offset to first non-empty line if we skipped empties awkwardly
                     break;
                 }
             }
@@ -71,7 +75,7 @@ final class CsvReader
             }
 
             $rows = [];
-            while (($raw = fgetcsv($handle, 0, self::DELIMITER)) !== false) {
+            while (($raw = fgetcsv($handle, 0, $delimiter)) !== false) {
                 if ($this->isEmptyRow($raw)) {
                     continue;
                 }
@@ -95,11 +99,86 @@ final class CsvReader
                 'rows' => $rows,
                 'header_offset' => $headerOffset,
                 'encoding' => $sawNonUtf8 ? 'legacy-to-utf8' : 'UTF-8',
-                'delimiter' => self::DELIMITER,
+                'delimiter' => $delimiter,
             ];
         } finally {
             fclose($handle);
         }
+    }
+
+    /**
+     * Escolhe `;` ou `,` pela linha de cabeçalho (mais colunas + marcadores Educacenso).
+     */
+    public function detectDelimiter(string $absolutePath, int $headerOffset = 1): string
+    {
+        $handle = fopen($absolutePath, 'rb');
+        if ($handle === false) {
+            return self::DELIMITER;
+        }
+
+        try {
+            $lineIndex = 0;
+            $headerLine = null;
+            while (($rawLine = fgets($handle)) !== false) {
+                $lineIndex++;
+                $trimmed = trim($this->stripBom($rawLine));
+                if ($trimmed === '') {
+                    continue;
+                }
+                if ($lineIndex < $headerOffset) {
+                    continue;
+                }
+                $headerLine = $trimmed;
+                break;
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        if ($headerLine === null || $headerLine === '') {
+            return self::DELIMITER;
+        }
+
+        $best = self::DELIMITER;
+        $bestScore = -1;
+
+        foreach (self::DELIMITER_CANDIDATES as $candidate) {
+            $cols = str_getcsv($headerLine, $candidate);
+            $normalized = [];
+            foreach ($cols as $col) {
+                $h = mb_strtolower(trim($this->stripBom((string) $col)));
+                if ($h !== '') {
+                    $normalized[] = $h;
+                }
+            }
+            $count = count($normalized);
+            if ($count < 2) {
+                continue;
+            }
+
+            $score = $count * 10;
+            foreach ([
+                'código da escola',
+                'codigo da escola',
+                'nome da escola',
+                'etapa de ensino',
+                'código da turma',
+                'codigo da turma',
+                'identificação única',
+                'identificacao unica',
+            ] as $marker) {
+                if (in_array($marker, $normalized, true)) {
+                    $score += 50;
+                }
+            }
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $candidate;
+            }
+        }
+
+        return $best;
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class ClioCampaign extends Model
@@ -144,6 +145,113 @@ class ClioCampaign extends Model
             self::STATUS_CROSS_CHECKED => __('Cruzado i-Educar'),
             default => $this->status,
         };
+    }
+
+    /**
+     * Resumo discreto de processamento de ficheiros (home / cartão do município).
+     *
+     * @return array{
+     *   total: int,
+     *   ok: int,
+     *   failed: int,
+     *   pending: int,
+     *   tone: string,
+     *   label: string,
+     *   acomp: array{
+     *     present: bool,
+     *     status: string,
+     *     tone: string,
+     *     label: string,
+     *     name: ?string
+     *   }
+     * }
+     */
+    public function fileProcessingSummary(): array
+    {
+        $ok = (int) ($this->artifacts_ok_count ?? 0);
+        $failed = (int) ($this->artifacts_failed_count ?? 0);
+        $pending = (int) ($this->artifacts_pending_count ?? 0);
+        $total = (int) ($this->artifacts_count ?? ($ok + $failed + $pending));
+
+        if (! isset($this->artifacts_ok_count) && $this->relationLoaded('artifacts')) {
+            $ok = $this->artifacts->whereIn('parse_status', [
+                ClioCampaignArtifact::PARSE_OK,
+                ClioCampaignArtifact::PARSE_WARNING,
+            ])->count();
+            $failed = $this->artifacts->where('parse_status', ClioCampaignArtifact::PARSE_FAILED)->count();
+            $pending = $this->artifacts->where('parse_status', ClioCampaignArtifact::PARSE_PENDING)->count();
+            $total = $this->artifacts->count();
+        }
+
+        $tone = match (true) {
+            $total === 0 => 'muted',
+            $failed > 0 => 'error',
+            $pending > 0 => 'warn',
+            default => 'ok',
+        };
+
+        $label = match (true) {
+            $total === 0 => __('Sem ficheiros'),
+            $failed > 0 => __(':ok ok · :err erro(s)', ['ok' => $ok, 'err' => $failed]),
+            $pending > 0 => __(':ok processado(s) · :p pendente(s)', ['ok' => $ok, 'p' => $pending]),
+            default => __(':n ficheiro(s) ok', ['n' => $ok]),
+        };
+
+        $acomp = null;
+        if ($this->relationLoaded('acompArtifact')) {
+            $acomp = $this->acompArtifact;
+        } elseif ($this->relationLoaded('artifacts')) {
+            $acomp = $this->artifacts->firstWhere('kind', 'acomp_coleta_1etapa');
+        }
+
+        if ($acomp instanceof ClioCampaignArtifact) {
+            $acompStatus = (string) $acomp->parse_status;
+            $acompTone = match ($acompStatus) {
+                ClioCampaignArtifact::PARSE_OK, ClioCampaignArtifact::PARSE_WARNING => 'ok',
+                ClioCampaignArtifact::PARSE_FAILED => 'error',
+                default => 'warn',
+            };
+            $acompLabel = match ($acompStatus) {
+                ClioCampaignArtifact::PARSE_OK => __('Acomp ok'),
+                ClioCampaignArtifact::PARSE_WARNING => __('Acomp com aviso'),
+                ClioCampaignArtifact::PARSE_FAILED => __('Acomp com erro'),
+                ClioCampaignArtifact::PARSE_PENDING => __('Acomp pendente'),
+                default => __('Acomp :s', ['s' => $acompStatus]),
+            };
+            $acompBlock = [
+                'present' => true,
+                'status' => $acompStatus,
+                'tone' => $acompTone,
+                'label' => $acompLabel,
+                'name' => $acomp->original_name,
+            ];
+        } else {
+            $acompBlock = [
+                'present' => false,
+                'status' => 'missing',
+                'tone' => $total > 0 ? 'warn' : 'muted',
+                'label' => __('Acomp ausente'),
+                'name' => null,
+            ];
+        }
+
+        return [
+            'total' => $total,
+            'ok' => $ok,
+            'failed' => $failed,
+            'pending' => $pending,
+            'tone' => $tone,
+            'label' => $label,
+            'acomp' => $acompBlock,
+        ];
+    }
+
+    public function acompArtifact(): HasOne
+    {
+        return $this->hasOne(ClioCampaignArtifact::class, 'campaign_id')
+            ->ofMany(['id' => 'max'], function ($query) {
+                $query->where('kind', 'acomp_coleta_1etapa');
+            });
     }
 
     /**

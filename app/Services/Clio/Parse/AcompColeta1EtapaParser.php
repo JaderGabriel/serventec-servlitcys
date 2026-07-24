@@ -118,7 +118,7 @@ final class AcompColeta1EtapaParser implements ArtifactParser
             meta: [
                 'header_offset' => 1,
                 'school_rows' => count($schools),
-                'delimiter' => CsvReader::DELIMITER,
+                'delimiter' => $data['delimiter'] ?? CsvReader::DELIMITER,
             ],
         );
     }

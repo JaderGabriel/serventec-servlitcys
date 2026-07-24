@@ -188,6 +188,16 @@
                                     @endif
                                 </div>
 
+                                @php $files = $campaign->fileProcessingSummary(); @endphp
+                                <div class="clio-file-pulse clio-file-pulse--{{ $files['tone'] }}" title="{{ $files['acomp']['name'] ?? __('Relatório Acomp. Coleta 1ª etapa') }}">
+                                    <span class="clio-file-pulse__dot" aria-hidden="true"></span>
+                                    <span class="clio-file-pulse__text">{{ $files['label'] }}</span>
+                                    <span class="clio-file-pulse__sep" aria-hidden="true">·</span>
+                                    <span class="clio-file-pulse__acomp clio-file-pulse__acomp--{{ $files['acomp']['tone'] }}">
+                                        {{ $files['acomp']['label'] }}
+                                    </span>
+                                </div>
+
                                 <div class="clio-meter">
                                     <div class="clio-meter__row">
                                         <span class="clio-meter__label">{{ __('Cobertura da tríade') }}</span>
