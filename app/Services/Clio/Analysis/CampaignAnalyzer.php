@@ -1534,7 +1534,7 @@ final class CampaignAnalyzer
                 'scanned' => $total,
                 'by_cor_raca' => $byCor,
                 'by_sexo' => $bySexo,
-                'by_faixa_etaria' => $byIdade,
+                'by_faixa_etaria' => $this->aggregator->sortAgeBands($byIdade),
                 'without_cor' => $withoutCor,
                 'without_sexo' => $withoutSexo,
                 'without_nascimento' => $withoutNasc,

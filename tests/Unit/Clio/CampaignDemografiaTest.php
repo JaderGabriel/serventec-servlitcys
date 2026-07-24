@@ -35,6 +35,30 @@ final class CampaignDemografiaTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $agg['nee_flagged']);
         $this->assertNotEmpty($agg['by_faixa_etaria']);
         $this->assertArrayHasKey('11–14', $agg['by_faixa_etaria']);
+        $keys = array_keys($agg['by_faixa_etaria']);
+        $this->assertSame($keys, array_values(array_intersect(
+            ['0–3', '4–5', '6–10', '11–14', '15–17', '18+'],
+            $keys,
+        )));
+    }
+
+    #[Test]
+    public function sort_age_bands_ordena_por_idade_nao_por_volume(): void
+    {
+        $sorted = (new RelationCsvAggregator)->sortAgeBands([
+            '18+' => 90,
+            '6 a 10' => 10,
+            '0–3' => 5,
+            '15–17' => 40,
+            '11–14' => 20,
+            '4–5' => 8,
+        ]);
+
+        $this->assertSame(
+            ['0–3', '4–5', '6–10', '11–14', '15–17', '18+'],
+            array_keys($sorted),
+        );
+        $this->assertSame(10, $sorted['6–10']);
     }
 
     #[Test]

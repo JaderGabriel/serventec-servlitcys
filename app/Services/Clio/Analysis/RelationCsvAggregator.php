@@ -859,22 +859,64 @@ final class RelationCsvAggregator
     }
 
     /**
+     * Ordena faixas etárias pela idade (0–3 → 18+), não pelo volume.
+     *
      * @param  array<string, int>  $counts
      * @return array<string, int>
      */
-    private function sortAgeBands(array $counts): array
+    public function sortAgeBands(array $counts): array
     {
         $order = ['0–3', '4–5', '6–10', '11–14', '15–17', '18+', __('Não informado')];
+        $canonical = [];
+        foreach ($counts as $label => $count) {
+            $key = $this->canonicalizeAgeBandLabel((string) $label);
+            $canonical[$key] = ($canonical[$key] ?? 0) + (int) $count;
+        }
+
         $sorted = [];
         foreach ($order as $label) {
-            if (isset($counts[$label])) {
-                $sorted[$label] = $counts[$label];
-                unset($counts[$label]);
+            if (isset($canonical[$label])) {
+                $sorted[$label] = $canonical[$label];
+                unset($canonical[$label]);
             }
         }
-        arsort($counts, SORT_NUMERIC);
+        // Restantes (rótulos inesperados): por idade mínima no texto, depois alfabético.
+        uksort($canonical, function (string $a, string $b): int {
+            return $this->ageBandSortKey($a) <=> $this->ageBandSortKey($b) ?: strcmp($a, $b);
+        });
 
-        return $sorted + $counts;
+        return $sorted + $canonical;
+    }
+
+    private function canonicalizeAgeBandLabel(string $label): string
+    {
+        $s = trim($label);
+        if ($s === '') {
+            return __('Não informado');
+        }
+        $norm = mb_strtolower($s);
+        $norm = str_replace(['–', '—', '−', ' a ', ' até '], ['-', '-', '-', '-', '-'], $norm);
+        $norm = preg_replace('/\s+/', '', $norm) ?? $norm;
+
+        return match (true) {
+            $norm === '0-3' || $norm === '0–3' => '0–3',
+            $norm === '4-5' || $norm === '4–5' => '4–5',
+            $norm === '6-10' || $norm === '6–10' => '6–10',
+            $norm === '11-14' || $norm === '11–14' => '11–14',
+            $norm === '15-17' || $norm === '15–17' => '15–17',
+            $norm === '18+' || $norm === '18mais' || str_starts_with($norm, '18') => '18+',
+            in_array($norm, ['ni', 'n/i', 'naoinformado', 'nãoinformado', 'naodeclarado', 'nãodeclarado'], true) => __('Não informado'),
+            default => $s,
+        };
+    }
+
+    private function ageBandSortKey(string $label): int
+    {
+        if (preg_match('/(\d+)/', $label, $m) === 1) {
+            return (int) $m[1];
+        }
+
+        return 999;
     }
 
     public function classifyTipoTurma(string $tipo): string

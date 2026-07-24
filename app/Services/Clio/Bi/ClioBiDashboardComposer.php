@@ -8,6 +8,7 @@ use App\Models\Bi\BiClioInclusion;
 use App\Models\Bi\BiClioQuality;
 use App\Models\Bi\BiClioSchool;
 use App\Services\Clio\Analysis\EtapaLabelOrder;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Support\Dashboard\ChartPayload;
 
 /**
@@ -189,9 +190,11 @@ final class ClioBiDashboardComposer
 
         $idade = $this->assocBarHorizontal(
             __('Faixa etária'),
-            is_array($dem['by_faixa_etaria'] ?? null) ? $dem['by_faixa_etaria'] : [],
+            (new RelationCsvAggregator)->sortAgeBands(
+                is_array($dem['by_faixa_etaria'] ?? null) ? $dem['by_faixa_etaria'] : [],
+            ),
             __('Alunos'),
-            __('Estimativa a partir da data de nascimento · INF-DEM.'),
+            __('Estimativa a partir da data de nascimento · INF-DEM · ordenado por idade.'),
             false,
         );
         if ($idade !== null) {
