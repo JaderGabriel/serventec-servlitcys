@@ -22,4 +22,13 @@ final class SafeOutboundUrlTest extends TestCase
     {
         $this->assertTrue(SafeOutboundUrl::isAllowedHttpUrl('https://dados.gov.br/dataset/file.csv'));
     }
+
+    #[Test]
+    public function bloqueia_quando_dns_nao_resolve(): void
+    {
+        // TLD .invalid é reservado (RFC 2606) e não resolve em DNS públicos.
+        $this->assertFalse(
+            SafeOutboundUrl::isAllowedHttpUrl('https://host-inexistente-servlitcys.invalid/arquivo.csv')
+        );
+    }
 }

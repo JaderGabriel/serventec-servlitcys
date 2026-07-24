@@ -50,7 +50,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **B2** | P1 | Throttle (+ logging) em `/relatorio/{publicId}`; rever necessidade de token na API SAEB pública | **Concluído** (2026-07-24) — throttle+log; API sem token documentada | — |
 | **B3** | P1 | Validação `mimes` / extensões em upload Clio e CadÚnico CSV | **Concluído** (2026-07-24) — `mimes`+`extensions` em Clio e CadÚnico | — |
 | **B4** | P2 | Produção: `SESSION_ENCRYPT` + `SESSION_SECURE_COOKIE`; reduzir `$fillable` sensível em `User` | **Concluído** (2026-07-24) — defaults session + fillable endurecido | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) |
-| **B5** | P2 | `SafeOutboundUrl`: falhar fechado quando DNS não resolve | Teste unitário cobre o edge case | — |
+| **B5** | P2 | `SafeOutboundUrl`: falhar fechado quando DNS não resolve | **Concluído** (2026-07-24) — fail-closed + teste `.invalid` | — |
 
 ---
 

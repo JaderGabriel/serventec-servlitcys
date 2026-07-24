@@ -69,7 +69,7 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 
 | Risco | Mitigação no código |
 |--------|---------------------|
-| **SSRF** em download de CSV por URL (`IEDUCAR_CADUNICO_*_CSV_URL`, CKAN) | `SafeOutboundUrl::isAllowedHttpUrl()` — bloqueia `localhost`, redes privadas e esquemas não HTTP(S) |
+| **SSRF** em download de CSV por URL (`IEDUCAR_CADUNICO_*_CSV_URL`, CKAN) | `SafeOutboundUrl::isAllowedHttpUrl()` — bloqueia `localhost`, redes privadas, esquemas não HTTP(S) e hosts cujo DNS **não resolve** (fail-closed) |
 | **SSRF** em sync SAEB / Pedagógico (URLs admin, planilhas, microdados, JSON) | Mesma allowlist antes de cada `Http::get` / sink em `SaebPedagogicalImportService`, `SaebOfficialMunicipalImportService`, `SaebMicrodadosInepDownloader` e validação no `PedagogicalSyncController` |
 | **Path traversal** em `cadunico:import-cecad {path}` | `ContainedPathResolver` — arquivo só dentro de `storage/app` ou `storage/app/cadunico/cecad` |
 | **Lista Solr `fl` demasiado longa** (Misocial) | Máximo `IEDUCAR_CADUNICO_MISOGIAL_FIELDS_MAX` (default 24); acima disso usa lista compacta interna |

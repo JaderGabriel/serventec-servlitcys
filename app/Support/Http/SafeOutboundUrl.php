@@ -46,8 +46,9 @@ final class SafeOutboundUrl
         }
 
         $resolved = @gethostbyname($host);
+        // DNS não resolve → fail-closed (evita SSRF via nomes inventados / DNS interno).
         if ($resolved === '' || $resolved === $host) {
-            return true;
+            return false;
         }
 
         return self::isPublicIp($resolved);
