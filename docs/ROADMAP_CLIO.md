@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Hygieia
 
-> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
+> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
 Documento **vivo** do módulo Clio: o que está estável, quais indicadores o produto consolida hoje e o que ainda muda números/interpretação. A spec histórica de implementação permanece em [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md); este arquivo é o mapa operacional pós-MVP.
 
@@ -120,7 +120,7 @@ Indicadores que o Clio **já calcula e expõe** de forma estável (UI, inferênc
 | NEE / TEA / AH | `INF-NEE` | Contagem por pessoa (não por linha); DEF / TRS / AH; subnotificação `SUB-*` |
 | NEE sem AEE | relatório / PDF | Destaque operacional |
 | Tempo de escolarização | `INF-JOR` | Turnos canónicos + Outros; CH em faixas pedagógicas; fund.+AEE; regular+AC; infantil estendida |
-| Tempo escolar semanal | composer | CH ponderada por alunos × segmentos (PDF gestor / Insights) |
+| Tempo escolar semanal | composer | CH ponderada por alunos × segmentos (PDF gestor / Insights) — **guia:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) |
 | Transporte | `INF-TRA` | Uso; rural/urbano (Acomp); veículo; ativas × demais |
 | Demografia | `INF-DEM` | Cor/Raça, sexo, faixa etária (quando colunas existem) |
 | **Diagnóstico Geral** | findings + parse_meta | Escolas ativas × erros/avisos + Cor/Raça; PDF + Excel |

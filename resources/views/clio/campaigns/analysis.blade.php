@@ -366,7 +366,7 @@
                             <div class="clio-panel overflow-hidden">
                                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                                     <h4 class="clio-section-title">{{ __('Alunos e turmas por ano / etapa') }}</h4>
-                                    <p class="text-xs text-slate-500">{{ __('Relação de alunos × Relação de turmas (mesma Etapa de ensino). Primeiro as etapas com idade/série definida; depois EJA, profissional, especial e afins com dados.') }}</p>
+                                    <p class="text-xs text-slate-500">{{ __('Relação de alunos × Relação de turmas (mesma Etapa de ensino). Ordem: infantil/fundamental/médio; depois EJA, profissional, especial, complementar e «Não se aplica».') }}</p>
                                 </div>
                                 <div class="space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
                                     @forelse ($xchk['etapa_groups'] ?? [] as $group)
@@ -396,7 +396,7 @@
                                                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                                         @foreach ($group['rows'] as $row)
                                                             <tr>
-                                                                <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
+                                                                <td class="px-4 py-2 text-sm">{{ $row['etapa_label'] ?? $row['etapa'] }}</td>
                                                                 <td class="px-4 py-2 text-right tabular-nums">{{ $row['alunos'] }}</td>
                                                                 <td class="px-4 py-2 text-right tabular-nums">{{ $row['turmas'] }}</td>
                                                                 <td class="px-4 py-2 text-xs">
@@ -429,7 +429,7 @@
                                                 <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
                                                     @foreach ($xchk['etapa_rows'] as $row)
                                                         <tr>
-                                                            <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
+                                                            <td class="px-4 py-2 text-sm">{{ $row['etapa_label'] ?? $row['etapa'] }}</td>
                                                             <td class="px-4 py-2 text-right tabular-nums">{{ $row['alunos'] }}</td>
                                                             <td class="px-4 py-2 text-right tabular-nums">{{ $row['turmas'] }}</td>
                                                             <td class="px-4 py-2 text-xs">

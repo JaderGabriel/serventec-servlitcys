@@ -94,9 +94,15 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
         $this->assertSame(EtapaLabelOrder::SEGMENT_PROFISSIONAL, $order->segment('Educação profissional técnica de nível médio'));
         $this->assertSame(EtapaLabelOrder::SEGMENT_ESPECIAL, $order->segment('Atendimento Educacional Especializado'));
         $this->assertSame(EtapaLabelOrder::SEGMENT_COMPLEMENTAR, $order->segment('Atividade complementar'));
+        $this->assertSame(EtapaLabelOrder::SEGMENT_NSA, $order->segment('Não se aplica'));
+        $this->assertStringContainsString('AEE', $order->displayLabel('Não se aplica'));
         $this->assertLessThan(
             $order->segmentOrder(EtapaLabelOrder::SEGMENT_EJA),
             $order->segmentOrder(EtapaLabelOrder::SEGMENT_SERIADA),
+        );
+        $this->assertLessThan(
+            $order->segmentOrder(EtapaLabelOrder::SEGMENT_NSA),
+            $order->segmentOrder(EtapaLabelOrder::SEGMENT_COMPLEMENTAR),
         );
     }
 

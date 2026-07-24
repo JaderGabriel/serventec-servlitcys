@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 estável; Hygieia (série SVG + reanálise lote + Censo 2025)
 
-> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio` · **Roadmap vivo:** [ROADMAP_CLIO.md](../ROADMAP_CLIO.md)
+> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio` · **Roadmap vivo:** [ROADMAP_CLIO.md](../ROADMAP_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](../CLIO_TEMPO_ESCOLAR.md)
 
 **Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e cruzar** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso (CSV `;` / ZIP), com ou sem i-Educar.
 

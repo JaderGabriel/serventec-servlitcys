@@ -58,8 +58,6 @@
                 </div>
             @else
                 <header class="clio-bi-hero">
-                    <div class="clio-bi-hero__glow" aria-hidden="true"></div>
-                    <div class="clio-bi-hero__grid" aria-hidden="true"></div>
                     <div class="clio-bi-hero__body">
                         <div class="min-w-0">
                             <p class="clio-bi-hero__kicker">{{ __('Painel gerencial · leitura sem PII') }}</p>
@@ -146,7 +144,7 @@
                                 'eyebrow' => __('Fluxo escolar'),
                                 'title' => __('Distorção, densidade e docentes'),
                                 'lead' => __('Indicadores de adequação idade-série e organização das turmas.'),
-                                'keys' => ['distorcao_stack', 'distorcao_etapas', 'densidade', 'docentes'],
+                                'keys' => ['distorcao_stack', 'densidade', 'docentes', 'distorcao_etapas'],
                                 'wide' => ['distorcao_etapas'],
                             ],
                             [
@@ -163,7 +161,6 @@
                                 'title' => __('Transporte e jornada'),
                                 'lead' => __('Usuários de transporte, veículos, turnos e padrões de jornada.'),
                                 'keys' => ['tra_local', 'tra_veiculo', 'jornada_turno', 'jornada_padroes'],
-                                'wide' => ['tra_veiculo', 'jornada_turno'],
                             ],
                             [
                                 'id' => 'demografia',
@@ -178,7 +175,7 @@
                                 'eyebrow' => __('Priorização'),
                                 'title' => __('Escolas e cruzamentos'),
                                 'lead' => __('Deltas, score de atenção e lacuna Clio × i-Educar.'),
-                                'keys' => ['deltas', 'escolas', 'gap'],
+                                'keys' => ['gap', 'deltas', 'escolas'],
                                 'wide' => ['deltas', 'escolas'],
                             ],
                         ];
@@ -213,9 +210,9 @@
                                             :chart="$charts[$key]"
                                             :exportFilename="'clio-insights-'.$key"
                                             :exportMeta="$chartExportContext"
-                                            :compact="! in_array($key, $wideKeys, true)"
+                                            :compact="true"
                                             :chartPanelId="'clio-bi-'.$key"
-                                            panelTone="indigo"
+                                            panelTone="default"
                                         />
                                     </div>
                                 @endforeach

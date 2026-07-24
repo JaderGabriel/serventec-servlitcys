@@ -16,9 +16,9 @@ use App\Support\Dashboard\ChartPayload;
  */
 final class ClioBiDashboardComposer
 {
-    private const ETAPAS_TOP = 20;
+    private const ETAPAS_TOP = 40;
 
-    private const ESCOLAS_TOP = 12;
+    private const ESCOLAS_TOP = 8;
 
     private const DEM_TOP = 12;
 
@@ -125,7 +125,36 @@ final class ClioBiDashboardComposer
             $out['escolas'] = $escolas;
         }
 
+        foreach ($out as $key => $chart) {
+            if (is_array($chart)) {
+                $out[$key] = $this->compactChartOptions($chart);
+            }
+        }
+
         return $out;
+    }
+
+    /**
+     * Densifica payloads Chart.js para o painel Insights (altura controlada).
+     *
+     * @param  array<string, mixed>  $chart
+     * @return array<string, mixed>
+     */
+    private function compactChartOptions(array $chart): array
+    {
+        $options = is_array($chart['options'] ?? null) ? $chart['options'] : [];
+        if (! isset($options['panelHeight'])) {
+            $options['panelHeight'] = 'sm';
+        }
+        if (($options['indexAxis'] ?? '') === 'y') {
+            $options['skipHorizontalBarAutoHeight'] = true;
+            if (! isset($options['minChartHeight'])) {
+                $options['minChartHeight'] = 220;
+            }
+        }
+        $chart['options'] = $options;
+
+        return $chart;
     }
 
     /**
@@ -607,16 +636,17 @@ final class ClioBiDashboardComposer
             return null;
         }
 
-        $top = $rows
-            ->sortByDesc(fn ($r) => (int) $r->qt_alunos)
-            ->take(self::ETAPAS_TOP)
+        $ordered = $rows
+            ->sort(function ($a, $b) {
+                return $this->etapaOrder->compare((string) $a->etapa, (string) $b->etapa);
+            })
             ->values();
 
-        $ordered = $top->sort(function ($a, $b) {
-            return $this->etapaOrder->compare((string) $a->etapa, (string) $b->etapa);
-        })->values();
+        if ($ordered->count() > self::ETAPAS_TOP) {
+            $ordered = $ordered->take(self::ETAPAS_TOP)->values();
+        }
 
-        $labels = $ordered->map(fn ($r) => (string) $r->etapa)->all();
+        $labels = $ordered->map(fn ($r) => $this->etapaOrder->displayLabel((string) $r->etapa))->all();
         $alunos = $ordered->map(fn ($r) => (int) $r->qt_alunos)->all();
         $turmas = $ordered->map(fn ($r) => (int) $r->qt_turmas)->all();
 
@@ -633,12 +663,15 @@ final class ClioBiDashboardComposer
                 ['label' => __('Turmas'), 'data' => $turmas],
             ],
         );
-        $chart['subtitle'] = __('Até :n etapas com mais alunos · ordem pedagógica.', ['n' => self::ETAPAS_TOP]);
-        $chart['footnote'] = __('Fonte: bi_clio_enrollment_stage (agregado municipal).');
+        $chart['subtitle'] = __('Sequência de escolarização (infantil → fundamental → médio → EJA → outros). Até :n etapas.', [
+            'n' => self::ETAPAS_TOP,
+        ]);
+        $chart['footnote'] = __('Fonte: bi_clio_enrollment_stage (agregado municipal). «Não se aplica» = matrícula sem ano/série (comum em AEE/AC).');
         $chart['kpi_total'] = (int) array_sum($alunos);
         $chart['kpi_total_label'] = __('Alunos nas etapas exibidas');
         $chart['kpi_total_secondary'] = (int) array_sum($turmas);
         $chart['kpi_total_secondary_label'] = __('Turmas');
+        $chart['preserve_order'] = true;
 
         return $chart;
     }

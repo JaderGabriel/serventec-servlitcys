@@ -7,6 +7,7 @@ use App\Models\Bi\BiClioEnrollmentStage;
 use App\Models\Bi\BiClioInsight;
 use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
+use App\Services\Clio\Analysis\EtapaLabelOrder;
 use App\Services\Clio\Bi\ClioBiDashboardComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
@@ -26,6 +27,7 @@ final class CampaignInsightsPdfExporter
         private readonly ClioBiDashboardComposer $dashboard,
         private readonly CampaignSchoolTimeComposer $schoolTime,
         private readonly HorizonteMunicipioEnrollmentSeriesService $enrollmentSeries,
+        private readonly EtapaLabelOrder $etapaOrder,
     ) {}
 
     public function download(ClioCampaign $campaign): Response
@@ -63,18 +65,23 @@ final class CampaignInsightsPdfExporter
             ])
             ->values();
 
-        $etapas = BiClioEnrollmentStage::query()
+        $etapaRows = BiClioEnrollmentStage::query()
             ->where('campaign_id', $campaign->id)
             ->whereNull('inep')
-            ->orderByDesc('qt_alunos')
-            ->limit(15)
-            ->get();
+            ->get(['etapa', 'qt_alunos', 'qt_turmas'])
+            ->map(static fn ($r): array => [
+                'etapa' => (string) $r->etapa,
+                'alunos' => (int) $r->qt_alunos,
+                'turmas' => (int) $r->qt_turmas,
+            ])
+            ->all();
+        $etapaGroups = $this->etapaOrder->groupEnrollmentRows($etapaRows);
 
         $ibge = (string) ($campaign->ibge_municipio ?: $campaign->city?->ibge_municipio ?? '');
         $series = $this->enrollmentSeries->forIbge($ibge, 5, 'municipal', allowConsultoriaActive: true);
-        $seriesChartSvg = null;
+        $seriesChartImg = null;
         if (($series['ok'] ?? false) === true && is_array($series['chart'] ?? null)) {
-            $seriesChartSvg = AnalyticsReportChartSvg::render($series['chart'], 520, 248);
+            $seriesChartImg = AnalyticsReportChartSvg::renderDataUri($series['chart'], 520, 248);
         }
         $schoolTime = $this->schoolTime->compose($campaign);
         $diagnosticoGeral = app(DiagnosticoGeralComposer::class)->compose($campaign);
@@ -86,10 +93,10 @@ final class CampaignInsightsPdfExporter
             'bi' => $bi,
             'coverage' => $coverage,
             'insights' => $insights,
-            'etapas' => $etapas,
+            'etapaGroups' => $etapaGroups,
             'chartTables' => $chartTables,
             'series' => $series,
-            'seriesChartSvg' => $seriesChartSvg,
+            'seriesChartImg' => $seriesChartImg,
             'schoolTime' => $schoolTime,
             'diagnosticoGeral' => $diagnosticoGeral,
             'generated_at' => $generatedAt,
@@ -98,7 +105,10 @@ final class CampaignInsightsPdfExporter
                 'secondary' => '#0f766e',
                 'primary_light' => '#e2e8f0',
             ],
-        ])->setPaper('a4');
+        ])->setPaper('a4')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('defaultFont', 'DejaVu Sans');
 
         $citySlug = $this->slugPart((string) $campaign->municipality_name) ?: 'municipio';
         $ibgeSlug = preg_replace('/\D+/', '', $ibge) ?: 'ibge';
@@ -163,13 +173,16 @@ final class CampaignInsightsPdfExporter
             if (! is_array($chart)) {
                 continue;
             }
-            $rows = $this->chartToRows($chart, 12);
+            $preserveOrder = ($chart['preserve_order'] ?? false) === true;
+            $limit = $preserveOrder ? 40 : 12;
+            $rows = $this->chartToRows($chart, $limit, $preserveOrder);
             if ($rows === []) {
                 continue;
             }
             $out[] = [
                 'title' => (string) ($chart['title'] ?? __('Indicador')),
                 'rows' => $rows,
+                'preserve_order' => $preserveOrder,
             ];
             if (count($out) >= 6) {
                 break;
@@ -183,7 +196,7 @@ final class CampaignInsightsPdfExporter
      * @param  array<string, mixed>  $chart
      * @return list<array{label: string, value: int|float}>
      */
-    private function chartToRows(array $chart, int $limit): array
+    private function chartToRows(array $chart, int $limit, bool $preserveOrder = false): array
     {
         $labels = is_array($chart['labels'] ?? null) ? array_values($chart['labels']) : [];
         $datasets = is_array($chart['datasets'] ?? null) ? $chart['datasets'] : [];
@@ -196,11 +209,13 @@ final class CampaignInsightsPdfExporter
         $pairs = [];
         foreach ($labels as $i => $label) {
             $pairs[] = [
-                'label' => mb_substr(trim((string) $label), 0, 72),
+                'label' => mb_substr(trim((string) $label), 0, 96),
                 'value' => $values[$i] ?? 0.0,
             ];
         }
-        usort($pairs, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
+        if (! $preserveOrder) {
+            usort($pairs, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
+        }
 
         return array_slice($pairs, 0, max(1, $limit));
     }

@@ -17,6 +17,8 @@ final class EtapaLabelOrder
 
     public const SEGMENT_COMPLEMENTAR = 'complementar';
 
+    public const SEGMENT_NSA = 'nao_se_aplica';
+
     public const SEGMENT_OUTRO = 'outro';
 
     /**
@@ -27,14 +29,47 @@ final class EtapaLabelOrder
         return $this->sortKey($a) <=> $this->sortKey($b);
     }
 
+    public function isNaoSeAplica(string $label): bool
+    {
+        $e = mb_strtolower(trim($label));
+        if ($e === '') {
+            return false;
+        }
+
+        $e = str_replace(['ã', 'á', 'à', 'â'], 'a', $e);
+
+        return $e === 'nao se aplica'
+            || str_starts_with($e, 'nao se aplica')
+            || preg_match('/^n[aã]o\s+se\s+aplica\b/u', mb_strtolower(trim($label))) === 1;
+    }
+
+    /**
+     * Rótulo para UI/PDF: detalha «Não se aplica» do Educacenso.
+     */
+    public function displayLabel(string $label): string
+    {
+        $raw = trim($label);
+        if ($raw === '') {
+            return __('(Etapa em branco)');
+        }
+        if ($this->isNaoSeAplica($raw)) {
+            return __('Não se aplica — sem ano/série curricular (comum em AEE / atividade complementar)');
+        }
+
+        return $raw;
+    }
+
     /**
      * Segmento educacional para agrupamento na UI (após etapas com idade bem definida).
      */
     public function segment(string $label): string
     {
         $e = mb_strtolower(trim($label));
-        if ($e === '' || $e === 'não se aplica' || $e === 'nao se aplica') {
+        if ($e === '') {
             return self::SEGMENT_OUTRO;
+        }
+        if ($this->isNaoSeAplica($label)) {
+            return self::SEGMENT_NSA;
         }
         if (str_contains($e, 'atividade complementar') || str_contains($e, 'ativ. complementar')) {
             return self::SEGMENT_COMPLEMENTAR;
@@ -88,6 +123,7 @@ final class EtapaLabelOrder
             self::SEGMENT_PROFISSIONAL => __('Educação profissional / técnica'),
             self::SEGMENT_ESPECIAL => __('Educação especial (AEE)'),
             self::SEGMENT_COMPLEMENTAR => __('Atividade complementar'),
+            self::SEGMENT_NSA => __('Não se aplica — sem etapa curricular'),
             default => __('Outros segmentos'),
         };
     }
@@ -100,6 +136,7 @@ final class EtapaLabelOrder
             self::SEGMENT_PROFISSIONAL => __('Cursos profissionais/técnicos presentes nas Relações.'),
             self::SEGMENT_ESPECIAL => __('Turmas/etapas de AEE ou educação especial explícita.'),
             self::SEGMENT_COMPLEMENTAR => __('Atividade complementar — fora do vínculo curricular principal.'),
+            self::SEGMENT_NSA => __('No Educacenso, «Não se aplica» indica matrícula sem ano/série (alunos e/ou turmas). Frequente em AEE e atividade complementar — confira as Relações.'),
             default => __('Demais rótulos de etapa encontrados no export.'),
         };
     }
@@ -112,6 +149,7 @@ final class EtapaLabelOrder
             self::SEGMENT_PROFISSIONAL => 30,
             self::SEGMENT_ESPECIAL => 40,
             self::SEGMENT_COMPLEMENTAR => 50,
+            self::SEGMENT_NSA => 55,
             default => 60,
         };
     }
@@ -129,7 +167,7 @@ final class EtapaLabelOrder
         $band = 50;
         $ano = 50;
 
-        if ($e === 'não se aplica' || $e === 'nao se aplica') {
+        if ($e === 'não se aplica' || $e === 'nao se aplica' || $this->isNaoSeAplica($label)) {
             return [95, 0, $e];
         }
         if (str_contains($e, 'atividade complementar') || str_contains($e, 'ativ. complementar')) {
@@ -220,6 +258,52 @@ final class EtapaLabelOrder
         });
 
         return $rows;
+    }
+
+    /**
+     * Agrupa linhas de etapa por segmento (ordem pedagógica), com rótulo detalhado de NSA.
+     *
+     * @param  list<array<string, mixed>>  $rows  cada item: etapa, alunos, turmas (+ opcional flag/segment)
+     * @return list<array{key: string, title: string, hint: string, rows: list<array<string, mixed>>, alunos: int, turmas: int}>
+     */
+    public function groupEnrollmentRows(array $rows): array
+    {
+        $groupsMap = [];
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $alunos = (int) ($row['alunos'] ?? 0);
+            $turmas = (int) ($row['turmas'] ?? 0);
+            if ($alunos === 0 && $turmas === 0) {
+                continue;
+            }
+            $etapa = (string) ($row['etapa'] ?? '');
+            $segment = (string) ($row['segment'] ?? $this->segment($etapa));
+            $groupsMap[$segment][] = array_merge($row, [
+                'etapa' => $etapa,
+                'etapa_label' => $this->displayLabel($etapa),
+                'alunos' => $alunos,
+                'turmas' => $turmas,
+                'segment' => $segment,
+            ]);
+        }
+
+        $groups = [];
+        foreach ($groupsMap as $segment => $segmentRows) {
+            $segmentRows = $this->sortRowsByEtapaKey($segmentRows, 'etapa');
+            $groups[] = [
+                'key' => $segment,
+                'title' => $this->segmentLabel($segment),
+                'hint' => $this->segmentHint($segment),
+                'rows' => $segmentRows,
+                'alunos' => array_sum(array_column($segmentRows, 'alunos')),
+                'turmas' => array_sum(array_column($segmentRows, 'turmas')),
+            ];
+        }
+        usort($groups, fn (array $a, array $b): int => $this->segmentOrder((string) $a['key']) <=> $this->segmentOrder((string) $b['key']));
+
+        return $groups;
     }
 
     private function extractAno(string $e): ?int

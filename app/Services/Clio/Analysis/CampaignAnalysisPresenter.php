@@ -1489,6 +1489,7 @@ final class CampaignAnalysisPresenter
             $flag = $row['flag'] ?? null;
             $groupsMap[$segment][] = [
                 'etapa' => (string) ($row['etapa'] ?? ''),
+                'etapa_label' => $order->displayLabel((string) ($row['etapa'] ?? '')),
                 'alunos' => $alunos,
                 'turmas' => $turmas,
                 'flag' => $flag,
@@ -1525,6 +1526,7 @@ final class CampaignAnalysisPresenter
                     EtapaLabelOrder::SEGMENT_PROFISSIONAL => 'violet',
                     EtapaLabelOrder::SEGMENT_ESPECIAL => 'indigo',
                     EtapaLabelOrder::SEGMENT_COMPLEMENTAR => 'emerald',
+                    EtapaLabelOrder::SEGMENT_NSA => 'rose',
                     default => 'slate',
                 },
                 'rows' => $rows,

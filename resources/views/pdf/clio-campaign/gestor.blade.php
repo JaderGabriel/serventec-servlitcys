@@ -177,32 +177,38 @@
     </table>
 @endif
 
-@if (($etapas ?? collect())->isNotEmpty())
+@if (! empty($etapaGroups))
     <h2>{{ __('Matrículas por etapa') }}</h2>
-    <p class="note">{{ __('Totais agregados da coleta (dataset BI), sem identificação de alunos.') }}</p>
-    <table class="data">
-        <thead>
-            <tr>
-                <th>{{ __('Etapa') }}</th>
-                <th>{{ __('Alunos') }}</th>
-                <th>{{ __('Turmas') }}</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($etapas as $row)
+    <p class="note">{{ __('Totais agregados da coleta (dataset BI), na sequência de escolarização — sem identificação de alunos.') }}</p>
+    @foreach ($etapaGroups as $group)
+        <p style="font-size: 10px; font-weight: 700; margin: 10px 0 3px;">{{ $group['title'] ?? '' }}</p>
+        @if (! empty($group['hint']))
+            <p class="note" style="margin-top: 0;">{{ $group['hint'] }}</p>
+        @endif
+        <table class="data">
+            <thead>
                 <tr>
-                    <td>{{ $row->etapa }}</td>
-                    <td>{{ number_format((int) $row->qt_alunos, 0, ',', '.') }}</td>
-                    <td>{{ number_format((int) $row->qt_turmas, 0, ',', '.') }}</td>
+                    <th>{{ __('Etapa') }}</th>
+                    <th>{{ __('Alunos') }}</th>
+                    <th>{{ __('Turmas') }}</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach ($group['rows'] ?? [] as $row)
+                    <tr>
+                        <td>{{ $row['etapa_label'] ?? $row['etapa'] ?? '—' }}</td>
+                        <td>{{ number_format((int) ($row['alunos'] ?? 0), 0, ',', '.') }}</td>
+                        <td>{{ number_format((int) ($row['turmas'] ?? 0), 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endforeach
 @endif
 
 @if (! empty($chartTables))
     <h2>{{ __('Visualizações') }}</h2>
-    <p class="note">{{ __('Top categorias por magnitude (tabela legível no PDF). Consulte o painel Clio para gráficos interativos.') }}</p>
+    <p class="note">{{ __('Categorias do painel Clio em tabela. Etapas seguem a sequência pedagógica; demais indicadores listam as maiores magnitudes.') }}</p>
     @foreach ($chartTables as $block)
         <div class="chart-block">
             <p style="font-size: 10px; font-weight: 700; margin: 0 0 4px;">{{ $block['title'] ?? __('Indicador') }}</p>
@@ -233,11 +239,11 @@
         $chart = $series['chart'] ?? [];
         $labels = is_array($chart['labels'] ?? null) ? $chart['labels'] : [];
         $datasets = is_array($chart['datasets'] ?? null) ? $chart['datasets'] : [];
-        $seriesChartSvg = $seriesChartSvg ?? null;
+        $seriesChartImg = $seriesChartImg ?? null;
     @endphp
-    @if (filled($seriesChartSvg))
-        <div class="chart-block" style="text-align: center;">
-            {!! $seriesChartSvg !!}
+    @if (filled($seriesChartImg))
+        <div class="chart-block" style="text-align: center; margin: 8px 0 12px;">
+            <img src="{{ $seriesChartImg }}" alt="{{ __('Série histórica de matrículas') }}" width="520" height="248" style="max-width: 100%; height: auto;">
         </div>
     @endif
     @if ($labels !== [] && $datasets !== [])
