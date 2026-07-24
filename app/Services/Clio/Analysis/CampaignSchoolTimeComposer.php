@@ -69,7 +69,7 @@ final class CampaignSchoolTimeComposer
             }
         }
 
-        /** @var array<string, array{label: string, turmas: int, alunos: int, ch_sum_turma: float, ch_n_turma: int, ch_sum_aluno: float, ch_alunos: int, curricular: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}, aee: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}, ac: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}}> $buckets */
+        /** @var array<string, array{label: string, turmas: int, alunos: int, ch_sum_turma: float, ch_n_turma: int, ch_sum_aluno: float, ch_alunos: int, ch_hours_map: array<string, array{hours: float, turmas: int, alunos: int}>, curricular: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}, aee: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}, ac: array{turmas: int, alunos: int, ch_sum: float, ch_alunos: int}}> $buckets */
         $buckets = [];
 
         foreach ($profiles as $code => $profile) {
@@ -90,6 +90,16 @@ final class CampaignSchoolTimeComposer
                     $buckets[$segment]['ch_sum_aluno'] += $ch * $alunos;
                     $buckets[$segment]['ch_alunos'] += $alunos;
                 }
+                $chKey = $this->chOptionKey($ch);
+                if (! isset($buckets[$segment]['ch_hours_map'][$chKey])) {
+                    $buckets[$segment]['ch_hours_map'][$chKey] = [
+                        'hours' => $ch,
+                        'turmas' => 0,
+                        'alunos' => 0,
+                    ];
+                }
+                $buckets[$segment]['ch_hours_map'][$chKey]['turmas']++;
+                $buckets[$segment]['ch_hours_map'][$chKey]['alunos'] += $alunos;
             }
 
             $tipoKey = match ($bucket) {
@@ -119,6 +129,13 @@ final class CampaignSchoolTimeComposer
                 $netChSum += $b['ch_sum_aluno'];
                 $netAlunos += $b['ch_alunos'];
             }
+            $tiposAtivos = 0;
+            foreach (['curricular', 'aee', 'ac'] as $tk) {
+                if (($b[$tk]['turmas'] ?? 0) > 0) {
+                    $tiposAtivos++;
+                }
+            }
+            $chOptions = $this->chOptionsOut($b['ch_hours_map']);
             $segments[] = [
                 'key' => $key,
                 'label' => $b['label'],
@@ -130,6 +147,9 @@ final class CampaignSchoolTimeComposer
                 'curricular' => $this->tipoOut($b['curricular']),
                 'aee' => $this->tipoOut($b['aee']),
                 'ac' => $this->tipoOut($b['ac']),
+                'ch_options' => $chOptions,
+                'has_multiple_tipos' => $tiposAtivos > 1,
+                'has_multiple_ch' => count($chOptions) > 1,
             ];
         }
 
@@ -137,8 +157,8 @@ final class CampaignSchoolTimeComposer
             'available' => $profiles !== [],
             'has_ch' => $hasCh,
             'note' => $hasCh
-                ? __('Horas/semana estimadas a partir da Carga horária das turmas, ponderadas pelos alunos vinculados (Relação). Curricular, AEE e atividade complementar são apresentados em separado.')
-                : __('As Relações de turmas não trouxeram Carga horária — só contagens de turmas/alunos por segmento.'),
+                ? __('Horas/semana estimadas a partir da Carga horária das turmas, ponderadas pelos alunos vinculados (Relação). Quando o segmento mistura curricular, AEE ou complementar — ou várias cargas — o detalhe aparece sob a linha.')
+                : __('As Relações de turmas não trouxeram Carga horária legível — abaixo só contagens de turmas/alunos por segmento. Confirme se a coluna «Carga horária semanal» veio preenchida no export do Educacenso.'),
             'segments' => $segments,
             'network' => [
                 'ch_media_aluno' => $netAlunos > 0 ? round($netChSum / $netAlunos, 1) : null,
@@ -159,6 +179,40 @@ final class CampaignSchoolTimeComposer
             'alunos' => $t['alunos'],
             'ch_media_aluno' => $t['ch_alunos'] > 0 ? round($t['ch_sum'] / $t['ch_alunos'], 1) : null,
         ];
+    }
+
+    private function chOptionKey(float $hours): string
+    {
+        $n = round($hours, 1);
+
+        return abs($n - (int) $n) < 0.05 ? (string) (int) $n : (string) $n;
+    }
+
+    /**
+     * @param  array<string, array{hours: float, turmas: int, alunos: int}>  $map
+     * @return list<array{hours: float, label: string, turmas: int, alunos: int}>
+     */
+    private function chOptionsOut(array $map): array
+    {
+        $rows = array_values($map);
+        usort($rows, static fn (array $a, array $b): int => $a['hours'] <=> $b['hours']);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $h = (float) $row['hours'];
+            $out[] = [
+                'hours' => $h,
+                'label' => __(':n h/semana', [
+                    'n' => abs($h - (int) $h) < 0.05
+                        ? (string) (int) $h
+                        : rtrim(rtrim(number_format($h, 1, ',', ''), '0'), ','),
+                ]),
+                'turmas' => (int) $row['turmas'],
+                'alunos' => (int) $row['alunos'],
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -240,6 +294,7 @@ final class CampaignSchoolTimeComposer
             'ch_n_turma' => 0,
             'ch_sum_aluno' => 0.0,
             'ch_alunos' => 0,
+            'ch_hours_map' => [],
             'curricular' => $emptyTipo,
             'aee' => $emptyTipo,
             'ac' => $emptyTipo,

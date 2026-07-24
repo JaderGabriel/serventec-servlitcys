@@ -55,6 +55,9 @@ final class RelationCsvAggregator
         $chHeader = $this->findCargaHorariaHeader($headerKeys);
         $hasTurno = $turnoHeader !== null;
         $hasCh = $chHeader !== null;
+        $chParsed = 0;
+        $chEmpty = 0;
+        $chUnreadable = 0;
 
         foreach ($rows as $row) {
             $etapa = trim($csv->value($row, 'Etapa de ensino'));
@@ -92,8 +95,16 @@ final class RelationCsvAggregator
                     $byTurnoOutros[$detail] = ($byTurnoOutros[$detail] ?? 0) + 1;
                 }
             }
-            $chHours = $hasCh ? $this->parseCargaHoraria(trim($csv->value($row, $chHeader))) : null;
+            $chRaw = $hasCh ? trim($csv->value($row, $chHeader)) : '';
+            $chHours = $hasCh ? $this->parseCargaHoraria($chRaw) : null;
             if ($hasCh) {
+                if ($chHours !== null) {
+                    $chParsed++;
+                } elseif ($chRaw === '') {
+                    $chEmpty++;
+                } else {
+                    $chUnreadable++;
+                }
                 $bandMeta = $this->cargaHorariaBandMeta($chHours);
                 $byChBand[$bandMeta['label']] = ($byChBand[$bandMeta['label']] ?? 0) + 1;
                 if ($chHours !== null) {
@@ -126,6 +137,8 @@ final class RelationCsvAggregator
             $buckets[$bucket]++;
         }
 
+        $chTotal = $chParsed + $chEmpty + $chUnreadable;
+
         return [
             'total' => count($rows),
             'by_etapa_ensino' => $this->sortDesc($byEtapa),
@@ -144,6 +157,23 @@ final class RelationCsvAggregator
             'columns' => [
                 'turno' => $hasTurno,
                 'carga_horaria' => $hasCh,
+            ],
+            'carga_horaria_meta' => $hasCh ? [
+                'header' => (string) $chHeader,
+                'turmas' => $chTotal,
+                'parsed' => $chParsed,
+                'empty' => $chEmpty,
+                'unreadable' => $chUnreadable,
+                'pct_ni' => $chTotal > 0
+                    ? round(100 * ($chEmpty + $chUnreadable) / $chTotal, 1)
+                    : 0.0,
+            ] : [
+                'header' => null,
+                'turmas' => 0,
+                'parsed' => 0,
+                'empty' => 0,
+                'unreadable' => 0,
+                'pct_ni' => null,
             ],
         ];
     }
@@ -1063,11 +1093,87 @@ final class RelationCsvAggregator
      */
     private function findCargaHorariaHeader(array $headerKeys): ?string
     {
+        $best = null;
+        $bestScore = 0;
+
         foreach ($headerKeys as $key) {
             $k = (string) $key;
-            if (preg_match('/carga\s*hor[aá]ria|ch\s*semanal|dura[cç][aã]o\s*(semanal|semanal\s*da\s*turma)?/iu', $k) === 1) {
-                return $k;
+            $score = $this->scoreCargaHorariaHeader($k);
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $k;
             }
+        }
+
+        return $bestScore > 0 ? $best : null;
+    }
+
+    /**
+     * Pontuação para escolher a coluna correcta de CH semanal (evita «Duração do curso»).
+     */
+    private function scoreCargaHorariaHeader(string $header): int
+    {
+        $s = mb_strtolower(trim($header));
+        if ($s === '') {
+            return 0;
+        }
+
+        // Falso-positivos comuns do Educacenso / cadastro.
+        if (preg_match('/dura[cç][aã]o\s+(do\s+)?curso|carga\s*hor[aá]ria\s+(do\s+)?curso|carga\s*hor[aá]ria\s+anual/iu', $s) === 1) {
+            return 0;
+        }
+
+        if (preg_match('/carga\s*hor[aá]ria\s*semanal/iu', $s) === 1) {
+            return 100;
+        }
+        if (preg_match('/ch\s*semanal/iu', $s) === 1) {
+            return 90;
+        }
+        if (preg_match('/carga\s*hor[aá]ria/iu', $s) === 1) {
+            return 70;
+        }
+        if (preg_match('/dura[cç][aã]o\s+semanal(\s+da\s+turma)?/iu', $s) === 1) {
+            return 60;
+        }
+
+        return 0;
+    }
+
+    private function parseCargaHoraria(string $raw): ?float
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return null;
+        }
+
+        $s = mb_strtolower($raw);
+        $s = preg_replace('/\s+/u', ' ', $s) ?? $s;
+
+        // Minutos explícitos: «1200 min», «120 minutos».
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(?:min(?:utos?)?|m)\b/u', $s, $m) === 1) {
+            $minutes = (float) str_replace(',', '.', $m[1]);
+            if ($minutes > 0 && $minutes <= 168 * 60) {
+                return round($minutes / 60, 2);
+            }
+
+            return null;
+        }
+
+        // «20h», «20 h», «20 horas», «20,5 horas/semana».
+        if (preg_match('/(\d+(?:[.,]\d+)?)\s*(?:h(?:oras?)?(?:\s*\/?\s*sem(?:ana)?)?|:00)?\b/u', $s, $m) === 1) {
+            $n = (float) str_replace(',', '.', $m[1]);
+            // Valores típicos em minutos sem unidade (ex.: 1200) — converter se > 168.
+            if ($n > 168 && $n <= 168 * 60 && fmod($n, 1.0) < 0.001) {
+                $asHours = $n / 60;
+                if ($asHours >= 1 && $asHours <= 168) {
+                    return round($asHours, 2);
+                }
+            }
+            if ($n < 0 || $n > 168) {
+                return null;
+            }
+
+            return $n;
         }
 
         return null;
@@ -1516,7 +1622,7 @@ final class RelationCsvAggregator
                 'range' => '—',
                 'tone' => 'slate',
                 'icon' => 'question',
-                'hint' => __('Sem Carga horária semanal legível no export'),
+                'hint' => __('Coluna presente, mas sem horas semanais legíveis (vazio, texto sem número ou valor fora de 0–168 h)'),
                 'hours_anchor' => null,
             ];
         }
@@ -1736,23 +1842,6 @@ final class RelationCsvAggregator
         }
 
         return null;
-    }
-
-    private function parseCargaHoraria(string $raw): ?float
-    {
-        $raw = trim($raw);
-        if ($raw === '') {
-            return null;
-        }
-        if (preg_match('/(\d+(?:[.,]\d+)?)/u', $raw, $m) !== 1) {
-            return null;
-        }
-        $n = (float) str_replace(',', '.', $m[1]);
-        if ($n < 0 || $n > 168) {
-            return null;
-        }
-
-        return $n;
     }
 
     /**

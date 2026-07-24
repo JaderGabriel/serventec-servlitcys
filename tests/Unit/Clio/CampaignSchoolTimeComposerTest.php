@@ -22,4 +22,22 @@ final class CampaignSchoolTimeComposerTest extends TestCase
         $this->assertSame([], $result['segments']);
         $this->assertNull($result['network']['horas_aluno_semana']);
     }
+
+    #[Test]
+    public function ch_options_out_ordena_por_horas(): void
+    {
+        $composer = new CampaignSchoolTimeComposer(new RelationCsvAggregator);
+        $method = new \ReflectionMethod(CampaignSchoolTimeComposer::class, 'chOptionsOut');
+        $method->setAccessible(true);
+
+        $rows = $method->invoke($composer, [
+            '40' => ['hours' => 40.0, 'turmas' => 2, 'alunos' => 50],
+            '20' => ['hours' => 20.0, 'turmas' => 5, 'alunos' => 120],
+        ]);
+
+        $this->assertCount(2, $rows);
+        $this->assertSame(20.0, $rows[0]['hours']);
+        $this->assertSame(40.0, $rows[1]['hours']);
+        $this->assertSame(5, $rows[0]['turmas']);
+    }
 }

@@ -135,6 +135,38 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
     }
 
     #[Test]
+    public function carga_horaria_detecta_coluna_correcta_e_parseia_formatos(): void
+    {
+        $agg = new RelationCsvAggregator;
+        $score = new ReflectionMethod(RelationCsvAggregator::class, 'scoreCargaHorariaHeader');
+        $score->setAccessible(true);
+        $parse = new ReflectionMethod(RelationCsvAggregator::class, 'parseCargaHoraria');
+        $parse->setAccessible(true);
+        $find = new ReflectionMethod(RelationCsvAggregator::class, 'findCargaHorariaHeader');
+        $find->setAccessible(true);
+
+        $this->assertGreaterThan(
+            $score->invoke($agg, 'Duração do curso'),
+            $score->invoke($agg, 'Carga horária semanal'),
+        );
+        $this->assertSame(0, $score->invoke($agg, 'Duração do curso'));
+        $this->assertSame(0, $score->invoke($agg, 'Duração'));
+        $this->assertSame(
+            'Carga horária semanal',
+            $find->invoke($agg, ['Turno', 'Duração do curso', 'Carga horária semanal', 'Código da turma']),
+        );
+
+        $this->assertSame(20.0, $parse->invoke($agg, '20'));
+        $this->assertSame(20.0, $parse->invoke($agg, '20h'));
+        $this->assertSame(20.0, $parse->invoke($agg, '20 horas'));
+        $this->assertSame(20.0, $parse->invoke($agg, '20:00'));
+        $this->assertSame(2.0, $parse->invoke($agg, '120 min'));
+        $this->assertSame(20.0, $parse->invoke($agg, '1200')); // minutos implícitos
+        $this->assertNull($parse->invoke($agg, ''));
+        $this->assertNull($parse->invoke($agg, 'Integral'));
+    }
+
+    #[Test]
     public function turno_abreviado_com_dias_e_tom(): void
     {
         $agg = new RelationCsvAggregator;

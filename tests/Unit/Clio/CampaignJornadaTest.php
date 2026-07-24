@@ -22,6 +22,9 @@ final class CampaignJornadaTest extends TestCase
 
         $this->assertTrue($agg['columns']['turno']);
         $this->assertTrue($agg['columns']['carga_horaria']);
+        $this->assertSame('Carga horária semanal', $agg['carga_horaria_meta']['header'] ?? null);
+        $this->assertSame(5, (int) ($agg['carga_horaria_meta']['parsed'] ?? 0));
+        $this->assertSame(0.0, (float) ($agg['carga_horaria_meta']['pct_ni'] ?? 1));
         $this->assertSame(5, $agg['total']);
         $this->assertArrayHasKey('Manhã', $agg['by_turno']);
         $this->assertArrayHasKey('Integral', $agg['by_turno']);

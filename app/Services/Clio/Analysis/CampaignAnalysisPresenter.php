@@ -1767,6 +1767,15 @@ final class CampaignAnalysisPresenter
             ->values()
             ->all();
 
+        $chBars = $agg->enrichCargaBars($agg->toBars($rebucketedCh['by_ch_band'], 8));
+        $chExact = $agg->enrichCargaExactBars($agg->toBars($rebucketedCh['by_ch_exact'], 24));
+        $chMeta = is_array($payload['carga_horaria_meta'] ?? null) ? $payload['carga_horaria_meta'] : [];
+        $chExplain = $this->cargaHorariaExplain(
+            $chMeta,
+            $chBars,
+            (bool) ($payload['has_ch_columns'] ?? false),
+        );
+
         $schoolTime = $this->presentSchoolTime(
             is_array($payload['school_time'] ?? null) ? $payload['school_time'] : null,
             $campaign,
@@ -1785,11 +1794,13 @@ final class CampaignAnalysisPresenter
             'has_ch_columns' => (bool) ($payload['has_ch_columns'] ?? false),
             'by_turno' => $turnoBars,
             'by_turno_outros' => $turnoOutrosDetails,
-            'by_ch_band' => $agg->enrichCargaBars($agg->toBars($rebucketedCh['by_ch_band'], 8)),
-            'by_ch_exact' => $agg->enrichCargaExactBars($agg->toBars($rebucketedCh['by_ch_exact'], 24)),
+            'by_ch_band' => $chBars,
+            'by_ch_exact' => $chExact,
+            'carga_horaria_meta' => $chMeta,
+            'carga_horaria_explain' => $chExplain,
             'by_turno_curricular' => $agg->enrichTurnoBars($agg->toBars(is_array($payload['by_turno_curricular'] ?? null) ? $payload['by_turno_curricular'] : [], 8)),
             'school_time' => $schoolTime,
-            'note_ch' => __('Carga horária agrupada em faixas pedagógicas (parcial, ampliada, integral). Os valores exactos do export ficam no detalhe.'),
+            'note_ch' => $chExplain['lead'],
             'note_turno' => __('Turnos agrupados em Manhã, Intermediário, Tarde, Noite e Integral. Textos livres e horários não classificados entram em «Outros», com detalhe abaixo.'),
             'note_fund_aee' => (string) ($payload['note_fund_aee']
                 ?? __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.')),
@@ -1807,19 +1818,20 @@ final class CampaignAnalysisPresenter
     private function presentSchoolTime(?array $fromPayload, ClioCampaign $campaign): array
     {
         $wanted = ['infantil', 'fundamental_1', 'fundamental_2', 'medio', 'eja', 'profissional'];
-        $source = $fromPayload;
-        if (! is_array($source) || empty($source['available'])) {
-            $composed = app(CampaignSchoolTimeComposer::class)->compose($campaign);
-            $source = [
-                'available' => (bool) ($composed['available'] ?? false),
-                'has_ch' => (bool) ($composed['has_ch'] ?? false),
-                'note' => (string) ($composed['note'] ?? ''),
-                'network' => is_array($composed['network'] ?? null) ? $composed['network'] : [],
-                'segments' => array_values(array_filter(
-                    is_array($composed['segments'] ?? null) ? $composed['segments'] : [],
-                    static fn ($seg): bool => is_array($seg) && in_array((string) ($seg['key'] ?? ''), $wanted, true),
-                )),
-            ];
+        // Preferir cálculo vivo (detalhe curricular/AEE/AC e opções de CH); o payload INF-JOR pode estar desatualizado.
+        $composed = app(CampaignSchoolTimeComposer::class)->compose($campaign);
+        $source = [
+            'available' => (bool) ($composed['available'] ?? false),
+            'has_ch' => (bool) ($composed['has_ch'] ?? false),
+            'note' => (string) ($composed['note'] ?? ''),
+            'network' => is_array($composed['network'] ?? null) ? $composed['network'] : [],
+            'segments' => array_values(array_filter(
+                is_array($composed['segments'] ?? null) ? $composed['segments'] : [],
+                static fn ($seg): bool => is_array($seg) && in_array((string) ($seg['key'] ?? ''), $wanted, true),
+            )),
+        ];
+        if (! ($source['available'] ?? false) && is_array($fromPayload) && ! empty($fromPayload['available'])) {
+            $source = $fromPayload;
         }
 
         $segments = [];
@@ -1842,6 +1854,12 @@ final class CampaignAnalysisPresenter
                 'ch_media_turma' => isset($seg['ch_media_turma']) && is_numeric($seg['ch_media_turma'])
                     ? (float) $seg['ch_media_turma']
                     : null,
+                'curricular' => is_array($seg['curricular'] ?? null) ? $seg['curricular'] : null,
+                'aee' => is_array($seg['aee'] ?? null) ? $seg['aee'] : null,
+                'ac' => is_array($seg['ac'] ?? null) ? $seg['ac'] : null,
+                'ch_options' => is_array($seg['ch_options'] ?? null) ? $seg['ch_options'] : [],
+                'has_multiple_tipos' => (bool) ($seg['has_multiple_tipos'] ?? false),
+                'has_multiple_ch' => (bool) ($seg['has_multiple_ch'] ?? false),
             ];
         }
 
@@ -1851,6 +1869,88 @@ final class CampaignAnalysisPresenter
             'note' => (string) ($source['note'] ?? ''),
             'network' => is_array($source['network'] ?? null) ? $source['network'] : [],
             'segments' => $segments,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @param  list<array<string, mixed>>  $chBars
+     * @return array{lead: string, detail: string|null, severity: string}
+     */
+    private function cargaHorariaExplain(array $meta, array $chBars, bool $hasChColumns): array
+    {
+        $niLabel = __('Não informado');
+        $niCount = 0;
+        $total = 0;
+        foreach ($chBars as $bar) {
+            $n = (int) ($bar['count'] ?? 0);
+            $total += $n;
+            if (($bar['band'] ?? '') === 'ni' || ($bar['label'] ?? '') === $niLabel || ($bar['short'] ?? '') === __('N/I')) {
+                $niCount += $n;
+            }
+        }
+        $pctNi = $total > 0 ? round(100 * $niCount / $total, 1) : (float) ($meta['pct_ni'] ?? 0);
+        $header = filled($meta['header'] ?? null) ? (string) $meta['header'] : null;
+        $parsed = (int) ($meta['parsed'] ?? max(0, $total - $niCount));
+        $empty = (int) ($meta['empty'] ?? 0);
+        $unreadable = (int) ($meta['unreadable'] ?? 0);
+
+        if (! $hasChColumns && $total === 0) {
+            return [
+                'lead' => __('A coluna de Carga horária semanal não foi encontrada nas Relações de turmas desta coleta.'),
+                'detail' => __('No portal Educacenso, confirme o export da Relação de turmas com a coluna «Carga horária semanal» e volte a importar/analisar.'),
+                'severity' => 'warn',
+            ];
+        }
+
+        if ($pctNi >= 95 && $total > 0) {
+            $parts = [];
+            if ($empty > 0) {
+                $parts[] = __(':n células vazias', ['n' => $empty]);
+            }
+            if ($unreadable > 0) {
+                $parts[] = __(':n com texto sem horas legíveis', ['n' => $unreadable]);
+            }
+            $why = $parts !== []
+                ? implode('; ', $parts)
+                : __('valores vazios ou sem número de horas (0–168)');
+
+            return [
+                'lead' => __('Quase todas as turmas estão em N/I (:pct%). A coluna :col existe, mas :why.', [
+                    'pct' => number_format($pctNi, 0, ',', '.'),
+                    'col' => $header ? '«'.$header.'»' : __('de carga horária'),
+                    'why' => $why,
+                ]),
+                'detail' => __('Isto não é uma faixa pedagógica — significa que o export não trouxe horas semanais interpretáveis. Preencha a CH no Educacenso ou reexporte a Relação de turmas e reanalise a coleta.'),
+                'severity' => 'warn',
+            ];
+        }
+
+        if ($pctNi >= 20 && $total > 0) {
+            return [
+                'lead' => __('Faixas pedagógicas da Carga horária semanal (parcial típica, ampliada e tempo integral). :pct% das turmas sem horas legíveis (N/I).', [
+                    'pct' => number_format($pctNi, 0, ',', '.'),
+                ]),
+                'detail' => $header
+                    ? __('Coluna detectada: :col · :ok com valor · :ni sem valor legível.', [
+                        'col' => $header,
+                        'ok' => $parsed,
+                        'ni' => $niCount,
+                    ])
+                    : null,
+                'severity' => 'info',
+            ];
+        }
+
+        return [
+            'lead' => __('Faixas pedagógicas da Carga horária semanal — parcial típica (~20–24 h), jornada ampliada (25–34 h) e tempo integral (≥ 35 h).'),
+            'detail' => $header
+                ? __('Coluna detectada: :col · :ok turmas com horas lidas.', [
+                    'col' => $header,
+                    'ok' => $parsed,
+                ])
+                : null,
+            'severity' => 'ok',
         ];
     }
 

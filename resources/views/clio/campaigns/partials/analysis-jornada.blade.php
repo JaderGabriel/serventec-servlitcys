@@ -144,6 +144,10 @@
                                 'n' => number_format((int) ($schoolTime['network']['alunos_com_ch'] ?? 0), 0, ',', '.'),
                             ]) }}
                         </p>
+                    @elseif (empty($schoolTime['has_ch']))
+                        <p class="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                            {{ __('Sem horas semanais calculáveis — a tabela mostra só turmas e alunos por segmento.') }}
+                        </p>
                     @endif
                 </div>
                 <div class="clio-table-wrap">
@@ -178,6 +182,44 @@
                                         @endif
                                     </td>
                                 </tr>
+                                @if (! empty($seg['has_multiple_tipos']) || ! empty($seg['has_multiple_ch']))
+                                    <tr class="bg-slate-50/80 dark:bg-slate-900/40">
+                                        <td colspan="5" class="px-4 py-2.5 text-xs text-slate-600 dark:text-slate-300">
+                                            @if (! empty($seg['has_multiple_tipos']))
+                                                <p class="font-medium text-slate-700 dark:text-slate-200">{{ __('Composição do segmento') }}</p>
+                                                <ul class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                                                    @foreach ([
+                                                        'curricular' => __('Curricular'),
+                                                        'aee' => __('AEE'),
+                                                        'ac' => __('Atividade complementar'),
+                                                    ] as $tipoKey => $tipoLabel)
+                                                        @php $tipo = $seg[$tipoKey] ?? null; @endphp
+                                                        @if (is_array($tipo) && (int) ($tipo['turmas'] ?? 0) > 0)
+                                                            <li>
+                                                                <span class="font-medium">{{ $tipoLabel }}</span>:
+                                                                {{ __(':t turmas · :a alunos', ['t' => (int) $tipo['turmas'], 'a' => (int) $tipo['alunos']]) }}
+                                                                @if (($tipo['ch_media_aluno'] ?? null) !== null)
+                                                                    · {{ number_format((float) $tipo['ch_media_aluno'], 1, ',', '.') }} {{ __('h/sem.') }}
+                                                                @endif
+                                                            </li>
+                                                        @endif
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                            @if (! empty($seg['has_multiple_ch']) && ! empty($seg['ch_options']))
+                                                <p class="mt-2 font-medium text-slate-700 dark:text-slate-200">{{ __('Cargas horárias neste segmento') }}</p>
+                                                <ul class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+                                                    @foreach ($seg['ch_options'] as $opt)
+                                                        <li>
+                                                            <span class="font-medium tabular-nums">{{ $opt['label'] }}</span>:
+                                                            {{ __(':t turmas · :a alunos', ['t' => (int) $opt['turmas'], 'a' => (int) $opt['alunos']]) }}
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -186,10 +228,18 @@
         @endif
 
         @if (! empty($jornada['by_ch_band']))
+            @php $chExplain = $jornada['carga_horaria_explain'] ?? null; @endphp
             <div class="clio-panel clio-panel--pad space-y-4">
                 <div>
                     <h4 class="clio-section-title text-base">{{ __('Turmas por carga horária') }}</h4>
-                    <p class="mt-1 text-xs text-slate-500">{{ __('Faixas pedagógicas da Carga horária semanal — parcial típica, ampliada e tempo integral.') }}</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ $chExplain['lead'] ?? $jornada['note_ch'] ?? __('Faixas pedagógicas da Carga horária semanal — parcial típica, ampliada e tempo integral.') }}
+                    </p>
+                    @if (! empty($chExplain['detail']))
+                        <p class="mt-2 text-sm {{ ($chExplain['severity'] ?? '') === 'warn' ? 'text-amber-800 dark:text-amber-200' : 'text-slate-600 dark:text-slate-300' }}">
+                            {{ $chExplain['detail'] }}
+                        </p>
+                    @endif
                 </div>
                 <div class="clio-shift-grid clio-shift-grid--ch">
                     @foreach ($jornada['by_ch_band'] as $bar)

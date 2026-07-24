@@ -1259,6 +1259,14 @@ final class CampaignAnalyzer
         $byTurnoCurricular = [];
         $hasTurnoCol = false;
         $hasChCol = false;
+        $chMeta = [
+            'header' => null,
+            'turmas' => 0,
+            'parsed' => 0,
+            'empty' => 0,
+            'unreadable' => 0,
+            'pct_ni' => null,
+        ];
         $schoolsBreakdown = [];
         $disk = (string) config('clio.disk', 'local');
 
@@ -1299,6 +1307,10 @@ final class CampaignAnalyzer
                 $byTurnoOutros = $this->aggregator->mergeCounts($byTurnoOutros, $schoolByTurnoOutros);
                 $byChBand = $this->aggregator->mergeCounts($byChBand, $schoolByCh);
                 $byChExact = $this->aggregator->mergeCounts($byChExact, $schoolByChExact);
+                $chMeta = $this->mergeCargaHorariaMeta(
+                    $chMeta,
+                    is_array($turmaAgg['carga_horaria_meta'] ?? null) ? $turmaAgg['carga_horaria_meta'] : [],
+                );
                 if ($schoolHasTurno) {
                     $hasTurnoCol = true;
                 }
@@ -1398,6 +1410,7 @@ final class CampaignAnalyzer
                 'by_turno_curricular' => $byTurnoCurricular,
                 'has_turno_columns' => $hasTurnoCol,
                 'has_ch_columns' => $hasChCol,
+                'carga_horaria_meta' => $this->finalizeCargaHorariaMeta($chMeta),
                 'school_time' => $this->schoolTimePayload($schoolTime),
                 'schools' => array_slice($schoolsBreakdown, 0, 120),
                 'note_fund_aee' => __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.'),
@@ -1429,6 +1442,12 @@ final class CampaignAnalyzer
                 'alunos' => (int) ($seg['alunos'] ?? 0),
                 'horas_aluno_semana' => $seg['horas_aluno_semana'] ?? null,
                 'ch_media_turma' => $seg['ch_media_turma'] ?? null,
+                'curricular' => is_array($seg['curricular'] ?? null) ? $seg['curricular'] : null,
+                'aee' => is_array($seg['aee'] ?? null) ? $seg['aee'] : null,
+                'ac' => is_array($seg['ac'] ?? null) ? $seg['ac'] : null,
+                'ch_options' => is_array($seg['ch_options'] ?? null) ? $seg['ch_options'] : [],
+                'has_multiple_tipos' => (bool) ($seg['has_multiple_tipos'] ?? false),
+                'has_multiple_ch' => (bool) ($seg['has_multiple_ch'] ?? false),
             ];
         }
 
@@ -1439,6 +1458,36 @@ final class CampaignAnalyzer
             'network' => is_array($schoolTime['network'] ?? null) ? $schoolTime['network'] : [],
             'segments' => $segments,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $into
+     * @param  array<string, mixed>  $from
+     * @return array<string, mixed>
+     */
+    private function mergeCargaHorariaMeta(array $into, array $from): array
+    {
+        if (($into['header'] ?? null) === null && filled($from['header'] ?? null)) {
+            $into['header'] = (string) $from['header'];
+        }
+        foreach (['turmas', 'parsed', 'empty', 'unreadable'] as $key) {
+            $into[$key] = (int) ($into[$key] ?? 0) + (int) ($from[$key] ?? 0);
+        }
+
+        return $into;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array<string, mixed>
+     */
+    private function finalizeCargaHorariaMeta(array $meta): array
+    {
+        $turmas = (int) ($meta['turmas'] ?? 0);
+        $ni = (int) ($meta['empty'] ?? 0) + (int) ($meta['unreadable'] ?? 0);
+        $meta['pct_ni'] = $turmas > 0 ? round(100 * $ni / $turmas, 1) : null;
+
+        return $meta;
     }
 
     /**
@@ -2006,6 +2055,14 @@ final class CampaignAnalyzer
                 'turno' => false,
                 'carga_horaria' => false,
             ],
+            'carga_horaria_meta' => [
+                'header' => null,
+                'turmas' => 0,
+                'parsed' => 0,
+                'empty' => 0,
+                'unreadable' => 0,
+                'pct_ni' => null,
+            ],
         ];
     }
 
@@ -2095,6 +2152,9 @@ final class CampaignAnalyzer
                 'turno' => (bool) ($cols['turno'] ?? false),
                 'carga_horaria' => (bool) ($cols['carga_horaria'] ?? false),
             ],
+            'carga_horaria_meta' => is_array($agg['carga_horaria_meta'] ?? null)
+                ? $agg['carga_horaria_meta']
+                : $base['carga_horaria_meta'],
         ];
     }
 
@@ -2213,6 +2273,11 @@ final class CampaignAnalyzer
             }
         }
         $into['columns'] = $intoCols;
+        $into['carga_horaria_meta'] = $this->mergeCargaHorariaMeta(
+            is_array($into['carga_horaria_meta'] ?? null) ? $into['carga_horaria_meta'] : $this->emptyTurmaAgg()['carga_horaria_meta'],
+            is_array($from['carga_horaria_meta'] ?? null) ? $from['carga_horaria_meta'] : [],
+        );
+        $into['carga_horaria_meta'] = $this->finalizeCargaHorariaMeta($into['carga_horaria_meta']);
         $codes = array_unique(array_merge(
             is_array($into['turma_codes'] ?? null) ? $into['turma_codes'] : [],
             is_array($from['turma_codes'] ?? null) ? $from['turma_codes'] : [],
