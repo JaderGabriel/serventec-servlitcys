@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.1.0** |
 | **Tag de deploy** | `20260724b-Asclepius` |
-| **Commit de referência** | `PENDING` |
+| **Commit de referência** | `ca0f09a8` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) |
 | **Marco** | **Asclepius** — Diagnóstico Geral; PDF do gestor; tempo escolar; jornada |

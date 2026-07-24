@@ -10,7 +10,7 @@
 | **Data de referência** | **24/07/2026** |
 | **Último marco documentado** | **Clio Asclepius** — Diagnóstico Geral, PDF do gestor, tempo escolar, jornada — [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `PENDING` (#**—**) |
+| **Commit de release** | `ca0f09a8` (#**563**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -67,7 +67,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.1.0** | `PENDING` / `20260724b-Asclepius` → `main` | **—** | 24/07/2026 | **Produção:** Clio — Diagnóstico Geral, PDF do gestor, tempo escolar, série no card, faixas de CH/turnos — [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md). |
+| **▶ 8.1.0** | `ca0f09a8` / `20260724b-Asclepius` → `main` | **563** | 24/07/2026 | **Produção:** Clio — Diagnóstico Geral, PDF do gestor, tempo escolar, série no card, faixas de CH/turnos — [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md). |
 | 8.0.4 | `c0a7d791` / `20260724a-Theia` → `main` | **561** | 24/07/2026 | Clio — painel Insights nativo (Chart.js), UX análise (jornada/transporte/etapas) e botões dos cards — [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md). |
 | 8.0.3 | `55bccd96` / `20260724-Pythia` → `main` | **559** | 24/07/2026 | Clio — S7 BI `bi_clio_*`, insights gestores, CLI-IND-01…10, prune, margem distorção — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md). |
 | 8.0.2 | `4fc99bac` / `20260723b-Harmonia` → `main` | **554** | 23/07/2026 | Clio — PDF/Excel alinhados, Fund. I/II, distorção ordenada, AEE sem NEE, lotes Drive, painel escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md). |
