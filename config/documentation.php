@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '8.2.0',
         'release_tag' => '20260724c-Hygieia',
-        'commit_short' => 'PENDING',
+        'commit_short' => '696dd173',
         'commit_number' => 568,
         'revision_date' => '2026-07-24',
         'in_production' => true,

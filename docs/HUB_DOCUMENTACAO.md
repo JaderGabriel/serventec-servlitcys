@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.2.0** |
 | **Tag de deploy** | `20260724c-Hygieia` |
-| **Commit de referência** | `PENDING` |
+| **Commit de referência** | `696dd173` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md) |
 | **Marco** | **Hygieia** — série SVG no PDF gestor; reanálise em lote; Censo 2025 |
