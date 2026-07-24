@@ -528,7 +528,7 @@ Só necessárias se o schema do município divergir do Portabilis 2.x. Lista com
 2. `php artisan migrate --force`
 3. `php artisan config:clear` e `php artisan storage:link`
 4. Cron `schedule:run` ativo
-5. Worker `default,admin-sync` ou confiar em `ADMIN_SYNC_SCHEDULE_*`
+5. Worker `default,admin-sync,clio` (timeout ≥ 1200) ou confiar em `ADMIN_SYNC_SCHEDULE_*` só para sync admin
 6. Bloco **§7** (analytics) para evitar 500 ao filtrar ano letivo
 7. `IEDUCAR_CADUNICO_NACIONAL_CSV_URL` se usar previsão CadÚnico automática (§12c)
 8. `PORTAL_TRANSPARENCIA_API_KEY` se usar Financiamentos com Transparência

@@ -61,7 +61,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **C1** | P1 | Code-split Vite: chunks `horizonte`, `clio`, `analytics` | **Concluído** (2026-07-24) — `import()` lazy + `manualChunks` | [PERFORMANCE.md](PERFORMANCE.md) |
 | **C2** | P1 | Defaults Redis documentados / alinhados em `.env.example` (com fallback) | **Concluído** (2026-07-24) — bloco Redis + `DB_PERSISTENT` | INF-06 |
 | **C3** | P0 | Worker: `default,admin-sync,clio` no README e IMPLANTAÇÃO | **Concluído** (2026-07-24) — docs + Supervisor `--timeout=1200` | [MODULO_CLIO.md](modulos/MODULO_CLIO.md) |
-| **C4** | P1 | Testes unitários leves de `HorizonteMapService` (assemble scoped + cache hit) | Cobertura do núcleo do mapa | — |
+| **C4** | P1 | Testes unitários leves de `HorizonteMapService` (assemble scoped + cache hit) | **Concluído** (2026-07-24) — `HorizonteMapServiceTest` | — |
 | **C5** | P2 | Cache de `NetworkRepository::snapshot` (Rede & Oferta) | Menos N+1 / passes SQL em redes grandes | [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md) |
 | **C6** | P1 | INF-05: Pulse ingest Redis + tuning InnoDB | Menos lock wait sob telemetria | INF-05 |
 
