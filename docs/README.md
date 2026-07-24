@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 8.2.0 · tag `20260724c-Hygieia` · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.2.2 · tag `20260724e-Metis` · **Última revisão:** 2026-07-24
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitetura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
@@ -61,7 +61,7 @@ flowchart TD
 |--------|----------------|
 | Gestão / secretaria | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) → [STATUS_PROJETO.md](STATUS_PROJETO.md) → [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Analista (usuário) | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) → [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) → [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) |
-| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) → [README do repositório](../README.md) |
+| Desenvolvimento | [STATUS_PROJETO.md](STATUS_PROJETO.md) → [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) → [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) → [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) → [README do repositório](../README.md) |
 | Operações / deploy | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) → [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) → [SEGURANCA.md](SEGURANCA.md) → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) |
 | Priorização de produto | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) → [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 
@@ -76,6 +76,7 @@ flowchart TD
 | [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) | Padrão editorial e checklist de manutenção |
 | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) | Tags, commits e trajetória de releases |
 | [STATUS_PROJETO.md](STATUS_PROJETO.md) | Funcionalidades **implementadas** em produção |
+| [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) | Tipo, porte, fundamentos e metas de cobertura de testes |
 | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) | Decisões técnicas e limites do sistema |
 | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) | Auditoria MVC, Eloquent, testes e plano de melhoria |
 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Identidade visual e ordem das abas |
@@ -197,7 +198,8 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) | CLI (incl. repasses §4.1) |
 | [PERFORMANCE.md](PERFORMANCE.md) | Redis e performance |
 | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) | Pool de conexões, balanceamento, alto volume |
-| [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md) | Estratégia de testes |
+| [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) | Qualificação do sistema + inventário e metas de testes |
+| [PLANO_TESTES_UNITARIOS.md](PLANO_TESTES_UNITARIOS.md) | Convenções e mapa histórico de unitários |
 
 ### 7. Entregas escalonadas
 

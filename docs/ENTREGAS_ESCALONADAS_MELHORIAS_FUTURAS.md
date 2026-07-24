@@ -14,7 +14,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 
 | Eixo | Estado | Achado principal |
 |------|--------|------------------|
-| **Testes** | Médio / frágil | ~299 ficheiros (265 Unit / 34 Feature); Unit forte; Feature fraca; suite instável (`pdo_sqlite` + consentimento legal) |
+| **Testes** | Bom / assimétrico | ~306 ficheiros (~271 Unit / ~35 Feature); runner sqlite estável; AuthZ admin e Jobs cobertos (Metis); Feature ainda << Unit — ver [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) |
 | **Otimizações** | Bom | Code-split Vite; Redis/worker `clio` documentados; cache Rede & Oferta; Pulse ingest Redis no checklist ops |
 | **Documentação** | Bom | PERFORMANCE / IMPLANTAÇÃO / VARIÁVEIS / SEGURANÇA / índice docs em **8.2**; README linha 8.x |
 | **Segurança** | Bom | Policies + `SafeOutboundUrl` (SAEB/admin); throttle/log em `/relatorio`; uploads Clio/CadÚnico tipados; sessão e `User` fillable endurecidos |

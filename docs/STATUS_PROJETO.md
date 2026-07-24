@@ -4,7 +4,7 @@
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
-Referência do que está **implementado** hoje. Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md). **Índice completo:** [README.md](README.md) · **diagramas:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
+Referência do que está **implementado** hoje. Para **tipo, porte e cobertura de testes**, ver [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md). Para **decisões técnicas**, ver [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md). Para **próximas entregas**, ver [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md). **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md). **Índice completo:** [README.md](README.md) · **diagramas:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
 ---
 

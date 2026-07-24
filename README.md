@@ -42,6 +42,7 @@ flowchart LR
 | Pergunta | Onde ler |
 |----------|----------|
 | O que está implementado? | [docs/STATUS_PROJETO.md](docs/STATUS_PROJETO.md) |
+| Tipo, porte, fundamentos e cobertura de testes? | [docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) |
 | Módulos (Analytics, Horizonte, Clio, RX, FUNDEB…) | [docs/modulos/README.md](docs/modulos/README.md) · Clio: [docs/modulos/MODULO_CLIO.md](docs/modulos/MODULO_CLIO.md) |
 | Roadmaps e backlog | [docs/ROADMAP_INDICE.md](docs/ROADMAP_INDICE.md) · [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
 | Diagramas e fluxos (deploy, FUNDEB, releases) | [docs/ARQUITETURA_E_FLUXOS.md](docs/ARQUITETURA_E_FLUXOS.md) |
@@ -59,6 +60,25 @@ flowchart TB
 ```
 
 Detalhe: [docs/ANALYTICS_NAVEGACAO_UI.md](docs/ANALYTICS_NAVEGACAO_UI.md).
+
+---
+
+## Qualificação do sistema e cobertura de testes
+
+| Dimensão | Síntese |
+|----------|---------|
+| **Tipo** | Plataforma web **B2G / educação municipal** — BI consultivo, GIS Horizonte e pipeline Clio sobre i-Educar e dados públicos |
+| **Porte** | **Grande** (~151k LOC PHP em `app/`, ~683 ficheiros, ~169 rotas, ~171 services, ~61 Artisan) |
+| **Fundamentos** | Laravel · PHP 8.3+ · MySQL app + i-Educar multi-DB · Redis/filas · RBAC · LGPD · Vite |
+| **Testes** | ~306 ficheiros PHPUnit (~271 Unit / ~35 Feature, ~996 métodos); CI em GitHub Actions; clover opcional |
+| **Meta** | H1 ≥40% linhas em Services+Jobs+Policies+`SafeOutbound`; H2 ≥55% paths críticos + smokes Feature por módulo |
+
+Documento completo (inventário por domínio, lacunas, metas H0–H3): **[docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md)** · convenções unitárias: [docs/PLANO_TESTES_UNITARIOS.md](docs/PLANO_TESTES_UNITARIOS.md).
+
+```bash
+composer test          # suite Unit+Feature (pdo_sqlite via scripts/run-tests.sh)
+composer test:clio     # foco Clio
+```
 
 ---
 
@@ -259,6 +279,7 @@ Leitor na aplicação (`/admin/documentacao` ou `/documentacao`): menu lateral *
 | Design system (UI) | [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) |
 | Decisões técnicas | [docs/PONDERACOES_TECNICAS.md](docs/PONDERACOES_TECNICAS.md) |
 | Performance / Redis | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
+| Qualificação e cobertura de testes | [docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](docs/QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) |
 | Backlog | [docs/BACKLOG_IMPLEMENTACOES.md](docs/BACKLOG_IMPLEMENTACOES.md) |
 | Padrão editorial pt-BR | [docs/PADRAO_DOCUMENTACAO.md](docs/PADRAO_DOCUMENTACAO.md) |
 
