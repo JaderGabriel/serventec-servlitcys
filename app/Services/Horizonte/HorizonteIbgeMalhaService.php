@@ -94,7 +94,16 @@ final class HorizonteIbgeMalhaService
      */
     public function stateMunicipalGeoJsonFiltered(string $uf, array $ibgeCodes): array
     {
-        $full = $this->stateMunicipalGeoJson($uf);
+        return self::filterFeatureCollectionByIbge($this->stateMunicipalGeoJson($uf), $ibgeCodes);
+    }
+
+    /**
+     * @param  array<string, mixed>  $geo
+     * @param  list<string>  $ibgeCodes
+     * @return array{type: string, features: list<array<string, mixed>>}
+     */
+    public static function filterFeatureCollectionByIbge(array $geo, array $ibgeCodes): array
+    {
         $wanted = [];
         foreach ($ibgeCodes as $code) {
             $digits = preg_replace('/\D/', '', (string) $code) ?? '';
@@ -109,7 +118,7 @@ final class HorizonteIbgeMalhaService
         }
 
         $features = [];
-        foreach ($full['features'] ?? [] as $feature) {
+        foreach ($geo['features'] ?? [] as $feature) {
             if (! is_array($feature)) {
                 continue;
             }

@@ -236,6 +236,7 @@ final class HorizonteSiconfiMunicipalSyncService
         bool $refresh,
     ): array {
         $ufsPerStep = max(1, min(3, (int) ($options['ufs_per_step'] ?? config('horizonte.siconfi_sync.ufs_per_step', 1))));
+        $municipiosPerStep = max(1, min(50, (int) ($options['municipios_per_step'] ?? config('horizonte.siconfi.municipios_per_step', 8))));
         $totalUfs = count(IbgeMunicipalityCatalog::brazilianUfs());
 
         if ($reset) {
@@ -291,20 +292,33 @@ final class HorizonteSiconfiMunicipalSyncService
 
         foreach ($targetUfs as $uf) {
             $codes = $this->resolvePendingCodesForUf($uf, $year, $period, $refresh);
-            $batchResult = $this->processIbgeCodes($codes, $year, $period);
+            if ($codes === []) {
+                if ($scopedUf === null) {
+                    HorizonteSiconfiSyncProgress::markUfsDone([$uf], $year, $period);
+                }
+                $processedUfs[] = $uf;
+                continue;
+            }
+
+            // Limita municípios por passo mesmo em modo by_uf (UFs grandes, ex. SP).
+            $chunk = array_slice($codes, 0, $municipiosPerStep);
+            $batchResult = $this->processIbgeCodes($chunk, $year, $period);
             $imported += (int) ($batchResult['imported'] ?? 0);
             $importedItems = array_merge($importedItems, $batchResult['items'] ?? []);
             $failedItems = array_merge($failedItems, $batchResult['failed'] ?? []);
             $processedUfs[] = $uf;
 
-            if ($scopedUf === null) {
+            $stillPending = $this->resolvePendingCodesForUf($uf, $year, $period, $refresh);
+            if ($scopedUf === null && $stillPending === []) {
                 HorizonteSiconfiSyncProgress::markUfsDone([$uf], $year, $period);
             }
         }
 
         $remainingUfs = $scopedUf !== null ? [] : HorizonteSiconfiSyncProgress::remainingUfs($year, $period);
         $doneUfs = $totalUfs - count($remainingUfs);
-        $partial = $scopedUf === null && $remainingUfs !== [];
+        $scopedStillPending = $scopedUf !== null
+            && $this->resolvePendingCodesForUf($scopedUf, $year, $period, $refresh) !== [];
+        $partial = $scopedUf === null ? $remainingUfs !== [] : $scopedStillPending;
         $complete = ! $partial;
         $importedLines = array_map(fn (array $item): string => $this->formatImportedLine($item), $importedItems);
         $failedLines = array_map(fn (array $item): string => $this->formatFailedLine($item), $failedItems);

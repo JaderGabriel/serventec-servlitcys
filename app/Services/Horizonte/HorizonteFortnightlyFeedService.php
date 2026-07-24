@@ -617,6 +617,7 @@ final class HorizonteFortnightlyFeedService
             }
 
             $yearImported = 0;
+            $batchRows = [];
             foreach ($index as $ibge => $row) {
                 $ibgeNorm = FundebMunicipioReferenceRepository::normalizeIbge((string) $ibge);
                 if ($ibgeNorm === null) {
@@ -631,22 +632,20 @@ final class HorizonteFortnightlyFeedService
                     continue;
                 }
 
-                $this->fundebReferences->upsertHorizontePortariaReceita(
-                    $ibgeNorm,
-                    $ano,
-                    $cityIbgeMap[$ibgeNorm] ?? null,
-                    [
-                        'receita_total' => $totalReceita,
-                        'complementacao_vaaf' => $row['complementacao_vaaf'] ?? null,
-                        'complementacao_vaat' => $row['complementacao_vaat'] ?? null,
-                        'complementacao_vaar' => $row['complementacao_vaar'] ?? null,
-                        'fonte' => 'fnde_portaria_receita_horizonte',
-                        'url_portaria' => $row['csv_url'] ?? null,
-                    ],
-                );
-                $imported++;
-                $yearImported++;
+                $batchRows[] = [
+                    'ibge' => $ibgeNorm,
+                    'city_id' => $cityIbgeMap[$ibgeNorm] ?? null,
+                    'receita_total' => $totalReceita,
+                    'complementacao_vaaf' => $row['complementacao_vaaf'] ?? null,
+                    'complementacao_vaat' => $row['complementacao_vaat'] ?? null,
+                    'complementacao_vaar' => $row['complementacao_vaar'] ?? null,
+                    'fonte' => 'fnde_portaria_receita_horizonte',
+                    'url_portaria' => $row['csv_url'] ?? null,
+                ];
             }
+
+            $yearImported = $this->fundebReferences->upsertHorizontePortariaReceitaBatch($ano, $batchRows);
+            $imported += $yearImported;
 
             $line = __('FUNDEB — ano :ano: :n registo(s).', ['ano' => (string) $ano, 'n' => (string) $yearImported]);
             $debugLines[] = $line;

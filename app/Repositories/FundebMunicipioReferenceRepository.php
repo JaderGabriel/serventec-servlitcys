@@ -124,6 +124,90 @@ class FundebMunicipioReferenceRepository
         return $ref;
     }
 
+    /**
+     * Upsert em lote da receita portaria Horizonte (evita firstOrNew×N no feed nacional).
+     *
+     * @param  list<array{
+     *     ibge: string,
+     *     city_id: ?int,
+     *     receita_total: float,
+     *     complementacao_vaaf?: float|null,
+     *     complementacao_vaat?: float|null,
+     *     complementacao_vaar?: float|null,
+     *     fonte?: string,
+     *     url_portaria?: string|null
+     * }>  $rows
+     */
+    public function upsertHorizontePortariaReceitaBatch(int $ano, array $rows): int
+    {
+        if ($rows === []) {
+            return 0;
+        }
+
+        $now = now();
+        $defaultNotas = __('Registo Horizonte — receita portaria FNDE; VAAF municipal pode ser enriquecido depois (fundeb:import-api ou sync por município).');
+        $payload = [];
+        foreach ($rows as $row) {
+            $ibge = self::normalizeIbge($row['ibge'] ?? null);
+            if ($ibge === null) {
+                continue;
+            }
+            $receita = (float) ($row['receita_total'] ?? 0);
+            if ($receita <= 0) {
+                continue;
+            }
+            $payload[] = [
+                'ibge_municipio' => $ibge,
+                'ano' => $ano,
+                'city_id' => isset($row['city_id']) ? (int) $row['city_id'] : null,
+                'receita_total' => $receita,
+                'complementacao_vaaf' => array_key_exists('complementacao_vaaf', $row) && $row['complementacao_vaaf'] !== null
+                    ? (float) $row['complementacao_vaaf']
+                    : null,
+                'complementacao_vaat' => array_key_exists('complementacao_vaat', $row) && $row['complementacao_vaat'] !== null
+                    ? (float) $row['complementacao_vaat']
+                    : null,
+                'complementacao_vaar' => array_key_exists('complementacao_vaar', $row) && $row['complementacao_vaar'] !== null
+                    ? (float) $row['complementacao_vaar']
+                    : null,
+                'fonte' => trim((string) ($row['fonte'] ?? 'fnde_portaria_receita_horizonte')) ?: 'fnde_portaria_receita_horizonte',
+                'url_portaria' => isset($row['url_portaria']) ? trim((string) $row['url_portaria']) : null,
+                'vaaf' => 0.0,
+                'tipo_valor' => 'estimativa',
+                'notas' => $defaultNotas,
+                'imported_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        if ($payload === []) {
+            return 0;
+        }
+
+        $written = 0;
+        foreach (array_chunk($payload, 250) as $chunk) {
+            FundebMunicipioReference::query()->upsert(
+                $chunk,
+                ['ibge_municipio', 'ano'],
+                [
+                    'city_id',
+                    'receita_total',
+                    'complementacao_vaaf',
+                    'complementacao_vaat',
+                    'complementacao_vaar',
+                    'fonte',
+                    'url_portaria',
+                    'imported_at',
+                    'updated_at',
+                ],
+            );
+            $written += count($chunk);
+        }
+
+        return $written;
+    }
+
     public static function normalizeIbge(mixed $raw): ?string
     {
         $ibge = preg_replace('/\D/', '', (string) $raw);
