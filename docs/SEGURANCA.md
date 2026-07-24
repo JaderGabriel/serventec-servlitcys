@@ -47,15 +47,17 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 ## Proteções HTTP comuns
 
 - **CSRF** em formulários web (middleware Laravel).
-- **Sessão**: `SESSION_DRIVER=database` (ou `redis` em escala); considerar `SESSION_ENCRYPT=true` com HTTPS.
+- **Sessão**: `SESSION_DRIVER=database` (ou `redis` em escala); em produção **`SESSION_ENCRYPT=true`** e **`SESSION_SECURE_COOKIE=true`** (defaults em `config/session.php`; em HTTP local use `false` — ver `.env.example`).
 - **Throttle** em rotas sensíveis:
   - `POST /login` — 5 tentativas por minuto (por IP)
   - Pedidos de reset de senha — limitados da mesma forma
+- **Mass assignment (`User`)**: `password`, `role`, `is_active`, `cpf` e campos de consentimento legal **fora** de `$fillable` — só atribuição explícita / `forceCreate` / `unguarded` no seeder.
 
 ## Checklist antes de produção
 
 - [ ] `APP_DEBUG=false`
 - [ ] HTTPS com certificado válido e `APP_URL` com `https://`
+- [ ] `SESSION_ENCRYPT=true` e `SESSION_SECURE_COOKIE=true` (obrigatório com HTTPS)
 - [ ] `php artisan config:cache` e `route:cache` após deploy
 - [ ] Permissões de arquivos: `storage/` e `bootstrap/cache/` graváveis pelo web server
 - [ ] Backup da base de dados e de `APP_KEY`

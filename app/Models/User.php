@@ -25,14 +25,6 @@ use Illuminate\Support\Facades\Storage;
     'whatsapp',
     'profile_photo_path',
     'birth_date',
-    'cpf',
-    'password',
-    'role',
-    'is_active',
-    'privacy_policy_version_accepted',
-    'privacy_policy_accepted_at',
-    'cookies_consent_version',
-    'cookies_consent_accepted_at',
 ])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable

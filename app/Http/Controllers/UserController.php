@@ -70,7 +70,7 @@ class UserController extends Controller
     {
         $role = $request->resolvedRole();
 
-        $user = User::query()->create([
+        $user = User::forceCreate([
             'name' => $request->validated('name'),
             'username' => $request->validated('username'),
             'email' => $request->validated('email'),
@@ -150,9 +150,9 @@ class UserController extends Controller
             'email' => $request->validated('email'),
             'phone' => $request->validated('phone'),
             'whatsapp' => $request->validated('whatsapp'),
-            'role' => $newRole,
-            'is_active' => $newIsActive,
         ]);
+        $user->role = $newRole;
+        $user->is_active = $newIsActive;
 
         $passwordChanged = $request->filled('password');
         if ($passwordChanged) {

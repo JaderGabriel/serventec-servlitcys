@@ -14,17 +14,19 @@ class AdminUserSeeder extends Seeder
         $plainPassword = (string) env('ADMIN_PASSWORD', '');
         $username = (string) env('ADMIN_USERNAME', 'admin');
 
-        User::query()->updateOrCreate(
-            ['email' => $email],
-            [
-                'name' => 'Administrador',
-                'username' => $username,
-                'password' => $plainPassword,
-                'birth_date' => env('ADMIN_BIRTH_DATE', '1990-31-12'),
-                'cpf' => env('ADMIN_CPF', ''),
-                'role' => UserRole::Admin,
-                'email_verified_at' => now(),
-            ]
-        );
+        User::unguarded(function () use ($email, $plainPassword, $username): void {
+            User::query()->updateOrCreate(
+                ['email' => $email],
+                [
+                    'name' => 'Administrador',
+                    'username' => $username,
+                    'password' => $plainPassword,
+                    'birth_date' => env('ADMIN_BIRTH_DATE', '1990-31-12'),
+                    'cpf' => env('ADMIN_CPF', ''),
+                    'role' => UserRole::Admin,
+                    'email_verified_at' => now(),
+                ]
+            );
+        });
     }
 }

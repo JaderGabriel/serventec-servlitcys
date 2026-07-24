@@ -25,10 +25,10 @@ class FirstAccessProfileController extends Controller
         $user = $request->user();
         $user->fill([
             'birth_date' => $request->validated('birth_date'),
-            'cpf' => $request->validated('cpf'),
             'phone' => $request->validated('phone'),
             'whatsapp' => $request->validated('whatsapp'),
         ]);
+        $user->cpf = $request->validated('cpf');
         $user->save();
 
         return redirect()->route($user->homeRouteName(), $user->homeRouteParameters())

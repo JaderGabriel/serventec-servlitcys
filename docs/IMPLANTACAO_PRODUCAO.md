@@ -131,6 +131,8 @@ IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true
 PORTAL_TRANSPARENCIA_API_KEY=   # preencher para despesas na aba Financiamentos
 ```
 
+`SESSION_ENCRYPT` e `SESSION_SECURE_COOKIE` têm default `true` em `config/session.php` (produção HTTPS). Em desenvolvimento HTTP local, force `false` no `.env` — ver comentários em `.env.example`.
+
 Consultas na aba Financiamentos: [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md). Desenvolvimento local: [README.md](../README.md) e `.env.example`.
 
 Depois de editar o `.env`:
