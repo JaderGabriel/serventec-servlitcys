@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **8.0.3** · release `20260724-Pythia` · **Ramo:** `main` · **Última revisão:** 2026-07-24
+**Versão em produção:** **8.0.4** · release `20260724a-Theia` · **Ramo:** `main` · **Última revisão:** 2026-07-24
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (8.0.3)
+## Mapa de capacidades (8.0.4)
 
 ```mermaid
 flowchart TB
@@ -179,7 +179,7 @@ flowchart TB
 | Início — KPIs realinhados (bases, RX/FUNDEB, consultoria, filas) | Implementado (5.0.0) |
 | Notificações — feed completo só no sino (sem duplicar menu usuário) | Implementado (5.0.0) |
 | Educacenso — conferência 1ª etapa (upload, cruzamento i-Educar, painel Censo) | Implementado (4.4.8) |
-| **Clio** — coletas Educacenso 1ª etapa (CSV/ZIP, INF-* incl. DEM/DIS/DEN, cruzamento i-Educar, export CSV/PDF, bloco RX, BI `bi_clio_*`) | Implementado (S1–S7; 8.0.3+) — [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · próximo S8 promote |
+| **Clio** — coletas Educacenso 1ª etapa (CSV/ZIP, INF-* incl. DEM/DIS/DEN, cruzamento i-Educar, export CSV/PDF, bloco RX, BI `bi_clio_*` + painel Insights nativo) | Implementado (S1–S7; 8.0.4+) — [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · próximo S8 promote |
 | Catálogo API i-Educar (consultas SQL → endpoints propostos, JSON, perf/seg) | Documentado — [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) |
 | Estudo integrações setor público + previsão demanda (doc) | Documentado — [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md); implementação Ondas 1–3 no backlog §H |
 | Sync massiva semanal (`system::weekly_mass_sync`, checkpoint) | Implementado |

@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Bi\BiClioCampaign;
 use App\Models\Bi\BiClioInsight;
 use App\Models\Clio\ClioCampaign;
+use App\Services\Clio\Bi\ClioBiDashboardComposer;
 use App\Services\Clio\Bi\ClioBiRefreshService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class CampaignInsightsController extends Controller
 {
-    public function show(ClioCampaign $campaign): View
+    public function show(ClioCampaign $campaign, ClioBiDashboardComposer $dashboard): View
     {
         $this->authorize('view', $campaign);
 
@@ -23,10 +24,24 @@ class CampaignInsightsController extends Controller
             ->orderBy('id')
             ->get();
 
+        $charts = $bi instanceof BiClioCampaign
+            ? $dashboard->charts((int) $campaign->id, $bi)
+            : [];
+
+        $municipality = $campaign->municipality_name ?? $campaign->city?->name ?? '';
+        $exportMeta = [
+            'municipality' => $municipality,
+            'year' => (int) $campaign->year,
+            'module' => 'Clio Insights',
+            'refreshed_at' => $bi?->refreshed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i'),
+        ];
+
         return view('clio.campaigns.insights', [
             'campaign' => $campaign->load('city'),
             'bi' => $bi,
             'insights' => $insights,
+            'charts' => $charts,
+            'chartExportContext' => $exportMeta,
             'analyzed' => in_array($campaign->status, [
                 ClioCampaign::STATUS_ANALYZED,
                 ClioCampaign::STATUS_CROSS_CHECKED,

@@ -1745,6 +1745,7 @@ final class CampaignAnalyzer
         $etapaRows = [];
         $alunosSemTurmaEtapa = 0;
         $turmasSemAlunoEtapa = 0;
+        $etapaOrder = new EtapaLabelOrder;
 
         foreach ($etapas as $etapa) {
             $alunos = (int) ($alunoByEtapa[$etapa] ?? 0);
@@ -1763,11 +1764,16 @@ final class CampaignAnalyzer
                 'alunos' => $alunos,
                 'turmas' => $turmas,
                 'flag' => $flag,
+                'segment' => $etapaOrder->segment((string) $etapa),
             ];
         }
 
-        $etapaOrder = new EtapaLabelOrder;
         usort($etapaRows, static function (array $a, array $b) use ($etapaOrder): int {
+            $sa = $etapaOrder->segmentOrder((string) ($a['segment'] ?? $etapaOrder->segment((string) ($a['etapa'] ?? ''))));
+            $sb = $etapaOrder->segmentOrder((string) ($b['segment'] ?? $etapaOrder->segment((string) ($b['etapa'] ?? ''))));
+            if ($sa !== $sb) {
+                return $sa <=> $sb;
+            }
             $prio = static fn (?string $f): int => match ($f) {
                 'alunos_sem_turma' => 0,
                 'turma_sem_aluno' => 1,

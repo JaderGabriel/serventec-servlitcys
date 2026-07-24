@@ -968,8 +968,8 @@ final class CampaignAnalysisPresenter
         $jorChSource = (is_array($jorSchool) && is_array($jorSchool['by_ch_band'] ?? null) && $this->isCountMap($jorSchool['by_ch_band']))
             ? $jorSchool['by_ch_band']
             : (is_array($turmaAgg['by_ch_band'] ?? null) ? $turmaAgg['by_ch_band'] : []);
-        $jorTurno = $agg->toBars($jorTurnoSource, 8);
-        $jorCh = $agg->toBars($jorChSource, 8);
+        $jorTurno = $agg->enrichTurnoBars($agg->toBars($jorTurnoSource, 8));
+        $jorCh = $agg->enrichCargaBars($agg->toBars($jorChSource, 8));
 
         $traSource = (is_array($traSchool) && is_array($traSchool['by_transporte'] ?? null) && $this->isCountMap($traSchool['by_transporte']))
             ? $traSchool['by_transporte']
@@ -1468,17 +1468,83 @@ final class CampaignAnalysisPresenter
             ->values()
             ->all();
 
+        $order = new EtapaLabelOrder;
+        $groupsMap = [];
+        foreach ($etapaRows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+            $alunos = (int) ($row['alunos'] ?? 0);
+            $turmas = (int) ($row['turmas'] ?? 0);
+            if ($alunos === 0 && $turmas === 0) {
+                continue;
+            }
+            $segment = (string) ($row['segment'] ?? $order->segment((string) ($row['etapa'] ?? '')));
+            $flag = $row['flag'] ?? null;
+            $groupsMap[$segment][] = [
+                'etapa' => (string) ($row['etapa'] ?? ''),
+                'alunos' => $alunos,
+                'turmas' => $turmas,
+                'flag' => $flag,
+                'segment' => $segment,
+                'ok' => $flag === null,
+            ];
+        }
+
+        $etapaGroups = [];
+        foreach ($groupsMap as $segment => $rows) {
+            $rows = $order->sortRowsByEtapaKey($rows, 'etapa');
+            usort($rows, static function (array $a, array $b) use ($order): int {
+                $prio = static fn (?string $f): int => match ($f) {
+                    'alunos_sem_turma' => 0,
+                    'turma_sem_aluno' => 1,
+                    default => 2,
+                };
+                $pa = $prio($a['flag'] ?? null);
+                $pb = $prio($b['flag'] ?? null);
+                if ($pa !== $pb) {
+                    return $pa <=> $pb;
+                }
+
+                return $order->compare((string) ($a['etapa'] ?? ''), (string) ($b['etapa'] ?? ''));
+            });
+            $issues = count(array_filter($rows, static fn (array $r): bool => ($r['flag'] ?? null) !== null));
+            $etapaGroups[] = [
+                'key' => $segment,
+                'title' => $order->segmentLabel($segment),
+                'hint' => $order->segmentHint($segment),
+                'tone' => match ($segment) {
+                    EtapaLabelOrder::SEGMENT_SERIADA => 'sky',
+                    EtapaLabelOrder::SEGMENT_EJA => 'amber',
+                    EtapaLabelOrder::SEGMENT_PROFISSIONAL => 'violet',
+                    EtapaLabelOrder::SEGMENT_ESPECIAL => 'indigo',
+                    EtapaLabelOrder::SEGMENT_COMPLEMENTAR => 'emerald',
+                    default => 'slate',
+                },
+                'rows' => $rows,
+                'alunos' => array_sum(array_column($rows, 'alunos')),
+                'turmas' => array_sum(array_column($rows, 'turmas')),
+                'issues' => $issues,
+                'ok' => $issues === 0,
+            ];
+        }
+        usort($etapaGroups, fn (array $a, array $b): int => $order->segmentOrder((string) $a['key']) <=> $order->segmentOrder((string) $b['key']));
+
+        $flatRows = [];
+        foreach ($etapaGroups as $group) {
+            foreach ($group['rows'] as $row) {
+                $flatRows[] = $row;
+            }
+        }
+
         return [
             'available' => $payload !== [] || $related !== [],
             'summary' => $xchk?->summary,
             'acomp_note' => $payload['acomp_by_etapa_note']
                 ?? __('O arquivo geral não desagrega matrículas por ano/etapa.'),
             'checks' => $checks,
-            'etapa_rows' => array_slice(
-                (new EtapaLabelOrder)->sortRowsByEtapaKey($etapaRows, 'etapa'),
-                0,
-                25,
-            ),
+            'etapa_groups' => $etapaGroups,
+            'etapa_rows' => $flatRows,
             'findings' => $related,
         ];
     }
@@ -1564,7 +1630,7 @@ final class CampaignAnalysisPresenter
                 'label' => __('Transporte escolar'),
                 'available' => $hasTra,
                 'hint' => $hasTra
-                    ? __('Uso, poder público e/ou veículo agregados quando presentes')
+                    ? __('Detalhe na secção Transporte escolar (abaixo)')
                     : __('Não detectado neste export'),
             ],
             [
@@ -1594,8 +1660,8 @@ final class CampaignAnalysisPresenter
         $doc = $inferences->get('INF-DOC');
 
         return [
-            'available' => $dem !== null || $nee !== null || $tra !== null || $dis !== null || $den !== null,
-            'summary' => $dem?->summary ?? $nee?->summary ?? $tra?->summary,
+            'available' => $dem !== null || $nee !== null || $dis !== null || $den !== null,
+            'summary' => $dem?->summary ?? $nee?->summary,
             'scanned' => $scanned,
             'coverage' => $coverage,
             'by_cor_raca' => $agg->toBars(is_array($demPayload['by_cor_raca'] ?? null) ? $demPayload['by_cor_raca'] : [], 10),
@@ -1618,9 +1684,7 @@ final class CampaignAnalysisPresenter
                 ?? __('Deficiências (DEF-*) e transtornos (TRS-*, ex. TEA) são públicos distintos no Censo; AH é categoria própria.')),
             'nee_note_sub' => (string) ($neePayload['note_sub']
                 ?? __('Alertas de subnotificação são heurísticos (comorbidades frequentes e tipificação incompleta) — validar com a escola/laudo.')),
-            'by_transporte' => $agg->toBars(is_array($traPayload['by_transporte'] ?? null) ? $traPayload['by_transporte'] : [], 6),
-            'by_poder_publico_transporte' => $agg->toBars(is_array($traPayload['by_poder_publico'] ?? null) ? $traPayload['by_poder_publico'] : [], 8),
-            'by_veiculo_transporte' => $agg->toBars(is_array($traPayload['by_veiculo'] ?? null) ? $traPayload['by_veiculo'] : [], 8),
+            'has_transporte' => $hasTra,
             'transporte_flagged' => (int) ($traPayload['flagged'] ?? 0),
             'transporte_pct' => $traPayload['pct'] ?? null,
             'transporte_summary' => $tra?->summary,
@@ -1694,9 +1758,11 @@ final class CampaignAnalysisPresenter
             'multi_enrollment' => (int) ($payload['multi_enrollment'] ?? 0),
             'has_turno_columns' => (bool) ($payload['has_turno_columns'] ?? false),
             'has_ch_columns' => (bool) ($payload['has_ch_columns'] ?? false),
-            'by_turno' => $agg->toBars(is_array($payload['by_turno'] ?? null) ? $payload['by_turno'] : [], 8),
-            'by_ch_band' => $agg->toBars(is_array($payload['by_ch_band'] ?? null) ? $payload['by_ch_band'] : [], 6),
-            'by_turno_curricular' => $agg->toBars(is_array($payload['by_turno_curricular'] ?? null) ? $payload['by_turno_curricular'] : [], 8),
+            'by_turno' => $agg->enrichTurnoBars($agg->toBars(is_array($payload['by_turno'] ?? null) ? $payload['by_turno'] : [], 12)),
+            'by_ch_band' => $agg->enrichCargaBars($agg->toBars(is_array($payload['by_ch_band'] ?? null) ? $payload['by_ch_band'] : [], 16)),
+            'by_turno_curricular' => $agg->enrichTurnoBars($agg->toBars(is_array($payload['by_turno_curricular'] ?? null) ? $payload['by_turno_curricular'] : [], 8)),
+            'note_ch' => __('Valores exactos de «Carga horária semanal» encontrados no export — não são faixas inventadas.'),
+            'note_turno' => __('Turnos normalizados (Manhã/Tarde/Noite/Integral). Dias e horários abreviados quando o texto original os traz.'),
             'note_fund_aee' => (string) ($payload['note_fund_aee']
                 ?? __('Fundamental regular + AEE em outra matrícula (contraturno típico) — não confundir com atividade complementar.')),
             'note_infantil' => (string) ($payload['note_infantil']

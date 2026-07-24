@@ -224,27 +224,72 @@
                                     </p>
                                 @endif
 
-                                <div class="clio-report-card__footer">
+                                <div class="clio-report-card__footer" role="group" aria-label="{{ __('Acções da coleta') }}">
                                     <a href="{{ $campaign->primaryReportUrl() }}"
-                                       class="{{ $ready ? 'serv-btn-primary' : 'serv-btn-secondary' }} text-sm flex-1 sm:flex-none text-center">
-                                        {{ $ready ? __('Abrir relatório') : __('Abrir coleta') }}
+                                       class="clio-card-action clio-card-action--report {{ $ready ? 'clio-card-action--ready' : '' }}"
+                                       title="{{ $ready ? __('Abrir relatório analítico') : __('Abrir coleta') }}">
+                                        <span class="clio-card-action__icon" aria-hidden="true">
+                                            @if ($ready)
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v11.5A2.25 2.25 0 0 0 4.25 18h11.5A2.25 2.25 0 0 0 18 15.75V4.25A2.25 2.25 0 0 0 15.75 2H4.25ZM3.5 4.25a.75.75 0 0 1 .75-.75h11.5a.75.75 0 0 1 .75.75v11.5a.75.75 0 0 1-.75.75H4.25a.75.75 0 0 1-.75-.75V4.25Zm2.5 2a.75.75 0 0 0 0 1.5h7.5a.75.75 0 0 0 0-1.5H6Zm0 3.5a.75.75 0 0 0 0 1.5h7.5a.75.75 0 0 0 0-1.5H6Zm0 3.5a.75.75 0 0 0 0 1.5h4a.75.75 0 0 0 0-1.5H6Z" clip-rule="evenodd"/></svg>
+                                            @else
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3.5 2.75a.75.75 0 0 0-1.5 0v14.5a.75.75 0 0 0 1.5 0v-4.392l1.657-.348a6.45 6.45 0 0 1 1.837.148l.1.023a7.95 7.95 0 0 0 2.265.186h3.832a.75.75 0 0 0 0-1.5H9.39a9.45 9.45 0 0 1-2.696-.223l-.1-.023a4.95 4.95 0 0 0-1.41-.113l-.854.18V2.75Z"/></svg>
+                                            @endif
+                                        </span>
+                                        <span class="clio-card-action__label">{{ $ready ? __('Relatório') : __('Coleta') }}</span>
                                     </a>
+
                                     @if ($ready)
                                         <a href="{{ route('clio.campaigns.insights', $campaign) }}"
-                                           class="serv-btn-secondary text-sm text-center"
+                                           class="clio-card-action clio-card-action--insights"
                                            title="{{ __('Insights gerenciais e dataset BI') }}">
-                                            {{ __('Insights / BI') }}
+                                            <span class="clio-card-action__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238 1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192-.238a1 1 0 0 0 0-1.962l-1.192-.238a1 1 0 0 1-.785-.785l-.238-1.192ZM6.949 5.684a1 1 0 0 0-1.898 0l-.683 2.051a1 1 0 0 1-.633.633l-2.051.683a1 1 0 0 0 0 1.898l2.051.684a1 1 0 0 1 .633.632l.683 2.051a1 1 0 0 0 1.898 0l.683-2.051a1 1 0 0 1 .633-.633l2.051-.683a1 1 0 0 0 0-1.898l-2.051-.683a1 1 0 0 1-.633-.633L6.95 5.684ZM13.949 13.684a1 1 0 0 0-1.898 0l-.184.551a1 1 0 0 1-.632.633l-.551.183a1 1 0 0 0 0 1.898l.551.183a1 1 0 0 1 .633.633l.183.551a1 1 0 0 0 1.898 0l.184-.551a1 1 0 0 1 .632-.633l.551-.183a1 1 0 0 0 0-1.898l-.551-.184a1 1 0 0 1-.633-.632l-.183-.551Z"/></svg>
+                                            </span>
+                                            <span class="clio-card-action__label">{{ __('Insights') }}</span>
                                         </a>
-                                        @can('export', $campaign)
-                                            @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
-                                        @endcan
                                     @else
-                                        <span class="serv-btn-secondary text-sm opacity-50 cursor-not-allowed"
+                                        <span class="clio-card-action clio-card-action--insights clio-card-action--disabled"
                                               title="{{ __('Disponível após analisar a coleta') }}">
-                                            {{ __('Insights / BI') }}
+                                            <span class="clio-card-action__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M15.98 1.804a1 1 0 0 0-1.96 0l-.24 1.192a1 1 0 0 1-.784.785l-1.192.238a1 1 0 0 0 0 1.962l1.192.238a1 1 0 0 1 .785.785l.238 1.192a1 1 0 0 0 1.962 0l.238-1.192a1 1 0 0 1 .785-.785l1.192-.238a1 1 0 0 0 0-1.962l-1.192-.238a1 1 0 0 1-.785-.785l-.238-1.192ZM6.949 5.684a1 1 0 0 0-1.898 0l-.683 2.051a1 1 0 0 1-.633.633l-2.051.683a1 1 0 0 0 0 1.898l2.051.684a1 1 0 0 1 .633.632l.683 2.051a1 1 0 0 0 1.898 0l.683-2.051a1 1 0 0 1 .633-.633l2.051-.683a1 1 0 0 0 0-1.898l-2.051-.683a1 1 0 0 1-.633-.633L6.95 5.684ZM13.949 13.684a1 1 0 0 0-1.898 0l-.184.551a1 1 0 0 1-.632.633l-.551.183a1 1 0 0 0 0 1.898l.551.183a1 1 0 0 1 .633.633l.183.551a1 1 0 0 0 1.898 0l.184-.551a1 1 0 0 1 .632-.633l.551-.183a1 1 0 0 0 0-1.898l-.551-.184a1 1 0 0 1-.633-.632l-.183-.551Z"/></svg>
+                                            </span>
+                                            <span class="clio-card-action__label">{{ __('Insights') }}</span>
                                         </span>
                                     @endif
-                                    <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-link text-sm ml-auto">{{ __('Central') }}</a>
+
+                                    @if ($ready)
+                                        @can('export', $campaign)
+                                            @include('clio.campaigns.partials.downloads-menu', [
+                                                'campaign' => $campaign,
+                                                'variant' => 'card',
+                                            ])
+                                        @else
+                                            <span class="clio-card-action clio-card-action--download clio-card-action--disabled"
+                                                  title="{{ __('Sem permissão de exportação') }}">
+                                                <span class="clio-card-action__icon" aria-hidden="true">
+                                                    <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z"/><path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z"/></svg>
+                                                </span>
+                                                <span class="clio-card-action__label">{{ __('Exportar') }}</span>
+                                            </span>
+                                        @endcan
+                                    @else
+                                        <span class="clio-card-action clio-card-action--download clio-card-action--disabled"
+                                              title="{{ __('Disponível após analisar a coleta') }}">
+                                            <span class="clio-card-action__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z"/><path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z"/></svg>
+                                            </span>
+                                            <span class="clio-card-action__label">{{ __('Exportar') }}</span>
+                                        </span>
+                                    @endif
+
+                                    <a href="{{ route('clio.campaigns.show', $campaign) }}"
+                                       class="clio-card-action clio-card-action--central"
+                                       title="{{ __('Central da coleta — arquivos e processamento') }}">
+                                        <span class="clio-card-action__icon" aria-hidden="true">
+                                            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Zm0 5.25a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1-.75-.75Z" clip-rule="evenodd"/></svg>
+                                        </span>
+                                        <span class="clio-card-action__label">{{ __('Central') }}</span>
+                                    </a>
                                 </div>
 
                                 @php $files = $campaign->fileProcessingSummary(); @endphp

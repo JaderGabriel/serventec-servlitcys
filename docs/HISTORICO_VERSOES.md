@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`8.0.3`** · tag de deploy **`20260724-Pythia`** · ver [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`8.0.4`** · tag de deploy **`20260724a-Theia`** · ver [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **8.0.3** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **8.0.4** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260724-Pythia` |
+| **Tag de deploy (servidor)** | `20260724a-Theia` |
 | **Data de referência** | **24/07/2026** |
-| **Último marco documentado** | **Clio Pythia** — BI `bi_clio_*`, insights gestores, medidores CLI-IND-01…10 — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) |
+| **Último marco documentado** | **Clio Theia** — painel Insights nativo (Chart.js), UX análise/home — [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `55bccd96` (#**559**) |
+| **Commit de release** | `pending` (#**561**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -48,6 +48,7 @@ timeline
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
     2026-07-09 : 7.0.3 Calliope — leitor documentação modular e publicação tag+GitHub
+    2026-07-24 : 8.0.4 Theia — Clio painel Insights nativo Chart.js, UX análise/home
     2026-07-24 : 8.0.3 Pythia — Clio BI bi_clio_*, insights gestores, medidores IND
     2026-07-23 : 8.0.2 Harmonia — Clio PDF/Excel alinhados, Fund. I/II, lotes Drive
     2026-07-23 : 8.0.1 Euterpe — Clio jornada, NEE, transporte, Excel/PDF, UTF-8
@@ -65,7 +66,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.0.3** | `55bccd96` / `20260724-Pythia` → `main` | **559** | 24/07/2026 | **Produção:** Clio — S7 BI `bi_clio_*`, insights gestores, CLI-IND-01…10, prune, margem distorção — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md). |
+| **▶ 8.0.4** | `pending` / `20260724a-Theia` → `main` | **561** | 24/07/2026 | **Produção:** Clio — painel Insights nativo (Chart.js), UX análise (jornada/transporte/etapas) e botões dos cards — [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md). |
+| 8.0.3 | `55bccd96` / `20260724-Pythia` → `main` | **559** | 24/07/2026 | Clio — S7 BI `bi_clio_*`, insights gestores, CLI-IND-01…10, prune, margem distorção — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md). |
 | 8.0.2 | `4fc99bac` / `20260723b-Harmonia` → `main` | **554** | 23/07/2026 | Clio — PDF/Excel alinhados, Fund. I/II, distorção ordenada, AEE sem NEE, lotes Drive, painel escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md). |
 | 8.0.1 | `af850f7` / `20260723-Euterpe` → `main` | **548** | 23/07/2026 | Clio — jornada, NEE/subnotificação, transporte, Excel, matriz PDF, UTF-8 CSV, filtro Consultoria — [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md). |
 | 8.0.0 | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |

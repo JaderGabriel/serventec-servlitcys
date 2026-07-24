@@ -6,7 +6,7 @@
                     {{ __('Insights / BI') }} — {{ $campaign->municipality_name ?? $campaign->city?->name }}
                 </h2>
                 <p class="mt-1 text-sm text-slate-500">
-                    {{ __('Leitura gerencial da Matrícula inicial · exercício :y', ['y' => $campaign->year]) }}
+                    {{ __('Painel gerencial da Matrícula inicial · exercício :y', ['y' => $campaign->year]) }}
                 </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -44,10 +44,13 @@
             </div>
         @else
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-xs text-slate-500">
-                    {{ __('Actualizado em :d', ['d' => $bi->refreshed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—']) }}
-                    · {{ __('Tabelas bi_clio_* sem PII — ligáveis ao Power BI Desktop') }}
-                </p>
+                <div>
+                    <p class="text-sm font-semibold text-serv-navy dark:text-white">{{ __('Painel gerencial') }}</p>
+                    <p class="text-xs text-slate-500">
+                        {{ __('Actualizado em :d', ['d' => $bi->refreshed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—']) }}
+                        · {{ __('Gráficos nativos a partir de bi_clio_* (sem PII)') }}
+                    </p>
+                </div>
                 @can('analyze', $campaign)
                     <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}">
                         @csrf
@@ -95,6 +98,102 @@
                 </div>
             </div>
 
+            @if (! empty($charts))
+                <section class="clio-bi-dash" aria-labelledby="clio-bi-dash-heading">
+                    <div class="clio-bi-dash__head">
+                        <h3 id="clio-bi-dash-heading" class="clio-section-title text-base">{{ __('Visualizações') }}</h3>
+                        <p class="text-xs text-slate-500">{{ __('Equivalente operacional a um relatório Power BI — no próprio sistema, com exportação PNG.') }}</p>
+                    </div>
+
+                    <div class="clio-bi-dash__grid">
+                        @if (! empty($charts['triade']))
+                            <div class="clio-bi-dash__cell">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['triade']"
+                                    exportFilename="clio-insights-triade"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    chartPanelId="clio-bi-triade"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['matriculas']))
+                            <div class="clio-bi-dash__cell">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['matriculas']"
+                                    exportFilename="clio-insights-matriculas"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    chartPanelId="clio-bi-matriculas"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['etapas']))
+                            <div class="clio-bi-dash__cell clio-bi-dash__cell--wide">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['etapas']"
+                                    exportFilename="clio-insights-etapas"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="false"
+                                    chartPanelId="clio-bi-etapas"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['inclusao']))
+                            <div class="clio-bi-dash__cell">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['inclusao']"
+                                    exportFilename="clio-insights-inclusao"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    chartPanelId="clio-bi-inclusao"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['aee_gap']))
+                            <div class="clio-bi-dash__cell">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['aee_gap']"
+                                    exportFilename="clio-insights-aee-gap"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    chartPanelId="clio-bi-aee-gap"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['qualidade']))
+                            <div class="clio-bi-dash__cell">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['qualidade']"
+                                    exportFilename="clio-insights-qualidade"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="true"
+                                    chartPanelId="clio-bi-qualidade"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                        @if (! empty($charts['escolas']))
+                            <div class="clio-bi-dash__cell clio-bi-dash__cell--wide">
+                                <x-dashboard.chart-panel
+                                    :chart="$charts['escolas']"
+                                    exportFilename="clio-insights-escolas"
+                                    :exportMeta="$chartExportContext"
+                                    :compact="false"
+                                    chartPanelId="clio-bi-escolas"
+                                    panelTone="indigo"
+                                />
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            @endif
+
             <section class="clio-panel overflow-hidden" aria-labelledby="clio-insights-heading">
                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                     <h3 id="clio-insights-heading" class="clio-section-title text-base">{{ __('O que os indicadores mostram') }}</h3>
@@ -120,9 +219,9 @@
             </section>
 
             <div class="clio-note">
-                <p class="clio-note__title">{{ __('Power BI Desktop') }}</p>
+                <p class="clio-note__title">{{ __('BI no sistema') }}</p>
                 <p class="mt-1 text-xs leading-relaxed">
-                    {{ __('Ligue às tabelas bi_clio_campaign, bi_clio_school, bi_clio_enrollment_stage, bi_clio_quality, bi_clio_inclusion e bi_clio_insight (utilizador só-leitura). Documentação em docs/POWERBI.md · secção Clio.') }}
+                    {{ __('Este painel usa Chart.js sobre as tabelas bi_clio_* — não é necessário Power BI Desktop para a leitura gerencial. Ligação externa (Desktop / consultoria multi-município) permanece opcional; ver docs/POWERBI.md · secção Clio.') }}
                 </p>
             </div>
         @endif

@@ -84,4 +84,43 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
             $method->invoke($builder, '', '', 'Anos finais'),
         );
     }
+
+    #[Test]
+    public function segmenta_eja_profissional_especial_e_seriada(): void
+    {
+        $order = new EtapaLabelOrder;
+        $this->assertSame(EtapaLabelOrder::SEGMENT_SERIADA, $order->segment('Ensino Fundamental de 9 anos - 5º Ano'));
+        $this->assertSame(EtapaLabelOrder::SEGMENT_EJA, $order->segment('EJA - Ensino fundamental - anos iniciais'));
+        $this->assertSame(EtapaLabelOrder::SEGMENT_PROFISSIONAL, $order->segment('Educação profissional técnica de nível médio'));
+        $this->assertSame(EtapaLabelOrder::SEGMENT_ESPECIAL, $order->segment('Atendimento Educacional Especializado'));
+        $this->assertSame(EtapaLabelOrder::SEGMENT_COMPLEMENTAR, $order->segment('Atividade complementar'));
+        $this->assertLessThan(
+            $order->segmentOrder(EtapaLabelOrder::SEGMENT_EJA),
+            $order->segmentOrder(EtapaLabelOrder::SEGMENT_SERIADA),
+        );
+    }
+
+    #[Test]
+    public function carga_horaria_usa_valores_exactos_ordenados(): void
+    {
+        $agg = new RelationCsvAggregator;
+        $bars = $agg->enrichCargaBars([
+            ['label' => '40 h/semana', 'count' => 2, 'pct' => 20],
+            ['label' => '20 h/semana', 'count' => 6, 'pct' => 60],
+            ['label' => 'Não informado', 'count' => 2, 'pct' => 20],
+        ]);
+        $this->assertSame('20 h', $bars[0]['short']);
+        $this->assertSame('40 h', $bars[1]['short']);
+        $this->assertNull($bars[2]['hours']);
+    }
+
+    #[Test]
+    public function turno_abreviado_com_dias_e_tom(): void
+    {
+        $agg = new RelationCsvAggregator;
+        $meta = $agg->turnoDisplayMeta('Manhã — segunda a sexta');
+        $this->assertSame('Manhã', $meta['label']);
+        $this->assertSame('amber', $meta['tone']);
+        $this->assertSame(['seg', 'ter', 'qua', 'qui', 'sex'], $meta['days']);
+    }
 }

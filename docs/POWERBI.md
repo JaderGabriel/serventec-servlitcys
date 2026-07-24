@@ -1,12 +1,12 @@
 # Power BI — estudo de integração no servlitcys
 
-**Versão do produto:** 8.0.3 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.0.4 · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Clio:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Arquitetura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
 
 ## 1. Resumo executivo
 
-O **servlitcys** implementa **BI embutido** em Laravel (`/dashboard/analytics`) e, no módulo **Clio**, o data mart **`bi_clio_*`** (S7 / CEN-16) com página de insights gestores e ligação a Power BI Desktop. **Power BI Embedded (Azure)** continua opcional e fora do MVP.
+O **servlitcys** implementa **BI embutido** em Laravel (`/dashboard/analytics`) e, no módulo **Clio**, o data mart **`bi_clio_*`** (S7 / CEN-16) com **painel gerencial nativo** em `/insights` (Chart.js) e ligação opcional a Power BI Desktop. **Power BI Embedded (Azure)** continua fora do MVP.
 
 Este documento descreve:
 
@@ -627,11 +627,11 @@ php artisan bi:refresh-clio-campaigns --all --year=2026
 
 Também corre no fim de `CampaignAnalyzer::analyze` e após lotes Drive completos (job de análise).
 
-**UI:** `/clio/coletas/{uuid}/insights` · botão **Insights / BI** na home Clio.
+**UI:** `/clio/coletas/{uuid}/insights` — **painel gerencial nativo** (KPIs + Chart.js via `chart-panel` sobre `bi_clio_*`) · botão **Insights** na home Clio. Power BI Desktop é **opcional** (consultoria multi-município / modelos próprios).
 
 **LGPD:** zero PII nas tabelas `bi_clio_*` (sem nome/CPF/ID de aluno).
 
-**Power BI Desktop (exemplo)**
+**Power BI Desktop (opcional)**
 
 ```
 SELECT c.municipality_name, c.year, c.triade_pct, c.distortion_pct, c.nee_people

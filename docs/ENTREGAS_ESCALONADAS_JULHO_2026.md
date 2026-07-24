@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **8.0.3** · tag **`20260724-Pythia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **8.0.4** · tag **`20260724a-Theia`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -18,6 +18,7 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 6 | **8.0.1** | `20260723-Euterpe` | 23/07 | [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md) | Clio — jornada, NEE, transporte, Excel/PDF, UTF-8, cadastro Consultoria |
 | 7 | **8.0.2** | `20260723b-Harmonia` | 23/07 | [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md) | Clio — PDF/Excel alinhados, Fund. I/II, lotes Drive, painel escola |
 | 8 | **8.0.3** | `20260724-Pythia` | 24/07 | [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) | Clio — S7 BI, insights gestores, medidores CLI-IND-01…10 |
+| 9 | **8.0.4** | `20260724a-Theia` | 24/07 | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) | Clio — painel Insights nativo Chart.js; UX análise/home |
 
 ---
 

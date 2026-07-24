@@ -81,6 +81,9 @@
                 'emerald' => 'clio-chip clio-chip--ready',
                 'amber' => 'clio-chip clio-chip--warn',
                 'rose' => 'clio-chip clio-chip--error',
+                'sky' => 'clio-chip clio-chip--sky',
+                'violet' => 'clio-chip clio-chip--violet',
+                'indigo' => 'clio-chip clio-chip--indigo',
                 default => 'clio-chip clio-chip--neutral',
             };
         };
@@ -137,7 +140,7 @@
                 <section class="clio-panel clio-panel--pad" aria-labelledby="clio-legend-heading">
                     <h3 id="clio-legend-heading" class="clio-section-title text-base">{{ __('Como ler esta análise') }}</h3>
                     <p class="clio-section-lead">
-                        {{ __('Os contadores acima separam o que exige correção (erros), o que merece revisão (atenção) e o que só informa.') }}
+                        {{ __('Ordem sugerida de leitura: cobertura → arquivo geral → panorama → conferências por etapa → perfil demográfico/inclusão → transporte → jornada (turnos/CH) → medidores → apontamentos.') }}
                     </p>
                     <ul class="clio-legend-grid mt-3">
                         @foreach ($dashboard['severity_legend'] ?? [] as $item)
@@ -359,41 +362,91 @@
                                 </div>
                             @endforeach
                         </div>
-                        @if (! empty($xchk['etapa_rows']))
+                        @if (! empty($xchk['etapa_groups']) || ! empty($xchk['etapa_rows']))
                             <div class="clio-panel overflow-hidden">
                                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                                     <h4 class="clio-section-title">{{ __('Alunos e turmas por ano / etapa') }}</h4>
-                                    <p class="text-xs text-slate-500">{{ __('Relação de alunos × Relação de turmas (mesma Etapa de ensino). O arquivo geral não entra nesta tabela por ano.') }}</p>
+                                    <p class="text-xs text-slate-500">{{ __('Relação de alunos × Relação de turmas (mesma Etapa de ensino). Primeiro as etapas com idade/série definida; depois EJA, profissional, especial e afins com dados.') }}</p>
                                 </div>
-                                <div class="clio-table-wrap">
-                                    <table class="clio-table">
-                                        <thead>
-                                            <tr>
-                                                <th class="px-4 py-2 font-medium">{{ __('Etapa / ano') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Alunos') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
-                                                <th class="px-4 py-2 font-medium">{{ __('Conferência') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @foreach ($xchk['etapa_rows'] as $row)
-                                                <tr>
-                                                    <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
-                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['alunos'] }}</td>
-                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['turmas'] }}</td>
-                                                    <td class="px-4 py-2 text-xs">
-                                                        @if (($row['flag'] ?? null) === 'alunos_sem_turma')
-                                                            <span class="text-amber-700 dark:text-amber-300">{{ __('Alunos sem turma nesta etapa') }}</span>
-                                                        @elseif (($row['flag'] ?? null) === 'turma_sem_aluno')
-                                                            <span class="text-slate-500">{{ __('Turma sem aluno nesta etapa') }}</span>
-                                                        @else
-                                                            <span class="text-emerald-700 dark:text-emerald-300">{{ __('Coerente') }}</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                                <div class="space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
+                                    @forelse ($xchk['etapa_groups'] ?? [] as $group)
+                                        <div>
+                                            <div class="flex flex-wrap items-center gap-2 bg-slate-50/80 px-4 py-2.5 dark:bg-slate-900/40">
+                                                <span class="{{ $chipTone($group['tone'] ?? 'slate') }}">{{ $group['title'] }}</span>
+                                                <span class="text-[11px] tabular-nums text-slate-500">
+                                                    {{ __(':a alunos · :t turmas', ['a' => number_format((int) ($group['alunos'] ?? 0)), 't' => number_format((int) ($group['turmas'] ?? 0))]) }}
+                                                </span>
+                                                @if (! empty($group['ok']))
+                                                    <span class="clio-chip clio-chip--ready text-[10px]">{{ __('Coerente') }}</span>
+                                                @else
+                                                    <span class="clio-chip clio-chip--warn text-[10px]">{{ __(':n apontamento(s)', ['n' => (int) ($group['issues'] ?? 0)]) }}</span>
+                                                @endif
+                                                <p class="w-full text-[11px] text-slate-500 leading-snug">{{ $group['hint'] ?? '' }}</p>
+                                            </div>
+                                            <div class="clio-table-wrap">
+                                                <table class="clio-table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="px-4 py-2 font-medium">{{ __('Etapa / ano') }}</th>
+                                                            <th class="px-4 py-2 font-medium text-right">{{ __('Alunos') }}</th>
+                                                            <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
+                                                            <th class="px-4 py-2 font-medium">{{ __('Conferência') }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                        @foreach ($group['rows'] as $row)
+                                                            <tr>
+                                                                <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
+                                                                <td class="px-4 py-2 text-right tabular-nums">{{ $row['alunos'] }}</td>
+                                                                <td class="px-4 py-2 text-right tabular-nums">{{ $row['turmas'] }}</td>
+                                                                <td class="px-4 py-2 text-xs">
+                                                                    @if (($row['flag'] ?? null) === 'alunos_sem_turma')
+                                                                        <span class="text-amber-700 dark:text-amber-300">{{ __('Alunos sem turma nesta etapa') }}</span>
+                                                                    @elseif (($row['flag'] ?? null) === 'turma_sem_aluno')
+                                                                        <span class="text-slate-500">{{ __('Turma sem aluno nesta etapa') }}</span>
+                                                                    @else
+                                                                        <span class="text-emerald-700 dark:text-emerald-300">{{ __('Coerente') }}</span>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        {{-- fallback legado sem grupos --}}
+                                        <div class="clio-table-wrap">
+                                            <table class="clio-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="px-4 py-2 font-medium">{{ __('Etapa / ano') }}</th>
+                                                        <th class="px-4 py-2 font-medium text-right">{{ __('Alunos') }}</th>
+                                                        <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
+                                                        <th class="px-4 py-2 font-medium">{{ __('Conferência') }}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                                    @foreach ($xchk['etapa_rows'] as $row)
+                                                        <tr>
+                                                            <td class="px-4 py-2 text-sm">{{ $row['etapa'] }}</td>
+                                                            <td class="px-4 py-2 text-right tabular-nums">{{ $row['alunos'] }}</td>
+                                                            <td class="px-4 py-2 text-right tabular-nums">{{ $row['turmas'] }}</td>
+                                                            <td class="px-4 py-2 text-xs">
+                                                                @if (($row['flag'] ?? null) === 'alunos_sem_turma')
+                                                                    <span class="text-amber-700 dark:text-amber-300">{{ __('Alunos sem turma nesta etapa') }}</span>
+                                                                @elseif (($row['flag'] ?? null) === 'turma_sem_aluno')
+                                                                    <span class="text-slate-500">{{ __('Turma sem aluno nesta etapa') }}</span>
+                                                                @else
+                                                                    <span class="text-emerald-700 dark:text-emerald-300">{{ __('Coerente') }}</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @endforelse
                                 </div>
                             </div>
                         @endif
@@ -616,449 +669,31 @@
                                     </div>
                                 </div>
                             @endif
-                            @if (
-                                ! empty($profile['by_transporte'])
-                                || ! empty($profile['by_poder_publico_transporte'])
-                                || ! empty($profile['by_veiculo_transporte'])
-                                || ($profile['transporte_flagged'] ?? 0) > 0
-                            )
-                                <div class="clio-panel clio-panel--pad space-y-3 sm:col-span-2 lg:col-span-3">
-                                    <h4 class="clio-section-title text-base">{{ __('Transporte escolar') }}</h4>
-                                    @if (! empty($profile['transporte_summary']))
-                                        <p class="text-xs text-slate-500">{{ $profile['transporte_summary'] }}</p>
-                                    @endif
-                                    <div class="grid gap-4 sm:grid-cols-3">
-                                        @if (! empty($profile['by_transporte']))
-                                            <div class="space-y-3">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Uso') }}</p>
-                                                @foreach ($profile['by_transporte'] as $bar)
-                                                    <div class="clio-dist__row">
-                                                        <div class="clio-dist__head">
-                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                                        </div>
-                                                        <div class="clio-dist__track">
-                                                            <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
+                            @if (! empty($profile['has_transporte']))
+                                <div class="clio-note sm:col-span-2 lg:col-span-3">
+                                    <p class="clio-note__title">{{ __('Transporte escolar') }}</p>
+                                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                                        {{ __('Os indicadores de uso, poder público, veículo e rural/urbano estão reunidos na secção «Transporte escolar», a seguir — para evitar duplicar o mesmo quadro.') }}
+                                        @if (($profile['transporte_flagged'] ?? 0) > 0)
+                                            {{ __('Nesta coleta: :n aluno(s) usam transporte.', ['n' => number_format((int) $profile['transporte_flagged'])]) }}
                                         @endif
-                                        @if (! empty($profile['by_poder_publico_transporte']))
-                                            <div class="space-y-3">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Poder público') }}</p>
-                                                @foreach ($profile['by_poder_publico_transporte'] as $bar)
-                                                    <div class="clio-dist__row">
-                                                        <div class="clio-dist__head">
-                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                                        </div>
-                                                        <div class="clio-dist__track">
-                                                            <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                        @if (! empty($profile['by_veiculo_transporte']))
-                                            <div class="space-y-3">
-                                                <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{{ __('Tipo de veículo') }}</p>
-                                                @foreach ($profile['by_veiculo_transporte'] as $bar)
-                                                    <div class="clio-dist__row">
-                                                        <div class="clio-dist__head">
-                                                            <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                            <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                                        </div>
-                                                        <div class="clio-dist__track">
-                                                            <div class="clio-dist__fill clio-dist__fill--amber" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                        </div>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
+                                    </p>
                                 </div>
                             @endif
                         </div>
                     </section>
+                @endif
+
+                {{-- Transporte escolar (secção única, antes da jornada) --}}
+                @php $transporte = $dashboard['transporte'] ?? []; @endphp
+                @if (! empty($transporte['available']))
+                    @include('clio.campaigns.partials.analysis-transporte', ['transporte' => $transporte, 'tileTone' => $tileTone, 'toneClass' => $toneClass, 'chipTone' => $chipTone])
                 @endif
 
                 {{-- Tempo de escolarização / turnos / CH / padrões de jornada --}}
                 @php $jornada = $dashboard['jornada'] ?? []; @endphp
                 @if (! empty($jornada['available']))
-                    <section aria-labelledby="clio-jornada-heading" class="space-y-4">
-                        <div>
-                            <h3 id="clio-jornada-heading" class="clio-section-title">{{ __('Tempo de escolarização') }}</h3>
-                            <p class="mt-1 text-sm text-slate-500 max-w-3xl">
-                                {{ $jornada['summary'] ?? __('Turnos e carga horária das turmas, com destaque para padrões de jornada do aluno (sem dados pessoais).') }}
-                            </p>
-                        </div>
-
-                        <div class="clio-kpi-grid clio-kpi-grid--4">
-                            <div class="clio-kpi-tile {{ $tileTone(($jornada['fund_aee_contraturno'] ?? 0) > 0 ? 'sky' : 'slate') }}">
-                                <p class="clio-kpi-tile__label">{{ __('Fund. + AEE (contraturno)') }}</p>
-                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass(($jornada['fund_aee_contraturno'] ?? 0) > 0 ? 'sky' : 'slate') }}">
-                                    {{ number_format((int) ($jornada['fund_aee_contraturno'] ?? 0)) }}
-                                </p>
-                                <p class="clio-kpi-tile__hint">{{ __('Duas matrículas: regular + AEE') }}</p>
-                            </div>
-                            <div class="clio-kpi-tile {{ $tileTone(($jornada['curricular_ac'] ?? 0) > 0 ? 'amber' : 'slate') }}">
-                                <p class="clio-kpi-tile__label">{{ __('Regular + atividade complementar') }}</p>
-                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass(($jornada['curricular_ac'] ?? 0) > 0 ? 'amber' : 'slate') }}">
-                                    {{ number_format((int) ($jornada['curricular_ac'] ?? 0)) }}
-                                </p>
-                                <p class="clio-kpi-tile__hint">{{ __('Não é AEE — jornada diferente') }}</p>
-                            </div>
-                            <div class="clio-kpi-tile {{ $tileTone(($jornada['infantil_turma_estendida'] ?? 0) > 0 ? 'emerald' : 'slate') }}">
-                                <p class="clio-kpi-tile__label">{{ __('Infantil · turma estendida') }}</p>
-                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass(($jornada['infantil_turma_estendida'] ?? 0) > 0 ? 'emerald' : 'slate') }}">
-                                    {{ number_format((int) ($jornada['infantil_turma_estendida'] ?? 0)) }}
-                                </p>
-                                <p class="clio-kpi-tile__hint">{{ __('Uma matrícula · turno/CH estendido') }}</p>
-                            </div>
-                            <div class="clio-kpi-tile {{ $tileTone('slate') }}">
-                                <p class="clio-kpi-tile__label">{{ __('Mais de uma matrícula') }}</p>
-                                <p class="clio-kpi-tile__value clio-kpi-tile__value--sm">
-                                    {{ number_format((int) ($jornada['multi_enrollment'] ?? 0)) }}
-                                </p>
-                                <p class="clio-kpi-tile__hint">{{ __('Pessoas com ≥2 turmas na escola') }}</p>
-                            </div>
-                        </div>
-
-                        <div class="clio-note">
-                            <p class="clio-note__title">{{ __('Como ler estes números') }}</p>
-                            <ul class="clio-note__list">
-                                <li>{{ $jornada['note_fund_aee'] ?? '' }}</li>
-                                <li>{{ $jornada['note_infantil'] ?? '' }}</li>
-                                @if (empty($jornada['has_turno_columns']) && empty($jornada['has_ch_columns']))
-                                    <li>{{ __('Turno e carga horária não vieram neste export — os padrões AEE/AC ainda são detectados pelo Tipo de turma.') }}</li>
-                                @elseif (empty($jornada['has_turno_columns']))
-                                    <li>{{ __('Coluna Turno ausente; faixas de CH e padrões de matrícula seguem disponíveis.') }}</li>
-                                @elseif (empty($jornada['has_ch_columns']))
-                                    <li>{{ __('Coluna de carga horária ausente; turnos e padrões de matrícula seguem disponíveis.') }}</li>
-                                @endif
-                            </ul>
-                        </div>
-
-                        <div class="grid gap-4 lg:grid-cols-2">
-                            @if (! empty($jornada['by_turno']))
-                                <div class="clio-panel clio-panel--pad space-y-4">
-                                    <div>
-                                        <h4 class="clio-section-title text-base">{{ __('Turmas por turno') }}</h4>
-                                        <p class="mt-1 text-xs text-slate-500">{{ __('Campo Turno / horário de funcionamento da Relação de turmas.') }}</p>
-                                    </div>
-                                    @foreach ($jornada['by_turno'] as $bar)
-                                        <div>
-                                            <div class="flex items-baseline justify-between gap-2 text-sm">
-                                                <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
-                                                <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                            </div>
-                                            <div class="clio-dist__track">
-                                                <div class="clio-dist__fill clio-dist__fill--sky" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                            @if (! empty($jornada['by_ch_band']))
-                                <div class="clio-panel clio-panel--pad space-y-4">
-                                    <div>
-                                        <h4 class="clio-section-title text-base">{{ __('Turmas por carga horária') }}</h4>
-                                        <p class="mt-1 text-xs text-slate-500">{{ __('Faixas semanais; 35h+ sugere funcionamento em tempo integral na própria turma.') }}</p>
-                                    </div>
-                                    @foreach ($jornada['by_ch_band'] as $bar)
-                                        <div>
-                                            <div class="flex items-baseline justify-between gap-2 text-sm">
-                                                <span class="text-slate-700 dark:text-slate-200 truncate" title="{{ $bar['label'] }}">{{ $bar['label'] }}</span>
-                                                <span class="tabular-nums text-xs text-slate-500 shrink-0">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                            </div>
-                                            <div class="clio-dist__track">
-                                                <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="clio-panel overflow-hidden">
-                            <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                <h4 class="clio-section-title">{{ __('Por escola — em atividade') }}</h4>
-                                <p class="text-xs text-slate-500">{{ __('Contagens de pessoas (Identificação única) com os padrões destacados.') }}</p>
-                            </div>
-                            <div class="clio-table-wrap">
-                                <table class="clio-table">
-                                    <thead>
-                                        <tr>
-                                            <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Fund.+AEE') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Reg.+AC') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Inf. estendido') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('≥2 matr.') }}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        @forelse ($jornada['schools_active'] ?? [] as $row)
-                                            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 {{ ! empty($row['highlight']) ? 'bg-sky-50/50 dark:bg-sky-950/20' : '' }}">
-                                                <td class="px-4 py-3">
-                                                    <div class="font-medium text-serv-navy dark:text-white">{{ $row['name'] }}</div>
-                                                    <div class="font-mono text-[11px] text-slate-500">INEP {{ $row['inep'] }}</div>
-                                                </td>
-                                                <td class="px-4 py-3 text-right tabular-nums">{{ $row['turmas'] }}</td>
-                                                <td class="px-4 py-3 text-right tabular-nums font-medium {{ ($row['fund_aee_contraturno'] ?? 0) > 0 ? 'text-sky-700 dark:text-sky-300' : '' }}">{{ $row['fund_aee_contraturno'] }}</td>
-                                                <td class="px-4 py-3 text-right tabular-nums {{ ($row['curricular_ac'] ?? 0) > 0 ? 'text-amber-700 dark:text-amber-300' : '' }}">{{ $row['curricular_ac'] }}</td>
-                                                <td class="px-4 py-3 text-right tabular-nums {{ ($row['infantil_turma_estendida'] ?? 0) > 0 ? 'text-emerald-700 dark:text-emerald-300' : '' }}">{{ $row['infantil_turma_estendida'] }}</td>
-                                                <td class="px-4 py-3 text-right tabular-nums">{{ $row['multi_enrollment'] }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="6" class="px-4 py-8 text-center text-slate-500">{{ __('Sem dados de jornada nas escolas ativas.') }}</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        @if (! empty($jornada['schools_other']))
-                            <div class="clio-panel overflow-hidden">
-                                <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                    <h4 class="clio-section-title">{{ __('Por escola — demais situações') }}</h4>
-                                    <p class="text-xs text-slate-500">{{ __('Mesmos indicadores para unidades fora de atividade.') }}</p>
-                                </div>
-                                <div class="clio-table-wrap">
-                                    <table class="clio-table">
-                                        <thead>
-                                            <tr>
-                                                <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Turmas') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Fund.+AEE') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Reg.+AC') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Inf. estendido') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('≥2 matr.') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @foreach ($jornada['schools_other'] as $row)
-                                                <tr>
-                                                    <td class="px-4 py-3">
-                                                        <div class="font-medium text-serv-navy dark:text-white">{{ $row['name'] }}</div>
-                                                        <div class="font-mono text-[11px] text-slate-500">INEP {{ $row['inep'] }} · {{ $row['functioning'] }}</div>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-right tabular-nums">{{ $row['turmas'] }}</td>
-                                                    <td class="px-4 py-3 text-right tabular-nums">{{ $row['fund_aee_contraturno'] }}</td>
-                                                    <td class="px-4 py-3 text-right tabular-nums">{{ $row['curricular_ac'] }}</td>
-                                                    <td class="px-4 py-3 text-right tabular-nums">{{ $row['infantil_turma_estendida'] }}</td>
-                                                    <td class="px-4 py-3 text-right tabular-nums">{{ $row['multi_enrollment'] }}</td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        @endif
-                    </section>
-                @endif
-
-                {{-- Transporte escolar: uso, rural/urbano, tipo — ativas × demais --}}
-                @php $transporte = $dashboard['transporte'] ?? []; @endphp
-                @if (! empty($transporte['available']))
-                    <section aria-labelledby="clio-tra-heading" class="space-y-4">
-                        <div>
-                            <h3 id="clio-tra-heading" class="clio-section-title">{{ __('Transporte escolar') }}</h3>
-                            <p class="mt-1 text-sm text-slate-500 max-w-3xl">
-                                {{ $transporte['summary'] ?? __('Alunos que usam transporte, localização da escola (rural/urbano) e tipo de veículo.') }}
-                            </p>
-                        </div>
-
-                        @if (empty($transporte['has_transporte_columns']))
-                            <div class="clio-note">
-                                <p class="clio-note__title">{{ __('Colunas de transporte não detectadas') }}</p>
-                                <p class="text-xs text-slate-600 dark:text-slate-400">{{ __('Reexporte a Relação de alunos com uso de transporte, poder público e tipo de veículo, se o portal os oferecer.') }}</p>
-                            </div>
-                        @else
-                            <div class="clio-kpi-grid clio-kpi-grid--4">
-                                <div class="clio-kpi-tile {{ $tileTone(($transporte['flagged'] ?? 0) > 0 ? 'sky' : 'slate') }}">
-                                    <p class="clio-kpi-tile__label">{{ __('Usam transporte (rede)') }}</p>
-                                    <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass(($transporte['flagged'] ?? 0) > 0 ? 'sky' : 'slate') }}">
-                                        {{ number_format((int) ($transporte['flagged'] ?? 0)) }}
-                                    </p>
-                                    <p class="clio-kpi-tile__hint">
-                                        {{ $transporte['pct'] === null ? '—' : number_format((float) $transporte['pct'], 1, ',', '.').'% · '.__(':s matrículas', ['s' => $transporte['scanned'] ?? 0]) }}
-                                    </p>
-                                </div>
-                                <div class="clio-kpi-tile {{ $tileTone(($transporte['active']['flagged'] ?? 0) > 0 ? 'emerald' : 'slate') }}">
-                                    <p class="clio-kpi-tile__label">{{ __('Usam · escolas ativas') }}</p>
-                                    <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass(($transporte['active']['flagged'] ?? 0) > 0 ? 'emerald' : 'slate') }}">
-                                        {{ number_format((int) ($transporte['active']['flagged'] ?? 0)) }}
-                                    </p>
-                                    <p class="clio-kpi-tile__hint">
-                                        {{ ($transporte['active']['pct'] ?? null) === null ? '—' : number_format((float) $transporte['active']['pct'], 1, ',', '.').'%' }}
-                                    </p>
-                                </div>
-                                <div class="clio-kpi-tile {{ $tileTone('amber') }}">
-                                    <p class="clio-kpi-tile__label">{{ __('Usam · demais situações') }}</p>
-                                    <p class="clio-kpi-tile__value clio-kpi-tile__value--sm {{ $toneClass('amber') }}">
-                                        {{ number_format((int) ($transporte['other']['flagged'] ?? 0)) }}
-                                    </p>
-                                    <p class="clio-kpi-tile__hint">{{ __('Extinta / paralisada / reforma') }}</p>
-                                </div>
-                                <div class="clio-kpi-tile {{ $tileTone('slate') }}">
-                                    <p class="clio-kpi-tile__label">{{ __('Rural × urbana (quem usa)') }}</p>
-                                    <p class="clio-kpi-tile__value clio-kpi-tile__value--sm text-base leading-snug">
-                                        @php
-                                            $locBars = $transporte['active']['by_location_users'] ?? $transporte['by_location_users'] ?? [];
-                                            $locShort = collect($locBars)->take(2)->map(fn ($b) => $b['label'].' '.$b['count'])->implode(' · ');
-                                        @endphp
-                                        {{ $locShort !== '' ? $locShort : '—' }}
-                                    </p>
-                                    <p class="clio-kpi-tile__hint">{{ __('Só escolas ativas no destaque') }}</p>
-                                </div>
-                            </div>
-
-                            <p class="text-xs text-slate-500">{{ $transporte['note_location'] ?? '' }}</p>
-
-                            <div class="grid gap-4 lg:grid-cols-3">
-                                @if (! empty($transporte['by_transporte']))
-                                    <div class="clio-panel clio-panel--pad space-y-3">
-                                        <h4 class="clio-section-title text-base">{{ __('Uso de transporte') }}</h4>
-                                        @foreach ($transporte['by_transporte'] as $bar)
-                                            <div class="clio-dist__row">
-                                                <div class="clio-dist__head">
-                                                    <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                    <span class="clio-dist__count">{{ $bar['count'] }} · {{ number_format((float) $bar['pct'], 0) }}%</span>
-                                                </div>
-                                                <div class="clio-dist__track">
-                                                    <div class="clio-dist__fill {{ ($bar['label'] ?? '') === __('Sim') ? 'clio-dist__fill--sky' : 'clio-dist__fill--emerald' }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                                @if (! empty($transporte['by_location_users']))
-                                    <div class="clio-panel clio-panel--pad space-y-3">
-                                        <h4 class="clio-section-title text-base">{{ __('Quem usa · rural / urbana') }}</h4>
-                                        @foreach ($transporte['by_location_users'] as $bar)
-                                            <div class="clio-dist__row">
-                                                <div class="clio-dist__head">
-                                                    <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                    <span class="clio-dist__count">{{ $bar['count'] }}</span>
-                                                </div>
-                                                <div class="clio-dist__track">
-                                                    <div class="clio-dist__fill {{ preg_match('/rural/iu', $bar['label']) ? 'clio-dist__fill--amber' : 'clio-dist__fill--sky' }}" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                                @if (! empty($transporte['by_veiculo']))
-                                    <div class="clio-panel clio-panel--pad space-y-3">
-                                        <h4 class="clio-section-title text-base">{{ __('Tipo de veículo') }}</h4>
-                                        @foreach ($transporte['by_veiculo'] as $bar)
-                                            <div class="clio-dist__row">
-                                                <div class="clio-dist__head">
-                                                    <span class="clio-dist__label">{{ $bar['label'] }}</span>
-                                                    <span class="clio-dist__count">{{ $bar['count'] }}</span>
-                                                </div>
-                                                <div class="clio-dist__track">
-                                                    <div class="clio-dist__fill clio-dist__fill--emerald" style="width: {{ min(100, max(0, (float) $bar['pct'])) }}%"></div>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-
-                            <div class="clio-panel overflow-hidden">
-                                <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                    <h4 class="clio-section-title">{{ __('Por escola — em atividade') }}</h4>
-                                    <p class="text-xs text-slate-500">{{ __('Destaque para quem usa transporte; rural em âmbar.') }}</p>
-                                </div>
-                                <div class="clio-table-wrap">
-                                    <table class="clio-table">
-                                        <thead>
-                                            <tr>
-                                                <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
-                                                <th class="px-4 py-2 font-medium">{{ __('Localização') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Usam') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('%') }}</th>
-                                                <th class="px-4 py-2 font-medium">{{ __('Tipos de veículo') }}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                            @forelse ($transporte['schools_active'] ?? [] as $row)
-                                                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 {{ ! empty($row['highlight_rural']) ? 'bg-amber-50/60 dark:bg-amber-950/20' : (! empty($row['highlight']) ? 'bg-sky-50/50 dark:bg-sky-950/20' : '') }}">
-                                                    <td class="px-4 py-3">
-                                                        <div class="font-medium text-serv-navy dark:text-white">{{ $row['name'] }}</div>
-                                                        <div class="font-mono text-[11px] text-slate-500">INEP {{ $row['inep'] }}</div>
-                                                    </td>
-                                                    <td class="px-4 py-3">
-                                                        <span class="{{ ! empty($row['highlight_rural']) ? 'clio-chip clio-chip--warn' : 'clio-chip clio-chip--neutral' }}">{{ $row['location'] }}</span>
-                                                    </td>
-                                                    <td class="px-4 py-3 text-right tabular-nums font-medium {{ ($row['flagged'] ?? 0) > 0 ? 'text-sky-700 dark:text-sky-300' : '' }}">{{ $row['flagged'] }}</td>
-                                                    <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ number_format((float) ($row['pct'] ?? 0), 1, ',', '.') }}%</td>
-                                                    <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                                                        @forelse ($row['by_veiculo'] ?? [] as $v)
-                                                            <span class="mr-2">{{ $v['label'] }} ({{ $v['count'] }})</span>
-                                                        @empty
-                                                            —
-                                                        @endforelse
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="5" class="px-4 py-8 text-center text-slate-500">{{ __('Sem dados de transporte nas escolas ativas.') }}</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            @if (! empty($transporte['schools_other']))
-                                <div class="clio-panel overflow-hidden">
-                                    <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
-                                        <h4 class="clio-section-title">{{ __('Por escola — demais situações') }}</h4>
-                                        <p class="text-xs text-slate-500">{{ __('Referência cadastral; fora do escopo operacional da matrícula inicial.') }}</p>
-                                    </div>
-                                    <div class="clio-table-wrap">
-                                        <table class="clio-table">
-                                            <thead>
-                                                <tr>
-                                                    <th class="px-4 py-2 font-medium">{{ __('Escola') }}</th>
-                                                    <th class="px-4 py-2 font-medium">{{ __('Localização') }}</th>
-                                                    <th class="px-4 py-2 font-medium text-right">{{ __('Usam') }}</th>
-                                                    <th class="px-4 py-2 font-medium text-right">{{ __('%') }}</th>
-                                                    <th class="px-4 py-2 font-medium">{{ __('Tipos de veículo') }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
-                                                @foreach ($transporte['schools_other'] as $row)
-                                                    <tr>
-                                                        <td class="px-4 py-3">
-                                                            <div class="font-medium text-serv-navy dark:text-white">{{ $row['name'] }}</div>
-                                                            <div class="font-mono text-[11px] text-slate-500">INEP {{ $row['inep'] }} · {{ $row['functioning'] }}</div>
-                                                        </td>
-                                                        <td class="px-4 py-3">{{ $row['location'] }}</td>
-                                                        <td class="px-4 py-3 text-right tabular-nums">{{ $row['flagged'] }}</td>
-                                                        <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ number_format((float) ($row['pct'] ?? 0), 1, ',', '.') }}%</td>
-                                                        <td class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                                                            @forelse ($row['by_veiculo'] ?? [] as $v)
-                                                                <span class="mr-2">{{ $v['label'] }} ({{ $v['count'] }})</span>
-                                                            @empty
-                                                                —
-                                                            @endforelse
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            @endif
-                        @endif
-                    </section>
+                    @include('clio.campaigns.partials.analysis-jornada', ['jornada' => $jornada, 'tileTone' => $tileTone, 'toneClass' => $toneClass])
                 @endif
 
                 {{-- Medidores 1ª etapa: distorção, densidade, docentes --}}

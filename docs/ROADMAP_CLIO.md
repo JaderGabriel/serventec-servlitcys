@@ -1,6 +1,6 @@
 # Roadmap Clio — status, indicadores e melhorias
 
-**Versão do produto:** 8.0.3 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Pythia
+**Versão do produto:** 8.0.4 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Theia
 
 > **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
@@ -125,7 +125,7 @@ Indicadores que o Clio **já calcula e expõe** de forma estável (UI, inferênc
 |-------|---------------------|-----|
 | **Excel / CSV** | Contadores, INF-*, escolas ativas × demais, o que corrigir | Sem PII no CSV |
 | **PDF** | Mesmos + distorção por etapa (+ amostra), NEE, matriz, nome/CPF | Uso interno |
-| **Power BI (`bi_clio_*`)** | — | **Ainda não** (S7) |
+| **Power BI / painel nativo (`bi_clio_*`)** | KPIs, etapas, inclusão, qualidade | Sem PII — UI `/insights` |
 
 ---
 
@@ -157,7 +157,7 @@ Itens que **mudam números, denominadores ou interpretação**. Prioridade relat
 
 | ID | Item | Impacto | Estado |
 |----|------|---------|--------|
-| **CEN-16** | Tabelas `bi_clio_*` + insights gestores | Indicadores consolidados (Power BI Desktop + UI) | **Feito** |
+| **CEN-16** | Tabelas `bi_clio_*` + painel `/insights` nativo | Indicadores consolidados (UI Chart.js; Desktop opcional) | **Feito** |
 | — | `bi:refresh-clio-campaigns` | Série temporal por exercício / município | **Feito** |
 | — | Dataset documentado em [POWERBI.md](POWERBI.md) | Consumo consultoria | **Feito** |
 
