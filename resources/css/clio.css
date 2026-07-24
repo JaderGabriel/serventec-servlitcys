@@ -423,7 +423,7 @@
 }
 
 .clio-report-card:has([aria-expanded="true"]) {
-    z-index: 30;
+    z-index: 40;
 }
 
 .clio-report-card__rail {
@@ -572,11 +572,11 @@
 }
 
 .clio-report-card__footer {
-    @apply mt-auto grid grid-cols-4 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800;
+    @apply relative z-[1] mt-auto grid grid-cols-4 gap-2 border-t border-slate-100 pt-3 dark:border-slate-800;
 }
 
 .clio-card-action-wrap {
-    @apply min-w-0;
+    @apply relative z-[2] min-w-0;
 }
 
 .clio-card-action-wrap > div:first-child {

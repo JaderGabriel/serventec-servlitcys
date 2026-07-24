@@ -1,11 +1,22 @@
-@props(['align' => 'right', 'width' => '48', 'contentClasses' => 'py-1 bg-white dark:bg-gray-700'])
+@props([
+    'align' => 'right',
+    'width' => '48',
+    'contentClasses' => 'py-1 bg-white dark:bg-gray-700',
+    'placement' => 'bottom',
+])
 
 @php
-$alignmentClasses = match ($align) {
-    'left' => 'ltr:origin-top-left rtl:origin-top-right start-0',
-    'top' => 'origin-top',
+$placement = in_array($placement, ['top', 'bottom'], true) ? $placement : 'bottom';
+
+$alignmentClasses = match (true) {
+    $placement === 'top' && $align === 'left' => 'ltr:origin-bottom-left rtl:origin-bottom-right start-0',
+    $placement === 'top' => 'ltr:origin-bottom-right rtl:origin-bottom-left end-0',
+    $align === 'left' => 'ltr:origin-top-left rtl:origin-top-right start-0',
+    $align === 'top' => 'origin-top',
     default => 'ltr:origin-top-right rtl:origin-top-left end-0',
 };
+
+$placementClasses = $placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2';
 
 $width = match ($width) {
     '48' => 'w-48',
@@ -27,7 +38,7 @@ $width = match ($width) {
             x-transition:leave="transition ease-in duration-75"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="absolute z-50 mt-2 {{ $width }} rounded-xl shadow-lg shadow-slate-900/10 dark:shadow-black/30 {{ $alignmentClasses }}"
+            class="absolute z-[80] {{ $placementClasses }} {{ $width }} rounded-xl shadow-lg shadow-slate-900/10 dark:shadow-black/30 {{ $alignmentClasses }}"
             style="display: none;"
             @click.self="open = false">
         <div class="rounded-xl ring-1 ring-slate-200/90 dark:ring-gray-600/90 {{ $contentClasses }}">
