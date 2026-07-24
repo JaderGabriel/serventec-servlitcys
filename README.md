@@ -222,6 +222,8 @@ composer test
 # Clio apenas: composer test:clio
 ```
 
+CI remoto: GitHub Actions (`.github/workflows/phpunit.yml`) corre Unit + Feature com `pdo_sqlite` em PHP 8.3 e 8.4 em cada push/PR para `main`.
+
 ## Análise estática (PHPStan / Larastan)
 
 Analisa `app/Services` e `app/Repositories` (nível 5, com `phpstan-baseline.neon` para dívida existente).

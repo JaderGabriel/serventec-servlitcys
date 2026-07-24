@@ -92,10 +92,11 @@ Cada método de teste inclui comentário técnico (docblock) explicando **o que*
 ## Execução contínua
 
 ```bash
-# Só unitários (recomendado em CI sem SQLite)
+# Só unitários
 php artisan test --testsuite=Unit
 
-# Suite completa (instalar php-sqlite3 no CI)
-sudo apt install php-sqlite3   # Debian/Ubuntu
-php artisan test
+# Suite completa (requer pdo_sqlite — local: composer test)
+composer test
 ```
+
+No GitHub Actions (`.github/workflows/phpunit.yml`), `setup-php` instala `pdo_sqlite` / `sqlite3` e corre `php artisan test` (Unit + Feature) em PHP 8.3 e 8.4.
