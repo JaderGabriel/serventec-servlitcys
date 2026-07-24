@@ -6,12 +6,17 @@ use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 
 /**
  * Quadro Diagnóstico Geral: escolas ativas × erros/avisos (inclui Cor/Raça sem declaração).
  */
 final class DiagnosticoGeralComposer
 {
+    public function __construct(
+        private readonly RelationCsvAggregator $aggregator = new RelationCsvAggregator,
+    ) {}
+
     /**
      * @return array{
      *     available: bool,
@@ -33,6 +38,10 @@ final class DiagnosticoGeralComposer
      *         without_data: int,
      *         errors: int,
      *         warnings: int
+     *     },
+     *     cor_raca_undeclared: array{
+     *         total: int,
+     *         schools: list<array{inep: string, name: string, count: int}>
      *     }
      * }
      */
@@ -58,6 +67,8 @@ final class DiagnosticoGeralComposer
             'errors' => 0,
             'warnings' => 0,
         ];
+        $corSchools = [];
+        $corTotal = 0;
 
         $schools = $campaign->schools
             ->sortBy(static fn (ClioCampaignSchool $s): string => mb_strtolower((string) $s->name))
@@ -91,6 +102,12 @@ final class DiagnosticoGeralComposer
 
             $withoutCor = $this->withoutCorCount($school);
             if ($withoutCor !== null && $withoutCor > 0) {
+                $corTotal += $withoutCor;
+                $corSchools[] = [
+                    'inep' => (string) $school->inep_code,
+                    'name' => (string) $school->name,
+                    'count' => $withoutCor,
+                ];
                 $alerts[] = [
                     'severity' => ClioCampaignFinding::SEVERITY_WARNING,
                     'code' => 'CLIO-DEM-COR-ESCOLA',
@@ -145,10 +162,16 @@ final class DiagnosticoGeralComposer
             ];
         }
 
+        usort($corSchools, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+
         return [
             'available' => $rows !== [],
             'rows' => $rows,
             'totals' => $totals,
+            'cor_raca_undeclared' => [
+                'total' => $corTotal,
+                'schools' => $corSchools,
+            ],
         ];
     }
 
@@ -198,7 +221,7 @@ final class DiagnosticoGeralComposer
             return null;
         }
 
-        return (int) ($agg['without_cor'] ?? 0);
+        return $this->aggregator->undeclaredCorCountFromAggregates($agg);
     }
 
     /**

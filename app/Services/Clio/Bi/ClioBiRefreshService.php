@@ -14,6 +14,7 @@ use App\Models\Clio\ClioCampaignInference;
 use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignNeeCensusBuilder;
+use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use Illuminate\Support\Facades\DB;
 
@@ -26,6 +27,7 @@ final class ClioBiRefreshService
         private readonly CampaignParseService $parser,
         private readonly CampaignNeeCensusBuilder $neeBuilder,
         private readonly ClioBiInsightComposer $insights,
+        private readonly CampaignSchoolTimeComposer $schoolTime,
     ) {}
 
     public function refreshCampaign(ClioCampaign $campaign): void
@@ -36,6 +38,7 @@ final class ClioBiRefreshService
         $inferences = $campaign->inferences->keyBy('code');
         $stats = $campaign->schoolScopeStats();
         $nee = $this->neeBuilder->build($campaign);
+        $schoolTime = $this->schoolTime->compose($campaign);
 
         $mat = $this->payload($inferences->get('INF-MAT'));
         $dis = $this->payload($inferences->get('INF-DIS'));
@@ -67,8 +70,12 @@ final class ClioBiRefreshService
             'turmas_ge_40' => (int) ($den['turmas_ge_40'] ?? 0),
             'turmas_sem_docente' => (int) ($doc['turmas_sem_docente'] ?? 0),
             'nee_people' => (int) ($nee['flagged'] ?? 0),
+            'nee_people_scanned' => (int) ($nee['people_scanned'] ?? 0),
             'nee_without_aee' => (int) ($nee['without_aee'] ?? 0),
             'aee_without_nee' => (int) ($nee['aee_without_nee'] ?? 0),
+            'school_time_available' => (bool) ($schoolTime['available'] ?? false),
+            'school_time_has_ch' => (bool) ($schoolTime['has_ch'] ?? false),
+            'school_time_hours' => ($schoolTime['network']['horas_aluno_semana'] ?? null),
             'delta_rede' => $delta['divergent_curricular_sum'] ?? $mat['delta_curricular'] ?? null,
             'tra_rural_pct_active' => $this->ruralPct($tra),
             'gap_clio_only' => (int) ($gap['only_clio'] ?? $gap['clio_only'] ?? 0),

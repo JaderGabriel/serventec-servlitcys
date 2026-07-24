@@ -97,6 +97,12 @@ final class RelationCsvAggregator
             }
             $chRaw = $hasCh ? trim($csv->value($row, $chHeader)) : '';
             $chHours = $hasCh ? $this->parseCargaHoraria($chRaw) : null;
+            if ($chHours === null) {
+                $fromTurno = $this->estimateWeeklyHoursFromTurno($turno);
+                if ($fromTurno !== null) {
+                    $chHours = $fromTurno;
+                }
+            }
             if ($hasCh) {
                 if ($chHours !== null) {
                     $chParsed++;
@@ -427,9 +433,9 @@ final class RelationCsvAggregator
 
             if ($hasCor) {
                 $cor = $this->firstNonEmpty($csv, $row, ['Cor/Raça', 'Cor/Raca', 'Raça', 'Raca', 'Cor']);
-                if ($cor === '') {
+                if ($this->isUndeclaredCorRaca($cor)) {
                     $withoutCor++;
-                    $cor = __('Não informado');
+                    $cor = __('Não declarado');
                 }
                 $byCor[$cor] = ($byCor[$cor] ?? 0) + 1;
             }
@@ -837,6 +843,58 @@ final class RelationCsvAggregator
         return $sexo;
     }
 
+    /**
+     * Cor/Raça vazia ou explicitamente não declarada/informada (opção do Educacenso).
+     */
+    public function isUndeclaredCorRaca(string $raw): bool
+    {
+        $v = mb_strtolower(trim($raw));
+        if ($v === '') {
+            return true;
+        }
+
+        $v = str_replace(
+            ['Ã£', 'Ã¡', 'Ã©', 'Ã­', 'Ã³', 'Ãº', 'Ã§'],
+            ['ã', 'á', 'é', 'í', 'ó', 'ú', 'ç'],
+            $v,
+        );
+
+        if (preg_match('/^n[aã]o\s+(declarad|informad)/u', $v) === 1) {
+            return true;
+        }
+
+        return in_array($v, [
+            'não declarado', 'nao declarado',
+            'não informado', 'nao informado',
+            'sem informação', 'sem informacao',
+            'ni', 'n/i', 'n.i.', 'n.i', '-',
+            'ignorado', 'não especificado', 'nao especificado',
+        ], true);
+    }
+
+    /**
+     * Soma pessoas sem Cor/Raça a partir de aggregates (inclui rótulos legados «Não declarado»).
+     *
+     * @param  array<string, mixed>  $agg
+     */
+    public function undeclaredCorCountFromAggregates(array $agg): int
+    {
+        $without = (int) ($agg['without_cor'] ?? 0);
+        if ($without > 0) {
+            return $without;
+        }
+
+        $byCor = is_array($agg['by_cor_raca'] ?? null) ? $agg['by_cor_raca'] : [];
+        $sum = 0;
+        foreach ($byCor as $label => $n) {
+            if ($this->isUndeclaredCorRaca((string) $label)) {
+                $sum += (int) $n;
+            }
+        }
+
+        return $sum;
+    }
+
     private function ageBandFromDate(string $raw, int $refYear): ?string
     {
         $raw = trim($raw);
@@ -1177,6 +1235,46 @@ final class RelationCsvAggregator
         }
 
         return null;
+    }
+
+    /**
+     * Estima horas/semana a partir da grade no campo Turno do Educacenso
+     * (ex.: «Segunda-feira - 08:00 às 12:00 | Terça-feira - 08:00 às 12:00 | …»).
+     */
+    public function estimateWeeklyHoursFromTurno(string $turnoRaw): ?float
+    {
+        $raw = trim($turnoRaw);
+        if ($raw === '') {
+            return null;
+        }
+
+        $total = 0.0;
+        $matches = 0;
+        if (preg_match_all(
+            '/(\d{1,2})[:hH](\d{2})?\s*(?:às|as|ate|até|-|–|—)\s*(\d{1,2})[:hH](\d{2})?/iu',
+            $raw,
+            $parts,
+            PREG_SET_ORDER,
+        ) > 0) {
+            foreach ($parts as $m) {
+                $start = ((int) $m[1]) + ((isset($m[2]) && $m[2] !== '') ? ((int) $m[2]) / 60 : 0.0);
+                $end = ((int) $m[3]) + ((isset($m[4]) && $m[4] !== '') ? ((int) $m[4]) / 60 : 0.0);
+                if ($end <= $start) {
+                    $end += 12.0;
+                }
+                $dur = $end - $start;
+                if ($dur > 0 && $dur <= 16) {
+                    $total += $dur;
+                    $matches++;
+                }
+            }
+        }
+
+        if ($matches === 0 || $total <= 0 || $total > 168) {
+            return null;
+        }
+
+        return round($total, 2);
     }
 
     private function normalizeTurno(string $raw): string

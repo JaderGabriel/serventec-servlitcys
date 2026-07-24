@@ -24,10 +24,10 @@ return [
     */
 
     'product' => [
-        'version' => '8.1.0',
-        'release_tag' => '20260724b-Asclepius',
-        'commit_short' => 'ca0f09a8',
-        'commit_number' => 563,
+        'version' => '8.2.0',
+        'release_tag' => '20260724c-Hygieia',
+        'commit_short' => 'PENDING',
+        'commit_number' => 568,
         'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',

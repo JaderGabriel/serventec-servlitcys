@@ -126,31 +126,31 @@ final class InepCensoMunicipioMatriculasIndexer
         fclose($fh);
 
         $importedAt = now();
-        $count = 0;
+        $batch = [];
         foreach ($agg as $key => $data) {
             [$ibge] = explode('|', $key, 2);
-            $this->repository->upsert(
-                $ibge,
-                $data['ano'],
-                $data['mat'],
-                $data['escolas'],
-                'inep_microdados',
-                $importedAt,
-                $data['municipal'] > 0 ? $data['municipal'] : null,
-                $data['nao_municipal'] > 0 ? $data['nao_municipal'] : null,
-                $data['regular'] > 0 ? $data['regular'] : null,
-                $data['eja'] > 0 ? $data['eja'] : null,
-                $data['especial'] > 0 ? $data['especial'] : null,
-                $data['complementar'] > 0 ? $data['complementar'] : null,
-                $data['infantil'] > 0 ? $data['infantil'] : null,
-                $data['fundamental_1'] > 0 ? $data['fundamental_1'] : null,
-                $data['fundamental_2'] > 0 ? $data['fundamental_2'] : null,
-                $data['medio'] > 0 ? $data['medio'] : null,
-                $data['profissional'] > 0 ? $data['profissional'] : null,
-                $this->dependenciaBreakdownFromAggregate($data),
-            );
-            $count++;
+            $batch[] = [
+                'ibge_municipio' => $ibge,
+                'ano' => $data['ano'],
+                'matriculas_total' => $data['mat'],
+                'escolas_contagem' => $data['escolas'],
+                'fonte' => 'inep_microdados',
+                'matriculas_municipal' => $data['municipal'] > 0 ? $data['municipal'] : null,
+                'matriculas_nao_municipal' => $data['nao_municipal'] > 0 ? $data['nao_municipal'] : null,
+                'matriculas_regular' => $data['regular'] > 0 ? $data['regular'] : null,
+                'matriculas_eja' => $data['eja'] > 0 ? $data['eja'] : null,
+                'matriculas_especial' => $data['especial'] > 0 ? $data['especial'] : null,
+                'matriculas_complementar' => $data['complementar'] > 0 ? $data['complementar'] : null,
+                'matriculas_infantil' => $data['infantil'] > 0 ? $data['infantil'] : null,
+                'matriculas_fundamental_1' => $data['fundamental_1'] > 0 ? $data['fundamental_1'] : null,
+                'matriculas_fundamental_2' => $data['fundamental_2'] > 0 ? $data['fundamental_2'] : null,
+                'matriculas_medio' => $data['medio'] > 0 ? $data['medio'] : null,
+                'matriculas_profissional' => $data['profissional'] > 0 ? $data['profissional'] : null,
+                'dependencia_breakdown' => $this->dependenciaBreakdownFromAggregate($data),
+            ];
         }
+
+        $count = $this->repository->upsertBatch($batch, $importedAt);
 
         Log::info('INEP censo matrículas municipais indexadas', ['municipios_anos' => $count, 'file' => $absolutePath]);
 

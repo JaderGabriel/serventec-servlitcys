@@ -46,14 +46,21 @@ final class CampaignInsightsPdfExporter
             ? $this->dashboard->charts((int) $campaign->id, $bi, $inferences)
             : [];
 
-        $chartSvgs = $this->chartSvgs($charts, $bi);
+        $chartTables = $this->chartTables($charts, $bi);
 
         $insights = BiClioInsight::query()
             ->where('campaign_id', $campaign->id)
             ->orderBy('sort')
             ->orderBy('id')
             ->get()
-            ->filter(static fn (BiClioInsight $row): bool => (string) ($row->severity ?? '') !== 'error')
+            ->sortBy([
+                static fn (BiClioInsight $row): int => match ((string) ($row->severity ?? '')) {
+                    'error' => 0,
+                    'warning' => 1,
+                    default => 2,
+                },
+                static fn (BiClioInsight $row): int => (int) ($row->sort ?? 0),
+            ])
             ->values();
 
         $etapas = BiClioEnrollmentStage::query()
@@ -65,6 +72,10 @@ final class CampaignInsightsPdfExporter
 
         $ibge = (string) ($campaign->ibge_municipio ?: $campaign->city?->ibge_municipio ?? '');
         $series = $this->enrollmentSeries->forIbge($ibge, 5, 'municipal', allowConsultoriaActive: true);
+        $seriesChartSvg = null;
+        if (($series['ok'] ?? false) === true && is_array($series['chart'] ?? null)) {
+            $seriesChartSvg = AnalyticsReportChartSvg::render($series['chart'], 520, 248);
+        }
         $schoolTime = $this->schoolTime->compose($campaign);
         $diagnosticoGeral = app(DiagnosticoGeralComposer::class)->compose($campaign);
 
@@ -76,8 +87,9 @@ final class CampaignInsightsPdfExporter
             'coverage' => $coverage,
             'insights' => $insights,
             'etapas' => $etapas,
-            'chartSvgs' => $chartSvgs,
+            'chartTables' => $chartTables,
             'series' => $series,
+            'seriesChartSvg' => $seriesChartSvg,
             'schoolTime' => $schoolTime,
             'diagnosticoGeral' => $diagnosticoGeral,
             'generated_at' => $generatedAt,
@@ -99,10 +111,12 @@ final class CampaignInsightsPdfExporter
     }
 
     /**
+     * Tabelas para DomPDF (SVG denso fica ilegível com muitas categorias).
+     *
      * @param  array<string, array<string, mixed>>  $charts
-     * @return list<array{title: string, svg: string}>
+     * @return list<array{title: string, rows: list<array{label: string, value: int|float}>}>
      */
-    private function chartSvgs(array $charts, ?BiClioCampaign $bi): array
+    private function chartTables(array $charts, ?BiClioCampaign $bi): array
     {
         $candidates = [];
 
@@ -137,7 +151,10 @@ final class CampaignInsightsPdfExporter
             'docentes',
         ] as $key) {
             if (isset($charts[$key]) && is_array($charts[$key])) {
-                $candidates[] = $this->asBarChart($charts[$key]);
+                $asBar = $this->asBarChart($charts[$key]);
+                if ($asBar !== null) {
+                    $candidates[] = $asBar;
+                }
             }
         }
 
@@ -146,13 +163,13 @@ final class CampaignInsightsPdfExporter
             if (! is_array($chart)) {
                 continue;
             }
-            $svg = AnalyticsReportChartSvg::render($chart);
-            if ($svg === null) {
+            $rows = $this->chartToRows($chart, 12);
+            if ($rows === []) {
                 continue;
             }
             $out[] = [
-                'title' => (string) ($chart['title'] ?? __('Gráfico')),
-                'svg' => $svg,
+                'title' => (string) ($chart['title'] ?? __('Indicador')),
+                'rows' => $rows,
             ];
             if (count($out) >= 6) {
                 break;
@@ -160,6 +177,32 @@ final class CampaignInsightsPdfExporter
         }
 
         return $out;
+    }
+
+    /**
+     * @param  array<string, mixed>  $chart
+     * @return list<array{label: string, value: int|float}>
+     */
+    private function chartToRows(array $chart, int $limit): array
+    {
+        $labels = is_array($chart['labels'] ?? null) ? array_values($chart['labels']) : [];
+        $datasets = is_array($chart['datasets'] ?? null) ? $chart['datasets'] : [];
+        $first = $datasets[0] ?? null;
+        if ($labels === [] || ! is_array($first) || ! is_array($first['data'] ?? null)) {
+            return [];
+        }
+
+        $values = array_map(static fn ($v): float => (float) ($v ?? 0), array_values($first['data']));
+        $pairs = [];
+        foreach ($labels as $i => $label) {
+            $pairs[] = [
+                'label' => mb_substr(trim((string) $label), 0, 72),
+                'value' => $values[$i] ?? 0.0,
+            ];
+        }
+        usort($pairs, static fn (array $a, array $b): int => $b['value'] <=> $a['value']);
+
+        return array_slice($pairs, 0, max(1, $limit));
     }
 
     /**
@@ -181,12 +224,8 @@ final class CampaignInsightsPdfExporter
         }
 
         $title = (string) ($chart['title'] ?? __('Indicador'));
-        $horizontal = ($chart['options']['indexAxis'] ?? '') === 'y'
-            || count($labels) > 8;
 
-        return $horizontal
-            ? ChartPayload::barHorizontal($title, (string) ($first['label'] ?? __('Valor')), $labels, $values)
-            : ChartPayload::bar($title, (string) ($first['label'] ?? __('Valor')), $labels, $values);
+        return ChartPayload::bar($title, (string) ($first['label'] ?? __('Valor')), $labels, $values);
     }
 
     private function slugPart(string $value): string

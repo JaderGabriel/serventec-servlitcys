@@ -1,6 +1,6 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **8.1.0** · tag `20260724b-Asclepius` · **Última revisão:** 2026-07-24
+**Versão em produção:** **8.2.0** · tag `20260724c-Hygieia` · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 

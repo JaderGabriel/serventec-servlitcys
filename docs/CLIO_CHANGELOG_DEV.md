@@ -1,6 +1,6 @@
 # Clio — rastreio até o lançamento
 
-**Início do desenvolvimento:** 2026-07-21 · **Versão actual:** 8.1.0 Asclepius · **Próxima:** S8 promote (tag a definir)
+**Início do desenvolvimento:** 2026-07-21 · **Versão actual:** 8.2.0 Hygieia · **Próxima:** S8 promote (tag a definir)
 
 > **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
 
@@ -16,13 +16,22 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 | Menu superior | **Clio** após Horizonte |
 | Docs (leitor) | Secção **9 · Clio — Educacenso** |
 | Rotas | coletas, upload, analise, insights, vincular, cruzamento, export CSV/PDF/PDF-gestor/Excel |
-| CLI | `ingest` · `status` · `analyze` · `cross-check` · `bi:refresh-clio-campaigns` |
+| CLI | `ingest` · `status` · `analyze` · `reanalyze-all` · `cross-check` · `bi:refresh-clio-campaigns` |
 | Permissões | Ver: admin+usuário · Mutar: só admin · Municipal: sem acesso |
-| Pronto para release? | **8.1.0 Asclepius** — falta S8 |
+| Pronto para release? | **8.2.0 Hygieia** — falta S8 |
 
 ---
 
 ## Changelog de desenvolvimento
+
+### 2026-07-24 — Hygieia (8.2.0): série SVG, reanálise lote, Censo 2025
+
+**Entregue**
+
+- PDF gestor: gráfico SVG da série histórica antes da tabela; `0` no lugar de `—`; etapas do último ano após a tabela
+- `clio:campaign-reanalyze-all` (year / skip-parse / queue / dry-run)
+- Import matrículas Educacenso **2025** (merge Matricula×Escola + upsert em lote)
+- NEE whitelist; tempo escolar via Turno; Cor/Raça não declarado; Excel completo; leituras gerenciais
 
 ### 2026-07-24 — Asclepius (8.1.0): Diagnóstico Geral, PDF gestor, jornada
 

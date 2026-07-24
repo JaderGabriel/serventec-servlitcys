@@ -548,7 +548,7 @@
 @if (! empty($tables['missing_demographics']) || (int) ($tables['missing_demographics_total'] ?? 0) > 0)
     <h2>{{ __('Sem Cor/Raça ou Sexo definidos') }}</h2>
     <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
-        {{ __('Total de pessoas: :n (amostra abaixo com nome e CPF).', ['n' => (int) ($tables['missing_demographics_total'] ?? 0)]) }}
+        {{ __('Total de pessoas: :n (listagem com nome e CPF para correção no portal). Inclui Cor/Raça vazia ou «Não declarado».', ['n' => (int) ($tables['missing_demographics_total'] ?? 0)]) }}
     </p>
     @if (! empty($tables['missing_demographics']))
         <table class="data">

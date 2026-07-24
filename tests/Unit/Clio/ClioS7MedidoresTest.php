@@ -75,21 +75,51 @@ final class ClioS7MedidoresTest extends TestCase
             'turmas_ge_40' => 1,
             'turmas_sem_docente' => 0,
             'nee_people' => 40,
+            'nee_people_scanned' => 400,
             'nee_without_aee' => 5,
             'aee_without_nee' => 1,
             'delta_rede' => -12,
+            'school_time_available' => true,
+            'school_time_has_ch' => true,
+            'school_time_hours' => 20.5,
         ]);
 
         $this->assertNotEmpty($rows);
         $codes = array_column($rows, 'code');
         $this->assertContains('TRIAD', $codes);
+        $this->assertContains('ERRORS', $codes);
         $this->assertContains('INCLUSION', $codes);
+        $this->assertContains('SCHOOL_TIME', $codes);
+
+        $byCode = collect($rows)->keyBy('code');
+        $this->assertSame('error', $byCode['ERRORS']['severity']);
+        $this->assertSame('2', $byCode['ERRORS']['metric_value']);
+        $this->assertSame('40', $byCode['INCLUSION']['metric_value']);
+        $this->assertStringContainsString('10,0%', $byCode['INCLUSION']['body']);
+        $this->assertStringContainsString('Relação de alunos', $byCode['INCLUSION']['body']);
+        $this->assertSame('20,5h', $byCode['SCHOOL_TIME']['metric_value']);
+
+        // Críticos e avisos antes dos informativos.
+        $this->assertSame('ERRORS', $rows[0]['code']);
+
         foreach ($rows as $row) {
             $this->assertArrayHasKey('title', $row);
             $this->assertArrayHasKey('body', $row);
             $this->assertStringNotContainsString('cpf', mb_strtolower($row['body']));
             $this->assertStringNotContainsString('@', $row['body']);
         }
+    }
+
+    public function test_insight_composer_alerta_tempo_escolar_sem_ch(): void
+    {
+        $rows = (new ClioBiInsightComposer)->compose([
+            'schools_active' => 5,
+            'school_time_available' => true,
+            'school_time_has_ch' => false,
+        ]);
+        $schoolTime = collect($rows)->firstWhere('code', 'SCHOOL_TIME');
+        $this->assertNotNull($schoolTime);
+        $this->assertSame('warning', $schoolTime['severity']);
     }
 
     public function test_bi_clio_migration_defines_no_pii_columns(): void

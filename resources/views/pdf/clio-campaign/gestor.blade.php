@@ -9,8 +9,12 @@
         .kpi-grid .kpi-value { font-size: 16px; font-weight: 700; color: #0f172a; display: block; }
         .kpi-grid .kpi-label { font-size: 8px; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
         .chart-block { margin: 10px 0 14px; page-break-inside: avoid; }
-        .chart-block svg { max-width: 100%; height: auto; }
         .note { font-size: 9px; color: #64748b; margin: 0 0 8px; }
+        .insight-prio { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+        .insight-prio--error { color: #b91c1c; }
+        .insight-prio--warning { color: #b45309; }
+        .insight-prio--info { color: #0f766e; }
+        .insight-metric { font-size: 10px; font-weight: 700; color: #0f172a; white-space: nowrap; }
     </style>
 </head>
 <body>
@@ -129,26 +133,44 @@
         </td>
     </tr>
 </table>
+<p class="note">
+    {{ __('Matrículas curriculares / AEE vêm do Acompanhamento (totais INF-MAT). Pessoas com NEE/TEA/AH são contagem de pessoas únicas na Relação de alunos com marcador positivo — bases diferentes; o total NEE não deve superar o número de pessoas na Relação.') }}
+</p>
 
 @if (($insights ?? collect())->isNotEmpty())
     <h2>{{ __('Leituras gerenciais') }}</h2>
+    <p class="note">
+        {{ __('Síntese automática dos indicadores da coleta, ordenada por prioridade (crítico → atenção → informativo). Use para pautar a reunião de Matrícula inicial; detalhes numéricos estão nos quadros seguintes.') }}
+    </p>
     <table class="data">
         <thead>
             <tr>
-                <th style="width: 28%;">{{ __('Tema') }}</th>
-                <th>{{ __('Resumo') }}</th>
+                <th style="width: 12%;">{{ __('Prioridade') }}</th>
+                <th style="width: 22%;">{{ __('Tema') }}</th>
+                <th style="width: 12%;">{{ __('Indicador') }}</th>
+                <th>{{ __('Leitura') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($insights as $insight)
+                @php
+                    $sev = (string) ($insight->severity ?? 'info');
+                    $prioLabel = match ($sev) {
+                        'error' => __('Crítico'),
+                        'warning' => __('Atenção'),
+                        default => __('Informativo'),
+                    };
+                    $prioClass = match ($sev) {
+                        'error' => 'insight-prio--error',
+                        'warning' => 'insight-prio--warning',
+                        default => 'insight-prio--info',
+                    };
+                @endphp
                 <tr>
+                    <td><span class="insight-prio {{ $prioClass }}">{{ $prioLabel }}</span></td>
                     <td>{{ $insight->title }}</td>
-                    <td>
-                        {{ $insight->body }}
-                        @if ($insight->metric_value)
-                            <span style="color: #0f766e; font-weight: 600;"> · {{ $insight->metric_value }}</span>
-                        @endif
-                    </td>
+                    <td class="insight-metric">{{ $insight->metric_value ?: '—' }}</td>
+                    <td>{{ $insight->body }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -178,11 +200,28 @@
     </table>
 @endif
 
-@if (! empty($chartSvgs))
+@if (! empty($chartTables))
     <h2>{{ __('Visualizações') }}</h2>
-    @foreach ($chartSvgs as $block)
+    <p class="note">{{ __('Top categorias por magnitude (tabela legível no PDF). Consulte o painel Clio para gráficos interativos.') }}</p>
+    @foreach ($chartTables as $block)
         <div class="chart-block">
-            {!! $block['svg'] !!}
+            <p style="font-size: 10px; font-weight: 700; margin: 0 0 4px;">{{ $block['title'] ?? __('Indicador') }}</p>
+            <table class="data">
+                <thead>
+                    <tr>
+                        <th>{{ __('Categoria') }}</th>
+                        <th style="width: 22%;">{{ __('Valor') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($block['rows'] ?? [] as $row)
+                        <tr>
+                            <td>{{ $row['label'] ?? '—' }}</td>
+                            <td>{{ number_format((float) ($row['value'] ?? 0), 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     @endforeach
 @endif
@@ -194,7 +233,13 @@
         $chart = $series['chart'] ?? [];
         $labels = is_array($chart['labels'] ?? null) ? $chart['labels'] : [];
         $datasets = is_array($chart['datasets'] ?? null) ? $chart['datasets'] : [];
+        $seriesChartSvg = $seriesChartSvg ?? null;
     @endphp
+    @if (filled($seriesChartSvg))
+        <div class="chart-block" style="text-align: center;">
+            {!! $seriesChartSvg !!}
+        </div>
+    @endif
     @if ($labels !== [] && $datasets !== [])
         <table class="data">
             <thead>
@@ -210,13 +255,7 @@
                     <tr>
                         <td>{{ $ds['label'] ?? '—' }}</td>
                         @foreach (($ds['data'] ?? []) as $val)
-                            <td>
-                                @if ($val === null)
-                                    —
-                                @else
-                                    {{ number_format((int) $val, 0, ',', '.') }}
-                                @endif
-                            </td>
+                            <td>{{ number_format((int) ($val ?? 0), 0, ',', '.') }}</td>
                         @endforeach
                     </tr>
                 @endforeach
@@ -228,7 +267,7 @@
             {{ __('Último ano com dados (:y)', ['y' => $series['stage_counters']['ano'] ?? '—']) }}:
             @foreach ($series['stage_counters']['items'] as $item)
                 <strong>{{ $item['label'] ?? '' }}</strong>
-                {{ $item['value'] !== null ? number_format((int) $item['value'], 0, ',', '.') : '—' }}@if (! $loop->last) · @endif
+                {{ number_format((int) ($item['value'] ?? 0), 0, ',', '.') }}@if (! $loop->last) · @endif
             @endforeach
         </p>
     @endif
@@ -305,6 +344,38 @@
     <p class="note" style="margin-top: 6px;">
         {{ __('A óptica é do aluno: a carga horária da turma é ponderada pelo número de alunos vinculados. Curricular, AEE e atividade complementar aparecem em colunas distintas porque representam experiências escolares diferentes na mesma semana.') }}
     </p>
+@endif
+
+@php
+    $corUndeclared = is_array($diagnosticoGeral['cor_raca_undeclared'] ?? null)
+        ? $diagnosticoGeral['cor_raca_undeclared']
+        : ['total' => 0, 'schools' => []];
+@endphp
+@if ((int) ($corUndeclared['total'] ?? 0) > 0)
+    <h2>{{ __('Cor/Raça não declarada') }}</h2>
+    <p class="note">
+        {{ __('Pessoas com Cor/Raça vazia ou «Não declarado» na Relação de alunos, por escola. Total da rede: :n.', [
+            'n' => number_format((int) $corUndeclared['total'], 0, ',', '.'),
+        ]) }}
+    </p>
+    <table class="data">
+        <thead>
+            <tr>
+                <th style="width: 14%;">{{ __('INEP') }}</th>
+                <th>{{ __('Escola') }}</th>
+                <th style="width: 18%;">{{ __('Pessoas') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($corUndeclared['schools'] as $row)
+                <tr>
+                    <td style="font-family: DejaVu Sans Mono, monospace; font-size: 9px;">{{ $row['inep'] !== '' ? $row['inep'] : '—' }}</td>
+                    <td>{{ $row['name'] }}</td>
+                    <td>{{ number_format((int) $row['count'], 0, ',', '.') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 @endif
 
 @include('pdf.clio-campaign.partials.diagnostico-geral', ['diagnosticoGeral' => $diagnosticoGeral ?? []])

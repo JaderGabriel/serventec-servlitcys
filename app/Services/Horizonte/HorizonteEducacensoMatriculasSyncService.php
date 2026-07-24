@@ -63,7 +63,9 @@ final class HorizonteEducacensoMatriculasSyncService
             @ini_set('memory_limit', $memory);
         }
 
-        $allYears = HorizonteEducacensoYearWindow::years();
+        $allYears = is_array($options['years'] ?? null) && $options['years'] !== []
+            ? array_values(array_map('intval', $options['years']))
+            : HorizonteEducacensoYearWindow::years();
         $totalSteps = HorizonteEducacensoImportProgress::totalSteps($allYears);
 
         if (HorizonteEducacensoImportProgress::isComplete($allYears)) {

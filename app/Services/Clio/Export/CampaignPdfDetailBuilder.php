@@ -360,13 +360,13 @@ final class CampaignPdfDetailBuilder
 
             if ($hasCor) {
                 $cor = $this->firstNonEmpty($row, ['Cor/Raça', 'Cor/Raca', 'Raça', 'Raca', 'Cor']);
-                if ($cor === '') {
+                if ($this->aggregator->isUndeclaredCorRaca($cor)) {
                     $byId[$id]['without_cor'] = true;
                 }
             }
             if ($hasSexo) {
                 $sexo = $this->firstNonEmpty($row, ['Sexo', 'Sexo biológico', 'Sexo biologico', 'Gênero', 'Genero']);
-                if ($sexo === '') {
+                if ($sexo === '' || in_array(mb_strtolower(trim($sexo)), ['não informado', 'nao informado', 'não declarado', 'nao declarado', 'ni', 'n/i'], true)) {
                     $byId[$id]['without_sexo'] = true;
                 }
             }

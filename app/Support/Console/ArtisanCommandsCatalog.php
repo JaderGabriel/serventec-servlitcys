@@ -501,6 +501,19 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'clio',
                     ],
                     [
+                        'name' => 'clio:campaign-reanalyze-all',
+                        'summary' => __('Reanalisa todas as coletas Clio (cidades); refresca BI. Opções: --year, --skip-parse, --queue, --dry-run.'),
+                        'signature' => 'clio:campaign-reanalyze-all {--year=} {--skip-parse} {--queue} {--dry-run}',
+                        'examples' => [
+                            'php artisan clio:campaign-reanalyze-all --dry-run',
+                            'php artisan clio:campaign-reanalyze-all --year=2026',
+                            'php artisan clio:campaign-reanalyze-all --year=2026 --queue',
+                            'php artisan clio:campaign-reanalyze-all --skip-parse',
+                        ],
+                        'env' => ['CLIO_ENABLED', 'CLIO_QUEUE'],
+                        'doc_anchor' => 'clio',
+                    ],
+                    [
                         'name' => 'clio:campaign-cross-check',
                         'summary' => __('INF-GAP: cruza escolas da coleta com i-Educar (somente leitura).'),
                         'signature' => 'clio:campaign-cross-check {uuid}',

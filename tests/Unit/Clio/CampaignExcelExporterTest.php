@@ -97,4 +97,96 @@ final class CampaignExcelExporterTest extends TestCase
         $this->assertTrue($foundFundI);
         $this->assertTrue($foundFundIi);
     }
+
+    #[Test]
+    public function aba_demografia_lista_cor_nao_declarada_por_escola(): void
+    {
+        $exporter = app(CampaignExcelExporter::class);
+        $method = new ReflectionMethod(CampaignExcelExporter::class, 'fillDemografiaSheet');
+        $method->setAccessible(true);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $method->invoke($exporter, $sheet, [
+            'demographics' => [
+                'available' => true,
+                'scanned' => 100,
+                'by_cor_raca' => [
+                    ['label' => 'Parda', 'count' => 70, 'pct' => 70.0],
+                    ['label' => 'Não declarado', 'count' => 21, 'pct' => 21.0],
+                ],
+                'by_sexo' => [],
+                'by_faixa_etaria' => [],
+            ],
+            'missing_demographics_total' => 21,
+            'missing_demographics' => [
+                [
+                    'name' => 'ALUNO_X',
+                    'cpf' => '***.***.***-**',
+                    'school' => 'Escola A',
+                    'inep' => '123',
+                    'faltando' => 'Cor/Raça',
+                    'matriculas' => 'M1',
+                    'turmas' => 'T1',
+                    'id' => 'ID-1',
+                ],
+            ],
+        ], [
+            'cor_raca_undeclared' => [
+                'total' => 21,
+                'schools' => [
+                    ['inep' => '123', 'name' => 'Escola A', 'count' => 21],
+                ],
+            ],
+        ]);
+
+        $haystack = '';
+        foreach ($sheet->getRowIterator() as $row) {
+            foreach ($row->getCellIterator() as $cell) {
+                $haystack .= (string) $cell->getValue().'|';
+            }
+        }
+        $this->assertStringContainsString('Não declarado', $haystack);
+        $this->assertStringContainsString('Escola A', $haystack);
+        $this->assertStringContainsString('ALUNO_X', $haystack);
+        $this->assertStringContainsString('21', $haystack);
+    }
+
+    #[Test]
+    public function aba_tempo_escolar_escreve_segmentos(): void
+    {
+        $exporter = app(CampaignExcelExporter::class);
+        $method = new ReflectionMethod(CampaignExcelExporter::class, 'fillSchoolTimeSheet');
+        $method->setAccessible(true);
+
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $method->invoke($exporter, $sheet, [
+            'available' => true,
+            'has_ch' => true,
+            'note' => 'Nota CH',
+            'network' => ['horas_aluno_semana' => 20.0, 'alunos_com_ch' => 50],
+            'segments' => [
+                [
+                    'label' => 'Fundamental — anos iniciais',
+                    'turmas' => 10,
+                    'alunos' => 200,
+                    'horas_aluno_semana' => 20.0,
+                    'curricular' => ['ch_media_aluno' => 20.0, 'alunos' => 180],
+                    'aee' => ['ch_media_aluno' => null, 'alunos' => 0],
+                    'ac' => ['ch_media_aluno' => null, 'alunos' => 0],
+                    'ch_options' => [['label' => '20 h/semana', 'turmas' => 10, 'alunos' => 200]],
+                ],
+            ],
+        ], ['jornada' => ['available' => false]]);
+
+        $haystack = '';
+        foreach ($sheet->getRowIterator() as $row) {
+            foreach ($row->getCellIterator() as $cell) {
+                $haystack .= (string) $cell->getValue().'|';
+            }
+        }
+        $this->assertStringContainsString('Fundamental', $haystack);
+        $this->assertStringContainsString('20', $haystack);
+    }
 }

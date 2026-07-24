@@ -51,6 +51,7 @@ final class CampaignSchoolTimeComposer
                 if (! is_array($profile)) {
                     continue;
                 }
+                $profile = $this->enrichProfileCh($profile);
                 $profiles[(string) $code] = $profile;
                 if (($profile['ch_hours'] ?? null) !== null) {
                     $hasCh = true;
@@ -157,8 +158,8 @@ final class CampaignSchoolTimeComposer
             'available' => $profiles !== [],
             'has_ch' => $hasCh,
             'note' => $hasCh
-                ? __('Horas/semana estimadas a partir da Carga horária das turmas, ponderadas pelos alunos vinculados (Relação). Quando o segmento mistura curricular, AEE ou complementar — ou várias cargas — o detalhe aparece sob a linha.')
-                : __('As Relações de turmas não trouxeram Carga horária legível — abaixo só contagens de turmas/alunos por segmento. Confirme se a coluna «Carga horária semanal» veio preenchida no export do Educacenso.'),
+                ? __('Horas/semana estimadas a partir da Carga horária das turmas (ou da grade no campo Turno), ponderadas pelos alunos vinculados (Relação). Quando o segmento mistura curricular, AEE ou complementar — ou várias cargas — o detalhe aparece sob a linha.')
+                : __('As Relações de turmas não trouxeram Carga horária legível nem grade no Turno — abaixo só contagens de turmas/alunos por segmento. Confirme se a coluna «Carga horária semanal» ou os horários no Turno vieram preenchidos no export do Educacenso.'),
             'segments' => $segments,
             'network' => [
                 'ch_media_aluno' => $netAlunos > 0 ? round($netChSum / $netAlunos, 1) : null,
@@ -317,6 +318,29 @@ final class CampaignSchoolTimeComposer
     }
 
     /**
+     * @param  array<string, mixed>  $profile
+     * @return array<string, mixed>
+     */
+    private function enrichProfileCh(array $profile): array
+    {
+        if (isset($profile['ch_hours']) && is_numeric($profile['ch_hours'])) {
+            return $profile;
+        }
+
+        $turno = trim((string) ($profile['turno_raw'] ?? $profile['turno'] ?? ''));
+        if ($turno === '') {
+            return $profile;
+        }
+
+        $hours = $this->aggregator->estimateWeeklyHoursFromTurno($turno);
+        if ($hours !== null) {
+            $profile['ch_hours'] = $hours;
+        }
+
+        return $profile;
+    }
+
+    /**
      * @return \Illuminate\Support\Collection<int, ClioCampaignArtifact>
      */
     private function artifactsOfKind(ClioCampaign $campaign, string $kind): \Illuminate\Support\Collection
@@ -361,13 +385,31 @@ final class CampaignSchoolTimeComposer
         $meta = is_array($artifact->parse_meta) ? $artifact->parse_meta : [];
         $agg = $meta['aggregates'] ?? null;
         if (is_array($agg) && isset($agg['turma_profiles'])) {
-            return $agg;
+            $profiles = is_array($agg['turma_profiles']) ? $agg['turma_profiles'] : [];
+            $hasUsableCh = false;
+            foreach ($profiles as $profile) {
+                if (is_array($profile) && ($profile['ch_hours'] ?? null) !== null) {
+                    $hasUsableCh = true;
+                    break;
+                }
+                if (is_array($profile)) {
+                    $turno = trim((string) ($profile['turno_raw'] ?? $profile['turno'] ?? ''));
+                    if ($turno !== '' && $this->aggregator->estimateWeeklyHoursFromTurno($turno) !== null) {
+                        $hasUsableCh = true;
+                        break;
+                    }
+                }
+            }
+            if ($hasUsableCh || empty($agg['columns']['carga_horaria'])) {
+                return $agg;
+            }
+            // Meta antiga: coluna CH marcada, mas sem horas parseadas — reprocessa o CSV.
         }
 
         try {
             $data = $csv->read(Storage::disk($disk)->path((string) $artifact->storage_path), 1);
         } catch (\Throwable) {
-            return [];
+            return is_array($agg ?? null) ? $agg : [];
         }
 
         return $this->aggregator->aggregateTurmas($data['rows'] ?? [], $csv);

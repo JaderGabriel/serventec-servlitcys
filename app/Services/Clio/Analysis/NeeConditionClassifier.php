@@ -319,12 +319,36 @@ final class NeeConditionClassifier
             return false;
         }
 
-        return ! in_array($v, [
-            'não', 'nao', 'n', '0', 'false', 'não possui', 'nao possui',
-            'não informado', 'nao informado', 'ni', '-',
-            'não se aplica', 'nao se aplica', 'não aplicável', 'nao aplicavel',
+        // Mojibake comum: UTF-8 «Não» interpretado como Latin-1 → «NÃ£o».
+        $v = str_replace(
+            ['Ã£', 'Ã¡', 'Ã©', 'Ã­', 'Ã³', 'Ãº', 'Ã§', 'Ãƒ', 'Ã'],
+            ['ã', 'á', 'é', 'í', 'ó', 'ú', 'ç', 'ã', ''],
+            $v,
+        );
+
+        // Negação por prefixo («Não», «Não possui deficiência», «Não se aplica»…).
+        if (preg_match('/^(n[aã]o)\b/u', $v) === 1) {
+            return false;
+        }
+        if (preg_match('/^sem\s+/u', $v) === 1) {
+            return false;
+        }
+        if (in_array($v, [
+            'n', '0', 'false', 'f', 'ni', '-',
             'n/a', 'na', 'n.a.', 'n.a',
-        ], true);
+        ], true)) {
+            return false;
+        }
+
+        // Whitelist: só Sim/códigos claros ou nome da condição como valor.
+        if (preg_match('/^(sim|s|yes|true|1|x)$/u', $v) === 1) {
+            return true;
+        }
+
+        return preg_match(
+            '/cegueira|baixa\s*vis|vis[aã]o\s*monocular|surdez|surdocegueira|defici[eê]ncia|autis|\btea\b|espectro\s+autista|superdo|altas\s*habil/u',
+            $v,
+        ) === 1;
     }
 
     /**

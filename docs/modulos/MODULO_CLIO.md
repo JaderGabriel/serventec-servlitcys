@@ -1,6 +1,6 @@
 # Módulo — Clio (coletas Educacenso 1ª etapa)
 
-**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 estável; Asclepius (Diagnóstico + PDF gestor)
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 estável; Hygieia (série SVG + reanálise lote + Censo 2025)
 
 > **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio` · **Roadmap vivo:** [ROADMAP_CLIO.md](../ROADMAP_CLIO.md)
 

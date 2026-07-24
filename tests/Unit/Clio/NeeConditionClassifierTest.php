@@ -12,6 +12,42 @@ use Tests\TestCase;
 final class NeeConditionClassifierTest extends TestCase
 {
     #[Test]
+    public function nao_possui_deficiencia_nao_e_marcador_positivo(): void
+    {
+        $c = new NeeConditionClassifier;
+        $out = $c->classifyRow([
+            'Deficiência' => 'Não possui deficiência',
+            'Transtorno do espectro autista' => 'Não',
+            'Altas habilidades' => 'Não',
+        ]);
+
+        $this->assertFalse($out['flagged']);
+    }
+
+    #[Test]
+    public function mojibake_nao_nao_e_marcador_positivo(): void
+    {
+        $c = new NeeConditionClassifier;
+        $out = $c->classifyRow([
+            'Transtorno do espectro autista' => 'NÃ£o',
+        ]);
+
+        $this->assertFalse($out['flagged']);
+    }
+
+    #[Test]
+    public function valores_de_outras_colunas_nao_viram_nee(): void
+    {
+        $c = new NeeConditionClassifier;
+        $out = $c->classifyRow([
+            'Deficiência' => 'Parda',
+            'Transtorno do espectro autista' => 'F',
+        ]);
+
+        $this->assertFalse($out['flagged']);
+    }
+
+    #[Test]
     public function nao_se_aplica_nao_e_marcador_positivo_de_nee(): void
     {
         $c = new NeeConditionClassifier;

@@ -167,6 +167,35 @@ final class EtapaLabelOrderAndCensusStageTest extends TestCase
     }
 
     #[Test]
+    public function estima_carga_horaria_a_partir_da_grade_do_turno(): void
+    {
+        $agg = new RelationCsvAggregator;
+        $turno = 'Segunda-feira - 08:00 às 12:00 | Terça-feira - 08:00 às 12:00 | Quarta-feira - 08:00 às 12:00 | Quinta-feira - 08:00 às 12:00 | Sexta-feira - 08:00 às 12:00';
+        $this->assertSame(20.0, $agg->estimateWeeklyHoursFromTurno($turno));
+        $this->assertNull($agg->estimateWeeklyHoursFromTurno('Manhã'));
+        $this->assertNull($agg->estimateWeeklyHoursFromTurno(''));
+    }
+
+    #[Test]
+    public function cor_raca_nao_declarado_conta_como_without_cor(): void
+    {
+        $agg = new RelationCsvAggregator;
+        $this->assertTrue($agg->isUndeclaredCorRaca(''));
+        $this->assertTrue($agg->isUndeclaredCorRaca('Não declarado'));
+        $this->assertTrue($agg->isUndeclaredCorRaca('nao informado'));
+        $this->assertFalse($agg->isUndeclaredCorRaca('Parda'));
+
+        $this->assertSame(21, $agg->undeclaredCorCountFromAggregates([
+            'without_cor' => 0,
+            'by_cor_raca' => ['Parda' => 100, 'Não declarado' => 21],
+        ]));
+        $this->assertSame(5, $agg->undeclaredCorCountFromAggregates([
+            'without_cor' => 5,
+            'by_cor_raca' => ['Não declarado' => 5],
+        ]));
+    }
+
+    #[Test]
     public function turno_abreviado_com_dias_e_tom(): void
     {
         $agg = new RelationCsvAggregator;

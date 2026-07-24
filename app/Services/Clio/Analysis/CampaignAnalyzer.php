@@ -1517,7 +1517,9 @@ final class CampaignAnalyzer
             $byCor = $this->aggregator->mergeCounts($byCor, is_array($agg['by_cor_raca'] ?? null) ? $agg['by_cor_raca'] : []);
             $bySexo = $this->aggregator->mergeCounts($bySexo, is_array($agg['by_sexo'] ?? null) ? $agg['by_sexo'] : []);
             $byIdade = $this->mergeAgeBands($byIdade, is_array($agg['by_faixa_etaria'] ?? null) ? $agg['by_faixa_etaria'] : []);
-            $withoutCor += (int) ($agg['without_cor'] ?? 0);
+            $withoutCor += $this->aggregator->undeclaredCorCountFromAggregates(
+                is_array($agg) ? $agg : [],
+            );
             $withoutSexo += (int) ($agg['without_sexo'] ?? 0);
             $withoutNasc += (int) ($agg['without_nascimento'] ?? 0);
             $c = is_array($agg['columns'] ?? null) ? $agg['columns'] : [];

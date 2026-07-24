@@ -27,6 +27,24 @@ class HorizonteSyncEducacensoCommand extends Command
         }
 
         $years = HorizonteEducacensoYearWindow::years();
+        $yearOpt = trim((string) $this->option('year'));
+        $year = $yearOpt !== '' && ctype_digit($yearOpt) ? (int) $yearOpt : null;
+        if ($year !== null) {
+            if ($year < 2000 || $year > ((int) date('Y') + 1)) {
+                $this->error(__('Ano inválido: :ano', ['ano' => (string) $year]));
+
+                return self::FAILURE;
+            }
+            // Permite importar um ano publicado (ex.: 2025) antes de estar na janela âncora.
+            if (! in_array($year, $years, true)) {
+                $this->warn(__('Ano :ano fora da janela actual (:w) — importação forçada desse ano.', [
+                    'ano' => (string) $year,
+                    'w' => implode(', ', array_map('strval', $years)),
+                ]));
+                $years = [$year];
+            }
+        }
+
         $total = HorizonteEducacensoImportProgress::totalSteps($years);
 
         $this->info(__('Educacenso — reimportação por ano × UF'));
@@ -47,14 +65,6 @@ class HorizonteSyncEducacensoCommand extends Command
             return self::FAILURE;
         }
 
-        $yearOpt = trim((string) $this->option('year'));
-        $year = $yearOpt !== '' && ctype_digit($yearOpt) ? (int) $yearOpt : null;
-        if ($year !== null && ! in_array($year, $years, true)) {
-            $this->error(__('Ano :ano fora da janela configurada.', ['ano' => (string) $year]));
-
-            return self::FAILURE;
-        }
-
         $stepsOpt = trim((string) $this->option('steps'));
         $steps = $stepsOpt !== '' && ctype_digit($stepsOpt) ? max(1, (int) $stepsOpt) : null;
 
@@ -63,6 +73,7 @@ class HorizonteSyncEducacensoCommand extends Command
             'year' => $year,
             'uf' => $uf !== '' ? $uf : null,
             'steps' => $steps,
+            'years' => $years,
             'on_step' => function (string $message, string $level = 'info'): void {
                 match ($level) {
                     'error' => $this->error($message),

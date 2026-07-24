@@ -1,6 +1,6 @@
 # Roadmap Clio — status, indicadores e melhorias
 
-**Versão do produto:** 8.1.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Asclepius
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Hygieia
 
 > **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
@@ -31,7 +31,7 @@ flowchart TD
 | Perfis | Só coleta (`analysis_only`) · Consultoria (`consultancy` + cruzamento i-Educar) |
 | Acesso | Ver: admin + usuário · Mutar: só admin · Municipal: sem acesso |
 | Sprint código | **S7 concluída** (BI + medidores) · próximo **S8** (promote i-Educar) |
-| Release base | **8.1.0 Asclepius** (Diagnóstico Geral + PDF gestor + jornada) |
+| Release base | **8.2.0 Hygieia** (série SVG PDF gestor + reanálise lote + Censo 2025) |
 
 ### 1.2 Capacidade por sprint
 
@@ -57,7 +57,7 @@ flowchart TD
 | Detalhe escola | `…/escolas/{inep}` | Estável — medidores locais + distorção por etapa |
 | Cruzamento | `…/cruzamento` | Estável — preserva `INF-GAP` na reanálise |
 | Insights / BI | `…/insights` | Estável — Chart.js sobre `bi_clio_*` |
-| Exports | CSV / PDF detalhado / **PDF gestor** / Excel | Estável — Diagnóstico Geral no PDF e na aba Excel; PII só no PDF interno |
+| Exports | CSV / PDF detalhado / **PDF gestor** / Excel | Estável — Excel completo (índice, demografia/Cor-Raça, tempo escolar, leituras BI, Diagnóstico Geral); PII só em PDF/Excel interno |
 | Home — card | `/clio` | Estável — slider cobertura ↔ série histórica |
 | RX / aba Censo | ranking do exercício | Estável |
 
@@ -72,6 +72,7 @@ flowchart TD
 | Drive — reparse | Duplicata `failed` → `pending` + reparse do lote | `7178000f` |
 | Análise — glossário distorção | Legenda das colunas «Distorção por etapa / ano» | local |
 | **Asclepius (8.1.0)** | Diagnóstico Geral; PDF gestor; tempo escolar; faixas CH; Outros em turnos; série no card | [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md) |
+| **Hygieia (8.2.0)** | Série SVG no PDF gestor; `clio:campaign-reanalyze-all`; Censo 2025; NEE/Excel/Cor-Raça | [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md) |
 
 Checklist de código: [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md). Rastreio: [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md).
 

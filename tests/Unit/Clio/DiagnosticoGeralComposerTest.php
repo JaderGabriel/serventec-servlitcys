@@ -86,5 +86,46 @@ final class DiagnosticoGeralComposerTest extends TestCase
         $messages = collect($byInep['87654321']['alerts'])->pluck('message')->all();
         $this->assertTrue(collect($messages)->contains(fn ($m) => str_contains((string) $m, 'Cor/Raça')));
         $this->assertTrue(collect($messages)->contains('Turma sem vínculo'));
+
+        $this->assertSame(5, $result['cor_raca_undeclared']['total']);
+        $this->assertCount(1, $result['cor_raca_undeclared']['schools']);
+        $this->assertSame(5, $result['cor_raca_undeclared']['schools'][0]['count']);
+    }
+
+    #[Test]
+    public function conta_nao_declarado_no_by_cor_quando_without_cor_e_zero(): void
+    {
+        $campaign = new ClioCampaign;
+        $campaign->id = 2;
+
+        $school = new ClioCampaignSchool([
+            'inep_code' => '11223344',
+            'name' => 'Escola Não Declarado',
+            'functioning_status' => 'Em atividade',
+            'meta' => ['location' => 'Urbana'],
+        ]);
+        $school->id = 20;
+        $school->setRelation('artifacts', collect([
+            new ClioCampaignArtifact(['kind' => 'relacao_aluno_escola', 'parse_meta' => [
+                'aggregates' => [
+                    'columns' => ['cor_raca' => true],
+                    'without_cor' => 0,
+                    'by_cor_raca' => [
+                        'Parda' => 10,
+                        'Não declarado' => 21,
+                    ],
+                ],
+            ]]),
+        ]));
+
+        $campaign->setRelation('schools', collect([$school]));
+        $campaign->setRelation('findings', collect());
+
+        $result = (new DiagnosticoGeralComposer)->compose($campaign);
+
+        $this->assertSame(21, $result['cor_raca_undeclared']['total']);
+        $this->assertSame(21, $result['cor_raca_undeclared']['schools'][0]['count']);
+        $messages = collect($result['rows'][0]['alerts'])->pluck('message')->all();
+        $this->assertTrue(collect($messages)->contains(fn ($m) => str_contains((string) $m, '21')));
     }
 }

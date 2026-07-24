@@ -2,11 +2,14 @@
 
 namespace App\Services\Clio\Export;
 
+use App\Models\Bi\BiClioInsight;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
+use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Clio\Support\ClioUserCopy;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -16,8 +19,8 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Export Excel da coleta — alinhado às regras do PDF Clio
- * (nome cidade/IBGE/data, cores do sistema, distorção ordenada, NEE/AEE, Fund. I/II).
+ * Export Excel da coleta — documento completo alinhado ao PDF Clio e ao painel:
+ * escolas, diagnóstico, demografia (Cor/Raça), tempo escolar, distorção, NEE/AEE, exposição e leituras.
  */
 final class CampaignExcelExporter
 {
@@ -34,6 +37,7 @@ final class CampaignExcelExporter
         private CampaignAnalysisPresenter $presenter,
         private CampaignPdfDetailBuilder $detailBuilder,
         private DiagnosticoGeralComposer $diagnosticoGeral,
+        private CampaignSchoolTimeComposer $schoolTime,
     ) {}
 
     public function download(ClioCampaign $campaign): StreamedResponse
@@ -53,6 +57,12 @@ final class CampaignExcelExporter
         );
         $pdfTables = $this->detailBuilder->build($campaign);
         $diagnostico = $this->diagnosticoGeral->compose($campaign);
+        $schoolTime = $this->schoolTime->compose($campaign);
+        $insights = BiClioInsight::query()
+            ->where('campaign_id', $campaign->id)
+            ->orderBy('sort')
+            ->orderBy('id')
+            ->get();
 
         $citySlug = $this->slugPart((string) $campaign->municipality_name) ?: 'municipio';
         $ibge = preg_replace('/\D+/', '', (string) ($campaign->ibge_municipio ?? '')) ?: 'ibge';
@@ -67,7 +77,7 @@ final class CampaignExcelExporter
             mkdir($dir, 0755, true);
         }
 
-        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables, $diagnostico);
+        $this->writeXlsx($tmp, $campaign, $coverage, $dashboard, $pdfTables, $diagnostico, $schoolTime, $insights);
 
         $binary = file_get_contents($tmp);
         @unlink($tmp);
@@ -86,6 +96,8 @@ final class CampaignExcelExporter
      * @param  array<string, mixed>  $dashboard
      * @param  array<string, mixed>  $pdfTables
      * @param  array<string, mixed>  $diagnostico
+     * @param  array<string, mixed>  $schoolTime
+     * @param  Collection<int, BiClioInsight>  $insights
      */
     private function writeXlsx(
         string $absolutePath,
@@ -94,19 +106,33 @@ final class CampaignExcelExporter
         array $dashboard,
         array $pdfTables,
         array $diagnostico,
+        array $schoolTime,
+        Collection $insights,
     ): void {
         $spreadsheet = new Spreadsheet;
-        $active = $spreadsheet->getActiveSheet();
+
+        $index = $spreadsheet->getActiveSheet();
+        $index->setTitle(__('Índice'));
+
+        $active = $spreadsheet->createSheet();
         $active->setTitle(__('Escolas ativas'));
         $this->fillActiveSheet($active, $campaign, $coverage, $dashboard);
+
+        $other = $spreadsheet->createSheet();
+        $other->setTitle(__('Demais status'));
+        $this->fillOtherSheet($other, $dashboard);
 
         $diag = $spreadsheet->createSheet();
         $diag->setTitle(__('Diagnóstico Geral'));
         $this->fillDiagnosticoSheet($diag, $diagnostico);
 
-        $other = $spreadsheet->createSheet();
-        $other->setTitle(__('Demais status'));
-        $this->fillOtherSheet($other, $dashboard);
+        $demo = $spreadsheet->createSheet();
+        $demo->setTitle(__('Demografia'));
+        $this->fillDemografiaSheet($demo, $pdfTables, $diagnostico);
+
+        $tempo = $spreadsheet->createSheet();
+        $tempo->setTitle(__('Tempo escolar'));
+        $this->fillSchoolTimeSheet($tempo, $schoolTime, $dashboard);
 
         $dist = $spreadsheet->createSheet();
         $dist->setTitle(__('Distorção'));
@@ -120,7 +146,62 @@ final class CampaignExcelExporter
         $expo->setTitle(__('Exposição'));
         $this->fillCensusSheet($expo, $pdfTables['census_matrix'] ?? []);
 
+        $leituras = $spreadsheet->createSheet();
+        $leituras->setTitle(__('Leituras gerenciais'));
+        $this->fillLeiturasSheet($leituras, $insights);
+
+        $this->fillIndexSheet($index, $campaign, [
+            [__('Índice'), __('Mapa das abas deste ficheiro')],
+            [__('Escolas ativas'), __('Metadados, contadores, tríade, jornada, transporte e achados (com PII operacional)')],
+            [__('Demais status'), __('Escolas fora de atividade / outros funcionamentos')],
+            [__('Diagnóstico Geral'), __('Alertas por escola activa + Cor/Raça não declarada')],
+            [__('Demografia'), __('Distribuição Cor/Raça, sexo, faixa etária e listagem sem declaração')],
+            [__('Tempo escolar'), __('Horas/semana por segmento (óptica do aluno)')],
+            [__('Distorção'), __('Idade-série por etapa e amostra de alunos')],
+            [__('NEE e AEE'), __('Inclusão: totais e amostra de pessoas com marcadores')],
+            [__('Exposição'), __('Matriz de exposição das matrículas (Fund. I/II)')],
+            [__('Leituras gerenciais'), __('Síntese automática dos indicadores (dataset BI)')],
+        ]);
+
         (new Xlsx($spreadsheet))->save($absolutePath);
+    }
+
+    /**
+     * @param  list<array{0: string, 1: string}>  $sheets
+     */
+    private function fillIndexSheet(Worksheet $sheet, ClioCampaign $campaign, array $sheets): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [__('Clio — export da coleta'), __('Detalhe')]);
+        $row++;
+        foreach ([
+            [__('Município'), (string) $campaign->municipality_name],
+            [__('UF / IBGE'), trim(($campaign->uf ?? '').' / '.($campaign->ibge_municipio ?? ''), ' /')],
+            [__('Exercício'), (string) $campaign->year],
+            [__('Referência'), (string) optional($campaign->reference_date)?->format('d/m/Y') ?: '—'],
+            [__('UUID'), (string) $campaign->uuid],
+            [__('Gerado em'), now()->timezone(config('app.timezone'))->format('d/m/Y H:i')],
+        ] as [$k, $v]) {
+            $this->writeDataRow($sheet, $row, [$k, $v]);
+            $row++;
+        }
+
+        $row += 1;
+        $this->writeHeaderRow($sheet, $row, [__('Aba'), __('Conteúdo')], self::COLOR_ACCENT);
+        $row++;
+        foreach ($sheets as [$title, $desc]) {
+            $this->writeDataRow($sheet, $row, [$title, $desc]);
+            $row++;
+        }
+
+        $row += 1;
+        $this->writeDataRow($sheet, $row, [
+            __('Nota'),
+            __('Listagens com nome/CPF destinam-se à correção operacional no portal Educacenso. Não redistribuir fora da rede municipal.'),
+        ]);
+
+        $this->autosize($sheet, 2);
+        $sheet->getColumnDimension('B')->setWidth(72);
     }
 
     /**
@@ -513,8 +594,13 @@ final class CampaignExcelExporter
         $row = 1;
         $this->writeHeaderRow($sheet, $row, [__('Indicador'), __('Valor')]);
         $row++;
+        $this->writeDataRow($sheet, $row, [
+            __('Nota'),
+            __('Contagem por pessoa (Identificação única). Marcadores NEE/TEA/AH usam whitelist Sim/tipos — «Não» e «Não declarado» não contam.'),
+        ]);
+        $row++;
         foreach ([
-            [__('Total com marcador NEE'), (string) ($pdfTables['nee_total'] ?? 0)],
+            [__('Total com marcador NEE/TEA/AH'), (string) ($pdfTables['nee_total'] ?? 0)],
             [__('NEE sem matrícula AEE'), (string) ($pdfTables['nee_without_aee'] ?? 0)],
             [__('AEE sem deficiência/TEA/AH'), (string) ($pdfTables['nee_aee_without_condition'] ?? 0)],
             [__('Com alerta de subnotificação'), (string) ($pdfTables['nee_underreporting'] ?? 0)],
@@ -559,6 +645,329 @@ final class CampaignExcelExporter
         }
 
         $this->autosize($sheet, count($headers));
+    }
+
+    /**
+     * @param  array<string, mixed>  $pdfTables
+     * @param  array<string, mixed>  $diagnostico
+     */
+    private function fillDemografiaSheet(Worksheet $sheet, array $pdfTables, array $diagnostico): void
+    {
+        $row = 1;
+        $demo = is_array($pdfTables['demographics'] ?? null) ? $pdfTables['demographics'] : [];
+        $this->writeHeaderRow($sheet, $row, [__('Distribuição demográfica'), __('Detalhe')]);
+        $row++;
+        $this->writeDataRow($sheet, $row, [
+            __('Pessoas lidas (INF-DEM)'),
+            (string) ((int) ($demo['scanned'] ?? 0)),
+        ]);
+        $row++;
+        $this->writeDataRow($sheet, $row, [
+            __('Sem Cor/Raça ou Sexo (total)'),
+            (string) ((int) ($pdfTables['missing_demographics_total'] ?? 0)),
+        ]);
+        $row += 2;
+
+        foreach ([
+            [__('Cor/Raça'), $demo['by_cor_raca'] ?? []],
+            [__('Sexo'), $demo['by_sexo'] ?? []],
+            [__('Faixa etária'), $demo['by_faixa_etaria'] ?? []],
+        ] as [$title, $bars]) {
+            if (! is_array($bars) || $bars === []) {
+                continue;
+            }
+            $this->writeHeaderRow($sheet, $row, [$title, __('Quantidade'), __('%')], self::COLOR_ACCENT);
+            $row++;
+            foreach ($bars as $bar) {
+                if (! is_array($bar)) {
+                    continue;
+                }
+                $this->writeDataRow($sheet, $row, [
+                    (string) ($bar['label'] ?? ''),
+                    (string) ((int) ($bar['count'] ?? 0)),
+                    isset($bar['pct']) ? number_format((float) $bar['pct'], 1, ',', '.').'%' : '—',
+                ]);
+                $row++;
+            }
+            $row++;
+        }
+
+        $cor = is_array($diagnostico['cor_raca_undeclared'] ?? null) ? $diagnostico['cor_raca_undeclared'] : [];
+        $corTotal = (int) ($cor['total'] ?? 0);
+        $this->writeHeaderRow($sheet, $row, [
+            __('INEP'),
+            __('Escola'),
+            __('Pessoas sem Cor/Raça'),
+        ], self::COLOR_ACCENT);
+        $row++;
+        if ($corTotal <= 0) {
+            $this->writeDataRow($sheet, $row, ['', __('Nenhuma pessoa com Cor/Raça vazia ou «Não declarado».'), '']);
+            $row += 2;
+        } else {
+            $this->writeDataRow($sheet, $row, ['', __('Total da rede'), (string) $corTotal], self::COLOR_WARN);
+            $row++;
+            foreach (is_array($cor['schools'] ?? null) ? $cor['schools'] : [] as $schoolRow) {
+                if (! is_array($schoolRow)) {
+                    continue;
+                }
+                $this->writeDataRow($sheet, $row, [
+                    (string) ($schoolRow['inep'] ?? ''),
+                    (string) ($schoolRow['name'] ?? ''),
+                    (string) ((int) ($schoolRow['count'] ?? 0)),
+                ]);
+                $row++;
+            }
+            $row++;
+        }
+
+        $this->writeHeaderRow($sheet, $row, [
+            __('Nome'),
+            __('CPF'),
+            __('Escola'),
+            __('INEP'),
+            __('Faltando'),
+            __('Matrículas'),
+            __('Turmas'),
+            __('ID'),
+        ]);
+        $row++;
+        $missing = is_array($pdfTables['missing_demographics'] ?? null) ? $pdfTables['missing_demographics'] : [];
+        if ($missing === []) {
+            $this->writeDataRow($sheet, $row, [
+                __('Sem listagem — nenhum aluno sem Cor/Raça ou Sexo, ou ficheiros indisponíveis no momento do export.'),
+                '', '', '', '', '', '', '',
+            ]);
+            $row++;
+        } else {
+            foreach ($missing as $person) {
+                if (! is_array($person)) {
+                    continue;
+                }
+                $this->writeDataRow($sheet, $row, [
+                    (string) ($person['name'] ?? ''),
+                    (string) ($person['cpf'] ?? ''),
+                    (string) ($person['school'] ?? ''),
+                    (string) ($person['inep'] ?? ''),
+                    (string) ($person['faltando'] ?? ''),
+                    (string) ($person['matriculas'] ?? ''),
+                    (string) ($person['turmas'] ?? ''),
+                    (string) ($person['id'] ?? ''),
+                ], self::COLOR_WARN);
+                $row++;
+            }
+        }
+
+        $this->autosize($sheet, 8);
+    }
+
+    /**
+     * @param  array<string, mixed>  $schoolTime
+     * @param  array<string, mixed>  $dashboard
+     */
+    private function fillSchoolTimeSheet(Worksheet $sheet, array $schoolTime, array $dashboard): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [__('Indicador'), __('Valor')]);
+        $row++;
+
+        $jornada = is_array($dashboard['jornada'] ?? null) ? $dashboard['jornada'] : [];
+        $fromDashboard = is_array($jornada['school_time'] ?? null) ? $jornada['school_time'] : [];
+        if (empty($schoolTime['available']) && ! empty($fromDashboard['available'])) {
+            $schoolTime = $fromDashboard;
+        }
+
+        if (empty($schoolTime['available'])) {
+            $this->writeDataRow($sheet, $row, [
+                __('Disponibilidade'),
+                __('Sem Relações de turmas suficientes para estimar o tempo escolar.'),
+            ]);
+            $this->autosize($sheet, 2);
+
+            return;
+        }
+
+        $this->writeDataRow($sheet, $row, [
+            __('Nota'),
+            (string) ($schoolTime['note'] ?? ''),
+        ]);
+        $row++;
+        $network = is_array($schoolTime['network'] ?? null) ? $schoolTime['network'] : [];
+        $hours = $network['horas_aluno_semana'] ?? null;
+        $this->writeDataRow($sheet, $row, [
+            __('Média rede (h/semana aluno)'),
+            $hours !== null ? number_format((float) $hours, 1, ',', '.') : '—',
+        ]);
+        $row++;
+        $this->writeDataRow($sheet, $row, [
+            __('Alunos com CH identificada'),
+            (string) ((int) ($network['alunos_com_ch'] ?? 0)),
+        ]);
+        $row++;
+        $this->writeDataRow($sheet, $row, [
+            __('Tem carga horária legível'),
+            ! empty($schoolTime['has_ch']) ? '1' : '0',
+        ]);
+        $row += 2;
+
+        $this->writeHeaderRow($sheet, $row, [
+            __('Segmento'),
+            __('Turmas'),
+            __('Alunos'),
+            __('h/sem. aluno'),
+            __('Curricular h'),
+            __('Curricular alunos'),
+            __('AEE h'),
+            __('AEE alunos'),
+            __('Complementar h'),
+            __('Complementar alunos'),
+            __('Opções de CH'),
+        ], self::COLOR_ACCENT);
+        $row++;
+
+        foreach (is_array($schoolTime['segments'] ?? null) ? $schoolTime['segments'] : [] as $seg) {
+            if (! is_array($seg)) {
+                continue;
+            }
+            $chOptions = collect(is_array($seg['ch_options'] ?? null) ? $seg['ch_options'] : [])
+                ->map(static function ($opt): string {
+                    if (! is_array($opt)) {
+                        return '';
+                    }
+
+                    return trim((string) ($opt['label'] ?? '').' ('.(int) ($opt['turmas'] ?? 0).'t/'.(int) ($opt['alunos'] ?? 0).'a)');
+                })
+                ->filter()
+                ->implode('; ');
+
+            $curr = is_array($seg['curricular'] ?? null) ? $seg['curricular'] : [];
+            $aee = is_array($seg['aee'] ?? null) ? $seg['aee'] : [];
+            $ac = is_array($seg['ac'] ?? null) ? $seg['ac'] : [];
+
+            $this->writeDataRow($sheet, $row, [
+                (string) ($seg['label'] ?? ''),
+                (string) ((int) ($seg['turmas'] ?? 0)),
+                (string) ((int) ($seg['alunos'] ?? 0)),
+                isset($seg['horas_aluno_semana']) && is_numeric($seg['horas_aluno_semana'])
+                    ? number_format((float) $seg['horas_aluno_semana'], 1, ',', '.')
+                    : '—',
+                isset($curr['ch_media_aluno']) && is_numeric($curr['ch_media_aluno'])
+                    ? number_format((float) $curr['ch_media_aluno'], 1, ',', '.')
+                    : '—',
+                (string) ((int) ($curr['alunos'] ?? 0)),
+                isset($aee['ch_media_aluno']) && is_numeric($aee['ch_media_aluno'])
+                    ? number_format((float) $aee['ch_media_aluno'], 1, ',', '.')
+                    : '—',
+                (string) ((int) ($aee['alunos'] ?? 0)),
+                isset($ac['ch_media_aluno']) && is_numeric($ac['ch_media_aluno'])
+                    ? number_format((float) $ac['ch_media_aluno'], 1, ',', '.')
+                    : '—',
+                (string) ((int) ($ac['alunos'] ?? 0)),
+                $chOptions !== '' ? $chOptions : '—',
+            ]);
+            $row++;
+        }
+
+        // Faixas de CH / turnos da rede (INF-JOR) quando existirem.
+        if (! empty($jornada['available'])) {
+            $row += 2;
+            if (! empty($jornada['by_ch_band'])) {
+                $this->writeHeaderRow($sheet, $row, [__('Faixa de carga horária'), __('Turmas'), __('%')], self::COLOR_ACCENT);
+                $row++;
+                foreach ($jornada['by_ch_band'] as $bar) {
+                    if (! is_array($bar)) {
+                        continue;
+                    }
+                    $this->writeDataRow($sheet, $row, [
+                        (string) ($bar['label'] ?? $bar['short'] ?? ''),
+                        (string) ((int) ($bar['count'] ?? 0)),
+                        isset($bar['pct']) ? number_format((float) $bar['pct'], 1, ',', '.').'%' : '—',
+                    ]);
+                    $row++;
+                }
+            }
+            if (! empty($jornada['by_turno'])) {
+                $row++;
+                $this->writeHeaderRow($sheet, $row, [__('Turno'), __('Turmas'), __('%')], self::COLOR_ACCENT);
+                $row++;
+                foreach ($jornada['by_turno'] as $bar) {
+                    if (! is_array($bar)) {
+                        continue;
+                    }
+                    $this->writeDataRow($sheet, $row, [
+                        (string) ($bar['label'] ?? ''),
+                        (string) ((int) ($bar['count'] ?? 0)),
+                        isset($bar['pct']) ? number_format((float) $bar['pct'], 1, ',', '.').'%' : '—',
+                    ]);
+                    $row++;
+                }
+            }
+        }
+
+        $this->autosize($sheet, 11);
+    }
+
+    /**
+     * @param  Collection<int, BiClioInsight>  $insights
+     */
+    private function fillLeiturasSheet(Worksheet $sheet, Collection $insights): void
+    {
+        $row = 1;
+        $this->writeHeaderRow($sheet, $row, [
+            __('Prioridade'),
+            __('Código'),
+            __('Tema'),
+            __('Indicador'),
+            __('Leitura'),
+        ]);
+        $row++;
+
+        if ($insights->isEmpty()) {
+            $this->writeDataRow($sheet, $row, [
+                '',
+                '',
+                __('Sem leituras gerenciais'),
+                '',
+                __('Actualize o dataset BI na página Insights da coleta para gerar esta síntese.'),
+            ]);
+            $this->autosize($sheet, 5);
+
+            return;
+        }
+
+        $sorted = $insights->sortBy([
+            static fn (BiClioInsight $i): int => match ((string) ($i->severity ?? '')) {
+                'error' => 0,
+                'warning' => 1,
+                default => 2,
+            },
+            static fn (BiClioInsight $i): int => (int) ($i->sort ?? 0),
+        ])->values();
+
+        foreach ($sorted as $insight) {
+            $sev = (string) ($insight->severity ?? 'info');
+            $prio = match ($sev) {
+                'error' => __('Crítico'),
+                'warning' => __('Atenção'),
+                default => __('Informativo'),
+            };
+            $fill = match ($sev) {
+                'error' => 'FFF1F2',
+                'warning' => self::COLOR_WARN,
+                default => null,
+            };
+            $this->writeDataRow($sheet, $row, [
+                $prio,
+                (string) ($insight->code ?? ''),
+                (string) ($insight->title ?? ''),
+                (string) ($insight->metric_value ?: '—'),
+                (string) ($insight->body ?? ''),
+            ], $fill);
+            $sheet->getStyle('E'.$row)->getAlignment()->setWrapText(true);
+            $row++;
+        }
+
+        $this->autosize($sheet, 5);
+        $sheet->getColumnDimension('E')->setWidth(72);
     }
 
     /**
@@ -738,6 +1147,37 @@ final class CampaignExcelExporter
         ] as [$label, $value]) {
             $this->writeDataRow($sheet, $row, [(string) $label, (string) $value]);
             $row++;
+        }
+
+        $cor = is_array($diagnostico['cor_raca_undeclared'] ?? null) ? $diagnostico['cor_raca_undeclared'] : [];
+        $corTotal = (int) ($cor['total'] ?? 0);
+        $row += 2;
+        $this->writeHeaderRow($sheet, $row, [
+            __('Cor/Raça não declarada'),
+            __('Quantidade'),
+        ], self::COLOR_ACCENT);
+        $row++;
+        $this->writeDataRow($sheet, $row, [__('Total da rede'), (string) $corTotal], $corTotal > 0 ? self::COLOR_WARN : null);
+        $row++;
+        if ($corTotal > 0) {
+            $this->writeHeaderRow($sheet, $row, [__('INEP'), __('Escola'), __('Pessoas')]);
+            $row++;
+            foreach (is_array($cor['schools'] ?? null) ? $cor['schools'] : [] as $schoolRow) {
+                if (! is_array($schoolRow)) {
+                    continue;
+                }
+                $this->writeDataRow($sheet, $row, [
+                    (string) ($schoolRow['inep'] ?? ''),
+                    (string) ($schoolRow['name'] ?? ''),
+                    (string) ((int) ($schoolRow['count'] ?? 0)),
+                ], self::COLOR_WARN);
+                $row++;
+            }
+        } else {
+            $this->writeDataRow($sheet, $row, [
+                __('Nenhuma pessoa com Cor/Raça vazia ou «Não declarado» nas escolas activas.'),
+                '',
+            ]);
         }
 
         $this->autosize($sheet, 6);

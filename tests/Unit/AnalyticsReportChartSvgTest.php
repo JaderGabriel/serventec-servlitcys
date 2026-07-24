@@ -41,4 +41,33 @@ class AnalyticsReportChartSvgTest extends TestCase
         $this->assertStringContainsString('Programa longo', $svg);
         $this->assertStringContainsString('3', $svg);
     }
+
+    #[Test]
+    public function it_renders_line_multi_chart_treating_null_as_zero(): void
+    {
+        $svg = AnalyticsReportChartSvg::render([
+            'type' => 'line',
+            'title' => 'Matrículas — Censo INEP',
+            'labels' => ['2021', '2022', '2023'],
+            'datasets' => [
+                [
+                    'label' => 'Total',
+                    'data' => [100, null, 140],
+                    'borderColor' => '#0f766e',
+                ],
+                [
+                    'label' => 'Regular',
+                    'data' => [80, 90, 110],
+                    'borderColor' => '#4338ca',
+                ],
+            ],
+        ]);
+
+        $this->assertNotNull($svg);
+        $this->assertStringContainsString('Matrículas — Censo INEP', $svg);
+        $this->assertStringContainsString('<polyline', $svg);
+        $this->assertStringContainsString('Total', $svg);
+        $this->assertStringContainsString('2021', $svg);
+        $this->assertStringContainsString('#0f766e', $svg);
+    }
 }
