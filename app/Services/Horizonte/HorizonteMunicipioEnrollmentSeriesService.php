@@ -310,14 +310,16 @@ final class HorizonteMunicipioEnrollmentSeriesService
 
     private function isConsultoriaActive(string $ibge): bool
     {
+        $normalized = FundebMunicipioReferenceRepository::normalizeIbge($ibge);
+        if ($normalized === null) {
+            return false;
+        }
+
         /** @var City|null $city */
         $city = City::query()
             ->where('is_active', true)
-            ->whereNotNull('ibge_municipio')
-            ->get(['id', 'ibge_municipio'])
-            ->first(static function (City $candidate) use ($ibge): bool {
-                return FundebMunicipioReferenceRepository::normalizeIbge((string) $candidate->ibge_municipio) === $ibge;
-            });
+            ->where('ibge_municipio', $normalized)
+            ->first(['id', 'db_host', 'db_database', 'db_username']);
 
         return $city !== null && $city->hasDataSetup();
     }
