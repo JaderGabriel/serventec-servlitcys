@@ -78,7 +78,6 @@
             'deviceHint' => $deviceHint,
             'deviceSuggestsMobile' => $deviceSuggestsMobile,
         ]))"
-        x-init="init()"
         @horizonte-guide.window="onHorizonteGuide($event.detail)"
         @horizonte-layout-toggle.window="toggleLayoutVariant()"
     >

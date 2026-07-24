@@ -17,7 +17,6 @@
 <div
     class="space-y-3"
     x-data="cadunicoTerritoryMap(@js($markers), @js($schools), @js($footnote), @js($ranking))"
-    x-init="init()"
     @destroy.window="destroy()"
 >
     <div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,280px)]">

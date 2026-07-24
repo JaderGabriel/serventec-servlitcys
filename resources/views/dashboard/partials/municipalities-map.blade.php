@@ -47,7 +47,6 @@
 
     <div
         x-data="brazilMunicipalitiesMap(@js($mapMarkers), @js($mapStatusColors), @js($mapOptions))"
-        x-init="init()"
     >
         <div class="serv-map-legend px-5 py-3 border-b border-slate-200/90 dark:border-slate-700/90 flex flex-col gap-2.5 text-xs" aria-label="{{ __('Legendas do mapa') }}">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="list" aria-label="{{ __('Conexão i-Educar') }}">

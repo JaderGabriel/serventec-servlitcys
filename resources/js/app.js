@@ -38,39 +38,11 @@ import "./notification-bell.js";
 import "./documentationSearch.js";
 import "./documentationToc.js";
 import { registerScrollToTopData } from "./scroll-to-top.js";
-
-/**
- * Alpine data factory que só descarrega o módulo na primeira utilização
- * (code-split: horizonte / clio / mapas analytics ficam fora do bundle principal).
- *
- * O Vite pode resolver o dynamic import para a factory directa (`.then(e => e.t)`)
- * em vez de um módulo `{ default }` — aceitar ambas as formas.
- *
- * @param {() => Promise<Function|{ default: Function }>} importer
- */
-function lazyAlpineData(importer) {
-    return (...args) => ({
-        async init() {
-            const mod = await importer();
-            const factory =
-                typeof mod === "function" ? mod : mod?.default;
-            const instance =
-                typeof factory === "function" ? factory(...args) : factory;
-            if (instance == null || typeof instance !== "object") {
-                console.error("lazyAlpineData: factory inválida", mod);
-                return;
-            }
-            const nestedInit =
-                typeof instance.init === "function" ? instance.init : null;
-            const descriptors = Object.getOwnPropertyDescriptors(instance);
-            delete descriptors.init;
-            Object.defineProperties(this, descriptors);
-            if (nestedInit) {
-                return nestedInit.call(this);
-            }
-        },
-    });
-}
+import schoolUnitsMap from "./schoolUnitsMap.js";
+import cadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
+import brazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
+import createHorizonteMap from "./horizonteMap.js";
+import clioReportCard from "./clioReportCard.js";
 
 registerChartVisualPlugins(Chart);
 
@@ -268,25 +240,12 @@ function mergeCartesianScales(base, extra) {
 }
 
 document.addEventListener("alpine:init", () => {
-    Alpine.data(
-        "schoolUnitsMap",
-        lazyAlpineData(() => import("./schoolUnitsMap.js")),
-    );
-
-    Alpine.data(
-        "cadunicoTerritoryMap",
-        lazyAlpineData(() => import("./cadunicoTerritoryMap.js")),
-    );
-
-    Alpine.data(
-        "brazilMunicipalitiesMap",
-        lazyAlpineData(() => import("./brazilMunicipalitiesMap.js")),
-    );
-
-    Alpine.data(
-        "horizonteMap",
-        lazyAlpineData(() => import("./horizonteMap.js")),
-    );
+    // Import estático (não lazy): o code-split via dynamic import + unwrap
+    // incompatível com o interop Rolldown deixava x-cloak/x-show sem dados.
+    Alpine.data("schoolUnitsMap", schoolUnitsMap);
+    Alpine.data("cadunicoTerritoryMap", cadunicoTerritoryMap);
+    Alpine.data("brazilMunicipalitiesMap", brazilMunicipalitiesMap);
+    Alpine.data("horizonteMap", createHorizonteMap);
 
     registerAnalyticsExportHub(Alpine);
 
@@ -2316,10 +2275,7 @@ registerDataLoadingStore(Alpine);
 registerAnalyticsPageHeader(Alpine);
 registerScrollToTopData(Alpine);
 Alpine.data("rxCadastroPulse", rxCadastroPulse);
-Alpine.data(
-    "clioReportCard",
-    lazyAlpineData(() => import("./clioReportCard.js")),
-);
+Alpine.data("clioReportCard", clioReportCard);
 
 Alpine.start();
 
