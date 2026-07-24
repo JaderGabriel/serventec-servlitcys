@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade), **Clio** (coletas Educacenso 1ª etapa) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
-**Versão em produção (`main`):** **8.2.0** · tag **`20260724c-Hygieia`** · [release](docs/RELEASE_20260724c_HYGIEIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **8.2.1** · tag **`20260724d-Eunomia`** · [release](docs/RELEASE_20260724d_EUNOMIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
@@ -283,7 +283,8 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Tag | Data | Destaque |
 |--------|-----|------|----------|
-| **▶ 8.2.0** | `20260724c-Hygieia` | 24/07 | Clio PDF série SVG, reanálise em lote, Censo 2025 — [RELEASE](docs/RELEASE_20260724c_HYGIEIA.md) |
+| **▶ 8.2.1** | `20260724d-Eunomia` | 24/07 | Estabilização A–D (testes, segurança, perf, docs) — [RELEASE](docs/RELEASE_20260724d_EUNOMIA.md) |
+| 8.2.0 | `20260724c-Hygieia` | 24/07 | Clio PDF série SVG, reanálise em lote, Censo 2025 — [RELEASE](docs/RELEASE_20260724c_HYGIEIA.md) |
 | 8.1.0 | `20260724b-Asclepius` | 24/07 | Clio Diagnóstico Geral, PDF gestor, tempo escolar — [RELEASE](docs/RELEASE_20260724b_ASCLEPIUS.md) |
 | 8.0.0 | `20260721-Aletheia` | 21/07 | Clio hub de relatórios — [RELEASE](docs/RELEASE_20260721_ALETHEIA.md) |
 | 7.0.3 | `20260709-Calliope` | 09/07 | Leitor docs modular — [RELEASE](docs/RELEASE_20260709_CALLIOPE.md) |

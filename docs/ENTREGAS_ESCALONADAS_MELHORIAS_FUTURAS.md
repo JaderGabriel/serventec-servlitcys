@@ -1,10 +1,10 @@
 # Entregas escalonadas — melhorias futuras
 
-**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.2.1 · **Última revisão:** 2026-07-24
 
 > **Índice:** [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md) · **Julho/2026:** [ENTREGAS_ESCALONADAS_JULHO_2026.md](ENTREGAS_ESCALONADAS_JULHO_2026.md) · **Backlog (IDs):** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimizações, documentação e segurança), após a linha **8.2.0 Hygieia** e as otimizações Horizonte em `main` (fingerprint, geo filtrada, batch FUNDEB/SICONFI, retries 503).
+Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimizações, documentação e segurança), após a linha **8.2.1 Eunomia** (fases A–D em `main`) e as otimizações Horizonte (fingerprint, geo filtrada, batch FUNDEB/SICONFI, retries 503).
 
 **Como usar:** priorizar PRs pela ordem das fases A→E; cada item deve virar PR pequeno e entregável. Itens com ID `INF-*` / `HOR-*` cruzam com o [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md).
 

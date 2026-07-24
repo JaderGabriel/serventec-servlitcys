@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **8.2.0** · release `20260724c-Hygieia` · **Ramo:** `main` · **Última revisão:** 2026-07-24
+**Versão em produção:** **8.2.1** · release `20260724d-Eunomia` · **Ramo:** `main` · **Última revisão:** 2026-07-24
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **decisões técnicas**, ve
 
 ---
 
-## Mapa de capacidades (8.2.0)
+## Mapa de capacidades (8.2.1)
 
 ```mermaid
 flowchart TB
