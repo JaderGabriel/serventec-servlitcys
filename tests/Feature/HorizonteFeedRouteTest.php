@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,29 +19,14 @@ final class HorizonteFeedRouteTest extends TestCase
         $response->assertRedirect(route('admin.horizonte-import.index'));
     }
 
-    public function test_post_horizonte_feed_runs_feed_and_redirects_to_hub(): void
+    public function test_post_horizonte_feed_when_disabled_flashes_error(): void
     {
         config([
             'horizonte.enabled' => true,
-            'horizonte.fortnightly_feed.enabled' => true,
+            'horizonte.fortnightly_feed.enabled' => false,
         ]);
 
         $admin = User::factory()->admin()->create();
-
-        $this->mock(HorizonteFortnightlyFeedService::class, function ($mock): void {
-            $mock->shouldReceive('runStaged')
-                ->once()
-                ->withArgs(function (array $options): bool {
-                    return ($options['reset'] ?? false) === true
-                        && ($options['uf'] ?? '') === 'SP'
-                        && ($options['skip_fundeb'] ?? true) === false;
-                })
-                ->andReturn([
-                    'success' => true,
-                    'message' => 'OK',
-                    'phases' => [],
-                ]);
-        });
 
         $response = $this->actingAs($admin)->post(route('admin.horizonte-import.feed'), [
             'uf' => 'SP',
@@ -50,7 +34,7 @@ final class HorizonteFeedRouteTest extends TestCase
         ]);
 
         $response->assertRedirect(route('admin.horizonte-import.index'));
-        $response->assertSessionHas('horizonte_feed.success', true);
+        $response->assertSessionHas('public_data_error');
     }
 
     public function test_post_horizonte_feed_rejects_invalid_uf(): void
@@ -61,11 +45,6 @@ final class HorizonteFeedRouteTest extends TestCase
         ]);
 
         $admin = User::factory()->admin()->create();
-
-        $this->mock(HorizonteFortnightlyFeedService::class, function ($mock): void {
-            $mock->shouldNotReceive('runStaged');
-            $mock->shouldNotReceive('run');
-        });
 
         $response = $this->actingAs($admin)->post(route('admin.horizonte-import.feed'), [
             'uf' => 'XX',
@@ -85,11 +64,6 @@ final class HorizonteFeedRouteTest extends TestCase
 
         $admin = User::factory()->admin()->create();
 
-        $this->mock(HorizonteFortnightlyFeedService::class, function ($mock): void {
-            $mock->shouldNotReceive('runStaged');
-            $mock->shouldNotReceive('run');
-        });
-
         $response = $this->actingAs($admin)->post(route('admin.horizonte-import.feed'), [
             'phases' => [],
         ]);
@@ -105,5 +79,82 @@ final class HorizonteFeedRouteTest extends TestCase
         $response = $this->actingAs($admin)->get(route('admin.public-data.index', ['hub' => 'horizonte']));
 
         $response->assertRedirect(route('admin.horizonte-import.index'));
+    }
+
+    public function test_platform_user_cannot_post_horizonte_feed(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('admin.horizonte-import.feed'), [
+                'phases' => ['fundeb_receita'],
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_municipal_user_cannot_post_horizonte_educacenso_sync(): void
+    {
+        $user = User::factory()->municipal()->create();
+
+        $this->actingAs($user)
+            ->post(route('admin.horizonte-import.educacenso-sync'), [
+                'steps' => 1,
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_admin_post_educacenso_sync_when_disabled_flashes_error(): void
+    {
+        config(['horizonte.enabled' => false]);
+
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->post(route('admin.horizonte-import.educacenso-sync'), [
+            'steps' => 1,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('public_data_error');
+    }
+
+    public function test_admin_post_municipal_geo_sync_when_disabled_flashes_error(): void
+    {
+        config(['horizonte.enabled' => false]);
+
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->post(route('admin.horizonte-import.municipal-geo-sync'), [
+            'mode' => 'step',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('public_data_error');
+    }
+
+    public function test_platform_user_cannot_post_bundle_export(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->post(route('admin.horizonte-import.bundle-export'))
+            ->assertForbidden();
+    }
+
+    public function test_municipal_user_cannot_post_bundle_import(): void
+    {
+        $user = User::factory()->municipal()->create();
+
+        $this->actingAs($user)
+            ->post(route('admin.horizonte-import.bundle-import'))
+            ->assertForbidden();
+    }
+
+    public function test_admin_post_bundle_import_validates_bundle_file(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)
+            ->post(route('admin.horizonte-import.bundle-import'), [])
+            ->assertSessionHasErrors(['bundle']);
     }
 }

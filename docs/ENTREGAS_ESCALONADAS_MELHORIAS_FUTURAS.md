@@ -83,7 +83,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 
 | ID | Prioridade | Trabalho | Critério de done |
 |----|------------|----------|------------------|
-| **E1** | P1 | Feature tests POST admin (Horizonte import, Public Data) com mock | AuthZ + flash/redirect cobertos |
+| **E1** | P1 | Feature tests POST admin (Horizonte import, Public Data) com mock | **Concluído** (2026-07-24) — AuthZ + flash/redirect; `run-tests.sh` → phpunit directo |
 | **E2** | P1 | Unit tests dos 5 Jobs (`handle` + fila/timeout) | Jobs não regressam sem teste |
 | **E3** | P2 | Feature authz restante Admin (~12 controllers) | Ações POST críticas cobertas |
 
