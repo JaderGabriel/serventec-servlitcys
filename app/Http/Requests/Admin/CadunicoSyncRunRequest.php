@@ -21,7 +21,7 @@ class CadunicoSyncRunRequest extends FormRequest
             'action' => 'required|string|in:auto_sync,import_city_year,import_storage_year,import_csv,upload_cecad,upload_territorio,import_all_cities_year,sync_territorio_flow_city,sync_territorio_city,sync_territorio_all',
             'city_id' => 'nullable|integer|exists:cities,id',
             'ano' => 'nullable|integer|min:2000|max:'.((int) date('Y') + 1),
-            'csv_file' => 'required_if:action,import_csv,upload_cecad,upload_territorio|file|max:20480',
+            'csv_file' => 'required_if:action,import_csv,upload_cecad,upload_territorio|file|max:20480|mimes:csv,txt|extensions:csv,txt',
             'auto_import' => 'sometimes|boolean',
             'all_configured_years' => 'sometimes|boolean',
         ];

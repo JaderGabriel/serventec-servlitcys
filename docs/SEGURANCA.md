@@ -80,6 +80,8 @@ Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários re
 
 **Upload Educacenso (conferência CEN-01):** arquivo `.txt` temporário em `storage/app/educacenso/`; limite `EDUCACENSO_DRY_RUN_MAX_MB`; análise read-only do i-Educar — ver [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md).
 
+**Upload Clio / CadÚnico:** Clio aceita só `csv|txt|zip` (`mimes` + `extensions`); CadÚnico CSV `csv|txt` no `CadunicoSyncRunRequest`.
+
 ## Dependências e vulnerabilidades
 
 - Mantenha **Composer** e **npm** atualizados; execute `composer audit` e `npm audit` regularmente.

@@ -51,7 +51,7 @@ class CampaignUploadController extends Controller
 
         $request->validate([
             'files' => ['required', 'array', 'min:1', 'max:'.$maxFiles],
-            'files.*' => ['file', 'max:'.$maxKb],
+            'files.*' => ['file', 'max:'.$maxKb, 'mimes:csv,txt,zip', 'extensions:csv,txt,zip'],
             'relative_paths' => ['nullable', 'array', 'max:'.$maxFiles],
             'relative_paths.*' => ['nullable', 'string', 'max:1024'],
             'async_zip' => ['nullable', 'boolean'],
