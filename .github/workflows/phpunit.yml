@@ -44,3 +44,48 @@ jobs:
       - name: Run PHPUnit (Unit + Feature)
         # Extensões sqlite vêm do setup-php; não é necessário php-with-sqlite.sh.
         run: php artisan test --ansi
+
+  coverage:
+    name: Coverage clover (PHP 8.4)
+    runs-on: ubuntu-latest
+    # Não bloqueia merge: gera artefato mesmo se a suite falhar.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, ctype, json, mbstring, openssl, pdo, pdo_sqlite, sqlite3, tokenizer, xml
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Cache Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-php8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php8.4-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run PHPUnit with clover coverage
+        # Sem --min-coverage / threshold: só produz artefato para acompanhamento.
+        run: |
+          mkdir -p coverage
+          php artisan test --ansi --coverage-clover=coverage/clover.xml
+        continue-on-error: true
+
+      - name: Upload clover coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-coverage-clover
+          path: coverage/clover.xml
+          if-no-files-found: warn
+          retention-days: 14

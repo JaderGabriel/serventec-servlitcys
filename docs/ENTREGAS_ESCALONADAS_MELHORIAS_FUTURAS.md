@@ -38,7 +38,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **A1** | P0 | `composer test` usar `./scripts/php-with-sqlite.sh` | **Concluído** (2026-07-24) — `scripts/run-tests.sh` | INF-04 |
 | **A2** | P0 | Trait / `TestCase`: consentimento legal resolvido ou middleware desativado em Feature | **Concluído** (2026-07-24) — `DisablesAuthenticatedLegalConsent` + `LegalConsentTest` reativa | — |
 | **A3** | P1 | GitHub Actions: PHPUnit Unit+Feature com sqlite | **Concluído** (2026-07-24) — `.github/workflows/phpunit.yml` | INF-01, INF-04 |
-| **A4** | P2 | Coverage clover opcional no CI (sem threshold rígido no início) | Artefato de coverage no CI | — |
+| **A4** | P2 | Coverage clover opcional no CI (sem threshold rígido no início) | **Concluído** (2026-07-24) — job `coverage` + artefato `phpunit-coverage-clover` | — |
 
 ---
 

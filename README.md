@@ -222,7 +222,7 @@ composer test
 # Clio apenas: composer test:clio
 ```
 
-CI remoto: GitHub Actions (`.github/workflows/phpunit.yml`) corre Unit + Feature com `pdo_sqlite` em PHP 8.3 e 8.4 em cada push/PR para `main`.
+CI remoto: GitHub Actions (`.github/workflows/phpunit.yml`) corre Unit + Feature com `pdo_sqlite` em PHP 8.3 e 8.4 em cada push/PR para `main`. Um job opcional gera cobertura Clover (`coverage/clover.xml`) como artefato, **sem** threshold mínimo.
 
 ## Análise estática (PHPStan / Larastan)
 

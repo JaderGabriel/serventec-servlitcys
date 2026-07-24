@@ -99,4 +99,4 @@ php artisan test --testsuite=Unit
 composer test
 ```
 
-No GitHub Actions (`.github/workflows/phpunit.yml`), `setup-php` instala `pdo_sqlite` / `sqlite3` e corre `php artisan test` (Unit + Feature) em PHP 8.3 e 8.4.
+No GitHub Actions (`.github/workflows/phpunit.yml`), `setup-php` instala `pdo_sqlite` / `sqlite3` e corre `php artisan test` (Unit + Feature) em PHP 8.3 e 8.4. O job `coverage` (continue-on-error) gera `coverage/clover.xml` como artefato sem threshold mínimo.
