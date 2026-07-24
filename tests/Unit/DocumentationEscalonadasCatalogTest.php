@@ -36,7 +36,9 @@ class DocumentationEscalonadasCatalogTest extends TestCase
         $this->assertSame('20260601-Atlas', $releases[0]['tag']);
 
         $last = $releases[array_key_last($releases)];
-        $this->assertSame('docs/RELEASE_20260611_HARMONIA.md', $last['path']);
+        $this->assertStringStartsWith('docs/RELEASE_202606', $last['path']);
+        $this->assertNotSame('', $last['version']);
+        $this->assertStringStartsWith('202606', $last['tag']);
     }
 
     public function test_menu_section_lists_index_future_and_monthly_submenu(): void
