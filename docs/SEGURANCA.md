@@ -1,8 +1,8 @@
 # Segurança e operações — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
 
-> **Índice:** [README.md](README.md) · **Deploy:** [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10.
+> **Índice:** [README.md](README.md) · **Deploy:** [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10 · **Clio:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md).
 
 ## Senhas e segredos
 
@@ -84,19 +84,39 @@ Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários re
 
 **Upload Clio / CadÚnico:** Clio aceita só `csv|txt|zip` (`mimes` + `extensions`); CadÚnico CSV `csv|txt` no `CadunicoSyncRunRequest`.
 
+## Clio (coletas Educacenso)
+
+| Tema | Controlo |
+|------|----------|
+| **Acesso** | `canViewClio()` / `CLIO_ENABLED`; inserts e ações sensíveis (upload, análise, cruzamento, vincular i-Educar, CLI) — **só Admin** |
+| **Upload** | `mimes`+`extensions` `csv,txt,zip`; limites `CLIO_UPLOAD_MAX_MB` / `CLIO_MAX_FILES_PER_UPLOAD` |
+| **Fila** | Jobs em `CLIO_QUEUE` (default `clio`); worker com `--timeout=1200` — ver IMPLANTAÇÃO §4.8 |
+| **Drive** | URL de pasta pública ou `CLIO_DRIVE_API_KEY`; lotes `CLIO_DRIVE_BATCH_*` |
+| **Storage** | Artefactos em disco configurável (`CLIO_DISK`); retenção `CLIO_RETENTION_DAYS` + `clio:prune-artifacts` |
+| **Promote i-Educar** | `CLIO_PROMOTE_ENABLED=false` por defeito (Onda 3) |
+
+## Superfícies públicas (PDF / API)
+
+| Superfície | Auth | Mitigações |
+|------------|------|------------|
+| `/relatorio/{publicId}` (+ `/pdf`) | Não (QR do PDF Serventec) | Throttle `60/min`; `publicId` `[A-Za-z0-9_-]{8,64}`; log `analytics.report.public.*` |
+| `/api/saeb/municipio/{ibge}` | Não | Throttle `120/min`; flag `IEDUCAR_SAEB_PUBLIC_API`; **sem token** (conteúdo público pós-import) — reavaliar se houver PII |
+
 ## Dependências e vulnerabilidades
 
 - Mantenha **Composer** e **npm** atualizados; execute `composer audit` e `npm audit` regularmente.
 - Subscreva alertas de segurança do Laravel e PHP.
 
-### Revisão estruturada (2026-06-03)
+### Revisão estruturada (2026-07-24 · 8.2)
 
 - Rotas admin protegidas por `auth`, `verified`, `admin` e `legal.consent` onde aplicável.
 - Login e reset com **throttle** (5/min).
-- Superfície pública `/relatorio/{publicId}`: throttle `60/min`, log `analytics.report.public.*` (IP / `public_id`), formato `publicId` restrito.
-- API SAEB `/api/saeb/municipio/{ibge}`: **sem token** — conteúdo tratado como público pós-import; throttle `120/min` + flag `IEDUCAR_SAEB_PUBLIC_API`. Reavaliar token só se passar a expor PII ou payloads sensíveis.
-- SQL dinâmico em i-Educar limitado a nomes de colunas/tabelas resolvidos por schema da cidade (não a input HTTP directo).
-- Testes unitários: `ContainedPathResolverTest`, `SafeOutboundUrlTest`, CadÚnico/Misocial, FUNDEB metodologia.
+- Superfície pública `/relatorio/{publicId}`: throttle `60/min`, log `analytics.report.public.*`, formato `publicId` restrito.
+- API SAEB `/api/saeb/municipio/{ibge}`: **sem token**; throttle `120/min` + `IEDUCAR_SAEB_PUBLIC_API`.
+- Clio: RBAC + validação de tipos de upload + fila dedicada.
+- SSRF: `SafeOutboundUrl` (incl. SAEB/pedagógico) com DNS fail-closed.
+- SQL dinâmico em i-Educar limitado a nomes resolvidos por schema da cidade.
+- Testes: `ContainedPathResolverTest`, `SafeOutboundUrlTest`, CadÚnico/Misocial, FUNDEB, CI PHPUnit.
 
 ## Auditoria de usuárioes
 

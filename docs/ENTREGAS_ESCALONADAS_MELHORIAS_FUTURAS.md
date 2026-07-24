@@ -74,7 +74,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **D1** | P0 | Bump PERFORMANCE + IMPLANTAÇÃO + `docs/README` para **8.2.0**; secções fingerprint Horizonte + fila Clio | **Concluído** (2026-07-24) |
 | **D2** | P1 | VARIÁVEIS: `HORIZONTE_MAP_FINGERPRINT_CACHE`, `CLIO_DRIVE_BATCH_*`; alinhar default `HORIZONTE_CACHE_SECONDS` (doc ↔ `config/horizonte.php`) | **Concluído** (2026-07-24) — default **3600** |
 | **D3** | P0 | README: histórico 8.x; link Horizonte válido; menção Clio; worker com fila `clio` | **Concluído** (2026-07-24) — link Prospeccao; Clio no README |
-| **D4** | P1 | SEGURANÇA.md: secção Clio + superfície pública PDF/API | Checklist de segurança 8.x |
+| **D4** | P1 | SEGURANÇA.md: secção Clio + superfície pública PDF/API | **Concluído** (2026-07-24) — checklist 8.2 |
 | **D5** | P2 | Corrigir typo «Usuárioes» e resíduos pt-BR em docs administrativos | Consistência editorial |
 
 ---
