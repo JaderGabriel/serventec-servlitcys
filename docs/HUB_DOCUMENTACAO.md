@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.0.4** |
 | **Tag de deploy** | `20260724a-Theia` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `c0a7d791` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724a_THEIA.md](RELEASE_20260724a_THEIA.md) |
 | **Marco** | **Theia** — painel Insights nativo Chart.js; UX análise/home Clio |

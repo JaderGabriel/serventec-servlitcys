@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '8.0.4',
         'release_tag' => '20260724a-Theia',
-        'commit_short' => 'pending',
+        'commit_short' => 'c0a7d791',
         'commit_number' => 561,
         'revision_date' => '2026-07-24',
         'in_production' => true,
