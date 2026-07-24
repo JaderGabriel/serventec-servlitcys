@@ -1,6 +1,6 @@
 # Variáveis de ambiente — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [PERFORMANCE.md](PERFORMANCE.md)
 
@@ -276,6 +276,8 @@ Menu superior após Horizonte · Rotas `/clio/*` · Documentação: [modulos/MOD
 | `CLIO_DRIVE_MAX_FILE_MB` | `64` | Máx. MB por ficheiro Drive |
 | `CLIO_DRIVE_MAX_DEPTH` | `4` | Profundidade de subpastas no Drive |
 | `CLIO_DRIVE_TIMEOUT` | `120` | Timeout HTTP (s) para pedidos Drive |
+| `CLIO_DRIVE_BATCH_THRESHOLD` | `100` | A partir de N ficheiros, import Drive usa lotes |
+| `CLIO_DRIVE_BATCH_SIZE` | `40` | Tamanho de cada lote Drive |
 
 ---
 
@@ -286,7 +288,8 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | Variável | Default | Descrição |
 |----------|---------|-----------|
 | `HORIZONTE_ENABLED` | `true` | Liga o módulo |
-| `HORIZONTE_CACHE_SECONDS` | `900` | TTL cache do payload do mapa (segundos) |
+| `HORIZONTE_CACHE_SECONDS` | `3600` | TTL cache do payload do mapa (segundos) — alinhado a `config/horizonte.php` |
+| `HORIZONTE_MAP_FINGERPRINT_CACHE` | `45` | TTL da memoização do fingerprint COUNT/MAX (15–300 s) |
 | `HORIZONTE_REFERENCE_YEAR` | ano−1 | Exercício FUNDEB/Censo/SAEB |
 | `HORIZONTE_HIGH_THRESHOLD` | `70` | Limiar tier «alta propensão» |
 | `HORIZONTE_MEDIUM_THRESHOLD` | `40` | Limiar tier «média propensão» |
