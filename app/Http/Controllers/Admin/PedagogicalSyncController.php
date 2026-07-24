@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Services\AdminSync\AdminSyncQueueService;
 use App\Services\Inep\SaebHistoricoDatabase;
+use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -139,6 +140,17 @@ class PedagogicalSyncController extends Controller
                     ->withInput()
                     ->with('pedagogical_sync_error', __('A URL deve começar por http:// ou https://.'));
             }
+            $probe = str_replace(
+                ['{ibge}', '{uf}', '{city_id}'],
+                ['1100015', 'RO', '1'],
+                $override
+            );
+            if (! SafeOutboundUrl::isAllowedHttpUrl($probe)) {
+                return redirect()
+                    ->route('admin.pedagogical-sync.index')
+                    ->withInput()
+                    ->with('pedagogical_sync_error', __('URL inválida ou não permitida (SSRF).'));
+            }
             $payload['official_url_override'] = $override;
         }
 
@@ -155,6 +167,12 @@ class PedagogicalSyncController extends Controller
                 ? (int) $validated['md_year']
                 : max(2000, (int) date('Y') - 1);
             $payload['md_url'] = trim((string) ($validated['md_url'] ?? ''));
+            if ($payload['md_url'] !== '' && ! SafeOutboundUrl::isAllowedHttpUrl($payload['md_url'])) {
+                return redirect()
+                    ->route('admin.pedagogical-sync.index')
+                    ->withInput()
+                    ->with('pedagogical_sync_error', __('URL de microdados inválida ou não permitida (SSRF).'));
+            }
             $payload['md_merge'] = $request->boolean('md_merge', true);
             $payload['md_resolve_inep'] = $request->boolean('md_resolve_inep', true);
             $payload['md_keep_cache'] = $request->boolean('md_keep_cache', false);

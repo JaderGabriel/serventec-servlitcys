@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Models\City;
+use App\Support\Http\SafeOutboundUrl;
 use App\Support\Inep\SaebMunicipioPayloadReader;
 use App\Support\Inep\SaebOfficialPayloadParser;
 use Illuminate\Support\Collection;
@@ -143,6 +144,15 @@ class SaebOfficialMunicipalImportService
                         continue;
                     }
                 } else {
+                    if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+                        $errors[] = __(':nome (IBGE :ibge): URL inválida ou não permitida (SSRF).', [
+                            'nome' => $city->name,
+                            'ibge' => $ibge,
+                        ]);
+
+                        continue;
+                    }
+
                     try {
                         $resp = Http::timeout($this->httpTimeoutSeconds())
                             ->withHeaders([

@@ -2,6 +2,7 @@
 
 namespace App\Services\Inep;
 
+use App\Support\Http\SafeOutboundUrl;
 use App\Support\Inep\SaebExplicacaoModalBuilder;
 use Illuminate\Support\Facades\Http;
 
@@ -37,6 +38,9 @@ class SaebPedagogicalImportService
 
         foreach ($urls as $url) {
             $attempts[] = $url;
+            if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+                continue;
+            }
             try {
                 $resp = Http::timeout($this->httpTimeoutSeconds())
                     ->withHeaders([

@@ -3,6 +3,7 @@
 namespace App\Services\Inep;
 
 use App\Support\Filesystem\AppTemp;
+use App\Support\Http\SafeOutboundUrl;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -168,6 +169,10 @@ final class SaebMicrodadosInepDownloader
      */
     private function getWithSinkRespectingSsl(string $url, string $sinkPath, int $timeout, string $userAgent): Response
     {
+        if (! SafeOutboundUrl::isAllowedHttpUrl($url)) {
+            throw new \RuntimeException(__('URL inválida ou não permitida (SSRF).'));
+        }
+
         $variants = $this->httpClientOptionVariants();
 
         foreach ($variants as $index => $opts) {
