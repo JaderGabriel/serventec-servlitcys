@@ -33,16 +33,35 @@ import {
     servDataLoadingFinish,
     servDataLoadingStart,
 } from "./dataLoading.js";
-import createSchoolUnitsMap from "./schoolUnitsMap.js";
-import createCadunicoTerritoryMap from "./cadunicoTerritoryMap.js";
-import createBrazilMunicipalitiesMap from "./brazilMunicipalitiesMap.js";
-import createHorizonteMap from "./horizonteMap.js";
-import clioReportCard from "./clioReportCard.js";
 import rxCadastroPulse from "./rxCadastroPulse.js";
 import "./notification-bell.js";
 import "./documentationSearch.js";
 import "./documentationToc.js";
 import { registerScrollToTopData } from "./scroll-to-top.js";
+
+/**
+ * Alpine data factory que só descarrega o módulo na primeira utilização
+ * (code-split: horizonte / clio / mapas analytics ficam fora do bundle principal).
+ *
+ * @param {() => Promise<{ default: Function }>} importer
+ */
+function lazyAlpineData(importer) {
+    return (...args) => ({
+        async init() {
+            const { default: factory } = await importer();
+            const instance =
+                typeof factory === "function" ? factory(...args) : factory;
+            const nestedInit =
+                typeof instance.init === "function" ? instance.init : null;
+            const descriptors = Object.getOwnPropertyDescriptors(instance);
+            delete descriptors.init;
+            Object.defineProperties(this, descriptors);
+            if (nestedInit) {
+                return nestedInit.call(this);
+            }
+        },
+    });
+}
 
 registerChartVisualPlugins(Chart);
 
@@ -240,27 +259,24 @@ function mergeCartesianScales(base, extra) {
 }
 
 document.addEventListener("alpine:init", () => {
-    Alpine.data("schoolUnitsMap", (markers, footnote = null, options = null) =>
-        createSchoolUnitsMap(markers, footnote, options),
+    Alpine.data(
+        "schoolUnitsMap",
+        lazyAlpineData(() => import("./schoolUnitsMap.js")),
     );
 
     Alpine.data(
         "cadunicoTerritoryMap",
-        (territoryMarkers = [], schoolMarkers = [], footnote = null, ranking = []) =>
-            createCadunicoTerritoryMap(
-                territoryMarkers,
-                schoolMarkers,
-                footnote,
-                ranking,
-            ),
+        lazyAlpineData(() => import("./cadunicoTerritoryMap.js")),
     );
 
-    Alpine.data("brazilMunicipalitiesMap", (markers, statusColors = null, options = null) =>
-        createBrazilMunicipalitiesMap(markers, statusColors, options),
+    Alpine.data(
+        "brazilMunicipalitiesMap",
+        lazyAlpineData(() => import("./brazilMunicipalitiesMap.js")),
     );
 
-    Alpine.data("horizonteMap", (markers, colors = {}, options = {}) =>
-        createHorizonteMap(markers, colors, options),
+    Alpine.data(
+        "horizonteMap",
+        lazyAlpineData(() => import("./horizonteMap.js")),
     );
 
     registerAnalyticsExportHub(Alpine);
@@ -2291,7 +2307,10 @@ registerDataLoadingStore(Alpine);
 registerAnalyticsPageHeader(Alpine);
 registerScrollToTopData(Alpine);
 Alpine.data("rxCadastroPulse", rxCadastroPulse);
-Alpine.data("clioReportCard", clioReportCard);
+Alpine.data(
+    "clioReportCard",
+    lazyAlpineData(() => import("./clioReportCard.js")),
+);
 
 Alpine.start();
 

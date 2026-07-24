@@ -58,7 +58,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 
 | ID | Prioridade | Trabalho | Critério de done | Relacionado |
 |----|------------|----------|------------------|-------------|
-| **C1** | P1 | Code-split Vite: chunks `horizonte`, `clio`, `analytics` | Páginas sem módulo não carregam Leaflet/Clio inteiros | [PERFORMANCE.md](PERFORMANCE.md) |
+| **C1** | P1 | Code-split Vite: chunks `horizonte`, `clio`, `analytics` | **Concluído** (2026-07-24) — `import()` lazy + `manualChunks` | [PERFORMANCE.md](PERFORMANCE.md) |
 | **C2** | P1 | Defaults Redis documentados / alinhados em `.env.example` (com fallback) | Ops sabe o caminho recomendado | INF-06 |
 | **C3** | P0 | Worker: `default,admin-sync,clio` no README e IMPLANTAÇÃO | Jobs Clio (timeout ~20 min) não ficam parados | [MODULO_CLIO.md](modulos/MODULO_CLIO.md) |
 | **C4** | P1 | Testes unitários leves de `HorizonteMapService` (assemble scoped + cache hit) | Cobertura do núcleo do mapa | — |

@@ -16,6 +16,19 @@ Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis 
 
 Variáveis: `ANALYTICS_MUNICIPALITY_HEALTH_MODE`, `ANALYTICS_MUNICIPALITY_HEALTH_CACHE`, `ANALYTICS_FINANCE_TABS_REUSE_CONTEXT` ([VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §7).
 
+## Front-end (Vite) — code-split
+
+O entry `resources/js/app.js` **não** importa Leaflet / Horizonte / Clio de forma eager. Os módulos carregam sob demanda (`import()`) quando o componente Alpine correspondente é inicializado:
+
+| Chunk (Rollup) | Módulo | Página típica |
+|----------------|--------|---------------|
+| `horizonte` | `horizonteMap.js` | `/dashboard/horizonte` |
+| `clio` | `clioReportCard.js` | `/clio` (ficha) |
+| `analytics-maps` | `schoolUnitsMap`, `cadunicoTerritoryMap`, `brazilMunicipalitiesMap` | Analytics / Início |
+| `leaflet` | Leaflet + markercluster | partilhado pelos mapas |
+
+Login, docs e admin genérico ficam só com o bundle principal (sem Leaflet). Após alterar JS: `npm run build` e versionar `public/build/`.
+
 ## Diagnóstico rápido
 
 ```bash
