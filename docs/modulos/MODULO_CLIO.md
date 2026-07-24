@@ -10,6 +10,14 @@
 
 **Acesso:** Admin e Usuário (não Municipal). **Inserts e ações sensíveis** (coleta, upload, análise, cruzamento, ficha leve, vincular i-Educar, CLI `clio:*`) — **só Admin**. Leitura e export CSV/PDF — Admin e Usuário.
 
+**Fila:** jobs `ProcessClioCampaignIngestJob` / `ProcessClioCampaignAnalyzeJob` usam `CLIO_QUEUE` (default `clio`). O worker de produção **tem** de incluir essa fila, com `--timeout=1200`:
+
+```bash
+php artisan queue:work database --queue=default,admin-sync,clio --timeout=1200
+```
+
+Ver [IMPLANTACAO_PRODUCAO.md](../IMPLANTACAO_PRODUCAO.md) §4.8.
+
 ---
 
 ## O que este módulo faz

@@ -202,6 +202,7 @@ Processos que dependem da fila:
 - Notificações (`APP_NOTIFICATIONS_QUEUE=default`)
 - Exportação PDF Serventec (`ANALYTICS_PDF_QUEUE`)
 - Sincronização administrativa (`ADMIN_SYNC_QUEUE=admin-sync`)
+- **Clio** — ingest ZIP / análise (`CLIO_QUEUE=clio`; timeout dos jobs até **1200 s**)
 
 **Opção A — Supervisor (recomendado em produção contínua)**
 
@@ -209,7 +210,7 @@ Processos que dependem da fila:
 ; /etc/supervisor/conf.d/servlitcys-worker.conf
 [program:servlitcys-queue]
 process_name=%(program_name)s
-command=php /caminho/para/servlitcys/artisan queue:work database --sleep=3 --tries=3 --max-time=3600 --queue=default,admin-sync
+command=php /caminho/para/servlitcys/artisan queue:work database --sleep=3 --tries=3 --timeout=1200 --max-time=3600 --queue=default,admin-sync,clio
 autostart=true
 autorestart=true
 user=www-data
@@ -299,7 +300,8 @@ Altere a senha do admin após o primeiro login.
 |---------|----------------|--------|
 | CSS/JS quebrados; pedidos a porta 5173 | `public/hot` presente ou falta `public/build` | `rm -f public/hot`; confirmar `manifest.json` |
 | Aba Serventec em branco | Cache de views antiga | `php artisan view:clear && php artisan view:cache` |
-| Notificações/PDF não aparecem | Fila sem worker | Supervisor `queue:work` com `default,admin-sync` |
+| Notificações/PDF não aparecem | Fila sem worker | Supervisor `queue:work` com `default,admin-sync,clio` |
+| Upload/análise Clio parado | Worker sem fila `clio` | Incluir `clio` e `--timeout=1200` (jobs longos) |
 | Pulse «Servers offline» no cron, OK no SSH | Cron com usuário/permissões diferentes, `>> /dev/null`, ou cron `*/3` desalinhado | Cron `* * * * *` como usuário da app; log em `storage/logs/scheduler.log`; `SCHEDULE_LOG_TO_FILE=true`; `php artisan schedule:pulse-diagnose`; `schedule:clear-cache` |
 | Pulse «Servers offline» | Cron inactivo ou `PULSE_SCHEDULE_ENABLED=false` | Ativar cron; `PULSE_SCHEDULE_ENABLED=true` |
 | Financiamentos sem Transparência | API key vazia | `PORTAL_TRANSPARENCIA_API_KEY` no `.env` + `config:cache` |

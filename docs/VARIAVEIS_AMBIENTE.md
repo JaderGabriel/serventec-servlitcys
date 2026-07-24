@@ -132,7 +132,7 @@ Diagnóstico Pulse offline: `php artisan schedule:pulse-diagnose`
 **Worker de filas** (recomendado Supervisor):
 
 ```bash
-php artisan queue:work database --queue=default,admin-sync --sleep=3 --tries=3
+php artisan queue:work database --queue=default,admin-sync,clio --sleep=3 --tries=3 --timeout=1200
 ```
 
 ---

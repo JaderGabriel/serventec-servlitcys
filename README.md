@@ -212,6 +212,17 @@ git add public/build && git commit -m "chore: rebuild assets"
 
 Os mesmos comandos `npm ci` + `npm run build` acima geram os arquivos em `public/build/` antes do deploy.
 
+## Filas (worker)
+
+Inclua a fila **`clio`** (ingest/análise Educacenso; jobs até ~20 min). Sem ela, uploads ZIP e análises assíncronas ficam parados.
+
+```bash
+# database (default local) ou redis (produção)
+php artisan queue:work database --queue=default,admin-sync,clio --sleep=3 --tries=3 --timeout=1200
+```
+
+Supervisor e troubleshooting: [docs/IMPLANTACAO_PRODUCAO.md](docs/IMPLANTACAO_PRODUCAO.md) §4.8 · [docs/modulos/MODULO_CLIO.md](docs/modulos/MODULO_CLIO.md).
+
 ## Testes
 
 Requer extensão PHP `pdo_sqlite` para a base em memória definida em `phpunit.xml`. O script `composer test` carrega `pdo_sqlite` via `scripts/php-with-sqlite.sh` (extensões em `tools/php-ext/` quando o pacote do sistema não está instalado).
