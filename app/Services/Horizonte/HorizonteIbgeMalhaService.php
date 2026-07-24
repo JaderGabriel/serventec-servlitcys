@@ -87,6 +87,50 @@ final class HorizonteIbgeMalhaService
     }
 
     /**
+     * Malha municipal filtrada por códigos IBGE (resposta HTTP mais leve para Contornos).
+     *
+     * @param  list<string>  $ibgeCodes
+     * @return array<string, mixed>
+     */
+    public function stateMunicipalGeoJsonFiltered(string $uf, array $ibgeCodes): array
+    {
+        $full = $this->stateMunicipalGeoJson($uf);
+        $wanted = [];
+        foreach ($ibgeCodes as $code) {
+            $digits = preg_replace('/\D/', '', (string) $code) ?? '';
+            if (strlen($digits) >= 7) {
+                $wanted[substr($digits, 0, 7)] = true;
+            } elseif ($digits !== '') {
+                $wanted[str_pad($digits, 7, '0', STR_PAD_LEFT)] = true;
+            }
+        }
+        if ($wanted === []) {
+            return ['type' => 'FeatureCollection', 'features' => []];
+        }
+
+        $features = [];
+        foreach ($full['features'] ?? [] as $feature) {
+            if (! is_array($feature)) {
+                continue;
+            }
+            $codarea = preg_replace('/\D/', '', (string) ($feature['properties']['codarea'] ?? '')) ?? '';
+            if (strlen($codarea) >= 7) {
+                $codarea = substr($codarea, 0, 7);
+            } elseif ($codarea !== '') {
+                $codarea = str_pad($codarea, 7, '0', STR_PAD_LEFT);
+            }
+            if ($codarea !== '' && isset($wanted[$codarea])) {
+                $features[] = $feature;
+            }
+        }
+
+        return [
+            'type' => 'FeatureCollection',
+            'features' => $features,
+        ];
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function cachedStateMunicipalGeoJson(string $uf): ?array

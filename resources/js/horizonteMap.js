@@ -5800,7 +5800,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
             let geo;
             try {
-                geo = await this.fetchGeoMalha("municipal", this.scopeUf);
+                geo = await this.fetchGeoMalha("municipal", this.scopeUf, {
+                    ibgeIds,
+                });
             } catch (error) {
                 console.warn("horizonte geo malha (municipal)", this.scopeUf, error);
 
@@ -5906,7 +5908,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             const ibgeSet = new Set(ibgeIds);
             let geo;
             try {
-                geo = await this.fetchGeoMalha("municipal", this.scopeUf);
+                geo = await this.fetchGeoMalha("municipal", this.scopeUf, {
+                    ibgeIds,
+                });
             } catch (error) {
                 console.warn("horizonte geo malha (municipal)", this.scopeUf, error);
 
@@ -6286,17 +6290,48 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
-        async fetchGeoMalha(scope, uf = "") {
+        async fetchGeoMalha(scope, uf = "", { ibgeIds = null } = {}) {
+            const ibgeList = Array.isArray(ibgeIds)
+                ? [
+                      ...new Set(
+                          ibgeIds
+                              .map((id) => normalizeIbgeCodarea(id))
+                              .filter((id) => id !== ""),
+                      ),
+                  ].sort()
+                : [];
             const key =
                 scope === "meso"
                     ? `meso:${uf}`
                     : scope === "micro"
                       ? `micro:${uf}`
                       : scope === "municipal"
-                        ? `municipal:${uf}`
+                        ? ibgeList.length > 0
+                          ? `municipal:${uf}:f:${ibgeList.join(",")}`
+                          : `municipal:${uf}`
                         : "brazil";
             if (this._geoCache[key]) {
                 return this._geoCache[key];
+            }
+            // Reutiliza malha municipal completa já em cache e filtra no cliente.
+            if (
+                scope === "municipal" &&
+                ibgeList.length > 0 &&
+                this._geoCache[`municipal:${uf}`]
+            ) {
+                const full = this._geoCache[`municipal:${uf}`];
+                const wanted = new Set(ibgeList);
+                const filtered = {
+                    type: "FeatureCollection",
+                    features: (full?.features ?? []).filter((feature) =>
+                        wanted.has(
+                            normalizeIbgeCodarea(feature?.properties?.codarea),
+                        ),
+                    ),
+                };
+                this._geoCache[key] = filtered;
+
+                return filtered;
             }
 
             const urls = [];
@@ -6315,6 +6350,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     uf
                 ) {
                     apiUrl.searchParams.set("uf", uf);
+                }
+                if (scope === "municipal" && ibgeList.length > 0) {
+                    apiUrl.searchParams.set(
+                        "ibge",
+                        ibgeList.slice(0, 400).join(","),
+                    );
                 }
                 urls.push(apiUrl.toString());
             }

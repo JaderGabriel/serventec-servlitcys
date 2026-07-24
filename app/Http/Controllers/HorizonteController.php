@@ -105,6 +105,24 @@ class HorizonteController extends Controller
             $uf = HorizonteUfScope::normalize($request->query('uf'));
             abort_unless($uf !== null, 422);
 
+            $ibgeRaw = $request->query('ibge');
+            $ibgeCodes = [];
+            if (is_string($ibgeRaw) && trim($ibgeRaw) !== '') {
+                $ibgeCodes = array_values(array_filter(array_map(
+                    static fn (string $part): string => trim($part),
+                    explode(',', $ibgeRaw),
+                )));
+            } elseif (is_array($ibgeRaw)) {
+                $ibgeCodes = array_values(array_filter(array_map(
+                    static fn ($part): string => trim((string) $part),
+                    $ibgeRaw,
+                )));
+            }
+            $ibgeCodes = array_slice($ibgeCodes, 0, 400);
+            if ($ibgeCodes !== []) {
+                return response()->json($this->malha->stateMunicipalGeoJsonFiltered($uf, $ibgeCodes));
+            }
+
             return response()->json($this->malha->stateMunicipalGeoJson($uf));
         }
 
