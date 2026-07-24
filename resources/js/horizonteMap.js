@@ -4313,6 +4313,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } catch {
                 /* já removido */
             }
+            // Instância reutilizada após onRemove fica com transform/hit-area desalinhados no zoom.
+            this.canvasRenderer = null;
         },
 
         resetMunicipalBoundaryPaneZIndex() {
@@ -5157,7 +5159,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
         },
 
-        async fetchRegional(uf) {
+        async fetchRegional(uf, { deferMapRefresh = false } = {}) {
             const scoped = String(uf ?? "").trim().toUpperCase();
             if (!scoped) {
                 return;
@@ -5174,7 +5176,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             try {
                 const data = await this.fetchHorizonteJson(
                     this.dataUrl("regional", scoped),
-                    { retries: 6, retryDelayMs: 2500 },
+                    { retries: 2, retryDelayMs: 1000 },
                 );
                 if (!Array.isArray(data.markers) || data.markers.length === 0) {
                     throw new Error(
@@ -5198,8 +5200,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 if (this.isRegionalMode && this.ensurePointsVisibleOnMap()) {
                     this._filterSignature = this.filterSignature();
                 }
-                await this.scheduleMapRefresh();
-                this.ensureMapInteractions();
+                if (!deferMapRefresh) {
+                    await this.scheduleMapRefresh();
+                    this.ensureMapInteractions();
+                }
             }
         },
 
@@ -5455,11 +5459,18 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 }
                 this.ensureMapInteractions();
                 this.refreshCanvasMarkersAfterZoom();
+                // Segundo passe após o Leaflet terminar a animação CSS do canvas.
+                window.requestAnimationFrame(() => {
+                    this.refreshCanvasMarkersAfterZoom();
+                });
                 this.repositionFloatingPanels();
             });
 
             this.map.on("moveend", () => {
                 this._mapProgrammaticMove = false;
+                if (this.isRegionalMode) {
+                    this.refreshCanvasMarkersAfterZoom();
+                }
             });
 
             this.map.on("move", () => {
@@ -5649,6 +5660,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         ensureRegionalCanvasRenderer() {
             if (!this.canvasRenderer) {
                 this.canvasRenderer = L.canvas({ padding: 0.5 });
+            }
+            if (this.map && !this.map.hasLayer(this.canvasRenderer)) {
+                this.canvasRenderer.addTo(this.map);
             }
 
             return this.canvasRenderer;
@@ -6737,9 +6751,32 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         refreshCanvasMarkersAfterZoom() {
-            if (!this.map || !this.isRegionalMode || !this.canvasRenderer) {
+            if (!this.map || !this.isRegionalMode) {
                 return;
             }
+
+            const renderer = this.canvasRenderer;
+            if (renderer && this.map.hasLayer(renderer)) {
+                // Força ressincronizar bounds/transform do canvas com o basemap.
+                // Sem isto, tiles/SVG zoomam e os círculos ficam “presos” no ecrã.
+                if (typeof renderer._reset === "function") {
+                    renderer._reset();
+                } else {
+                    if (typeof renderer._update === "function") {
+                        renderer._update();
+                    }
+                    if (typeof renderer._updateTransform === "function") {
+                        renderer._updateTransform(
+                            this.map.getCenter(),
+                            this.map.getZoom(),
+                        );
+                    }
+                    if (typeof renderer._updatePaths === "function") {
+                        renderer._updatePaths();
+                    }
+                }
+            }
+
             const layer =
                 this.mapView === "heat" && this.map.hasLayer(this.heatLayer)
                     ? this.heatLayer
@@ -6769,24 +6806,34 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
 
         async enterRegionalWithPressureLens(uf) {
             this.hideApproxOnMap = false;
-            this.applyDecisionLens("high_pressure", { enteringRegional: true });
             this.mapView = "markers";
-            await this.selectUf(uf, false, true);
-            if (!this.isRegionalMode) {
+            this.applyDecisionLens("high_pressure", {
+                enteringRegional: true,
+                keepMapView: true,
+            });
+            // Um único refresh após escolher a lente — evita 2–3 re-renders no clique da UF.
+            await this.selectUf(uf, false, true, { deferMapRefresh: true });
+            if (!this.isUfScopedMode) {
                 return;
             }
-            if (this.filteredCount === 0 && this.markers.length > 0) {
-                this.applyDecisionLens("prospects", { enteringRegional: true });
-                this.recomputeFilteredMarkers();
+            if (this.isRegionalMode) {
+                if (this.filteredCount === 0 && this.markers.length > 0) {
+                    this.applyDecisionLens("prospects", {
+                        enteringRegional: true,
+                        keepMapView: true,
+                    });
+                }
+                if (this.filteredCount === 0 && this.markers.length > 0) {
+                    this.applyDecisionLens("all", {
+                        enteringRegional: true,
+                        keepMapView: true,
+                    });
+                }
                 this.ensurePointsVisibleOnMap();
-                await this.scheduleMapRefresh();
+                this._filterSignature = this.filterSignature();
             }
-            if (this.filteredCount === 0 && this.markers.length > 0) {
-                this.applyDecisionLens("all", { enteringRegional: true });
-                this.recomputeFilteredMarkers();
-                this.ensurePointsVisibleOnMap();
-                await this.scheduleMapRefresh();
-            }
+            await this.scheduleMapRefresh();
+            this.ensureMapInteractions();
         },
 
         async selectMesoFromOverview(mesoId) {
@@ -6857,7 +6904,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             await this.enterRegionalWithPressureLens(uf);
         },
 
-        async selectUf(uf, userInitiated = true, force = false) {
+        async selectUf(uf, userInitiated = true, force = false, opts = {}) {
             const scoped = String(uf ?? "").trim().toUpperCase();
             if (!scoped) {
                 return;
@@ -6882,7 +6929,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (userInitiated && !this.isOverviewMode) {
                 this.applyDefaultDecisionView();
             }
-            await this.fetchRegional(scoped);
+            await this.fetchRegional(scoped, {
+                deferMapRefresh: opts.deferMapRefresh === true,
+            });
         },
 
         async backToOverview() {

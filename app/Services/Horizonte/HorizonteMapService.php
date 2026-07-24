@@ -226,7 +226,7 @@ final class HorizonteMapService
         }
 
         $lock = $repo->lock($lockKey, 180);
-        $lockWait = max(15, (int) config('horizonte.map_display.cache_lock_wait_seconds', 90));
+        $lockWait = max(8, (int) config('horizonte.map_display.cache_lock_wait_seconds', 20));
         try {
             if ($lock->get(8)) {
                 $cached = $repo->get($cacheKey);
@@ -319,6 +319,9 @@ final class HorizonteMapService
         }
 
         $nationalByUf = HorizonteUfFundebInsights::aggregateNationalByUf($markers, $refYear, $currentYear);
+        // Grava agregados nacionais já calculados no overview — o recorte regional
+        // reutiliza este cache e não volta a montar o Brasil inteiro no clique da UF.
+        $this->storeNationalFundebByUfCache($nationalByUf, $refYear);
         $fundebByUf = HorizonteUfFundebInsights::overviewFundebMetrics($nationalByUf);
         if ($fundebByUf === []) {
             return $ufPoints;
@@ -406,46 +409,70 @@ final class HorizonteMapService
     /**
      * Agregados FUNDEB por UF (Brasil) para comparativo no recorte regional.
      *
+     * Nunca remonta o catálogo nacional neste caminho — isso tornava o clique numa UF
+     * extremamente lento quando o overview já tinha sido servido sem cache v2.
+     *
      * @return array<string, array<string, mixed>>
      */
     private function nationalFundebByUf(int $refYear, int $currentYear): array
     {
         $fingerprint = $this->dataFingerprint();
-        $cacheKey = 'horizonte:map:uf-fundeb-national:v2:'.$refYear.':'.$fingerprint;
+        $cacheKey = $this->nationalFundebByUfCacheKey($refYear, $fingerprint);
         $cached = AdminHomeMapCache::get($cacheKey);
         if (is_array($cached)) {
             return $cached;
         }
 
-        $markers = $this->nationalMarkersForInsights($refYear, $fingerprint);
+        $markers = $this->cachedNationalMarkersForInsights($refYear, $fingerprint);
         if ($markers === []) {
             return [];
         }
 
         $byUf = HorizonteUfFundebInsights::aggregateNationalByUf($markers, $refYear, $currentYear);
-        $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
-        AdminHomeMapCache::repository()->put($cacheKey, $byUf, $ttl);
+        $this->storeNationalFundebByUfCache($byUf, $refYear, $fingerprint);
 
         return $byUf;
     }
 
     /**
+     * @param  array<string, array<string, mixed>>  $byUf
+     */
+    private function storeNationalFundebByUfCache(array $byUf, int $refYear, ?string $fingerprint = null): void
+    {
+        if ($byUf === []) {
+            return;
+        }
+
+        $fingerprint ??= $this->dataFingerprint();
+        $ttl = max(60, (int) config('horizonte.cache_seconds', 900));
+        AdminHomeMapCache::repository()->put(
+            $this->nationalFundebByUfCacheKey($refYear, $fingerprint),
+            $byUf,
+            $ttl,
+        );
+    }
+
+    private function nationalFundebByUfCacheKey(int $refYear, string $fingerprint): string
+    {
+        return 'horizonte:map:uf-fundeb-national:v2:'.$refYear.':'.$fingerprint;
+    }
+
+    /**
+     * Marcadores nacionais já em cache (sem assemble). Usado só para insights FUNDEB.
+     *
      * @return list<array<string, mixed>>
      */
-    private function nationalMarkersForInsights(int $refYear, string $fingerprint): array
+    private function cachedNationalMarkersForInsights(int $refYear, string $fingerprint): array
     {
         $cacheKey = 'horizonte:map:v2:'.$refYear.':'.$fingerprint;
         $cached = AdminHomeMapCache::get($cacheKey);
-        if (is_array($cached)) {
-            $markers = is_array($cached['markers'] ?? null) ? $cached['markers'] : [];
-            if ($markers !== []) {
-                return $markers;
-            }
+        if (! is_array($cached)) {
+            return [];
         }
 
-        $assembled = $this->assemble($refYear, requireCoordinates: false);
+        $markers = is_array($cached['markers'] ?? null) ? $cached['markers'] : [];
 
-        return is_array($assembled['markers'] ?? null) ? $assembled['markers'] : [];
+        return $markers !== [] ? $markers : [];
     }
 
     /**
