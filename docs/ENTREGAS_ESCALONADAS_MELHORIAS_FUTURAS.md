@@ -17,7 +17,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **Testes** | Médio / frágil | ~299 ficheiros (265 Unit / 34 Feature); Unit forte; Feature fraca; suite instável (`pdo_sqlite` + consentimento legal) |
 | **Otimizações** | Médio+ | Mitigações Horizonte recentes OK; bundle Vite ~800KB; Redis opt-in; fila `clio` pouco documentada no worker |
 | **Documentação** | Parcial | STATUS/Clio/Histórico em 8.2; PERFORMANCE / IMPLANTAÇÃO / VARIÁVEIS / SEGURANÇA ainda em 6.5–7.0 |
-| **Segurança** | Bom com gaps | Policies e `SafeOutboundUrl` sólidos; SSRF residual em SAEB admin; superfícies públicas PDF/API |
+| **Segurança** | Bom | Policies + `SafeOutboundUrl` (SAEB/admin); throttle/log em `/relatorio`; uploads Clio/CadÚnico tipados; sessão e `User` fillable endurecidos |
 
 **Já feito (não repetir neste plano):** fingerprint do mapa; consultoria por IBGE; censo/transferências enxutos; retries 503; malha municipal filtrada; SICONFI lote + FUNDEB upsert; falhas honestas no feed.
 
