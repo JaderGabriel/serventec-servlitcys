@@ -2948,6 +2948,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         pendingRegionalUf: "",
         mapRefreshTimer: null,
         mapRefreshGeneration: 0,
+        /** Promise do refresh em curso — serializa renders (evita canvas/zoom partidos). */
+        _mapRefreshLock: null,
         mapRendering: false,
         renderProgress: 0,
         loadingMessage: "",
@@ -4266,11 +4268,46 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.refreshMapLayout({ immediate, force, preserveView });
         },
 
+        /**
+         * Cancela animações Leaflet a meio (flyTo/fitBounds concorrentes deixam
+         * `_animatingZoom` preso e o scroll/zoom deixa de responder).
+         */
+        stopMapMotion() {
+            const liveMap = this.map;
+            if (!liveMap) {
+                return;
+            }
+            try {
+                if (typeof liveMap.stop === "function") {
+                    liveMap.stop();
+                }
+            } catch {
+                /* ignore */
+            }
+            // Recuperação se a animação ficou órfã após stop parcial.
+            if (liveMap._animatingZoom) {
+                liveMap._animatingZoom = false;
+            }
+            if (liveMap._panAnim) {
+                try {
+                    liveMap._panAnim.stop?.();
+                } catch {
+                    /* ignore */
+                }
+                liveMap._panAnim = null;
+            }
+        },
+
         /** Restaura handlers Leaflet e política de ponteiros conforme o modo actual. */
         ensureMapInteractions() {
             const liveMap = this.map;
             if (!liveMap) {
                 return;
+            }
+
+            // Se zoom ficou “travado” após filtros/cliques, libertar antes de reactivar.
+            if (liveMap._animatingZoom) {
+                this.stopMapMotion();
             }
 
             for (const name of [
@@ -4380,15 +4417,17 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             );
         },
 
-        /** Envolve setView/fitBounds para não marcar a vista como gesto do utilizador. */
-        programmaticMapMove(fn) {
+        /** Envolve setView/fitBounds/flyTo para não marcar a vista como gesto do utilizador. */
+        programmaticMapMove(fn, holdMs = 120) {
+            this.stopMapMotion();
             this._mapProgrammaticMove = true;
             try {
                 return fn();
             } finally {
+                const hold = Math.max(120, Number(holdMs) || 120);
                 window.setTimeout(() => {
                     this._mapProgrammaticMove = false;
-                }, 120);
+                }, hold);
             }
         },
 
@@ -5174,7 +5213,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             } finally {
                 this.pageLoading = false;
                 window.servDataLoading?.finish?.();
-                await this.refreshMapLayers();
+                this.mapRefreshGeneration += 1;
+                await this.runMapRefreshExclusive(this.mapRefreshGeneration);
                 this.$nextTick(() => {
                     this.refreshMapLayout({ immediate: true, force: true });
                     this.ensureMapInteractions();
@@ -5578,10 +5618,48 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                         resolve();
                         return;
                     }
-                    await this.refreshMapLayers();
+                    await this.runMapRefreshExclusive(generation);
                     resolve();
                 }, this.mapRefreshDebounceMs);
             });
+        },
+
+        /**
+         * Garante um único refreshMapLayers de cada vez. Filtros/cliques rápidos
+         * já não correm em paralelo (canvas órfão + zoom Leaflet preso).
+         */
+        async runMapRefreshExclusive(generation) {
+            while (this._mapRefreshLock) {
+                try {
+                    await this._mapRefreshLock;
+                } catch {
+                    /* o refresh anterior falhou — continuar */
+                }
+                if (generation !== this.mapRefreshGeneration) {
+                    return;
+                }
+            }
+
+            let release = () => {};
+            this._mapRefreshLock = new Promise((r) => {
+                release = r;
+            });
+            try {
+                if (generation !== this.mapRefreshGeneration) {
+                    return;
+                }
+                await this.refreshMapLayers();
+            } finally {
+                this._mapRefreshLock = null;
+                release();
+                // Chegou um pedido mais recente enquanto estávamos a renderizar.
+                if (
+                    this.mapRefreshGeneration !== generation &&
+                    this.mapRefreshTimer === null
+                ) {
+                    void this.scheduleMapRefresh();
+                }
+            }
         },
 
         /** Corrige desalinhamento SVG/canvas quando o contentor muda após o GeoJSON. */
@@ -6277,15 +6355,20 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.resyncEnrollmentSeriesChart();
                 }
 
-                this.$nextTick(() => {
-                    this.syncMapViewport({
-                        immediate: true,
-                        force: true,
-                        preserveView: this.shouldPreserveMapView(
-                            this.isRegionalMode,
-                        ),
+                // Aguardar o sync do viewport — senão focusMunicipality/flyTo
+                // corre em paralelo com setView do nextTick e prende o zoom.
+                await new Promise((resolve) => {
+                    this.$nextTick(() => {
+                        this.syncMapViewport({
+                            immediate: true,
+                            force: true,
+                            preserveView: this.shouldPreserveMapView(
+                                this.isRegionalMode,
+                            ),
+                        });
+                        this.ensureMapInteractions();
+                        resolve();
                     });
-                    this.ensureMapInteractions();
                 });
             }
         },
@@ -7170,7 +7253,9 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 const lat = Number(mesoPoint?.lat);
                 const lng = Number(mesoPoint?.lng);
                 if (isValidCoord(lat, lng)) {
-                    this.map.flyTo([lat, lng], 8, { duration: 0.65 });
+                    this.programmaticMapMove(() => {
+                        this.map.flyTo([lat, lng], 8, { duration: 0.65 });
+                    }, 800);
                 }
                 return;
             }
@@ -7180,11 +7265,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this._lastChoroplethLayer?.getBounds?.()?.isValid?.()
             ) {
                 this.map.invalidateSize({ animate: false });
-                this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
-                    padding: [40, 40],
-                    maxZoom: 8,
-                    animate: true,
-                });
+                this.programmaticMapMove(() => {
+                    this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
+                        padding: [40, 40],
+                        maxZoom: 8,
+                        animate: true,
+                    });
+                }, 800);
                 return;
             }
 
@@ -7207,17 +7294,23 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     ) {
                         return;
                     }
-                    this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
-                        padding: [40, 40],
-                        maxZoom: 8,
-                        animate: false,
-                    });
+                    this.programmaticMapMove(() => {
+                        this.map.fitBounds(this._lastChoroplethLayer.getBounds(), {
+                            padding: [40, 40],
+                            maxZoom: 8,
+                            animate: false,
+                        });
+                    }, 200);
                 }, 250);
                 return;
             }
 
             const [lat, lng] = this.resolveUfCenter(this.scopeUf);
-            this.map.flyTo([lat, lng], this.regionalUfZoom(), { duration: 0.65 });
+            this.programmaticMapMove(() => {
+                this.map.flyTo([lat, lng], this.regionalUfZoom(), {
+                    duration: 0.65,
+                });
+            }, 800);
         },
 
         resolveUfCenter(uf) {
@@ -7396,11 +7489,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 });
                 const bounds = matched?.getBounds?.();
                 if (bounds?.isValid?.()) {
-                    this.map.fitBounds(bounds, {
-                        padding: [48, 48],
-                        maxZoom: 10,
-                        animate,
-                    });
+                    this.programmaticMapMove(() => {
+                        this.map.fitBounds(bounds, {
+                            padding: [48, 48],
+                            maxZoom: 10,
+                            animate,
+                        });
+                    }, animate ? 900 : 120);
 
                     return true;
                 }
@@ -7413,11 +7508,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
 
             const zoom = isApproxCoord(m) ? 7 : 8;
-            if (animate) {
-                this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
-            } else {
-                this.map.setView([lat, lng], zoom, { animate: false });
-            }
+            this.programmaticMapMove(() => {
+                if (animate) {
+                    this.map.flyTo([lat, lng], zoom, { duration: 0.75 });
+                } else {
+                    this.map.setView([lat, lng], zoom, { animate: false });
+                }
+            }, animate ? 900 : 120);
 
             return true;
         },
@@ -7439,10 +7536,6 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this._preserveViewOnNextRender = true;
             await this.scheduleMapRefresh();
 
-            await new Promise((resolve) => {
-                window.setTimeout(resolve, 120);
-            });
-
             if (!this.map) {
                 return;
             }
@@ -7450,6 +7543,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.fitMapToMunicipality(latest);
             this.refreshBoundaryHighlight();
             this.refreshMapLayout({ immediate: true, preserveView: true });
+            this.ensureMapInteractions();
         },
 
         setMapView(view) {

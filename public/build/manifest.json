@@ -22,12 +22,8 @@
     "file": "assets/clio-BAd0U1fr.js",
     "name": "clio"
   },
-  "_horizonte-d9yiDMe6.css": {
-    "file": "assets/horizonte-d9yiDMe6.css",
-    "src": "_horizonte-d9yiDMe6.css"
-  },
-  "_horizonte-q8uWYuLN.js": {
-    "file": "assets/horizonte-q8uWYuLN.js",
+  "_horizonte-DRU79Lcv.js": {
+    "file": "assets/horizonte-DRU79Lcv.js",
     "name": "horizonte",
     "imports": [
       "_rolldown-runtime-CtgBeM3P.js",
@@ -37,6 +33,10 @@
     "css": [
       "assets/horizonte-d9yiDMe6.css"
     ]
+  },
+  "_horizonte-d9yiDMe6.css": {
+    "file": "assets/horizonte-d9yiDMe6.css",
+    "src": "_horizonte-d9yiDMe6.css"
   },
   "_rolldown-runtime-CtgBeM3P.js": {
     "file": "assets/rolldown-runtime-CtgBeM3P.js",
@@ -68,14 +68,14 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-CZ0pLMa0.js",
+    "file": "assets/app-sO1ZA1se.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
       "_rolldown-runtime-CtgBeM3P.js",
       "_clio-BAd0U1fr.js",
-      "_horizonte-q8uWYuLN.js",
+      "_horizonte-DRU79Lcv.js",
       "_analytics-maps-DZpugG5m.js",
       "_scroll-to-top-KysRzy3q.js"
     ]
