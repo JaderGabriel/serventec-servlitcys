@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.0.3** |
 | **Tag de deploy** | `20260724-Pythia` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `55bccd96` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) |
 | **Marco** | **Pythia** — Clio BI `bi_clio_*`, insights gestores, medidores CLI-IND; tag + GitHub Release |

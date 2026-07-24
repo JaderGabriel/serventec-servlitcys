@@ -10,7 +10,7 @@
 | **Data de referência** | **24/07/2026** |
 | **Último marco documentado** | **Clio Pythia** — BI `bi_clio_*`, insights gestores, medidores CLI-IND-01…10 — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `pending` (#**pending**) |
+| **Commit de release** | `55bccd96` (#**559**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -65,7 +65,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.0.3** | `pending` / `20260724-Pythia` → `main` | **pending** | 24/07/2026 | **Produção:** Clio — S7 BI `bi_clio_*`, insights gestores, CLI-IND-01…10, prune, margem distorção — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md). |
+| **▶ 8.0.3** | `55bccd96` / `20260724-Pythia` → `main` | **559** | 24/07/2026 | **Produção:** Clio — S7 BI `bi_clio_*`, insights gestores, CLI-IND-01…10, prune, margem distorção — [RELEASE_20260724_PYTHIA.md](RELEASE_20260724_PYTHIA.md). |
 | 8.0.2 | `4fc99bac` / `20260723b-Harmonia` → `main` | **554** | 23/07/2026 | Clio — PDF/Excel alinhados, Fund. I/II, distorção ordenada, AEE sem NEE, lotes Drive, painel escola — [RELEASE_20260723b_HARMONIA.md](RELEASE_20260723b_HARMONIA.md). |
 | 8.0.1 | `af850f7` / `20260723-Euterpe` → `main` | **548** | 23/07/2026 | Clio — jornada, NEE/subnotificação, transporte, Excel, matriz PDF, UTF-8 CSV, filtro Consultoria — [RELEASE_20260723_EUTERPE.md](RELEASE_20260723_EUTERPE.md). |
 | 8.0.0 | `3951fab` / `20260721-Aletheia` → `main` | **536** | 21/07/2026 | Clio hub de relatórios, relatório municipal (etapas/AEE/AC), home redesenhada — [RELEASE_20260721_ALETHEIA.md](RELEASE_20260721_ALETHEIA.md). |

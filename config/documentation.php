@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '8.0.3',
         'release_tag' => '20260724-Pythia',
-        'commit_short' => 'pending',
-        'commit_number' => 0,
+        'commit_short' => '55bccd96',
+        'commit_number' => 559,
         'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',
