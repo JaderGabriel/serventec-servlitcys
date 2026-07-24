@@ -258,9 +258,9 @@
                     ])
 
 
-        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
-            {{ __('Depois de importar, os gráficos usam este arquivo. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
-        </p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed border-t border-gray-200 dark:border-gray-700 pt-6">
+                        {{ __('Depois de importar, os gráficos usam este arquivo. API interna: :url (só responde quando já há dados). Comandos: saeb:import-csv, saeb:sync-microdados, saeb:import-official.', ['url' => rtrim((string) config('app.url'), '/').'/api/saeb/municipio/{ibge}']) }}
+                    </p>
 
         <x-slot name="shortcuts">
             <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
