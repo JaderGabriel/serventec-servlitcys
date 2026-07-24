@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\ProcessClioCampaignAnalyzeJob;
 use App\Jobs\ProcessClioCampaignIngestJob;
 use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Ingest\CampaignIngestService;
@@ -69,6 +70,15 @@ final class ClioCampaignIngestCommand extends Command
                 'w' => $stats['warning'],
                 'f' => $stats['failed'],
             ]));
+            $fresh = $campaign->fresh() ?? $campaign;
+            $ok = (int) ($stats['ok'] ?? 0) + (int) ($stats['warning'] ?? 0);
+            if ($ok > 0 && in_array($fresh->status, [
+                ClioCampaign::STATUS_ANALYZED,
+                ClioCampaign::STATUS_CROSS_CHECKED,
+            ], true)) {
+                ProcessClioCampaignAnalyzeJob::dispatch((int) $fresh->id, parseFirst: false);
+                $this->info(__('Reanálise enfileirada (coleta já analisada).'));
+            }
         }
 
         $campaign->refresh();

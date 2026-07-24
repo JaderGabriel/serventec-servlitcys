@@ -514,17 +514,29 @@
                         <div class="clio-panel overflow-hidden">
                             <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                                 <h4 class="clio-section-title text-base">{{ __('Distorção por etapa / ano') }}</h4>
+                                <p class="text-xs text-slate-500">{{ __('Desagregação por ano/etapa nesta escola (EF/EM seriados).') }}</p>
+                            </div>
+                            <div class="clio-note border-0 border-b border-amber-200/80 rounded-none dark:border-amber-900">
+                                <p class="clio-note__title">{{ __('Significado das colunas') }}</p>
+                                <ul class="clio-note__list">
+                                    <li><strong>{{ __('Etapa') }}</strong> — {{ __('Ano/etapa de ensino da matrícula.') }}</li>
+                                    <li><strong>{{ __('Elegíveis') }}</strong> — {{ __('Alunos com nascimento e etapa seriada no indicador (EF/EM). EJA/AEE/AC fora.') }}</li>
+                                    <li><strong>{{ __('Distorção') }}</strong> — {{ __('Atraso ≥ 2 anos vs idade esperada em 31/03.') }}</li>
+                                    <li><strong>{{ __('Atraso 1 ano') }}</strong> — {{ __('Exatamente 1 ano acima da idade esperada (ainda não é distorção).') }}</li>
+                                    <li><strong>{{ __('Adequados') }}</strong> — {{ __('Idade alinhada à esperada para a etapa.') }}</li>
+                                    <li><strong>%</strong> — {{ __('Distorção ÷ Elegíveis nesta etapa.') }}</li>
+                                </ul>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="min-w-full text-sm">
                                     <thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/60">
                                         <tr>
-                                            <th class="px-4 py-2 font-medium">{{ __('Etapa') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Elegíveis') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Distorção') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Atraso 1 ano') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">{{ __('Adequados') }}</th>
-                                            <th class="px-4 py-2 font-medium text-right">%</th>
+                                            <th class="px-4 py-2 font-medium" title="{{ __('Ano/etapa de ensino da matrícula') }}">{{ __('Etapa') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Alunos elegíveis no indicador') }}">{{ __('Elegíveis') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Atraso ≥ 2 anos vs idade esperada em 31/03') }}">{{ __('Distorção') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Exatamente 1 ano acima da idade esperada') }}">{{ __('Atraso 1 ano') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Idade alinhada à esperada') }}">{{ __('Adequados') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Distorção ÷ Elegíveis') }}">%</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800">

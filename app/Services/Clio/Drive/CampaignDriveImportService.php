@@ -2,6 +2,7 @@
 
 namespace App\Services\Clio\Drive;
 
+use App\Jobs\ProcessClioCampaignAnalyzeJob;
 use App\Models\City;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
@@ -387,7 +388,8 @@ final class CampaignDriveImportService
                 'parsed' => $parsed,
             ]);
             if ($complete) {
-                $message .= ' '.__('Catálogo Drive completo — pode analisar a coleta.');
+                $message .= ' '.__('Catálogo Drive completo — análise e dataset BI enfileirados.');
+                ProcessClioCampaignAnalyzeJob::dispatch((int) $campaign->id, parseFirst: false);
             } elseif ($stillPending > 0) {
                 $message .= ' '.__('Restam :n ficheiro(s). Clique em «Continuar lote» para seguir.', ['n' => $stillPending]);
             }

@@ -239,11 +239,13 @@ final class CampaignPdfDetailBuilder
         });
 
         $censusMatrix = $this->censusMatrixBuilder->build($campaign);
+        $demographics = $this->demographicsFromInference($campaign);
 
         return [
             'distortion_by_etapa' => $distortionByEtapa,
             'distortion_students' => $distortionStudents,
             'missing_demographics' => $missingDemo,
+            'demographics' => $demographics,
             'nee_students' => $neeStudents,
             'nee_without_aee' => $neeWithoutAee,
             'nee_aee_without_condition' => $aeeWithoutNee,
@@ -251,6 +253,27 @@ final class CampaignPdfDetailBuilder
             'nee_underreporting' => $neeWithUnder,
             'missing_demographics_total' => $missingTotal,
             'census_matrix' => $censusMatrix,
+        ];
+    }
+
+    /**
+     * Barras demográficas alinhadas a INF-DEM / UI (sem PII).
+     *
+     * @return array{available: bool, by_cor_raca: list<array<string, mixed>>, by_sexo: list<array<string, mixed>>, by_faixa_etaria: list<array<string, mixed>>, scanned: int}
+     */
+    private function demographicsFromInference(ClioCampaign $campaign): array
+    {
+        $inf = $campaign->inferences->firstWhere('code', 'INF-DEM')
+            ?? $campaign->inferences()->where('code', 'INF-DEM')->first();
+        $payload = is_array($inf?->payload) ? $inf->payload : [];
+        $agg = new RelationCsvAggregator;
+
+        return [
+            'available' => $payload !== [],
+            'scanned' => (int) ($payload['scanned'] ?? 0),
+            'by_cor_raca' => $agg->toBars(is_array($payload['by_cor_raca'] ?? null) ? $payload['by_cor_raca'] : [], 10),
+            'by_sexo' => $agg->toBars(is_array($payload['by_sexo'] ?? null) ? $payload['by_sexo'] : [], 6),
+            'by_faixa_etaria' => $agg->toBars(is_array($payload['by_faixa_etaria'] ?? null) ? $payload['by_faixa_etaria'] : [], 8),
         ];
     }
 

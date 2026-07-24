@@ -793,7 +793,7 @@ final class CampaignAnalysisPresenter
             ];
         })->values();
 
-        $analytics = $this->buildSchoolAnalytics($school, $inferences ?? collect());
+        $analytics = $this->buildSchoolAnalytics($school, $inferences ?? collect(), $school->campaign);
 
         return [
             'kpis' => $kpis,
@@ -851,8 +851,11 @@ final class CampaignAnalysisPresenter
      * @param  Collection<string, ClioCampaignInference>  $inferences
      * @return array<string, mixed>
      */
-    private function buildSchoolAnalytics(\App\Models\Clio\ClioCampaignSchool $school, Collection $inferences): array
-    {
+    private function buildSchoolAnalytics(
+        \App\Models\Clio\ClioCampaignSchool $school,
+        Collection $inferences,
+        ?ClioCampaign $campaign = null,
+    ): array {
         $agg = new RelationCsvAggregator;
         $inep = (string) $school->inep_code;
         $alunoAgg = $this->mergeArtifactAggregates($school, 'relacao_aluno_escola');
@@ -908,14 +911,51 @@ final class CampaignAnalysisPresenter
 
         $byTurmaAluno = is_array($alunoAgg['by_turma'] ?? null) ? $alunoAgg['by_turma'] : [];
         $byTurmaProf = is_array($profAgg['by_turma'] ?? null) ? $profAgg['by_turma'] : [];
-        $turmasComAluno = count(array_filter($byTurmaAluno, static fn ($n) => (int) $n > 0));
-        $turmasGe40 = count(array_filter($byTurmaAluno, static fn ($n) => (int) $n >= 40));
-        $maxAlunosTurma = $byTurmaAluno === [] ? 0 : (int) max($byTurmaAluno);
+        $turmaProfiles = is_array($turmaAgg['turma_profiles'] ?? null) ? $turmaAgg['turma_profiles'] : [];
+        $curricularCodes = [];
+        foreach ($turmaProfiles as $code => $profile) {
+            $bucket = is_array($profile) ? (string) ($profile['bucket'] ?? '') : '';
+            if ($bucket === RelationCsvAggregator::BUCKET_CURRICULAR) {
+                $curricularCodes[(string) $code] = true;
+            }
+        }
+        if ($curricularCodes === [] && is_array($turmaAgg['turma_codes'] ?? null)) {
+            foreach ($turmaAgg['turma_codes'] as $code) {
+                $curricularCodes[(string) $code] = true;
+            }
+        }
+
+        $turmasComAluno = 0;
+        $turmasGe40 = 0;
+        $maxAlunosTurma = 0;
+        $alunosCurricular = 0;
+        foreach (array_keys($curricularCodes) as $code) {
+            $n = (int) ($byTurmaAluno[$code] ?? 0);
+            $alunosCurricular += $n;
+            if ($n > 0) {
+                $turmasComAluno++;
+            }
+            if ($n >= 40) {
+                $turmasGe40++;
+            }
+            if ($n > $maxAlunosTurma) {
+                $maxAlunosTurma = $n;
+            }
+        }
         $mediaAlunos = $turmasComAluno > 0
-            ? round(array_sum($byTurmaAluno) / $turmasComAluno, 1)
+            ? round($alunosCurricular / $turmasComAluno, 1)
             : null;
         $turmasComDocente = count(array_filter($byTurmaProf, static fn ($n) => (int) $n > 0));
-        $turmasSemDocente = max(0, count($byTurmaAluno) - $turmasComDocente);
+        $turmasSemDocente = max(0, count($curricularCodes) - $turmasComDocente);
+
+        $neeCensus = null;
+        if ($campaign !== null) {
+            if (! $campaign->relationLoaded('artifacts')) {
+                $campaign->load(['artifacts']);
+            }
+            $neeCensus = app(CampaignNeeCensusBuilder::class)->build($campaign, (int) $school->id);
+        }
+        $liveNee = is_array($neeCensus) && ! empty($neeCensus['available']);
 
         $cols = is_array($alunoAgg['columns'] ?? null) ? $alunoAgg['columns'] : [];
         $hasTra = (bool) ($cols['transporte'] ?? false)
@@ -1027,24 +1067,24 @@ final class CampaignAnalysisPresenter
             ],
             'profile' => [
                 'available' => $alunos > 0,
-                'scanned' => $alunos,
-                'privacy_note' => __('Identificadores nas amostras de achados aparecem por completo nesta tela (acesso autenticado). Contagens abaixo são agregadas.'),
+                'scanned' => $liveNee ? (int) ($neeCensus['people_scanned'] ?? 0) : $alunos,
+                'privacy_note' => __('Identificadores nas amostras de achados aparecem por completo nesta tela (acesso autenticado). Contagens NEE abaixo são por pessoa.'),
                 'by_cor_raca' => $agg->toBars(is_array($alunoAgg['by_cor_raca'] ?? null) ? $alunoAgg['by_cor_raca'] : [], 10),
                 'by_sexo' => $agg->toBars(is_array($alunoAgg['by_sexo'] ?? null) ? $alunoAgg['by_sexo'] : [], 6),
                 'by_faixa_etaria' => $agg->toBars(is_array($alunoAgg['by_faixa_etaria'] ?? null) ? $alunoAgg['by_faixa_etaria'] : [], 8),
-                'by_nee' => $agg->toBars(is_array($alunoAgg['by_nee'] ?? null) ? $alunoAgg['by_nee'] : [], 8),
-                'nee_flagged' => (int) ($alunoAgg['nee_flagged'] ?? 0),
-                'nee_unit' => 'rows',
-                'nee_without_aee' => null,
-                'nee_aee_without_condition' => null,
-                'by_deficiency' => $agg->toBars(is_array($alunoAgg['by_deficiency'] ?? null) ? $alunoAgg['by_deficiency'] : [], 10),
-                'by_disorder' => $agg->toBars(is_array($alunoAgg['by_disorder'] ?? null) ? $alunoAgg['by_disorder'] : [], 8),
-                'by_ah' => $agg->toBars(is_array($alunoAgg['by_ah'] ?? null) ? $alunoAgg['by_ah'] : [], 4),
-                'deficiency_flagged' => (int) ($alunoAgg['deficiency_flagged'] ?? 0),
-                'disorder_flagged' => (int) ($alunoAgg['disorder_flagged'] ?? 0),
-                'ah_flagged' => (int) ($alunoAgg['ah_flagged'] ?? 0),
-                'by_underreporting' => $agg->toBars(is_array($alunoAgg['by_underreporting'] ?? null) ? $alunoAgg['by_underreporting'] : [], 8),
-                'underreporting_flagged' => (int) ($alunoAgg['underreporting_flagged'] ?? 0),
+                'by_nee' => $agg->toBars($liveNee ? (array) ($neeCensus['by_nee'] ?? []) : (is_array($alunoAgg['by_nee'] ?? null) ? $alunoAgg['by_nee'] : []), 8),
+                'nee_flagged' => $liveNee ? (int) ($neeCensus['flagged'] ?? 0) : (int) ($alunoAgg['nee_flagged'] ?? 0),
+                'nee_unit' => $liveNee ? 'people' : 'rows',
+                'nee_without_aee' => $liveNee ? (int) ($neeCensus['without_aee'] ?? 0) : null,
+                'nee_aee_without_condition' => $liveNee ? (int) ($neeCensus['aee_without_nee'] ?? 0) : null,
+                'by_deficiency' => $agg->toBars($liveNee ? (array) ($neeCensus['by_deficiency'] ?? []) : (is_array($alunoAgg['by_deficiency'] ?? null) ? $alunoAgg['by_deficiency'] : []), 10),
+                'by_disorder' => $agg->toBars($liveNee ? (array) ($neeCensus['by_disorder'] ?? []) : (is_array($alunoAgg['by_disorder'] ?? null) ? $alunoAgg['by_disorder'] : []), 8),
+                'by_ah' => $agg->toBars($liveNee ? (array) ($neeCensus['by_ah'] ?? []) : (is_array($alunoAgg['by_ah'] ?? null) ? $alunoAgg['by_ah'] : []), 4),
+                'deficiency_flagged' => $liveNee ? (int) ($neeCensus['deficiency_flagged'] ?? 0) : (int) ($alunoAgg['deficiency_flagged'] ?? 0),
+                'disorder_flagged' => $liveNee ? (int) ($neeCensus['disorder_flagged'] ?? 0) : (int) ($alunoAgg['disorder_flagged'] ?? 0),
+                'ah_flagged' => $liveNee ? (int) ($neeCensus['ah_flagged'] ?? 0) : (int) ($alunoAgg['ah_flagged'] ?? 0),
+                'by_underreporting' => $agg->toBars($liveNee ? (array) ($neeCensus['by_underreporting'] ?? []) : (is_array($alunoAgg['by_underreporting'] ?? null) ? $alunoAgg['by_underreporting'] : []), 8),
+                'underreporting_flagged' => $liveNee ? (int) ($neeCensus['underreporting_flagged'] ?? 0) : (int) ($alunoAgg['underreporting_flagged'] ?? 0),
                 'columns' => $cols,
             ],
             'jornada' => [
@@ -1088,6 +1128,8 @@ final class CampaignAnalysisPresenter
                     'turmas_ge_40' => $turmasGe40,
                     'max' => $maxAlunosTurma,
                     'tone' => $turmasGe40 > 0 ? 'amber' : 'emerald',
+                    'scope' => 'curricular',
+                    'note' => __('Média e ≥40 apenas em turmas curriculares (AEE/AC fora).'),
                 ],
                 'staff' => [
                     'rows' => $profissionais,

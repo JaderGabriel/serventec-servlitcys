@@ -1,8 +1,8 @@
 # Módulo — Clio (coletas Educacenso 1ª etapa)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 (export / RX) — S1–S6 estável
+**Versão do produto:** 8.0.2 · **Última revisão:** 2026-07-24 · **Estado:** S6 (export / RX) — S1–S6 estável; patches pós-Harmonia
 
-> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio`
+> **Índice de módulos:** [README.md](README.md) · **Menu docs:** secção **9 · Clio** · **Rota app:** `/clio` · **Roadmap vivo:** [ROADMAP_CLIO.md](../ROADMAP_CLIO.md)
 
 **Clio** (musa grega da história) — módulo ServLitcys para **receber, analisar e cruzar** relatórios da **1ª etapa do Censo Escolar (Matrícula inicial)** exportados do portal Educacenso (CSV `;` / ZIP), com ou sem i-Educar.
 
@@ -80,8 +80,9 @@ Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 
 | Documento | Conteúdo |
 |-----------|----------|
+| [ROADMAP_CLIO.md](../ROADMAP_CLIO.md) | **Roadmap vivo** — status, indicadores consolidados, melhorias com impacto |
 | [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](../CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo INF-*, CLIO-*, relatório da rede e UI |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa |
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa (S1–S6) |
 | [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | Checklist S1–S8 |
 | [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md) | Rastreio até a release |
 | [PERFIS_UTILIZADOR.md](../PERFIS_UTILIZADOR.md) | Quem vê / quem muta |

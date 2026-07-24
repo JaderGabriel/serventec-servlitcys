@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Clio;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessClioCampaignAnalyzeJob;
 use App\Jobs\ProcessClioCampaignIngestJob;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
@@ -69,6 +70,7 @@ class CampaignUploadController extends Controller
         } else {
             $parseStats = $parser->parseCampaign($campaign->fresh() ?? $campaign);
             $result['parsed'] = $parseStats['parsed'];
+            $this->queueAnalyzeIfAlreadyAnalyzed($campaign->fresh() ?? $campaign, (int) ($parseStats['ok'] ?? 0) + (int) ($parseStats['warning'] ?? 0));
         }
 
         $message = __('Upload Clio: :stored salvo(s), :exp de ZIP, :dup duplicado(s), :ign ignorado(s).', [
@@ -89,5 +91,20 @@ class CampaignUploadController extends Controller
         return redirect()
             ->route('clio.campaigns.upload', $campaign)
             ->with($result['stored'] > 0 || $result['zip_ids'] !== [] ? 'success' : 'warning', $message);
+    }
+
+    private function queueAnalyzeIfAlreadyAnalyzed(ClioCampaign $campaign, int $parsedOk): void
+    {
+        if ($parsedOk <= 0) {
+            return;
+        }
+        if (! in_array($campaign->status, [
+            ClioCampaign::STATUS_ANALYZED,
+            ClioCampaign::STATUS_CROSS_CHECKED,
+        ], true)) {
+            return;
+        }
+
+        ProcessClioCampaignAnalyzeJob::dispatch((int) $campaign->id, parseFirst: false);
     }
 }

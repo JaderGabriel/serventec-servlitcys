@@ -1,8 +1,8 @@
 # Clio — TODO de implementação (código)
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado:** S6 estável com correcções de produto (tríade/RX, preservação INF-GAP, copy) — próximo S7 (BI)
+**Versão do produto:** 8.0.3 · **Última revisão:** 2026-07-24 · **Estado:** S7 concluída (BI + medidores) — próximo S8 (promote i-Educar)
 
-> **Roadmap:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
+> **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
 
 
 Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` → `- [x]` conforme entrega. Ordem = sprints **S1→S8** (§9.7 do roadmap).
@@ -126,7 +126,7 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 - [x] T8 painel analítico — KPIs + tabela escolas + filtros
 - [x] T9 detalhe escola
 - [x] T12 bloco na aba Censo (`work_done`) — link campanha do município/ano
-- [ ] Retenção / purge job opcional (`clio:prune-artifacts`)
+- [x] Retenção / purge job opcional (`clio:prune-artifacts`)
 
 ### Testes
 - [x] Unit catálogo/inferências com fixtures (leve)
@@ -164,12 +164,13 @@ Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` →
 
 ## S7 — BI (CEN-16)
 
-- [ ] Tabelas ETL `bi_clio_campaign`, `bi_clio_school`, `bi_clio_enrollment_stage`, `bi_clio_quality`, `bi_clio_inclusion`
-- [ ] `bi:refresh-clio-campaigns`
-- [ ] Documentar dataset em [POWERBI.md](POWERBI.md) (secção Clio)
-- [ ] Garantir zero PII nas tabelas `bi_clio_*`
+- [x] Tabelas ETL `bi_clio_campaign`, `bi_clio_school`, `bi_clio_enrollment_stage`, `bi_clio_quality`, `bi_clio_inclusion` (+ `bi_clio_insight`)
+- [x] `bi:refresh-clio-campaigns`
+- [x] Documentar dataset em [POWERBI.md](POWERBI.md) (secção Clio)
+- [x] Garantir zero PII nas tabelas `bi_clio_*`
+- [x] Página `/clio/coletas/{uuid}/insights` + entrada na home
 
-**Aceite S7:** refresh popula agregados; query Power BI Desktop possível.
+**Aceite S7:** refresh popula agregados; query Power BI Desktop possível; insights gestores na UI.
 
 ---
 

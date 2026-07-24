@@ -2117,6 +2117,62 @@
         bottom: calc(var(--serv-analytics-dock-height, 9rem) + 0.75rem + env(safe-area-inset-bottom, 0px));
     }
 
+    /* Mobile: esconder cabeçalho + dock para libertar a área central */
+    .serv-analytics-chrome-toggle {
+        @apply hidden;
+    }
+
+    .serv-analytics-chrome-restore {
+        @apply fixed z-[45] inline-flex items-center gap-1.5 rounded-full border border-slate-200/90 bg-white/95 px-3 py-2
+            text-xs font-semibold text-serv-navy shadow-lg backdrop-blur-md
+            focus:outline-none focus:ring-2 focus:ring-blue-500/40
+            dark:border-slate-600 dark:bg-slate-900/95 dark:text-slate-100;
+        left: 50%;
+        bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        transform: translateX(-50%);
+    }
+
+    @media (max-width: 1023px) {
+        .serv-analytics-chrome-toggle {
+            @apply inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-slate-200/90 bg-white px-2 py-1.5
+                text-[11px] font-semibold text-slate-700 shadow-sm
+                hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40
+                dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800;
+        }
+
+        .serv-analytics-chrome-toggle__text {
+            @apply whitespace-nowrap;
+        }
+
+        html.serv-analytics-chrome-focus:has(.serv-analytics-filter-dock) .serv-app-header {
+            display: none;
+        }
+
+        html.serv-analytics-chrome-focus .serv-analytics-filter-dock {
+            transform: translateY(110%);
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+        html.serv-analytics-chrome-focus .serv-analytics-page {
+            padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        }
+
+        html.serv-analytics-chrome-focus:has(.serv-analytics-filter-dock) .serv-app-footer {
+            margin-bottom: 0;
+        }
+
+        html.serv-analytics-chrome-focus:has(.serv-analytics-filter-dock) .serv-scroll-top {
+            bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .serv-analytics-chrome-restore {
+            display: none !important;
+        }
+    }
+
     .serv-export-hub__trigger {
         @apply inline-flex items-center gap-1.5 rounded-lg border border-sky-200/90 bg-white px-2.5 py-1.5 text-xs font-semibold text-sky-800 shadow-sm
             hover:bg-sky-50 focus:outline-none focus:ring-2 focus:ring-sky-500/40

@@ -11,6 +11,11 @@ export function initAnalyticsFilterDockLayout() {
     let frame = null;
 
     const apply = () => {
+        if (root.classList.contains("serv-analytics-chrome-focus")) {
+            root.style.setProperty("--serv-analytics-dock-height", "0px");
+            return;
+        }
+
         const height = Math.ceil(dock.getBoundingClientRect().height);
         if (height > 0) {
             root.style.setProperty("--serv-analytics-dock-height", `${height}px`);
@@ -36,4 +41,5 @@ export function initAnalyticsFilterDockLayout() {
 
     window.addEventListener("resize", schedule);
     document.addEventListener("analytics-tab-changed", schedule);
+    document.addEventListener("analytics-chrome-focus-changed", schedule);
 }

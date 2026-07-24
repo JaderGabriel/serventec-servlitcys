@@ -56,6 +56,22 @@
                 @endif
             </div>
 
+            <button
+                type="button"
+                class="serv-analytics-chrome-toggle"
+                data-analytics-chrome-toggle
+                data-label-show="{{ __('Mostrar menus') }}"
+                data-label-hide="{{ __('Mais espaço') }}"
+                aria-pressed="false"
+                title="{{ __('Mais espaço') }}"
+                aria-label="{{ __('Mais espaço') }}"
+            >
+                <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 9V4.5M9 9H4.5M9 9 3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5 5.25 5.25" />
+                </svg>
+                <span class="serv-analytics-chrome-toggle__text" data-analytics-chrome-label>{{ __('Mais espaço') }}</span>
+            </button>
+
             @if ($selectedCity)
                 <div class="serv-analytics-filter-dock__contact shrink-0">
                     <x-city.reference-contact :city="$selectedCity" variant="agenda" tone="light" layout="inline" />
@@ -205,3 +221,18 @@
         @endif
     </div>
 </div>
+
+<template id="analytics-chrome-restore-template">
+    <button
+        type="button"
+        class="serv-analytics-chrome-restore"
+        data-analytics-chrome-toggle="restore"
+        title="{{ __('Mostrar menus') }}"
+        aria-label="{{ __('Mostrar menus') }}"
+    >
+        <svg class="h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+        <span data-analytics-chrome-label>{{ __('Mostrar menus') }}</span>
+    </button>
+</template>

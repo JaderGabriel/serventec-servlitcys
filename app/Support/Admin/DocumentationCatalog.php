@@ -541,9 +541,10 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap Clio (vivo)'), 'path' => 'docs/ROADMAP_CLIO.md', 'hint' => __('Status · indicadores · melhorias')],
                     ['label' => __('Catálogo erros e relatórios'), 'path' => 'docs/CLIO_CATALOGO_ERROS_E_RELATORIOS.md', 'hint' => __('INF-* · CLIO-* · UI')],
                     ['label' => __('Perfis e acesso'), 'path' => 'docs/PERFIS_UTILIZADOR.md', 'hint' => __('Ver vs mutar · municipal excluído')],
-                    ['label' => __('Roadmap (spec)'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Roadmap (spec S1–S6)'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('TODO implementação'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md', 'hint' => __('clio:*')],

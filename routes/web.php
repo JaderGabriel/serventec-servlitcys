@@ -91,6 +91,8 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::get('/coletas/{campaign}', [\App\Http\Controllers\Clio\CampaignController::class, 'show'])->name('campaigns.show');
             Route::get('/coletas/{campaign}/analise', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'show'])->name('campaigns.analysis');
             Route::post('/coletas/{campaign}/analisar', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'run'])->name('campaigns.analyze');
+            Route::get('/coletas/{campaign}/insights', [\App\Http\Controllers\Clio\CampaignInsightsController::class, 'show'])->name('campaigns.insights');
+            Route::post('/coletas/{campaign}/insights/refresh', [\App\Http\Controllers\Clio\CampaignInsightsController::class, 'refresh'])->name('campaigns.insights.refresh');
             Route::get('/coletas/{campaign}/escolas/{inep}', [\App\Http\Controllers\Clio\CampaignAnalysisController::class, 'school'])->name('campaigns.school');
             Route::get('/coletas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'editLink'])->name('campaigns.link');
             Route::post('/coletas/{campaign}/vincular-ieducar', [\App\Http\Controllers\Clio\CampaignConsultancyController::class, 'storeLink'])->name('campaigns.link.store');

@@ -121,12 +121,14 @@ Documentação: [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARG
 
 | Comando | Descrição |
 |---------|-----------|
-| `clio:campaign-ingest` | Ingere ZIP, pasta ou ficheiros para uma coleta (`{uuid}`). Classifica kinds, deduplica SHA-256, ignora `.~lock.*`, e **por defeito faz parse CSV**. Opções: `--path=`, `--disk=`, `--queue`, `--no-parse`. |
+| `clio:campaign-ingest` | Ingere ZIP, pasta ou ficheiros para uma coleta (`{uuid}`). Classifica kinds, deduplica SHA-256, ignora `.~lock.*`, e **por defeito faz parse CSV**. Opções: `--path=`, `--disk=`, `--queue`, `--no-parse`. Se a coleta já estiver analisada, enfileira reanálise. |
 | `clio:campaign-status` | Relatório de cobertura (tríade, parse_status, `reference_date`). Opções: `--parse`, `--reparse`, `--json`. |
-| `clio:campaign-analyze` | Motor Modo A: INF-COL…INF-DELTA + achados; status `analyzed`. Opção: `--skip-parse`. |
+| `clio:campaign-analyze` | Motor Modo A: INF-COL…INF-DELTA + achados; status `analyzed`. Opção: `--skip-parse`. Dispara refresh `bi_clio_*`. |
 | `clio:campaign-cross-check` | INF-GAP: escolas só Clio / só i-Educar / ambos. Requer município com `hasDataSetup()`. |
+| `clio:prune-artifacts` | Remove artefactos (storage + rows) além de `CLIO_RETENTION_DAYS` (ou `--days=`). `--dry-run` lista sem apagar. |
+| `bi:refresh-clio-campaigns` | S7 — popula `bi_clio_*` (zero PII) + insights gestores. `{uuid?}` · `--all` · `--year=`. |
 
-**Interface web:** menu **Clio** · Documentação **9 · Clio** · aba Censo (bloco coleta)
+**Interface web:** menu **Clio** · Documentação **9 · Clio** · aba Censo (bloco coleta) · Insights `/clio/coletas/{uuid}/insights`
 
 **Fixtures:** `tests/fixtures/clio/coleta_2026/` (Acomp + tríade anonimizados + ZIP smoke)
 
@@ -135,9 +137,11 @@ php artisan clio:campaign-ingest {uuid} --path=tests/fixtures/clio/coleta_2026
 php artisan clio:campaign-status {uuid}
 php artisan clio:campaign-analyze {uuid}
 php artisan clio:campaign-cross-check {uuid}
+php artisan bi:refresh-clio-campaigns {uuid}
+php artisan clio:prune-artifacts --dry-run
 ```
 
-Documentação: [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md)
+Documentação: [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · [POWERBI.md](POWERBI.md) (secção Clio)
 
 **Variáveis:** `CLIO_*` — ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) §11a
 

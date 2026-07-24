@@ -4,7 +4,8 @@ namespace App\Services\Clio\Analysis;
 
 /**
  * Regras aproximadas INEP para idade esperada na série (Matrícula inicial).
- * Distorção idade-série: atraso ≥ 2 anos em relação à idade de referência (31/03 do exercício).
+ * Distorção idade-série: atraso ≥ margem configurável (default 2 anos, `clio.distortion_margin_years`)
+ * em relação à idade de referência (31/03 do exercício).
  *
  * Escopo clássico: Ensino Fundamental e Médio regulares. EJA, AEE, AC e etapas sem série
  * ficam fora do denominador oficial (marcados como excluídos).
@@ -127,7 +128,7 @@ final class AgeGradeRules
     /**
      * @return array{status: string, delay: int|null, age: int|null, expected: int|null}
      */
-    public function classify(string $etapaEnsino, string $birthRaw, int $referenceYear): array
+    public function classify(string $etapaEnsino, string $birthRaw, int $referenceYear, ?int $distortionMarginYears = null): array
     {
         $expected = $this->expectedAge($etapaEnsino);
         if ($expected === null) {
@@ -150,10 +151,13 @@ final class AgeGradeRules
             ];
         }
 
+        $margin = $distortionMarginYears ?? (int) config('clio.distortion_margin_years', 2);
+        $margin = max(1, $margin);
+
         $delay = $age - $expected;
-        if ($delay >= 2) {
+        if ($delay >= $margin) {
             $status = self::STATUS_DISTORTION;
-        } elseif ($delay === 1) {
+        } elseif ($delay >= 1 && $delay < $margin) {
             $status = self::STATUS_DELAY_1;
         } elseif ($delay < 0) {
             $status = self::STATUS_EARLY;

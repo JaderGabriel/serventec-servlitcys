@@ -31,7 +31,7 @@ Cada seção do índice usa identidade própria (implementação: `Documentation
 | **6 · Cadastro e CadÚnico** | Violet | `users` | Cadastro × CadÚnico — inclusão |
 | **7 · Pedagogia e SAEB** | Sky | `academic-cap` | SAEB / IDEB — pedagogia |
 | **8 · RX — Censo** | Amber | `clipboard-document-list` | RX — Educacenso e ritmo |
-| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — coletas CSV 1ª etapa (S1–S6) |
+| **9 · Clio — Educacenso** | Sky | `academic-cap` | Clio — coletas CSV 1ª etapa ([ROADMAP_CLIO](ROADMAP_CLIO.md)) |
 | **10 · Financiamento (FUNDEB)** | Rose | `banknotes` | Fluxo FUNDEB — VAAF e repasses |
 | **11 · Integrações (admin)** | Violet | `globe-alt` | Pontes externas — importações e APIs |
 | **12 · Operação (admin)** | Amber | `command-line` | Sala de máquinas — deploy, CLI e testes |
@@ -134,7 +134,8 @@ mindmap
 | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | SAEB / IDEB |
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Cadastro e integrações |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência arquivo Educacenso (portal INEP) × i-Educar + painel |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Roadmap **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
+| [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | **Roadmap vivo Clio** — status do módulo, indicadores consolidados, melhorias com impacto |
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
 | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de implementação do módulo Clio (S1–S6 ✓ · S7–S8) |
 | [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo do que o Clio mostra: INF-*, CLIO-*, relatório da rede, UI |
 | [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) | Rastreio até release do Clio |
@@ -184,6 +185,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | Estudo setor público |
 | [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) | Proposta API i-Educar |
 | [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) | Motor de repasses (futuro) |
+| [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | Clio — status, indicadores e melhorias (vivo) |
 | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Relatórios Educacenso 1ª etapa (campanhas / Modo A–B) |
 
 ### 6. Operação e deploy *(admin)*

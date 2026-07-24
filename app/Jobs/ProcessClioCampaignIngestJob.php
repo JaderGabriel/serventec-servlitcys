@@ -14,6 +14,7 @@ use Throwable;
 
 /**
  * S2/S3 — ingerir (classificar/ZIP) e em seguida interpretar artefatos pendentes.
+ * Se a coleta já estava analisada, reenfileira a análise (CLI-IND-04).
  */
 class ProcessClioCampaignIngestJob implements ShouldQueue
 {
@@ -51,7 +52,15 @@ class ProcessClioCampaignIngestJob implements ShouldQueue
         }
 
         if ($this->parse) {
-            $parser->parseCampaign($campaign->fresh() ?? $campaign);
+            $stats = $parser->parseCampaign($campaign->fresh() ?? $campaign);
+            $fresh = $campaign->fresh() ?? $campaign;
+            $ok = (int) ($stats['ok'] ?? 0) + (int) ($stats['warning'] ?? 0);
+            if ($ok > 0 && in_array($fresh->status, [
+                ClioCampaign::STATUS_ANALYZED,
+                ClioCampaign::STATUS_CROSS_CHECKED,
+            ], true)) {
+                ProcessClioCampaignAnalyzeJob::dispatch((int) $fresh->id, parseFirst: false);
+            }
         }
     }
 

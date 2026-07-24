@@ -123,7 +123,7 @@
                         [
                             'label' => __('Erros na rede'),
                             'value' => number_format($yearErrors ?? 0),
-                            'hint' => __('Escolas na coleta: :n', ['n' => number_format($yearSchools ?? 0)]),
+                            'hint' => __('Escolas ativas na coleta: :n', ['n' => number_format($yearSchools ?? 0)]),
                         ],
                     ] as $kpi)
                         <div class="clio-kpi-cell">
@@ -230,9 +230,19 @@
                                         {{ $ready ? __('Abrir relatório') : __('Abrir coleta') }}
                                     </a>
                                     @if ($ready)
+                                        <a href="{{ route('clio.campaigns.insights', $campaign) }}"
+                                           class="serv-btn-secondary text-sm text-center"
+                                           title="{{ __('Insights gerenciais e dataset BI') }}">
+                                            {{ __('Insights / BI') }}
+                                        </a>
                                         @can('export', $campaign)
                                             @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
                                         @endcan
+                                    @else
+                                        <span class="serv-btn-secondary text-sm opacity-50 cursor-not-allowed"
+                                              title="{{ __('Disponível após analisar a coleta') }}">
+                                            {{ __('Insights / BI') }}
+                                        </span>
                                     @endif
                                     <a href="{{ route('clio.campaigns.show', $campaign) }}" class="serv-link text-sm ml-auto">{{ __('Central') }}</a>
                                 </div>

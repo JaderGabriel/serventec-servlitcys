@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
-**Versão em produção (`main`):** **8.0.2** · tag **`20260723b-Harmonia`** · [release](docs/RELEASE_20260723b_HARMONIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **8.0.3** · tag **`20260724-Pythia`** · [release](docs/RELEASE_20260724_PYTHIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 

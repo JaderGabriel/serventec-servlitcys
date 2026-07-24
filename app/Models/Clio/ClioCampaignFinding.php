@@ -3,6 +3,7 @@
 namespace App\Models\Clio;
 
 use App\Services\Clio\Support\ClioUserCopy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -49,6 +50,32 @@ class ClioCampaignFinding extends Model
     public function artifact(): BelongsTo
     {
         return $this->belongsTo(ClioCampaignArtifact::class, 'artifact_id');
+    }
+
+    /**
+     * Achados de rede (sem escola) ou ligados a escolas em atividade (CLI-IND-06).
+     *
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeForActiveSchoolScope(Builder $query): Builder
+    {
+        $needles = ['extint', 'paralis', 'paraliz', 'reforma', 'cessad', 'desativad', 'fora de atividade', 'não em atividade', 'nao em atividade'];
+
+        return $query->where(function (Builder $outer) use ($needles): void {
+            $outer->whereNull('school_id')
+                ->orWhereHas('school', function (Builder $school) use ($needles): void {
+                    $school->where(function (Builder $status) use ($needles): void {
+                        $status->whereNull('functioning_status')
+                            ->orWhere('functioning_status', '')
+                            ->orWhere(function (Builder $active) use ($needles): void {
+                                foreach ($needles as $needle) {
+                                    $active->where('functioning_status', 'not like', '%'.$needle.'%');
+                                }
+                            });
+                    });
+                });
+        });
     }
 
     public function severityLabel(): string

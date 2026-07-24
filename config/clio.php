@@ -20,6 +20,15 @@ return [
 
     'feature_promote' => filter_var(env('CLIO_PROMOTE_ENABLED', false), FILTER_VALIDATE_BOOL),
 
+    /**
+     * Anos de atraso (idade − esperada em 31/03) a partir dos quais conta distorção idade-série.
+     * Alinhado ao motor i-Educar (`IEDUCAR_DISTORCAO_MARGEM_ANOS`) por omissão.
+     */
+    'distortion_margin_years' => max(1, (int) env(
+        'CLIO_DISTORCAO_MARGEM_ANOS',
+        env('IEDUCAR_DISTORCAO_MARGEM_ANOS', 2)
+    )),
+
     'drive' => [
         /** API key Google Cloud (Drive API v3) — pastas/ficheiros «qualquer pessoa com o link». */
         'api_key' => env('CLIO_DRIVE_API_KEY', env('GOOGLE_API_KEY')),

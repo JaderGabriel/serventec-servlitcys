@@ -511,6 +511,40 @@
     </table>
 @endif
 
+@if (! empty($tables['demographics']['available']))
+    @php $demo = $tables['demographics']; @endphp
+    <h2>{{ __('Perfil demográfico (agregado)') }}</h2>
+    <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">
+        {{ __('Mesma base da análise (INF-DEM). Pessoas/matrículas escaneadas: :n. Sem identificação nominal.', ['n' => (int) ($demo['scanned'] ?? 0)]) }}
+    </p>
+    <table class="data">
+        <thead>
+            <tr>
+                <th>{{ __('Dimensão') }}</th>
+                <th>{{ __('Categoria') }}</th>
+                <th style="text-align: right;">{{ __('Qtd.') }}</th>
+                <th style="text-align: right;">{{ __('%') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ([
+                __('Cor/Raça') => $demo['by_cor_raca'] ?? [],
+                __('Sexo') => $demo['by_sexo'] ?? [],
+                __('Faixa etária') => $demo['by_faixa_etaria'] ?? [],
+            ] as $dim => $bars)
+                @foreach ($bars as $bar)
+                    <tr>
+                        <td>{{ $dim }}</td>
+                        <td>{{ $bar['label'] ?? '—' }}</td>
+                        <td style="text-align: right;">{{ number_format((int) ($bar['count'] ?? 0)) }}</td>
+                        <td style="text-align: right;">{{ isset($bar['pct']) ? number_format((float) $bar['pct'], 1, ',', '.').'%' : '—' }}</td>
+                    </tr>
+                @endforeach
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
 @if (! empty($tables['missing_demographics']) || (int) ($tables['missing_demographics_total'] ?? 0) > 0)
     <h2>{{ __('Sem Cor/Raça ou Sexo definidos') }}</h2>
     <p style="font-size: 10px; color: #64748b; margin-bottom: 6px;">

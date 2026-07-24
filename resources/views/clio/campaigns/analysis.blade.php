@@ -1123,17 +1123,27 @@
                             <div class="clio-panel overflow-hidden">
                                 <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
                                     <h4 class="clio-section-title">{{ __('Distorção por etapa / ano') }}</h4>
-                                    <p class="text-xs text-slate-500">{{ __('Ordenado pelas etapas com mais alunos em distorção (≥2 anos).') }}</p>
+                                    <p class="text-xs text-slate-500">{{ __('Desagregação por ano/etapa da Relação de alunos (EF/EM seriados), na ordem pedagógica.') }}</p>
+                                </div>
+                                <div class="clio-note border-0 border-b border-amber-200/80 rounded-none dark:border-amber-900">
+                                    <p class="clio-note__title">{{ __('Significado das colunas') }}</p>
+                                    <ul class="clio-note__list">
+                                        <li><strong>{{ __('Etapa') }}</strong> — {{ __('Ano/etapa de ensino da matrícula (ex.: 5º ano do Ensino Fundamental).') }}</li>
+                                        <li><strong>{{ __('No escopo') }}</strong> — {{ __('Alunos com data de nascimento e etapa seriada no indicador clássico (EF/EM). EJA, AEE, atividade complementar e etapas sem série ficam fora.') }}</li>
+                                        <li><strong>{{ __('Distorção') }}</strong> — {{ __('Alunos com atraso de 2 anos ou mais em relação à idade esperada em 31/03 do exercício (critério alinhado ao INEP).') }}</li>
+                                        <li><strong>{{ __('%') }}</strong> — {{ __('Percentual de distorção nesta etapa: Distorção ÷ No escopo.') }}</li>
+                                        <li><strong>{{ __('Atraso 1 ano') }}</strong> — {{ __('Alunos com exatamente 1 ano acima da idade esperada — defasagem leve, ainda não conta como distorção oficial.') }}</li>
+                                    </ul>
                                 </div>
                                 <div class="clio-table-wrap">
                                     <table class="clio-table">
                                         <thead>
                                             <tr>
-                                                <th class="px-4 py-2 font-medium">{{ __('Etapa') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('No escopo') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Distorção') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('%') }}</th>
-                                                <th class="px-4 py-2 font-medium text-right">{{ __('Atraso 1 ano') }}</th>
+                                                <th class="px-4 py-2 font-medium" title="{{ __('Ano/etapa de ensino da matrícula') }}">{{ __('Etapa') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right" title="{{ __('Alunos elegíveis no indicador (nascimento + EF/EM seriado)') }}">{{ __('No escopo') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right" title="{{ __('Atraso ≥ 2 anos vs idade esperada em 31/03') }}">{{ __('Distorção') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right" title="{{ __('Distorção ÷ No escopo') }}">{{ __('%') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right" title="{{ __('Exatamente 1 ano acima da idade esperada') }}">{{ __('Atraso 1 ano') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">

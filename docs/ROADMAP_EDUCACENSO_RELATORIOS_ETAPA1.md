@@ -2,11 +2,11 @@
 
 **Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21 · **Estado do roadmap:** **fechado para implementação**
 
-> **Módulo:** [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **TODO de código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **CEN-01:** [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)
+> **Módulo:** [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **TODO de código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **CEN-01:** [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md)
 
 **Nome:** **Clio** (mitologia grega — musa da história): regista e narra a **declaração da Matrícula inicial** a partir dos relatórios do portal Educacenso.  
 **Código:** namespace `App\Services\Clio\` · controllers `App\Http\Controllers\Clio\` · rotas `/clio/*` · Artisan `clio:*` · tabelas `clio_*`.  
-**Implementação:** S1–S6 no código ([CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [CHANGELOG dev](CLIO_CHANGELOG_DEV.md)); próximo S7 BI / S8 promote.  
+**Implementação:** S1–S6 no código ([CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [CHANGELOG dev](CLIO_CHANGELOG_DEV.md)); status/indicadores/melhorias em [ROADMAP_CLIO.md](ROADMAP_CLIO.md); próximo S7 BI / S8 promote.  
 **Corpus:** [Google Drive — COLETA 2026](https://drive.google.com/drive/folders/1xP9cMR6JYHXRezzMs5ybSUdoR5V-yxLh)
 
 | Marco | Estado |

@@ -1,12 +1,12 @@
 # Power BI — estudo de integração no servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 8.0.3 · **Última revisão:** 2026-07-24
 
-> **Índice:** [README.md](README.md) · **Arquitetura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
+> **Índice:** [README.md](README.md) · **Clio:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Arquitetura:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Analytics:** [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) · **Performance:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Export FUNDEB:** [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · **BI Rede & Oferta:** [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md)
 
 ## 1. Resumo executivo
 
-O **servlitcys** hoje implementa **BI embutido** em Laravel: painéis interativos em `/dashboard/analytics`, exportações CSV/XLSX/PDF e agregações SQL sobre bases i-Educar municipais. **Não existe integração com Microsoft Power BI** no código, nas rotas nem na infraestrutura documentada.
+O **servlitcys** implementa **BI embutido** em Laravel (`/dashboard/analytics`) e, no módulo **Clio**, o data mart **`bi_clio_*`** (S7 / CEN-16) com página de insights gestores e ligação a Power BI Desktop. **Power BI Embedded (Azure)** continua opcional e fora do MVP.
 
 Este documento descreve:
 
@@ -602,6 +602,46 @@ Tempo: **2–4 horas** para primeiro relatório útil.
 | [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) | Alternativa API vs SQL directo |
 | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §9–11 | Performance e exportação |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC a replicar em RLS |
+
+---
+
+## 12a. Clio — data mart `bi_clio_*` (S7 / CEN-16)
+
+**Estado:** implementado no código (migração `2026_07_24_120000_create_bi_clio_tables`, refresh automático após análise).
+
+| Tabela | Grão | Uso |
+|--------|------|-----|
+| `bi_clio_campaign` | coleta | KPIs municipais (tríade, distorção, densidade, NEE, erros) |
+| `bi_clio_school` | escola × coleta | Tríade, deltas, actividade |
+| `bi_clio_enrollment_stage` | etapa × coleta | Pirâmide alunos/turmas |
+| `bi_clio_quality` | escola × coleta | Flags de qualidade |
+| `bi_clio_inclusion` | escola × coleta | NEE por pessoa (DEF/TRS/AH, AEE) |
+| `bi_clio_insight` | coleta × código | Textos em linguagem de gestão |
+
+**Refresh**
+
+```bash
+php artisan bi:refresh-clio-campaigns {uuid}
+php artisan bi:refresh-clio-campaigns --all --year=2026
+```
+
+Também corre no fim de `CampaignAnalyzer::analyze` e após lotes Drive completos (job de análise).
+
+**UI:** `/clio/coletas/{uuid}/insights` · botão **Insights / BI** na home Clio.
+
+**LGPD:** zero PII nas tabelas `bi_clio_*` (sem nome/CPF/ID de aluno).
+
+**Power BI Desktop (exemplo)**
+
+```
+SELECT c.municipality_name, c.year, c.triade_pct, c.distortion_pct, c.nee_people
+FROM bi_clio_campaign c
+WHERE c.year = 2026
+```
+
+Relacionar `bi_clio_school.campaign_id` → `bi_clio_campaign.campaign_id`; insights por `campaign_id` + `sort`.
+
+Roadmap vivo: [ROADMAP_CLIO.md](ROADMAP_CLIO.md).
 
 ---
 

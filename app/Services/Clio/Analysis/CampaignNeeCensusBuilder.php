@@ -41,7 +41,7 @@ final class CampaignNeeCensusBuilder
      *   unit: string
      * }
      */
-    public function build(ClioCampaign $campaign): array
+    public function build(ClioCampaign $campaign, ?int $schoolId = null): array
     {
         $disk = (string) config('clio.disk', 'local');
         $peopleScanned = 0;
@@ -60,7 +60,12 @@ final class CampaignNeeCensusBuilder
         $hasNeeCol = false;
         $filesRead = 0;
 
-        foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
+        $artifacts = $campaign->artifacts->where('kind', 'relacao_aluno_escola');
+        if ($schoolId !== null) {
+            $artifacts = $artifacts->where('school_id', $schoolId);
+        }
+
+        foreach ($artifacts as $artifact) {
             if (! $artifact instanceof ClioCampaignArtifact) {
                 continue;
             }

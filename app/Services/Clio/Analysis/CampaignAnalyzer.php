@@ -7,6 +7,7 @@ use App\Models\Clio\ClioCampaignArtifact;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Models\Clio\ClioCampaignInference;
 use App\Models\Clio\ClioCampaignSchool;
+use App\Services\Clio\Bi\ClioBiRefreshService;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Clio\Parse\CsvReader;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ final class CampaignAnalyzer
 
     public function __construct(
         private readonly CampaignParseService $parseService,
+        private readonly ?ClioBiRefreshService $biRefresh = null,
         ?CsvReader $csv = null,
         ?RelationCsvAggregator $aggregator = null,
     ) {
@@ -88,10 +90,17 @@ final class CampaignAnalyzer
                 : ClioCampaign::STATUS_ANALYZED,
         ]);
 
+        $fresh = $campaign->fresh() ?? $campaign;
+        try {
+            ($this->biRefresh ?? app(ClioBiRefreshService::class))->refreshCampaign($fresh);
+        } catch (Throwable) {
+            // Dataset BI não deve falhar a análise operacional.
+        }
+
         return [
             'inferences' => ClioCampaignInference::query()->where('campaign_id', $campaign->id)->count(),
             'findings' => ClioCampaignFinding::query()->where('campaign_id', $campaign->id)->count(),
-            'coverage' => $this->parseService->coverage($campaign->fresh()),
+            'coverage' => $this->parseService->coverage($fresh),
         ];
     }
 
@@ -636,9 +645,10 @@ final class CampaignAnalyzer
     private function inferDensidade(ClioCampaign $campaign): void
     {
         $alunosPorTurma = [];
-        $turmaCodes = [];
+        $turmaBuckets = [];
         $alunosComTurma = 0;
         $alunosSemTurma = 0;
+        $alunosCurricular = 0;
 
         foreach ($campaign->artifacts->where('kind', 'relacao_aluno_escola') as $artifact) {
             $agg = $this->resolveAlunoAggregates($artifact, (int) $campaign->year);
@@ -652,20 +662,29 @@ final class CampaignAnalyzer
 
         foreach ($campaign->artifacts->where('kind', 'relacao_turma_escola') as $artifact) {
             $turmaAgg = $this->resolveTurmaAggregates($artifact);
+            $profiles = is_array($turmaAgg['turma_profiles'] ?? null) ? $turmaAgg['turma_profiles'] : [];
             foreach (is_array($turmaAgg['turma_codes'] ?? null) ? $turmaAgg['turma_codes'] : [] as $code) {
-                $turmaCodes[$code] = true;
+                $profile = is_array($profiles[$code] ?? null) ? $profiles[$code] : [];
+                $bucket = (string) ($profile['bucket'] ?? RelationCsvAggregator::BUCKET_OUTRA);
+                $turmaBuckets[$code] = $bucket;
             }
         }
 
-        $turmas = count($turmaCodes);
+        $curricularCodes = array_keys(array_filter(
+            $turmaBuckets,
+            static fn (string $b): bool => $b === RelationCsvAggregator::BUCKET_CURRICULAR,
+        ));
+
+        $turmas = count($curricularCodes);
         $turmasComAluno = 0;
         $turmasSemAluno = 0;
         $turmasCheias = 0;
         $max = 0;
         $samplesCheias = [];
 
-        foreach (array_keys($turmaCodes) as $code) {
+        foreach ($curricularCodes as $code) {
             $n = (int) ($alunosPorTurma[$code] ?? 0);
+            $alunosCurricular += $n;
             if ($n > 0) {
                 $turmasComAluno++;
             } else {
@@ -682,14 +701,14 @@ final class CampaignAnalyzer
             }
         }
 
-        $media = $turmasComAluno > 0 ? round($alunosComTurma / $turmasComAluno, 1) : null;
+        $media = $turmasComAluno > 0 ? round($alunosCurricular / $turmasComAluno, 1) : null;
 
         if ($turmasSemAluno > 0 && $turmas > 0) {
             $this->addFinding(
                 $campaign,
                 'CLIO-DEN-TURMA-VAZIA',
                 ClioCampaignFinding::SEVERITY_INFO,
-                __('Há :n turma(s) na Relação sem nenhum aluno vinculado pelo Código da turma.', [
+                __('Há :n turma(s) curricular(es) na Relação sem nenhum aluno vinculado pelo Código da turma.', [
                     'n' => $turmasSemAluno,
                 ]),
             );
@@ -699,7 +718,7 @@ final class CampaignAnalyzer
                 $campaign,
                 'CLIO-DEN-TURMA-CHEIA',
                 ClioCampaignFinding::SEVERITY_WARNING,
-                __('Há :n turma(s) com 40 ou mais alunos vinculados (máx. observado: :m). Conferir no portal se a composição está correta.', [
+                __('Há :n turma(s) curricular(es) com 40 ou mais alunos vinculados (máx. observado: :m). Conferir no portal se a composição está correta.', [
                     'n' => $turmasCheias,
                     'm' => $max,
                 ]),
@@ -710,8 +729,8 @@ final class CampaignAnalyzer
             $campaign,
             'INF-DEN',
             $media === null
-                ? __('Densidade aluno/turma: sem pareamento suficiente por Código da turma.')
-                : __('Densidade: média :m aluno(s)/turma · :c com aluno · :v sem aluno · :h com ≥40 alunos.', [
+                ? __('Densidade aluno/turma curricular: sem pareamento suficiente por Código da turma.')
+                : __('Densidade curricular: média :m aluno(s)/turma · :c com aluno · :v sem aluno · :h com ≥40 alunos. AEE/AC fora do denominador.', [
                     'm' => $media,
                     'c' => $turmasComAluno,
                     'v' => $turmasSemAluno,
@@ -719,6 +738,7 @@ final class CampaignAnalyzer
                 ]),
             [
                 'alunos_com_turma' => $alunosComTurma,
+                'alunos_curricular' => $alunosCurricular,
                 'alunos_sem_turma' => $alunosSemTurma,
                 'turmas_total' => $turmas,
                 'turmas_com_aluno' => $turmasComAluno,
@@ -727,6 +747,8 @@ final class CampaignAnalyzer
                 'media_alunos_por_turma' => $media,
                 'max_alunos_turma' => $max,
                 'samples_cheias' => $samplesCheias,
+                'scope' => 'curricular',
+                'note' => __('Média e turmas ≥40 consideram apenas turmas do tipo Curricular (AEE e atividade complementar excluídas).'),
             ],
         );
     }
@@ -932,6 +954,7 @@ final class CampaignAnalyzer
         $hasVeiculoCol = false;
         $schoolsBreakdown = [];
         $seenArtifactIds = [];
+        $acompLocations = $this->acompLocationByInep($campaign);
 
         foreach ($campaign->schools as $school) {
             $schoolAgg = $this->emptyAlunoAgg();
@@ -963,7 +986,11 @@ final class CampaignAnalyzer
             }
 
             $meta = is_array($school->meta) ? $school->meta : [];
-            $location = $this->normalizeSchoolLocation((string) ($meta['location'] ?? ''));
+            $locationRaw = (string) ($meta['location'] ?? $meta['localizacao'] ?? $meta['Localização'] ?? '');
+            if (trim($locationRaw) === '' && isset($acompLocations[$school->inep_code])) {
+                $locationRaw = (string) $acompLocations[$school->inep_code];
+            }
+            $location = $this->normalizeSchoolLocation($locationRaw);
             $inactive = CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
             $byVeiculoSchool = is_array($schoolAgg['by_veiculo_transporte'] ?? null)
                 ? $schoolAgg['by_veiculo_transporte']
@@ -1159,9 +1186,43 @@ final class CampaignAnalyzer
                     'by_veiculo' => $byVeiculoOther,
                 ],
                 'schools' => array_slice($schoolsBreakdown, 0, 120),
-                'note_location' => __('Rural/urbano vem da Localização da escola no Acompanhamento; o uso e o tipo de veículo vêm da Relação de alunos.'),
+                'note_location' => __('Rural/urbano vem da Localização da escola no Acompanhamento (com fallback ao mapa INEP do Acomp quando a ficha da escola está incompleta); o uso e o tipo de veículo vêm da Relação de alunos.'),
             ],
         );
+    }
+
+    /**
+     * Mapa INEP → Localização a partir do Acomp (fallback quando meta da escola está vazia).
+     *
+     * @return array<string, string>
+     */
+    private function acompLocationByInep(ClioCampaign $campaign): array
+    {
+        $map = [];
+        $disk = (string) config('clio.disk', 'local');
+        foreach ($campaign->artifacts->where('kind', 'acomp_coleta_1etapa') as $artifact) {
+            if (! $artifact instanceof ClioCampaignArtifact) {
+                continue;
+            }
+            $path = Storage::disk($disk)->path((string) $artifact->storage_path);
+            if (! is_string($path) || ! is_file($path)) {
+                continue;
+            }
+            try {
+                $data = $this->csv->read($path, headerOffset: 1);
+            } catch (Throwable) {
+                continue;
+            }
+            foreach ($data['rows'] as $row) {
+                $inep = trim($this->csv->value($row, 'Código da escola'));
+                $loc = trim($this->csv->value($row, 'Localização'));
+                if ($inep !== '' && $loc !== '') {
+                    $map[$inep] = $loc;
+                }
+            }
+        }
+
+        return $map;
     }
 
     private function normalizeSchoolLocation(string $raw): string

@@ -265,7 +265,8 @@ Menu superior após Horizonte · Rotas `/clio/*` · Documentação: [modulos/MOD
 | `CLIO_ENABLED` | `true` | Liga menu e rotas Clio (`canViewClio`) |
 | `CLIO_UPLOAD_MAX_MB` | `64` | Tamanho máximo por ficheiro no upload |
 | `CLIO_MAX_FILES_PER_UPLOAD` | `200` | Máximo de ficheiros por pedido |
-| `CLIO_RETENTION_DAYS` | `90` | Retenção de artefactos (limpeza futura) |
+| `CLIO_RETENTION_DAYS` | `90` | Retenção de artefactos (`clio:prune-artifacts`) |
+| `CLIO_DISTORCAO_MARGEM_ANOS` | `IEDUCAR_DISTORCAO_MARGEM_ANOS` / `2` | Anos de atraso para contar distorção idade-série |
 | `CLIO_QUEUE` | `clio` | Nome da fila de jobs |
 | `CLIO_LAYOUT_YEAR_DEFAULT` | `2026` | Ano sugerido em nova coleta |
 | `CLIO_DISK` | `local` | Disco Laravel para uploads |

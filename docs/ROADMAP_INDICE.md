@@ -1,6 +1,6 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **8.0.1** · tag `20260723-Euterpe` · **Última revisão:** 2026-07-23
+**Versão em produção:** **8.0.3** · tag `20260724-Pythia` · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -59,7 +59,7 @@ flowchart TD
 | **Horizonte — PNAD** | UI modal pronta; falta pipeline SIDRA | [HOR-10](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) · [HOR-18](BACKLOG_IMPLEMENTACOES.md#j-horizonte--enriquecimento-por-bases-públicas) | Tabela `municipal_pnad_snapshots` vazia |
 | **Horizonte — v2.2** | Geo INEP escolas, IDHM, SIDRA ampliado, programas FNDE | [HORIZONTE.md](HORIZONTE.md) §11.3–§11.6 · `HOR-01`, `HOR-05`–`HOR-07` | — |
 | **Consultoria — SAEB** | Metas PNE / semáforo no quadro | [GRA-07](BACKLOG_IMPLEMENTACOES.md#b-painel--gráficos-e-inferências-mec--inep) · [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | Em andamento |
-| **Censo — Clio** | S1–S6 no código (painel + medidores 1ª etapa); próximo S7 BI / S8 promote | [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [MODULO_CLIO…](modulos/MODULO_CLIO.md) | Em curso |
+| **Censo — Clio** | S1–S7 em produção; próximo S8 promote · indicadores vivos | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) | Em curso |
 | **Infra — CI** | `pdo_sqlite` / MySQL de testes no pipeline | [INF-04](BACKLOG_IMPLEMENTACOES.md#a-produto-e-infraestrutura) | Em andamento |
 | **PHPStan** | Redução gradual do baseline | [TEC-06](BACKLOG_IMPLEMENTACOES.md#e-arquitetura-e-refactor-técnico) | Em andamento |
 
@@ -72,7 +72,7 @@ flowchart TD
 | **Onda 2** | CNES, busca ativa CadÚnico, PNAD completo | [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) · [HORIZONTE.md](HORIZONTE.md) §11.6 | HOR-09–10, HOR-18, CUN-03, INT-07–08 |
 | **Onda 3** | e-SUS escola, comparativo compliance clientes | [HORIZONTE.md](HORIZONTE.md) §11.7 | HOR-13, INT-09 |
 | **Transversal** | Power BI, plugins i-Educar, inclusão NEE | Ver tabela abaixo | PBI-*, PLG-*, CAD-* |
-| **Censo / Educacenso** | **Clio** — campanhas CSV 1ª etapa | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | CEN-04…CEN-16 |
+| **Censo / Educacenso** | **Clio** — campanhas CSV 1ª etapa | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) | CEN-04…CEN-16 · CLI-IND-* |
 
 ---
 
@@ -125,8 +125,10 @@ flowchart TD
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | **Clio** — multi-arquivo, análise com/sem i-Educar, carga · §9 validado |
+| [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | **Roadmap vivo** — status do módulo, indicadores consolidados, melhorias com impacto |
+| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec histórica — multi-arquivo, análise com/sem i-Educar, carga · §9 validado |
 | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de código do módulo Clio (S1–S8) |
+| [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo INF-* / CLIO-* / superfícies de relatório |
 | [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) | Landing Clio |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Spec CEN-01 (conferência TXT × i-Educar) — base a reutilizar |
 | [modulos/MODULO_RX_CENSO.md](modulos/MODULO_RX_CENSO.md) | Landing RX / Censo |
@@ -142,7 +144,7 @@ flowchart TD
 | CEN-04–07 | MVP ingestão CSV + análise Modo A | **Concluído** (S1–S4) |
 | CEN-14 | Cadastro ficha leve (sem i-Educar) | **Concluído** (S1) |
 | CEN-08–10 · CEN-15 | Modo B, vínculo i-Educar, export/RX | **Concluído** (S5–S6) |
-| CEN-16 | ETL `bi_clio_*` | Pendente (S7) |
+| CEN-16 | ETL `bi_clio_*` | **Concluído (S7 / 8.0.3)** |
 | CEN-11–13 | Carga assistida i-Educar | Pendente (S8) |
 
 ### Inclusão, NEE e qualidade de cadastro
@@ -193,7 +195,7 @@ flowchart TD
 | Resumo / Diagnóstico | [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md) | TEC-01–03 |
 | Cadastro | [CADUNICO_CECAD.md](CADUNICO_CECAD.md) | CUN-*, CAD-* |
 | Pedagógico | [saeb_pedagogico_referencias.md](saeb_pedagogico_referencias.md) | GRA-*, PLG-* |
-| Censo | [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) · [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | CEN-01 ✓ · CEN-04…15 ✓ (S1–S6) · CEN-16/11–13 pendente |
+| Censo | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [MODULO_CLIO.md](modulos/MODULO_CLIO.md) · [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) · [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | CEN-01 ✓ · CEN-04…15 ✓ (S1–S6) · CEN-16/11–13 pendente · CLI-IND-* |
 | Finanças | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | FIN-* (maioria ✓) |
 | Horizonte (paralelo) | [HORIZONTE.md](HORIZONTE.md) | HOR-* |
 

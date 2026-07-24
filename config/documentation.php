@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '8.0.2',
-        'release_tag' => '20260723b-Harmonia',
-        'commit_short' => '4fc99bac',
-        'commit_number' => 554,
-        'revision_date' => '2026-07-23',
+        'version' => '8.0.3',
+        'release_tag' => '20260724-Pythia',
+        'commit_short' => 'pending',
+        'commit_number' => 0,
+        'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

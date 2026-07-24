@@ -60,8 +60,12 @@ class HomeController extends Controller
                     ClioCampaignArtifact::PARSE_PENDING,
                 ),
                 'schools',
-                'findings as findings_error_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_ERROR),
-                'findings as findings_warning_count' => fn ($rel) => $rel->where('severity', ClioCampaignFinding::SEVERITY_WARNING),
+                'findings as findings_error_count' => fn ($rel) => $rel
+                    ->where('severity', ClioCampaignFinding::SEVERITY_ERROR)
+                    ->forActiveSchoolScope(),
+                'findings as findings_warning_count' => fn ($rel) => $rel
+                    ->where('severity', ClioCampaignFinding::SEVERITY_WARNING)
+                    ->forActiveSchoolScope(),
             ])
             ->where('year', $filterYear)
             ->orderBy('municipality_name');
@@ -101,6 +105,7 @@ class HomeController extends Controller
         $yearErrors = (int) ClioCampaignFinding::query()
             ->where('severity', ClioCampaignFinding::SEVERITY_ERROR)
             ->whereIn('campaign_id', (clone $yearBase)->select('id'))
+            ->forActiveSchoolScope()
             ->count();
 
         $yearCampaignsForStats = (clone $yearBase)
@@ -108,7 +113,9 @@ class HomeController extends Controller
             ->withCount('schools')
             ->get();
 
-        $yearSchools = (int) $yearCampaignsForStats->sum('schools_count');
+        $yearSchools = (int) $yearCampaignsForStats->sum(
+            fn (ClioCampaign $c) => (int) ($c->schoolScopeStats()['active'] ?? 0),
+        );
 
         $triades = $yearCampaignsForStats
             ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())

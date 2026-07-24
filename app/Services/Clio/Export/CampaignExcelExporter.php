@@ -445,6 +445,7 @@ final class CampaignExcelExporter
                     'alunos' => $item['distorcao'] ?? 0,
                 ];
             }
+            $byEtapa = (new \App\Services\Clio\Analysis\EtapaLabelOrder)->sortRowsByEtapaKey($byEtapa, 'etapa');
         }
 
         foreach ($byEtapa as $item) {

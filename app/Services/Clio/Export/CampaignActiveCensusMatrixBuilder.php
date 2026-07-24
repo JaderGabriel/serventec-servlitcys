@@ -5,7 +5,6 @@ namespace App\Services\Clio\Export;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
-use App\Services\Clio\Analysis\NeeConditionClassifier;
 use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Services\Clio\Parse\CsvReader;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +20,6 @@ final class CampaignActiveCensusMatrixBuilder
     public function __construct(
         private readonly CsvReader $csv,
         private readonly RelationCsvAggregator $aggregator,
-        private readonly NeeConditionClassifier $nee = new NeeConditionClassifier,
     ) {}
 
     /**
@@ -99,22 +97,21 @@ final class CampaignActiveCensusMatrixBuilder
                 $stage = $this->classifyStage($etapa, (string) ($profile['etapa'] ?? ''), (string) ($profile['agregada'] ?? ''));
                 $jornada = ! empty($profile['extended']) ? 'integral' : 'parcial';
                 $isAee = $bucket === RelationCsvAggregator::BUCKET_AEE;
-                $hasNee = $this->nee->classifyRow($row)['flagged'];
 
                 if ($stage === null) {
                     // AEE puro sem etapa curricular: entra só no total de Educação Especial.
-                    if ($isAee || $hasNee) {
+                    if ($isAee) {
                         $cells['_especial_extra'] = (int) ($cells['_especial_extra'] ?? 0) + 1;
                     }
 
                     continue;
                 }
 
-                // Regular = vínculo curricular; Especial = AEE ou marcador NEE/TEA/AH na linha.
-                if ($isAee || $hasNee) {
+                // Regular = vínculo curricular (não AEE). Especial = turma AEE (tipo explícito).
+                // NEE em turma curricular permanece só em «regular» — não inflaciona Educação Especial.
+                if ($isAee) {
                     $this->increment($cells, $stage, $jornada, $location, 'especial');
-                }
-                if (! $isAee) {
+                } else {
                     $this->increment($cells, $stage, $jornada, $location, 'regular');
                 }
                 $rowsCounted++;
@@ -137,7 +134,7 @@ final class CampaignActiveCensusMatrixBuilder
             'ibge' => (string) ($campaign->ibge_municipio ?? ''),
             'schools_active' => $schoolsActive,
             'rows_counted' => $rowsCounted,
-            'note' => __('Exposição do ano atual nas escolas em atividade. Sem comparação com ano anterior. Regular = vínculo curricular; Especial = AEE ou marcador de deficiência/TEA/AH. Parcial/Integral usa Turno/CH da turma quando existir (senão parcial). Rural/Urbana vem da Localização do Acompanhamento. Turmas «Curricular com Atividade Complementar» entram como vínculo curricular; só a matrícula exclusiva de Atividade Complementar fica de fora.'),
+            'note' => __('Exposição do ano atual nas escolas em atividade. Sem comparação com ano anterior. Regular = vínculo curricular (inclui alunos com NEE em turma regular); Especial = turma AEE. Parcial/Integral usa Turno/CH da turma quando existir (senão parcial). Rural/Urbana vem da Localização do Acompanhamento. Turmas «Curricular com Atividade Complementar» entram como vínculo curricular; só a matrícula exclusiva de Atividade Complementar fica de fora.'),
             'infantil' => $infantil,
             'fundamental' => $fundamental,
             'eja' => $eja,

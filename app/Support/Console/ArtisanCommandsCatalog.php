@@ -510,6 +510,28 @@ final class ArtisanCommandsCatalog
                         'env' => ['CLIO_ENABLED'],
                         'doc_anchor' => 'clio',
                     ],
+                    [
+                        'name' => 'bi:refresh-clio-campaigns',
+                        'summary' => __('S7 — popula tabelas bi_clio_* (agregados sem PII) para Power BI / insights.'),
+                        'signature' => 'bi:refresh-clio-campaigns {uuid?} {--all} {--year=}',
+                        'examples' => [
+                            'php artisan bi:refresh-clio-campaigns {uuid}',
+                            'php artisan bi:refresh-clio-campaigns --all --year=2026',
+                        ],
+                        'env' => ['CLIO_ENABLED'],
+                        'doc_anchor' => 'clio',
+                    ],
+                    [
+                        'name' => 'clio:prune-artifacts',
+                        'summary' => __('Remove artefactos Clio além da retenção (ficheiros + registos).'),
+                        'signature' => 'clio:prune-artifacts {--days=} {--dry-run}',
+                        'examples' => [
+                            'php artisan clio:prune-artifacts --dry-run',
+                            'php artisan clio:prune-artifacts --days=90',
+                        ],
+                        'env' => ['CLIO_ENABLED', 'CLIO_RETENTION_DAYS'],
+                        'doc_anchor' => 'clio',
+                    ],
                 ],
             ],
             [
