@@ -10,7 +10,7 @@
 | **Data de referência** | **24/07/2026** |
 | **Último marco documentado** | **Metis** — cobertura Fase E (Jobs + POSTs admin) — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `pending` (#**0**) |
+| **Commit de release** | `d7aa2ff` (#**613**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -70,7 +70,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.2.2** | `pending` / `20260724e-Metis` → `main` | **0** | 24/07/2026 | **Produção:** Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
+| **▶ 8.2.2** | `d7aa2ff` / `20260724e-Metis` → `main` | **613** | 24/07/2026 | **Produção:** Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
 | 8.2.1 | `ad7deaf` / `20260724d-Eunomia` → `main` | **608** | 24/07/2026 | Estabilização A–D (CI/testes, SafeOutboundUrl, worker Clio, docs 8.2) — [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md). |
 | 8.2.0 | `696dd173` / `20260724c-Hygieia` → `main` | **568** | 24/07/2026 | Clio — série SVG no PDF gestor, `clio:campaign-reanalyze-all`, Censo 2025, NEE/Excel/Cor-Raça — [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md). |
 | 8.1.0 | `ca0f09a8` / `20260724b-Asclepius` → `main` | **563** | 24/07/2026 | Clio — Diagnóstico Geral, PDF do gestor, tempo escolar, série no card, faixas de CH/turnos — [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md). |

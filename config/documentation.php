@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '8.2.2',
         'release_tag' => '20260724e-Metis',
-        'commit_short' => 'pending',
-        'commit_number' => 0,
+        'commit_short' => 'd7aa2ff',
+        'commit_number' => 613,
         'revision_date' => '2026-07-24',
         'in_production' => true,
         'production_label' => 'Em produção',

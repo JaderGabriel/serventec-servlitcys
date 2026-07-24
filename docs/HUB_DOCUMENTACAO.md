@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **8.2.2** |
 | **Tag de deploy** | `20260724e-Metis` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `d7aa2ff` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) |
 | **Marco** | **Metis** — cobertura Fase E (Jobs + POSTs admin) |
