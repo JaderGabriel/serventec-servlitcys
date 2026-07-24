@@ -941,8 +941,8 @@ final class HorizonteMapService
         $citiesByIbge = $this->citiesByIbge($scopedUf);
 
         $fundebByIbge = $this->fundebByIbge($refYear, $ibgePrefix);
-        $censoByIbge = $this->censoByIbge($refYear, $ibgePrefix);
         $censoRowsByIbge = $this->censoRowsByIbge($refYear, $ibgePrefix);
+        $censoByIbge = $this->censoSummaryFromRows($censoRowsByIbge);
         $censoSeriesByIbge = $this->censoSeriesByIbge($refYear, $ibgePrefix);
         $saebByIbge = $this->saebByIbge($refYear, $ibgePrefix);
         $cadunicoByIbge = $this->cadunicoByIbge($refYear, $ibgePrefix);
@@ -1482,19 +1482,13 @@ final class HorizonteMapService
     }
 
     /**
-     * @return array<string, array{matriculas_total: int}>
+     * @param  array<string, InepCensoMunicipioMatricula>  $rowsByIbge
+     * @return array<string, array{matriculas_total: int, ano: int}>
      */
-    private function censoByIbge(int $refYear, ?string $ibgePrefix = null): array
+    private function censoSummaryFromRows(array $rowsByIbge): array
     {
-        $years = [$refYear, $refYear - 1, $refYear - 2];
-        $rows = $this->latestModelRowsPerIbge(InepCensoMunicipioMatricula::class, 'ano', $years, $ibgePrefix);
-
         $out = [];
-        foreach ($rows as $row) {
-            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
-            if ($ibge === null) {
-                continue;
-            }
+        foreach ($rowsByIbge as $ibge => $row) {
             $out[$ibge] = [
                 'matriculas_total' => (int) $row->matriculas_total,
                 'ano' => (int) $row->ano,
@@ -1502,6 +1496,14 @@ final class HorizonteMapService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<string, array{matriculas_total: int, ano: int}>
+     */
+    private function censoByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        return $this->censoSummaryFromRows($this->censoRowsByIbge($refYear, $ibgePrefix));
     }
 
     /**

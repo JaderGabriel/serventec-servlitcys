@@ -71,7 +71,18 @@ final class HorizonteTransferBreakdown
 
         /** @var array<string, list<MunicipalTransferSnapshot>> $byIbge */
         $byIbge = [];
-        foreach ($query->get() as $row) {
+        foreach (
+            $query->get([
+                'id',
+                'ibge_municipio',
+                'programa_id',
+                'programa_label',
+                'valor',
+                'fonte',
+                'ano',
+                'meta',
+            ]) as $row
+        ) {
             if (! $row instanceof MunicipalTransferSnapshot) {
                 continue;
             }
