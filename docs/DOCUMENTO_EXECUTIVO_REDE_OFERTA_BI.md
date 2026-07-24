@@ -44,7 +44,7 @@ Melhorias típicas em roadmaps de BI: **drill-down** (escola → turma), **compa
 ### 4.3 Recomendações priorizadas
 
 1. **Índices na base municipal** (fora do repositório Laravel, mas crítico): colunas de junção e filtro de ano em `turma` e tabelas de vínculo matrícula–turma.
-2. **Cache de resultado** do `NetworkRepository::snapshot` (ou só do payload do gráfico principal) com `Cache::remember`, chave derivada do estado de filtros e invalidação ao publicar novo ano ou job de sincronização.
+2. **Cache de resultado** do `NetworkRepository::snapshot` com `Cache::remember`, chave `analytics:network:v1:{cityId}:{md5(filtros)}`, TTL `ANALYTICS_NETWORK_CACHE` (default 300 s; `0` = off). Falhas (`error`) **não** são cacheadas.
 3. **Job assíncrono** (fila) para pré-calcular agregados diários por município em tabela local (`network_offer_rollups`), se o tempo de resposta continuar alto — padrão em **data marts** corporativos.
 4. **Limite consciente de escolas** no eixo (já existe teto no código empilhado/agrupado): documentar no UI o «top N» para evitar expectativa de «todas as linhas em simultâneo» em redes enormes.
 5. **Monitorização**: logar tempo de `snapshot` por cidade (Pulse, Telescope em dev, ou `Log::info` com milissegundos) para priorizar otimizações reais.

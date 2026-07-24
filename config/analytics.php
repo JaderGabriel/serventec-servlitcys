@@ -114,6 +114,9 @@ return [
     /** Segundos de cache do snapshot do Diagnóstico (0 = sem cache). */
     'municipality_health_cache_seconds' => max(0, (int) env('ANALYTICS_MUNICIPALITY_HEALTH_CACHE', 300)),
 
+    /** Segundos de cache do snapshot Rede & Oferta (0 = sem cache). */
+    'network_cache_seconds' => max(0, (int) env('ANALYTICS_NETWORK_CACHE', 300)),
+
     /*
     |--------------------------------------------------------------------------
     | Diagnóstico — modo de carregamento

@@ -8,6 +8,8 @@ use App\Support\Dashboard\IeducarFilterState;
 use App\Support\Ieducar\MatriculaChartQueries;
 use Illuminate\Database\Connection;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Rede e oferta: vagas por turno/segmento/escola e matrículas por série e escola (expansão e uso da rede).
@@ -39,6 +41,55 @@ class NetworkRepository
             return ['charts' => [], 'vagas_por_unidade_chart' => null, 'kpis' => null, 'notes' => [], 'error' => null];
         }
 
+        $ttl = (int) config('analytics.network_cache_seconds', 300);
+        if ($ttl <= 0) {
+            return $this->snapshotFresh($city, $filters);
+        }
+
+        $params = $filters->toQueryParamsWithCity((int) $city->id);
+        ksort($params);
+        $cacheKey = 'analytics:network:v1:'.(int) $city->id.':'.md5((string) json_encode($params));
+
+        try {
+            /** @var array<string, mixed> $cached */
+            $cached = Cache::remember($cacheKey, $ttl, function () use ($city, $filters): array {
+                $fresh = $this->snapshotFresh($city, $filters);
+                // Não cachear falhas de ligação / SQL — próximas tentativas devem repetir.
+                if (($fresh['error'] ?? null) !== null) {
+                    throw new \RuntimeException((string) $fresh['error']);
+                }
+
+                return $fresh;
+            });
+
+            return $cached;
+        } catch (\Throwable $e) {
+            Log::warning('analytics.network_cache_failed', [
+                'city_id' => $city->id,
+                'message' => $e->getMessage(),
+            ]);
+
+            return $this->snapshotFresh($city, $filters);
+        }
+    }
+
+    /**
+     * @return array{
+     *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>}>,
+     *   vagas_por_unidade_chart: ?array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string},
+     *   kpis: ?array{
+     *     capacidade_total: int,
+     *     matriculas: int,
+     *     vagas_ociosas: int,
+     *     taxa_ociosidade_pct: ?float,
+     *     turmas_com_capacidade: int
+     *   },
+     *   notes: list<string>,
+     *   error: ?string
+     * }
+     */
+    private function snapshotFresh(City $city, IeducarFilterState $filters): array
+    {
         $charts = [];
         $vagasPorUnidadeChart = null;
         $notes = [];
