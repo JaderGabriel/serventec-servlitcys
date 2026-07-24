@@ -126,6 +126,9 @@ PULSE_ENABLED=true
 PULSE_DB_CONNECTION=mysql
 PULSE_SCHEDULE_ENABLED=true
 PULSE_SCHEDULE_INTERVAL_MINUTES=3
+# INF-05 — com Redis disponível, preferir ingest fora da MySQL:
+# PULSE_INGEST_DRIVER=redis
+# PULSE_CACHE_DRIVER=redis
 
 IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true
 PORTAL_TRANSPARENCIA_API_KEY=   # preencher para despesas na aba Financiamentos

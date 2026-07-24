@@ -187,10 +187,11 @@ Ordenado por **relação ganho/risco** (mais seguro primeiro). Cada etapa é ind
 - **Riscos:** nenhum técnico; risco é *pular* esta etapa.
 - **Evitar:** otimizar «no escuro» sem número antes/depois.
 
-### Etapa 1 — Tuning do servidor + isolar Pulse `[ ]`
+### Etapa 1 — Tuning do servidor + isolar Pulse `[parcial — app documentada 2026-07-24]`
 
-- [ ] Subir `innodb_buffer_pool_size` (alvo: 50–70% da RAM dedicada à base).
-- [ ] Mover telemetria Pulse para Redis (`PULSE_INGEST_DRIVER=redis`) ou base própria.
+- [x] App: caminho `PULSE_INGEST_DRIVER=redis` / `PULSE_CACHE_DRIVER=redis` documentado (`.env.example`, [PERFORMANCE.md](PERFORMANCE.md), IMPLANTAÇÃO).
+- [ ] **Ops MySQL:** subir `innodb_buffer_pool_size` (alvo: 50–70% da RAM dedicada à base).
+- [ ] **Ops:** activar ingest Redis em produção e validar redução de lock wait.
 - [ ] Avaliar `innodb_flush_log_at_trx_commit=2` se a perda de ≤1 s em falha for aceitável.
 - **Ganho:** ataca a **raiz** da contenção (lock wait das importações vs Pulse); maior retorno do plano.
 - **Riscos:** `=2` reduz durabilidade; *buffer pool* alto de mais sufoca o SO.

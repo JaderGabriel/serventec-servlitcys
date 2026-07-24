@@ -93,6 +93,14 @@ php artisan queue:work redis --queue=default,admin-sync,clio --sleep=3 --tries=3
 
 (O bloco comentado «Produção recomendada» em `.env.example` espelha estes valores; install nova mantém `database` até haver Redis.)
 
+### INF-05 — Pulse + InnoDB (menos lock wait)
+
+1. **App:** `PULSE_INGEST_DRIVER=redis` e `PULSE_CACHE_DRIVER=redis` (com Redis activo).
+2. **MySQL (DBA / janela de manutenção):** subir `innodb_buffer_pool_size` (alvo 50–70% da RAM da BD); avaliar `innodb_flush_log_at_trx_commit=2` se ≤1 s de perda em crash for aceitável.
+3. Medir antes/depois: `php artisan performance:check` + Pulse / `SHOW GLOBAL STATUS`.
+
+Detalhe: [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) §7 etapa 1.
+
 ## Otimizações no código (independentes do Redis)
 
 | Medida | Efeito |

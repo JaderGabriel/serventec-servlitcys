@@ -15,7 +15,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | Eixo | Estado | Achado principal |
 |------|--------|------------------|
 | **Testes** | Médio / frágil | ~299 ficheiros (265 Unit / 34 Feature); Unit forte; Feature fraca; suite instável (`pdo_sqlite` + consentimento legal) |
-| **Otimizações** | Médio+ | Mitigações Horizonte recentes OK; bundle Vite ~800KB; Redis opt-in; fila `clio` pouco documentada no worker |
+| **Otimizações** | Bom | Code-split Vite; Redis/worker `clio` documentados; cache Rede & Oferta; Pulse ingest Redis no checklist ops |
 | **Documentação** | Parcial | STATUS/Clio/Histórico em 8.2; PERFORMANCE / IMPLANTAÇÃO / VARIÁVEIS / SEGURANÇA ainda em 6.5–7.0 |
 | **Segurança** | Bom | Policies + `SafeOutboundUrl` (SAEB/admin); throttle/log em `/relatorio`; uploads Clio/CadÚnico tipados; sessão e `User` fillable endurecidos |
 
@@ -63,7 +63,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **C3** | P0 | Worker: `default,admin-sync,clio` no README e IMPLANTAÇÃO | **Concluído** (2026-07-24) — docs + Supervisor `--timeout=1200` | [MODULO_CLIO.md](modulos/MODULO_CLIO.md) |
 | **C4** | P1 | Testes unitários leves de `HorizonteMapService` (assemble scoped + cache hit) | **Concluído** (2026-07-24) — `HorizonteMapServiceTest` | — |
 | **C5** | P2 | Cache de `NetworkRepository::snapshot` (Rede & Oferta) | **Concluído** (2026-07-24) — `ANALYTICS_NETWORK_CACHE` | [DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md](DOCUMENTO_EXECUTIVO_REDE_OFERTA_BI.md) |
-| **C6** | P1 | INF-05: Pulse ingest Redis + tuning InnoDB | Menos lock wait sob telemetria | INF-05 |
+| **C6** | P1 | INF-05: Pulse ingest Redis + tuning InnoDB | **Concluído** (2026-07-24) — docs/app; InnoDB fica checklist ops | INF-05 |
 
 ---
 
