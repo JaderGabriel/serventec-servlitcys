@@ -18,6 +18,7 @@ use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPipeline;
 use App\Support\Horizonte\HorizonteIbgeMunicipalGeoImportProgress;
 use App\Support\Horizonte\HorizonteIbgeWarmProgress;
+use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\HorizonteSaebImportProgress;
 use App\Support\Horizonte\HorizonteSiconfiSyncProgress;
 use App\Support\Horizonte\HorizonteSidraImportProgress;
@@ -338,6 +339,7 @@ final class HorizonteFortnightlyFeedService
 
             if (($result['success'] ?? false) && ! $dryRun) {
                 HorizonteFortnightlyFeedMonolithicProgress::markPhaseDone($phaseKey);
+                HorizonteMapCacheBuster::forgetFingerprint();
                 gc_collect_cycles();
             }
         }

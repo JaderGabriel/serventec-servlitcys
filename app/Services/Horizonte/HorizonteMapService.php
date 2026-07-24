@@ -1928,6 +1928,13 @@ final class HorizonteMapService
 
     private function dataFingerprint(): string
     {
+        return HorizonteMapCacheBuster::rememberFingerprint(
+            fn (): string => $this->computeDataFingerprint(),
+        );
+    }
+
+    private function computeDataFingerprint(): string
+    {
         $parts = [];
         foreach ([
             [City::class, 'updated_at'],

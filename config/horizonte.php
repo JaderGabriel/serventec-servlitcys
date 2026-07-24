@@ -326,6 +326,8 @@ return [
         'overview_time_limit' => max(60, (int) env('HORIZONTE_MAP_OVERVIEW_TIME_LIMIT', 180)),
         /** Espera máxima (s) por lock de cache quando outro pedido monta o mesmo recorte (HTTP interativo). */
         'cache_lock_wait_seconds' => max(8, min(60, (int) env('HORIZONTE_MAP_CACHE_LOCK_WAIT', 20))),
+        /** Memoização do fingerprint (COUNT/MAX) entre pedidos map-data; invalidado por bust(). */
+        'fingerprint_cache_seconds' => max(15, min(300, (int) env('HORIZONTE_MAP_FINGERPRINT_CACHE', 45))),
         /** Todas as UFs com malha mesorregional IBGE abrem vista intermédia antes do detalhe municipal. */
         'meso_overview_threshold' => 0,
         /** Vista inicial GIS/BI — municípios com pressão FUNDEB elevada ou alta propensão. */
