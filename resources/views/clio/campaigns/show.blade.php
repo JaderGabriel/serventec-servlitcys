@@ -5,8 +5,9 @@
         $triadePct = (float) ($hub['triade_pct'] ?? 0);
         $triadeTone = $triadePct >= 80 ? 'emerald' : ($triadePct >= 40 ? 'amber' : 'rose');
         $hasAnalysis = ! empty($hub['has_analysis']);
-        $errors = (int) ($hub['errors'] ?? 0);
-        $warnings = (int) ($hub['warnings'] ?? 0);
+        // Evitar $errors — colide com ViewErrorBag do Laravel (@error → getBag).
+        $errorCount = (int) ($hub['errors'] ?? 0);
+        $warningCount = (int) ($hub['warnings'] ?? 0);
         $filesTotal = (int) (($filesInventory['total'] ?? null) ?? $campaign->artifacts_count);
         $ready = $campaign->hasReportReady();
 
@@ -24,10 +25,10 @@
             $nextHref = route('clio.campaigns.analysis', $campaign);
             $nextCta = __('Ir ao painel / analisar');
             $nextTone = 'sky';
-        } elseif ($errors > 0) {
+        } elseif ($errorCount > 0) {
             $nextKey = 'fix';
             $nextTitle = __('Corrigir inconsistências');
-            $nextLead = __(':n erro(s) na coleta — priorize o que corrigir no relatório analítico.', ['n' => $errors]);
+            $nextLead = __(':n erro(s) na coleta — priorize o que corrigir no relatório analítico.', ['n' => $errorCount]);
             $nextHref = route('clio.campaigns.analysis', $campaign);
             $nextCta = __('Abrir relatório');
             $nextTone = 'rose';
@@ -178,8 +179,8 @@
                             <p class="clio-hub-step__label">{{ __('Relatório') }}</p>
                             <h4 class="clio-hub-step__title">{{ __('Painel analítico') }}</h4>
                             <p class="clio-hub-step__text">
-                                @if ($errors > 0)
-                                    {{ __(':e erro(s) · :a atenção(ões)', ['e' => $errors, 'a' => $warnings]) }}
+                                @if ($errorCount > 0)
+                                    {{ __(':e erro(s) · :a atenção(ões)', ['e' => $errorCount, 'a' => $warningCount]) }}
                                 @elseif ($ready)
                                     {{ __('Escolas, distorção, NEE e o que corrigir.') }}
                                 @else
@@ -262,14 +263,14 @@
                         <p class="clio-kpi-tile__value {{ $toneClass('sky') }}">{{ number_format($filesTotal) }}</p>
                         <p class="clio-kpi-tile__hint">{{ __('No inventário desta coleta') }}</p>
                     </div>
-                    <div class="clio-kpi-tile {{ $tileTone($errors > 0 ? 'rose' : 'emerald') }}">
+                    <div class="clio-kpi-tile {{ $tileTone($errorCount > 0 ? 'rose' : 'emerald') }}">
                         <p class="clio-kpi-tile__label">{{ __('Erros') }}</p>
-                        <p class="clio-kpi-tile__value {{ $toneClass($errors > 0 ? 'rose' : 'emerald') }}">{{ number_format($errors) }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass($errorCount > 0 ? 'rose' : 'emerald') }}">{{ number_format($errorCount) }}</p>
                         <p class="clio-kpi-tile__hint">{{ __('Achados a corrigir') }}</p>
                     </div>
-                    <div class="clio-kpi-tile {{ $tileTone($warnings > 0 ? 'amber' : 'emerald') }}">
+                    <div class="clio-kpi-tile {{ $tileTone($warningCount > 0 ? 'amber' : 'emerald') }}">
                         <p class="clio-kpi-tile__label">{{ __('Atenções') }}</p>
-                        <p class="clio-kpi-tile__value {{ $toneClass($warnings > 0 ? 'amber' : 'emerald') }}">{{ number_format($warnings) }}</p>
+                        <p class="clio-kpi-tile__value {{ $toneClass($warningCount > 0 ? 'amber' : 'emerald') }}">{{ number_format($warningCount) }}</p>
                         <p class="clio-kpi-tile__hint">{{ __('Pontos de revisão') }}</p>
                     </div>
                     <div class="clio-kpi-tile {{ $tileTone($campaign->isAnalysisOnly() ? 'amber' : 'emerald') }}">

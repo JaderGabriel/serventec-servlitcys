@@ -156,8 +156,8 @@
                             $scope = $campaign->schoolScopeStats();
                             $triade = $scope['triade_pct'];
                             $ready = $campaign->hasReportReady();
-                            $errors = (int) $campaign->findings_error_count;
-                            $warnings = (int) ($campaign->findings_warning_count ?? 0);
+                            $errorCount = (int) $campaign->findings_error_count;
+                            $warningCount = (int) ($campaign->findings_warning_count ?? 0);
                         @endphp
                         <article
                             class="clio-report-card"
@@ -184,10 +184,10 @@
                                     @else
                                         <span class="clio-chip clio-chip--warn">{{ __('Em preparação') }}</span>
                                     @endif
-                                    @if ($errors > 0)
-                                        <span class="clio-chip clio-chip--error">{{ __(':n erro(s)', ['n' => $errors]) }}</span>
-                                    @elseif ($warnings > 0)
-                                        <span class="clio-chip clio-chip--warn">{{ __(':n aviso(s)', ['n' => $warnings]) }}</span>
+                                    @if ($errorCount > 0)
+                                        <span class="clio-chip clio-chip--error">{{ __(':n erro(s)', ['n' => $errorCount]) }}</span>
+                                    @elseif ($warningCount > 0)
+                                        <span class="clio-chip clio-chip--warn">{{ __(':n aviso(s)', ['n' => $warningCount]) }}</span>
                                     @endif
                                     <button
                                         type="button"
