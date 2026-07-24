@@ -36,7 +36,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | ID | Prioridade | Trabalho | Critério de done | Relacionado |
 |----|------------|----------|------------------|-------------|
 | **A1** | P0 | `composer test` usar `./scripts/php-with-sqlite.sh` | **Concluído** (2026-07-24) — `scripts/run-tests.sh` | INF-04 |
-| **A2** | P0 | Trait / `TestCase`: consentimento legal resolvido ou middleware desativado em Feature | Feature tests deixam de redirecionar para `/consentimento` | — |
+| **A2** | P0 | Trait / `TestCase`: consentimento legal resolvido ou middleware desativado em Feature | **Concluído** (2026-07-24) — `DisablesAuthenticatedLegalConsent` + `LegalConsentTest` reativa | — |
 | **A3** | P1 | GitHub Actions: PHPUnit Unit+Feature com sqlite | PR vermelho se a suite falhar | INF-01, INF-04 |
 | **A4** | P2 | Coverage clover opcional no CI (sem threshold rígido no início) | Artefato de coverage no CI | — |
 

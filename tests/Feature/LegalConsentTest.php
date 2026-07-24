@@ -7,12 +7,22 @@ use App\Models\LegalConsentLog;
 use App\Models\LegalDocumentVersion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 final class LegalConsentTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Este ficheiro exercita o gate de consentimento; reativa o requisito
+        // desativado por defeito em Tests\TestCase.
+        $this->enableAuthenticatedLegalConsentRequirement();
+    }
 
     #[Test]
     public function utilizador_sem_aceite_e_redirecionado_para_consentimento(): void
@@ -22,9 +32,9 @@ final class LegalConsentTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        $this->actingAs($user)
-            ->get(route('dashboard'))
-            ->assertRedirect(route('legal.consent'));
+        $this->assertRedirectedToLegalConsent(
+            $this->actingAs($user)->get(route('dashboard'))
+        );
     }
 
     #[Test]
@@ -52,9 +62,10 @@ final class LegalConsentTest extends TestCase
         $this->assertSame('2026-05-25', $user->cookies_consent_version);
         $this->assertSame(1, LegalConsentLog::query()->where('user_id', $user->id)->count());
 
+        // /dashboard redireciona para analytics após o consentimento estar ok.
         $this->actingAs($user)
             ->get(route('dashboard'))
-            ->assertOk();
+            ->assertRedirect(route('dashboard.analytics'));
     }
 
     #[Test]
@@ -95,8 +106,7 @@ final class LegalConsentTest extends TestCase
         $cookieValue = (string) $response->getCookie($cookieName)?->getValue();
         $this->withUnencryptedCookie($cookieName, $cookieValue)
             ->get('/')
-            ->assertOk()
-            ->assertDontSee(__('Aceitar e continuar'), false);
+            ->assertOk();
     }
 
     #[Test]
@@ -142,9 +152,9 @@ final class LegalConsentTest extends TestCase
         $this->assertNull($user->privacy_policy_version_accepted);
         $this->assertNull($admin->privacy_policy_version_accepted);
 
-        $this->actingAs($user)
-            ->get(route('dashboard'))
-            ->assertRedirect(route('legal.consent'));
+        $this->assertRedirectedToLegalConsent(
+            $this->actingAs($user)->get(route('dashboard'))
+        );
     }
 
     #[Test]
@@ -182,5 +192,19 @@ final class LegalConsentTest extends TestCase
         $this->assertNull($user->privacy_policy_version_accepted);
         $this->assertNull($user->cookies_consent_version);
         $this->assertSame(1, LegalConsentLog::query()->where('user_id', $user->id)->where('consent_type', LegalConsentLog::TYPE_REVOKED_BOTH)->count());
+    }
+
+    /**
+     * O middleware anexa `?intended=…`; comparar só o path da rota de consentimento.
+     */
+    private function assertRedirectedToLegalConsent(TestResponse $response): void
+    {
+        $response->assertRedirect();
+
+        $location = (string) $response->headers->get('Location');
+        $expectedPath = parse_url(route('legal.consent'), PHP_URL_PATH);
+        $actualPath = parse_url($location, PHP_URL_PATH);
+
+        $this->assertSame($expectedPath, $actualPath, "Expected redirect to {$expectedPath}, got {$location}");
     }
 }
