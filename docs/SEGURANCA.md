@@ -6,10 +6,10 @@
 
 ## Senhas e segredos
 
-### Usuárioes da aplicação
+### Usuários da aplicação
 
 - As senhas são armazenadas com **hash** (cast `hashed` no modelo `User`), usando o driver configurado (tipicamente bcrypt).
-- O registo público está **desactivado**; novos usuárioes são criados por um administrador autenticado, com validação de senha (regras Laravel `Password::defaults()`).
+- O registo público está **desactivado**; novos usuários são criados por um administrador autenticado, com validação de senha (regras Laravel `Password::defaults()`).
 
 ### Administrador inicial (seeder)
 
@@ -36,8 +36,8 @@ Perfis (`users.role`): **admin**, **user**, **municipal**. Municípios do perfil
 |---------|------|
 | Painel `/dashboard` (estatísticas, probe) | `role=admin` — outros perfis são redirecionados para Análise |
 | CRUD de cidades, sync, SMTP, sessões | `role=admin` (middleware `admin`) |
-| Criar usuárioes | Admin, Usuário (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
-| Desactivar / reactivar / excluir usuárioes | Só `role=admin`; não sobre a própria conta; não desactivar nem excluir o único admin — `UserPolicy::updateStatus`, `UserPolicy::delete` |
+| Criar usuários | Admin, Usuário (só `user`), Municipal (só `municipal` no seu âmbito) — `UserPolicy` |
+| Desactivar / reactivar / excluir usuários | Só `role=admin`; não sobre a própria conta; não desactivar nem excluir o único admin — `UserPolicy::updateStatus`, `UserPolicy::delete` |
 | Contas inactivas (`is_active=false`) | Login recusado (`LoginRequest`); sessão terminada em cada pedido (`EnsureUserIsActive`) |
 | Análise / exportação | Admin e Usuário: todos os municípios `forAnalytics`; Municipal: só vinculados — `CityPolicy::viewAnalytics` |
 | Histórico de logins | Gate `manageUserAudit` (admin) |
@@ -61,8 +61,8 @@ A coluna legada `is_admin` é sincronizada automaticamente com `role` ao gravar.
 - [ ] `php artisan config:cache` e `route:cache` após deploy
 - [ ] Permissões de arquivos: `storage/` e `bootstrap/cache/` graváveis pelo web server
 - [ ] Backup da base de dados e de `APP_KEY`
-- [ ] Rever usuárioes `is_admin` e senhas iniciais
-- [ ] Logs: não expor stack traces a usuárioes finais
+- [ ] Rever usuários `is_admin` e senhas iniciais
+- [ ] Logs: não expor stack traces a usuários finais
 - [ ] (Opcional) Proxy reverso: cabeçalhos `X-Forwarded-*` e `TrustProxies` configurados no Laravel se aplicável
 
 ## Importações e URLs externas (CadÚnico, FUNDEB, SAEB)
@@ -118,7 +118,7 @@ Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários re
 - SQL dinâmico em i-Educar limitado a nomes resolvidos por schema da cidade.
 - Testes: `ContainedPathResolverTest`, `SafeOutboundUrlTest`, CadÚnico/Misocial, FUNDEB, CI PHPUnit.
 
-## Auditoria de usuárioes
+## Auditoria de usuários
 
 Acções registadas em `admin_user_logs` (via `AdminUserAuditLogger`): criação, atualização, activação, desactivação, exclusão, encerramento de sessões, logins.
 

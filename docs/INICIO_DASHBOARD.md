@@ -4,7 +4,7 @@
 
 > **Release:** [RELEASE_20260603e_HYPERION.md](RELEASE_20260603e_HYPERION.md) (5.4.0) · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) · **Índice:** [README.md](README.md)
 
-Painel operacional após login (usuárioes com `canViewAdminDashboard()`). Usuárioes sem essa permissão são redirecionados para a consultoria municipal.
+Painel operacional após login (usuários com `canViewAdminDashboard()`). Usuários sem essa permissão são redirecionados para a consultoria municipal.
 
 ## Ordem dos blocos (4.0)
 
@@ -25,7 +25,7 @@ Quatro zonas operacionais — **sem** atalhos para abas da consultoria analític
 | Filas e monitorização | Filas de processamento, Dados públicos, Monitor de módulos |
 | Rede municipal | Conexões i-Educar, Municípios, Matriz FUNDEB (compatibilidade) |
 | Visão multi-município | RX, Horizonte (`canViewHorizonte`) |
-| Gestão | Usuárioes (`canManageUsers`) |
+| Gestão | Usuários (`canManageUsers`) |
 
 Badges dinâmicos: contagem de fila, `prontos/activos` i-Educar, municípios activos na RX.
 

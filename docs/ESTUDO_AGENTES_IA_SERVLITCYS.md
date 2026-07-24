@@ -143,7 +143,7 @@ Tools candidatas (escrita — fase tardia):
 
 | Vantagens | Contras |
 |-----------|---------|
-| Sem exposição a usuárioes finais | Valor indirecto |
+| Sem exposição a usuários finais | Valor indirecto |
 | Resumos de falha de teste/import | Pode vazar logs se mal configurado |
 
 **Caminho técnico:** hook pós-falha em `admin-sync` → envia trecho de log para LLM → grava sugestão em `meta` da tarefa (não auto-executa).

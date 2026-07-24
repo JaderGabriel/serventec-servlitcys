@@ -188,7 +188,7 @@ Fluxo desejado (implícito no Início 4.0 e `HomeQuickActionsCatalog`):
 - Finanças fica só com abas «numéricas»: Discrepâncias, FUNDEB, Tempo Real, Comparativo, Financiamentos.
 - `resolveInitialTab` → `municipality_health` quando ano aplicado.
 
-**Prós:** espelha jornada executiva e Início. **Contras:** refactor navegação Alpine, PDF, permissões, formação usuárioes.
+**Prós:** espelha jornada executiva e Início. **Contras:** refactor navegação Alpine, PDF, permissões, formação usuários.
 
 ### Cenário D — CadÚnico e Finanças (médio risco)
 
@@ -261,7 +261,7 @@ Arquivos tocados tipicamente:
 - [ ] `DiagnosisExploreCards` ordem vs menu Finanças (já alinhada: Discrepâncias primeiro em Finanças)  
 - [ ] PDF / export: ordem das seções (inalterado — PDF mantém grupo diagnóstico)  
 - [ ] `npm run build` em deploy (sem alteração JS obrigatória nesta mudança)  
-- [x] Comunicação usuárioes: Diagnóstico passou para área **Resumo** (1.º segmento) — ver [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
+- [x] Comunicação usuários: Diagnóstico passou para área **Resumo** (1.º segmento) — ver [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
 
 ---
 

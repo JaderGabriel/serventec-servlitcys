@@ -145,7 +145,7 @@ O **POST `/login`** em si é leve (uma query + `Hash::check` + redirect). A sens
 
 Com `PERFORMANCE_HOME_DEFER_MAP_RX=true` (default), a página abre só com conexão/cores básicas; o browser chama `GET /dashboard/municipality-map/cadastro-snapshot` em paralelo (endpoint já existia).
 
-**Usuárioes municipais** vão para `/dashboard/analytics` — aí o atraso típico é **uma** ligação i-Educar para anos letivo (`ANALYTICS_INDEX_LIGHT_FILTERS=true` evita escolas/cursos no index).
+**Usuários municipais** vão para `/dashboard/analytics` — aí o atraso típico é **uma** ligação i-Educar para anos letivo (`ANALYTICS_INDEX_LIGHT_FILTERS=true` evita escolas/cursos no index).
 
 ## Painel analítico
 

@@ -16,7 +16,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 |------|--------|------------------|
 | **Testes** | Médio / frágil | ~299 ficheiros (265 Unit / 34 Feature); Unit forte; Feature fraca; suite instável (`pdo_sqlite` + consentimento legal) |
 | **Otimizações** | Bom | Code-split Vite; Redis/worker `clio` documentados; cache Rede & Oferta; Pulse ingest Redis no checklist ops |
-| **Documentação** | Parcial | STATUS/Clio/Histórico em 8.2; PERFORMANCE / IMPLANTAÇÃO / VARIÁVEIS / SEGURANÇA ainda em 6.5–7.0 |
+| **Documentação** | Bom | PERFORMANCE / IMPLANTAÇÃO / VARIÁVEIS / SEGURANÇA / índice docs em **8.2**; README linha 8.x |
 | **Segurança** | Bom | Policies + `SafeOutboundUrl` (SAEB/admin); throttle/log em `/relatorio`; uploads Clio/CadÚnico tipados; sessão e `User` fillable endurecidos |
 
 **Já feito (não repetir neste plano):** fingerprint do mapa; consultoria por IBGE; censo/transferências enxutos; retries 503; malha municipal filtrada; SICONFI lote + FUNDEB upsert; falhas honestas no feed.
@@ -75,7 +75,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 | **D2** | P1 | VARIÁVEIS: `HORIZONTE_MAP_FINGERPRINT_CACHE`, `CLIO_DRIVE_BATCH_*`; alinhar default `HORIZONTE_CACHE_SECONDS` (doc ↔ `config/horizonte.php`) | **Concluído** (2026-07-24) — default **3600** |
 | **D3** | P0 | README: histórico 8.x; link Horizonte válido; menção Clio; worker com fila `clio` | **Concluído** (2026-07-24) — link Prospeccao; Clio no README |
 | **D4** | P1 | SEGURANÇA.md: secção Clio + superfície pública PDF/API | **Concluído** (2026-07-24) — checklist 8.2 |
-| **D5** | P2 | Corrigir typo «Usuárioes» e resíduos pt-BR em docs administrativos | Consistência editorial |
+| **D5** | P2 | Corrigir typo «Usuárioes» e resíduos pt-BR em docs administrativos | **Concluído** (2026-07-24) — Usuários nos docs vivos |
 
 ---
 

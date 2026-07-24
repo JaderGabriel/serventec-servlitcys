@@ -282,7 +282,7 @@ flowchart LR
 | **Latência por pedido na base remota** | Etapa 3 (PDO persistente) e, depois, Etapa 6 (pooling externo) |
 | **Coletas externas lentas/instáveis** | Etapa 4 (pool HTTP + *backoff*) |
 | **Importações a competir com a web** | Etapa 5 (Horizon) + Etapa 8 (réplica de leitura) |
-| **Crescimento de usuárioes simultâneos** | Etapa 7 (LB) e, se justificar, Etapa 9 (Octane) |
+| **Crescimento de usuários simultâneos** | Etapa 7 (LB) e, se justificar, Etapa 9 (Octane) |
 
 **Regra de ouro:** medir antes/depois (Etapa 0), resolver a **raiz** na base (Etapa 1) e só então escalar app/filas. Pooling e balanceamento amplificam o sistema — incluindo os seus defeitos — por isso vêm **depois** de corrigir contenção e tornar a app *stateless*.
 

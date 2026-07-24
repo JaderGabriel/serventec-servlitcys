@@ -165,7 +165,7 @@ flowchart LR
         Emb[Power BI Embedded]
     end
 
-    subgraph Users["Usuárioes"]
+    subgraph Users["Usuários"]
         Admin[Admin multi-município]
         Municipal[Perfil municipal]
     end

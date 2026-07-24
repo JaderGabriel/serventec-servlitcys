@@ -56,7 +56,7 @@ O acesso à aplicação é controlado pelo campo `users.role` (`admin`, `user`, 
 - Importar dados, sincronizar, configurar cidades ou SMTP
 - Criar administradores ou municipais
 - Ver Pulse, sessões globais ou histórico de logins de outros
-- Ver tarefas de sincronização de outros usuárioes ou documentação de deploy/integração admin
+- Ver tarefas de sincronização de outros usuários ou documentação de deploy/integração admin
 - Mutar dados Clio (criar coleta, upload, correr análise/cruzamento, cadastrar município, vincular i-Educar)
 
 ---
