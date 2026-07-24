@@ -73,6 +73,9 @@ REDIS_PORT=6379
 
 PULSE_CACHE_DRIVER=redis
 PULSE_INGEST_DRIVER=redis
+
+# Opcional (INF-06): PDO persistente só na BD principal da app
+# DB_PERSISTENT=true
 ```
 
 Depois:
@@ -85,8 +88,10 @@ php artisan migrate   # índice em admin_user_logs (histórico de login)
 **Worker de filas** (Supervisor):
 
 ```bash
-php artisan queue:work redis --queue=default,admin-sync --sleep=3 --tries=3
+php artisan queue:work redis --queue=default,admin-sync,clio --sleep=3 --tries=3 --timeout=1200
 ```
+
+(O bloco comentado «Produção recomendada» em `.env.example` espelha estes valores; install nova mantém `database` até haver Redis.)
 
 ## Otimizações no código (independentes do Redis)
 
