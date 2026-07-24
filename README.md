@@ -214,11 +214,12 @@ Os mesmos comandos `npm ci` + `npm run build` acima geram os arquivos em `public
 
 ## Testes
 
-Requer extensão PHP `pdo_sqlite` para a base em memória definida em `phpunit.xml`.
+Requer extensão PHP `pdo_sqlite` para a base em memória definida em `phpunit.xml`. O script `composer test` carrega `pdo_sqlite` via `scripts/php-with-sqlite.sh` (extensões em `tools/php-ext/` quando o pacote do sistema não está instalado).
 
 ```bash
 composer test
-# ou: php artisan test
+# ou: bash scripts/run-tests.sh
+# Clio apenas: composer test:clio
 ```
 
 ## Análise estática (PHPStan / Larastan)
