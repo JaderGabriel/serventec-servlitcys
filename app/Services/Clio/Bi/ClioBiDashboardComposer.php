@@ -136,6 +136,7 @@ final class ClioBiDashboardComposer
 
     /**
      * Densifica payloads Chart.js para o painel Insights (altura controlada).
+     * Gráficos com muitas categorias recebem altura dinâmica para leitura.
      *
      * @param  array<string, mixed>  $chart
      * @return array<string, mixed>
@@ -143,13 +144,24 @@ final class ClioBiDashboardComposer
     private function compactChartOptions(array $chart): array
     {
         $options = is_array($chart['options'] ?? null) ? $chart['options'] : [];
-        if (! isset($options['panelHeight'])) {
-            $options['panelHeight'] = 'sm';
-        }
-        if (($options['indexAxis'] ?? '') === 'y') {
-            $options['skipHorizontalBarAutoHeight'] = true;
-            if (! isset($options['minChartHeight'])) {
-                $options['minChartHeight'] = 220;
+        $labelCount = is_array($chart['labels'] ?? null) ? count($chart['labels']) : 0;
+        $isHorizontal = ($options['indexAxis'] ?? '') === 'y';
+        $dense = $isHorizontal && $labelCount >= 6;
+
+        if ($dense) {
+            $options['panelHeight'] = $labelCount >= 14 ? 'xl' : 'lg';
+            // Deixa o chart-panel calcular min-height pelas categorias.
+            unset($options['skipHorizontalBarAutoHeight']);
+            unset($options['minChartHeight']);
+        } else {
+            if (! isset($options['panelHeight'])) {
+                $options['panelHeight'] = 'sm';
+            }
+            if ($isHorizontal) {
+                $options['skipHorizontalBarAutoHeight'] = true;
+                if (! isset($options['minChartHeight'])) {
+                    $options['minChartHeight'] = 260;
+                }
             }
         }
         $chart['options'] = $options;

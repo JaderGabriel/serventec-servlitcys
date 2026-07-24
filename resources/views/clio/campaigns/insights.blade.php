@@ -138,6 +138,8 @@
                                 'lead' => __('Acompanhamento, tipos de turma e pirâmide por etapa.'),
                                 'keys' => ['matriculas', 'turmas_tipo', 'etapas'],
                                 'wide' => ['etapas'],
+                                'full' => ['etapas'],
+                                'dense' => ['etapas'],
                             ],
                             [
                                 'id' => 'pedagogico',
@@ -146,6 +148,8 @@
                                 'lead' => __('Indicadores de adequação idade-série e organização das turmas.'),
                                 'keys' => ['distorcao_stack', 'densidade', 'docentes', 'distorcao_etapas'],
                                 'wide' => ['distorcao_etapas'],
+                                'full' => ['distorcao_etapas'],
+                                'dense' => ['distorcao_etapas'],
                             ],
                             [
                                 'id' => 'inclusao',
@@ -154,6 +158,7 @@
                                 'lead' => __('Tipificação, lacunas de atendimento e escolas com mais NEE.'),
                                 'keys' => ['inclusao', 'aee_gap', 'subnotificacao', 'nee_escolas'],
                                 'wide' => ['nee_escolas'],
+                                'dense' => ['nee_escolas'],
                             ],
                             [
                                 'id' => 'jornada',
@@ -161,6 +166,8 @@
                                 'title' => __('Transporte e jornada'),
                                 'lead' => __('Usuários de transporte, veículos, turnos e padrões de jornada.'),
                                 'keys' => ['tra_local', 'tra_veiculo', 'jornada_turno', 'jornada_padroes'],
+                                'wide' => ['jornada_turno', 'jornada_padroes'],
+                                'dense' => ['jornada_turno', 'jornada_padroes'],
                             ],
                             [
                                 'id' => 'demografia',
@@ -168,7 +175,8 @@
                                 'title' => __('Demografia'),
                                 'lead' => __('Cor/Raça, sexo e faixa etária agregados (sem PII).'),
                                 'keys' => ['dem_cor', 'dem_sexo', 'dem_idade'],
-                                'wide' => ['dem_idade'],
+                                'wide' => ['dem_idade', 'dem_cor'],
+                                'dense' => ['dem_idade', 'dem_cor'],
                             ],
                             [
                                 'id' => 'escolas',
@@ -177,6 +185,8 @@
                                 'lead' => __('Deltas, score de atenção e lacuna Clio × i-Educar.'),
                                 'keys' => ['gap', 'deltas', 'escolas'],
                                 'wide' => ['deltas', 'escolas'],
+                                'full' => ['deltas', 'escolas'],
+                                'dense' => ['deltas', 'escolas'],
                             ],
                         ];
                     @endphp
@@ -187,6 +197,8 @@
                                 ->filter(fn ($key) => ! empty($charts[$key]))
                                 ->values();
                             $wideKeys = $section['wide'] ?? [];
+                            $fullKeys = $section['full'] ?? [];
+                            $denseKeys = $section['dense'] ?? [];
                         @endphp
                         @continue($sectionCharts->isEmpty())
 
@@ -201,16 +213,23 @@
 
                             <div class="clio-bi-dash__grid">
                                 @foreach ($sectionCharts as $key)
+                                    @php
+                                        $isDense = in_array($key, $denseKeys, true);
+                                        $isFull = in_array($key, $fullKeys, true);
+                                        $isWide = in_array($key, $wideKeys, true);
+                                    @endphp
                                     <div @class([
                                         'clio-bi-dash__cell',
                                         'clio-bi-dash__cell--enter',
-                                        'clio-bi-dash__cell--wide' => in_array($key, $wideKeys, true),
+                                        'clio-bi-dash__cell--wide' => $isWide && ! $isFull,
+                                        'clio-bi-dash__cell--full' => $isFull,
+                                        'clio-bi-dash__cell--dense' => $isDense,
                                     ])>
                                         <x-dashboard.chart-panel
                                             :chart="$charts[$key]"
                                             :exportFilename="'clio-insights-'.$key"
                                             :exportMeta="$chartExportContext"
-                                            :compact="true"
+                                            :compact="! $isDense"
                                             :chartPanelId="'clio-bi-'.$key"
                                             panelTone="default"
                                         />

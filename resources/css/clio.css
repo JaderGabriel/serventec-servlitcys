@@ -691,7 +691,7 @@
 }
 
 .clio-bi-shell {
-    @apply mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[96rem] space-y-7 px-4 sm:px-6 lg:px-8 2xl:px-10;
 }
 
 .clio-bi-masthead {
@@ -907,10 +907,10 @@
     @apply mt-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400;
 }
 
-/* Grelha de gráficos: altura uniforme, densidade profissional */
+/* Grelha de gráficos: cards maiores; densos crescem com o conteúdo */
 .clio-bi-dash__grid {
     display: grid;
-    gap: 0.75rem;
+    gap: 1rem;
     grid-template-columns: 1fr;
     align-items: stretch;
 }
@@ -918,10 +918,12 @@
 @media (min-width: 768px) {
     .clio-bi-dash__grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.125rem;
     }
 }
 
-@media (min-width: 1280px) {
+/* 3 colunas só em ecrãs muito largos — em laptop os cards ficam mais legíveis */
+@media (min-width: 1536px) {
     .clio-bi-dash__grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -942,10 +944,14 @@
     }
 }
 
-@media (min-width: 1280px) {
+@media (min-width: 1536px) {
     .clio-bi-dash__cell--wide {
         grid-column: span 2;
     }
+}
+
+.clio-bi-dash__cell--full {
+    grid-column: 1 / -1;
 }
 
 .clio-bi-dash__cell--enter {
@@ -968,11 +974,11 @@
 
 .clio-bi-dash .chart-panel-host > div:first-of-type {
     gap: 0.5rem;
-    padding: 0.55rem 0.7rem;
+    padding: 0.65rem 0.85rem;
 }
 
 .clio-bi-dash .chart-panel-host h4 {
-    @apply text-[11px] font-semibold normal-case tracking-normal leading-snug text-left;
+    @apply text-xs font-semibold normal-case tracking-normal leading-snug text-left;
 }
 
 .clio-bi-dash .chart-panel-host > div:first-of-type > div:first-child {
@@ -980,7 +986,7 @@
 }
 
 .clio-bi-dash .chart-panel-host > div:first-of-type p {
-    @apply text-[10px] leading-snug text-left;
+    @apply text-[11px] leading-snug text-left;
 }
 
 .clio-bi-dash .chart-panel-host > div:first-of-type button {
@@ -1003,27 +1009,45 @@
     min-width: 2rem;
 }
 
+/* Cards padrão: altura confortável para leitura */
 .clio-bi-dash .chart-panel-host > div.relative.isolate {
     flex: 1 1 auto;
-    min-height: 13.5rem !important;
-    height: 14.5rem !important;
-    max-height: 14.5rem !important;
-    padding: 0.4rem 0.55rem !important;
+    min-height: 18rem !important;
+    height: 20rem !important;
+    max-height: 22rem !important;
+    padding: 0.55rem 0.7rem !important;
     overflow: auto !important;
 }
 
-.clio-bi-dash__cell--wide .chart-panel-host > div.relative.isolate {
-    min-height: 14.5rem !important;
-    height: 16rem !important;
-    max-height: 16rem !important;
+.clio-bi-dash__cell--wide:not(.clio-bi-dash__cell--dense) .chart-panel-host > div.relative.isolate {
+    min-height: 19rem !important;
+    height: 21rem !important;
+    max-height: 23rem !important;
 }
 
 .clio-bi-dash .chart-panel-host canvas.chart-panel-canvas {
-    max-height: 13.5rem !important;
+    max-height: 18.5rem !important;
 }
 
-.clio-bi-dash__cell--wide .chart-panel-host canvas.chart-panel-canvas {
-    max-height: 15rem !important;
+.clio-bi-dash__cell--wide:not(.clio-bi-dash__cell--dense) .chart-panel-host canvas.chart-panel-canvas {
+    max-height: 19.5rem !important;
+}
+
+/* Cards densos (muitas categorias): crescem com o conteúdo, sem teto baixo */
+.clio-bi-dash__cell--dense .chart-panel-host > div.relative.isolate {
+    min-height: 26rem !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0.65rem 0.85rem !important;
+}
+
+.clio-bi-dash__cell--dense.clio-bi-dash__cell--full .chart-panel-host > div.relative.isolate,
+.clio-bi-dash__cell--dense.clio-bi-dash__cell--wide .chart-panel-host > div.relative.isolate {
+    min-height: 28rem !important;
+}
+
+.clio-bi-dash__cell--dense .chart-panel-host canvas.chart-panel-canvas {
+    max-height: none !important;
 }
 
 .clio-bi-feed {
