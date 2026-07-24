@@ -71,7 +71,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 
 | ID | Prioridade | Trabalho | Critério de done |
 |----|------------|----------|------------------|
-| **D1** | P0 | Bump PERFORMANCE + IMPLANTAÇÃO + `docs/README` para **8.2.0**; secções fingerprint Horizonte + fila Clio | Docs operacionais alinhados à produção |
+| **D1** | P0 | Bump PERFORMANCE + IMPLANTAÇÃO + `docs/README` para **8.2.0**; secções fingerprint Horizonte + fila Clio | **Concluído** (2026-07-24) |
 | **D2** | P1 | VARIÁVEIS: `HORIZONTE_MAP_FINGERPRINT_CACHE`, `CLIO_DRIVE_BATCH_*`; alinhar default `HORIZONTE_CACHE_SECONDS` (doc ↔ `config/horizonte.php`) | Sem conflito 900 vs 3600 |
 | **D3** | P0 | README: histórico 8.x; link Horizonte válido; menção Clio; worker com fila `clio` | Sem link morto `RELEASE_20260619_HORIZONTE` |
 | **D4** | P1 | SEGURANÇA.md: secção Clio + superfície pública PDF/API | Checklist de segurança 8.x |

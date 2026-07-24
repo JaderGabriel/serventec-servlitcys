@@ -1,12 +1,14 @@
 # Implantação em produção — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
 
 > **Índice:** [README.md](README.md) · **Variáveis:** [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) · **Comandos:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md)
 
 Guia passo a passo para publicar no servidor (código, assets, migrações, filas e `.env`).
 
-**Versão de referência:** **6.5.0** · tag **`20260702c-Jord`** · commit **`d07f58a`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260702c_JORD.md](RELEASE_20260702c_JORD.md)
+**Versão de referência:** **8.2.0** · tag **`20260724c-Hygieia`** — [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md)
+
+Após Hygieia, a linha 8.2 inclui também estabilização de qualidade (testes/CI), segurança (SSRF SAEB, throttle `/relatorio`, uploads tipados) e performance (code-split Vite, worker `clio`, cache Rede & Oferta) — ver [ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md](ENTREGAS_ESCALONADAS_MELHORIAS_FUTURAS.md).
 
 ```mermaid
 sequenceDiagram

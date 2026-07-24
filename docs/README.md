@@ -1,10 +1,10 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 7.0.2 · tag `20260706-Hermes` · **Última revisão:** 2026-07-06
+**Versão do produto:** 8.2.0 · tag `20260724c-Hygieia` · **Última revisão:** 2026-07-24
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitetura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 
-**Hub visual** (timeline 4.x→7.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
+**Hub visual** (timeline 4.x→8.x, mapa de docs): [HUB_DOCUMENTACAO.md](HUB_DOCUMENTACAO.md) — leitor Documentação na app · [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) no Cursor IDE.
 
 **Roadmaps e panorama (feito / em curso / planeado):** [ROADMAP_INDICE.md](ROADMAP_INDICE.md).
 

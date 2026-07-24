@@ -1,8 +1,8 @@
 # Performance e Redis — servlitcys
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
 
-> **Índice:** [README.md](README.md) · **Analytics:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Escala:** [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md)
+> **Índice:** [README.md](README.md) · **Analytics:** [METRICAS_QUERIES_ANALYTICS.md](METRICAS_QUERIES_ANALYTICS.md) · **Escala:** [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) · **Clio:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md)
 
 Guia para reduzir lentidão no **login** e em consultas repetidas, usando Redis quando disponível no servidor. Para **pool de conexões, balanceamento de carga e alto volume de dados/requisições/API**, ver [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md).
 
@@ -28,6 +28,26 @@ O entry `resources/js/app.js` **não** importa Leaflet / Horizonte / Clio de for
 | `leaflet` | Leaflet + markercluster | partilhado pelos mapas |
 
 Login, docs e admin genérico ficam só com o bundle principal (sem Leaflet). Após alterar JS: `npm run build` e versionar `public/build/`.
+
+## Horizonte — fingerprint e cache do mapa
+
+| Variável / chave | Papel |
+|------------------|--------|
+| `HORIZONTE_CACHE_SECONDS` | TTL do payload do mapa (`config/horizonte.php` → default **3600**) |
+| `HORIZONTE_MAP_FINGERPRINT_CACHE` | Memoização do fingerprint COUNT/MAX entre pedidos `map-data` (15–300 s; default **45**) |
+| Bust | `HorizonteMapCacheBuster::bust()` invalida fingerprint + chaves `horizonte:map:*` |
+
+O fingerprint evita remontar o assemble quando os dados de origem (FUNDEB, Censo, SAEB…) não mudaram. Ver testes em `HorizonteMapServiceTest` / `HorizonteMapCacheBusterTest`.
+
+## Clio — fila longa
+
+Jobs de ingest ZIP e análise usam `CLIO_QUEUE` (default `clio`), com timeout até **1200 s**. O worker **tem** de incluir essa fila:
+
+```bash
+php artisan queue:work database --queue=default,admin-sync,clio --timeout=1200
+```
+
+Sem `clio`, uploads assíncronos e `clio:campaign-reanalyze-all --queue` ficam parados. Ver [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) §4.8.
 
 ## Diagnóstico rápido
 
