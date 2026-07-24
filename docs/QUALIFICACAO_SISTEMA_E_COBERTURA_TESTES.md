@@ -47,14 +47,14 @@ Não é um CMS genérico nem um ERP escolar: é uma **camada analítica e de aba
 Distribuição aproximada de LOC em `app/`:
 
 ```mermaid
-pie title LOC aproximada em app/
+pie title LOC aproximada em app
     "Support" : 60420
     "Services" : 60053
     "Other" : 13481
     "Commands" : 7229
     "Controllers" : 6274
     "Models" : 2824
-    "Jobs + Policies" : 753
+    "Jobs e Policies" : 753
 ```
 
 ### 1.3 Fundamentos
