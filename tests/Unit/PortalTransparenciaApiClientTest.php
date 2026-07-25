@@ -121,6 +121,102 @@ final class PortalTransparenciaApiClientTest extends TestCase
     }
 
     #[Test]
+    public function emendas_consulta_ano_e_funcao_educacao(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/emendas*' => Http::response([
+                [
+                    'codigoEmenda' => '202540290014',
+                    'ano' => 2025,
+                    'localidadeDoGasto' => 'CAMPESTRE - MG',
+                    'funcao' => 'Educação',
+                    'valorEmpenhado' => '60.000,00',
+                    'autor' => 'LAFAYETTE DE ANDRADA',
+                ],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $rows = $client->emendas(2025, 'token-teste', 10, 1);
+
+        $this->assertCount(1, $rows);
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api-de-dados/emendas')
+                && ! str_contains($request->url(), '/documentos/')
+                && $request->hasHeader('chave-api-dados', 'token-teste')
+                && (int) ($request['ano'] ?? 0) === 2025
+                && ($request['codigoFuncao'] ?? null) === PortalTransparenciaApiClient::FUNCAO_EDUCACAO
+                && (int) ($request['pagina'] ?? 0) === 1;
+        });
+    }
+
+    #[Test]
+    public function emendas_para_municipio_filtra_localidade_e_ignora_uf_agregada(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/emendas*' => Http::response([
+                [
+                    'codigoEmenda' => '1',
+                    'localidadeDoGasto' => 'CAMPESTRE - MG',
+                    'valorPago' => '10.000,00',
+                ],
+                [
+                    'codigoEmenda' => '2',
+                    'localidadeDoGasto' => 'MINAS GERAIS (UF)',
+                    'valorPago' => '99.000,00',
+                ],
+                [
+                    'codigoEmenda' => '3',
+                    'localidadeDoGasto' => 'ALFENAS - MG',
+                    'valorPago' => '5.000,00',
+                ],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $rows = $client->emendasParaMunicipio('Campestre', 'MG', 2025, 'token-teste', 10, 1);
+
+        $this->assertCount(1, $rows);
+        $this->assertSame('1', $rows[0]['codigoEmenda']);
+    }
+
+    #[Test]
+    public function emendas_documentos_usa_codigo_no_path(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/emendas/documentos/*' => Http::response([
+                [
+                    'id' => 1,
+                    'fase' => 'Empenho',
+                    'codigoDocumento' => '2025NE654165',
+                ],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $docs = $client->emendasDocumentos('202540290014', 'token-teste', 10, 1);
+
+        $this->assertCount(1, $docs);
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api-de-dados/emendas/documentos/202540290014')
+                && (int) ($request['pagina'] ?? 0) === 1;
+        });
+    }
+
+    #[Test]
+    public function parse_valor_brl_e_match_localidade(): void
+    {
+        $this->assertSame(60000.0, PortalTransparenciaApiClient::parseValorBrl('60.000,00'));
+        $this->assertSame(0.0, PortalTransparenciaApiClient::parseValorBrl('0,00'));
+        $this->assertSame(1500.5, PortalTransparenciaApiClient::parseValorBrl(1500.5));
+
+        $this->assertTrue(PortalTransparenciaApiClient::localidadeMatchesMunicipio('CAMPESTRE - MG', 'Campestre', 'MG'));
+        $this->assertTrue(PortalTransparenciaApiClient::localidadeMatchesMunicipio('Tarauacá - AC', 'Tarauacá', 'AC'));
+        $this->assertFalse(PortalTransparenciaApiClient::localidadeMatchesMunicipio('ACRE (UF)', 'Tarauacá', 'AC'));
+        $this->assertFalse(PortalTransparenciaApiClient::localidadeMatchesMunicipio('CAMPESTRE - MG', 'Campestre', 'BA'));
+    }
+
+    #[Test]
     public function import_complementar_grava_pnae_do_portal_e_omite_fundeb(): void
     {
         Cache::flush();

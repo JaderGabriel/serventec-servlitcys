@@ -31,7 +31,8 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 |----------|---------------|--------------|-------------|
 | `despesas/recursos-recebidos` | **`codigoFavorecido` (CNPJ)** + mês/ano; keywords/órgão FNDE | Já implementado via CNPJ; evoluir: paginar até esgotar + classificar UG FNDE | FIN-07 |
 | `convenios` | `codigoIBGE`, `funcao=12`, **`dataUltimaLiberacao*`** | Já parcial; evoluir: lista na ficha municipal + alerta «convênio a vencer» | HOR-08b |
-| `emendas` | `ano`, `codigoFuncao` (12=educação), autor | Emendas parlamentares educação no município (via documentos relacionados) | FIN-08 / HOR-08c |
+| `emendas` | `ano`, `codigoFuncao` (12=educação), autor | Emendas parlamentares educação; município via `localidadeDoGasto` (sem IBGE) | FIN-08 / HOR-08c |
+| `emendas/documentos/{codigo}` | `codigoEmenda`, `pagina` | Detalhe orçamental da emenda (empenho/liquidação/pagamento) | FIN-08 |
 | `despesas/por-funcional-programatica` | `ano`, `funcao=12` | Execução orçamental federal por função educação (contexto nacional/UF, não sempre IBGE) | FIN-09 |
 | `despesas/documentos-por-favorecido` | CNPJ prefeitura / UG | Empenhos/liquidações/pagamentos ao ente (API **restrita** — rate menor) | FIN-10 |
 

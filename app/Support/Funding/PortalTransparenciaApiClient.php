@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
  * - GET /api-de-dados/despesas/recursos-recebidos
  *   Preferir `codigoFavorecido` = CNPJ da prefeitura (IBGE sozinho devolve vazio para o ente).
  * - GET /api-de-dados/convenios (`codigoIBGE`, `funcao=12`; ano via última liberação)
+ * - GET /api-de-dados/emendas (`ano`, `codigoFuncao=12`; município via `localidadeDoGasto`, sem IBGE)
+ * - GET /api-de-dados/emendas/documentos/{codigo}
  */
 final class PortalTransparenciaApiClient
 {
@@ -24,6 +26,9 @@ final class PortalTransparenciaApiClient
     public const DOCS_URL = 'https://portaldatransparencia.gov.br/api-de-dados';
 
     public const SWAGGER_URL = 'https://api.portaldatransparencia.gov.br/swagger-ui/index.html';
+
+    /** Função orçamental Educação (SIAFI / Portal). */
+    public const FUNCAO_EDUCACAO = '12';
 
     /**
      * Recursos recebidos no exercício.
@@ -246,6 +251,295 @@ final class PortalTransparenciaApiClient
         }
 
         return $out;
+    }
+
+    /**
+     * Emendas parlamentares (lista nacional por ano/função — sem filtro IBGE na API).
+     *
+     * Município: cruzar `localidadeDoGasto` (ex.: «CAMPESTRE - MG») com nome/UF do ente.
+     * Valores vêm como string BR («60.000,00») — usar {@see parseValorBrl()}.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function emendas(
+        int $year,
+        string $apiKey,
+        int $timeout = 20,
+        int $maxPages = 5,
+        string $codigoFuncao = self::FUNCAO_EDUCACAO,
+        ?string $codigoSubfuncao = null,
+        ?string $nomeAutor = null,
+        ?string $tipoEmenda = null,
+    ): array {
+        $apiKey = trim($apiKey);
+        if ($apiKey === '' || $year < 2000) {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(50, $maxPages));
+
+        $queryBase = [
+            'ano' => $year,
+        ];
+        if ($codigoFuncao !== '') {
+            $queryBase['codigoFuncao'] = $codigoFuncao;
+        }
+        if ($codigoSubfuncao !== null && $codigoSubfuncao !== '') {
+            $queryBase['codigoSubfuncao'] = $codigoSubfuncao;
+        }
+        if ($nomeAutor !== null && trim($nomeAutor) !== '') {
+            $queryBase['nomeAutor'] = trim($nomeAutor);
+        }
+        if ($tipoEmenda !== null && trim($tipoEmenda) !== '') {
+            $queryBase['tipoEmenda'] = trim($tipoEmenda);
+        }
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.'/api-de-dados/emendas', array_merge($queryBase, [
+                        'pagina' => $page,
+                    ]));
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.emendas_failed', [
+                    'year' => $year,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.emendas_http', [
+                    'year' => $year,
+                    'page' => $page,
+                    'status' => $response->status(),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    $out[] = $item;
+                }
+            }
+
+            if (count($items) < 15) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Emendas do ano/função cuja `localidadeDoGasto` corresponde ao município (nome + UF).
+     *
+     * A API não filtra por IBGE — percorre páginas até `maxPages`. Para cobertura
+     * nacional completa use um job com `maxPages` alto e cache (fase A2).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function emendasParaMunicipio(
+        string $municipioNome,
+        string $uf,
+        int $year,
+        string $apiKey,
+        int $timeout = 20,
+        int $maxPages = 20,
+        string $codigoFuncao = self::FUNCAO_EDUCACAO,
+    ): array {
+        $rows = $this->emendas($year, $apiKey, $timeout, $maxPages, $codigoFuncao);
+        $matched = [];
+        foreach ($rows as $row) {
+            $localidade = (string) ($row['localidadeDoGasto'] ?? '');
+            if (self::localidadeMatchesMunicipio($localidade, $municipioNome, $uf)) {
+                $matched[] = $row;
+            }
+        }
+
+        return $matched;
+    }
+
+    /**
+     * Documentos orçamentais ligados a uma emenda (`codigoEmenda`).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function emendasDocumentos(
+        string $codigoEmenda,
+        string $apiKey,
+        int $timeout = 20,
+        int $maxPages = 5,
+    ): array {
+        $codigoEmenda = trim($codigoEmenda);
+        $apiKey = trim($apiKey);
+        if ($codigoEmenda === '' || $apiKey === '') {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(20, $maxPages));
+        $path = $baseUrl.'/api-de-dados/emendas/documentos/'.rawurlencode($codigoEmenda);
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($path, ['pagina' => $page]);
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.emendas_documentos_failed', [
+                    'codigo' => $codigoEmenda,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.emendas_documentos_http', [
+                    'codigo' => $codigoEmenda,
+                    'page' => $page,
+                    'status' => $response->status(),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    $out[] = $item;
+                }
+            }
+
+            if (count($items) < 10) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Converte valor monetário do Portal («60.000,00» ou «60000.00») para float.
+     */
+    public static function parseValorBrl(mixed $raw): ?float
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        if (is_int($raw) || is_float($raw)) {
+            return round((float) $raw, 2);
+        }
+
+        $str = trim((string) $raw);
+        if ($str === '') {
+            return null;
+        }
+
+        // BR: 1.234.567,89
+        if (preg_match('/^\d{1,3}(\.\d{3})*,\d{2}$/', $str) === 1
+            || (str_contains($str, ',') && str_contains($str, '.'))) {
+            $normalized = str_replace('.', '', $str);
+            $normalized = str_replace(',', '.', $normalized);
+        } elseif (str_contains($str, ',')) {
+            $normalized = str_replace(',', '.', preg_replace('/[^\d,.-]/', '', $str) ?? '');
+        } else {
+            $normalized = preg_replace('/[^\d.-]/', '', $str) ?? '';
+        }
+
+        if ($normalized === '' || ! is_numeric($normalized)) {
+            return null;
+        }
+
+        return round((float) $normalized, 2);
+    }
+
+    /**
+     * Cruza `localidadeDoGasto` com município + UF.
+     *
+     * Aceita «NOME - UF». Rejeita localidades só de UF («MINAS GERAIS (UF)»)
+     * quando se pede um município concreto.
+     */
+    public static function localidadeMatchesMunicipio(string $localidade, string $municipioNome, string $uf): bool
+    {
+        $localidade = trim($localidade);
+        $municipioNome = trim($municipioNome);
+        $uf = strtoupper(trim($uf));
+        if ($localidade === '' || $municipioNome === '' || strlen($uf) !== 2) {
+            return false;
+        }
+
+        $locNorm = self::normalizeLocalidadeToken($localidade);
+        $nomeNorm = self::normalizeLocalidadeToken($municipioNome);
+
+        if ($locNorm === '' || $nomeNorm === '') {
+            return false;
+        }
+
+        // Só UF / estado — não é o município.
+        if (preg_match('/\([Uu][Ff]\)\s*$/u', $localidade) === 1) {
+            return false;
+        }
+
+        $ufInLoc = null;
+        if (preg_match('/\s*-\s*([A-Za-z]{2})\s*$/u', $localidade, $m) === 1) {
+            $ufInLoc = strtoupper($m[1]);
+        }
+        if ($ufInLoc !== null && $ufInLoc !== $uf) {
+            return false;
+        }
+
+        // Preferir «NOME - UF»
+        $expected = $nomeNorm.' '.$uf;
+        $locCompact = preg_replace('/\s*-\s*/', ' ', $locNorm) ?? $locNorm;
+        if ($locCompact === $expected || str_starts_with($locCompact, $nomeNorm.' '.$uf)) {
+            return true;
+        }
+
+        // Nome exacto no início + UF presente ou implícita
+        if ($ufInLoc === $uf && ($locNorm === $nomeNorm || str_starts_with($locNorm, $nomeNorm.' ') || str_starts_with($locNorm, $nomeNorm.'-'))) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function normalizeLocalidadeToken(string $value): string
+    {
+        $value = mb_strtoupper(trim($value));
+        $value = strtr($value, [
+            'Á' => 'A', 'À' => 'A', 'Ã' => 'A', 'Â' => 'A', 'Ä' => 'A',
+            'É' => 'E', 'Ê' => 'E', 'È' => 'E',
+            'Í' => 'I', 'Ì' => 'I', 'Î' => 'I',
+            'Ó' => 'O', 'Ò' => 'O', 'Õ' => 'O', 'Ô' => 'O',
+            'Ú' => 'U', 'Ù' => 'U', 'Ü' => 'U',
+            'Ç' => 'C',
+        ]);
+        $value = preg_replace('/\s+/', ' ', $value) ?? $value;
+
+        return trim($value);
     }
 
     /**

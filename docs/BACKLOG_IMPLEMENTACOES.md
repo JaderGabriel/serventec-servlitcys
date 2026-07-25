@@ -77,7 +77,7 @@ Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequeno
 
 | # | To-do | Notas / aceitação |
 |---|--------|-------------------|
-| A1 | Estender `PortalTransparenciaApiClient` para `emendas` (+ `emendas/documentos/{codigo}` quando útil) | Filtros: `ano`, `codigoFuncao=12`; **sem IBGE directo** — ligar município via localidade/documentos / favorecido |
+| A1 | Estender `PortalTransparenciaApiClient` para `emendas` (+ `emendas/documentos/{codigo}` quando útil) | **Feito (fase 1)** — `emendas`, `emendasParaMunicipio`, `emendasDocumentos`, `parseValorBrl`, `localidadeMatchesMunicipio` |
 | A2 | Persistência por município/ano (snapshot ou tabela dedicada) + comando/job de enrich (consultoria primeiro) | Respeitar rate limit; `Http::fake` nos testes |
 | A3 | UI **Finanças → Emendas** (ou secção na aba Financiamentos): catálogo tabular | Colunas mín.: autor/autoría, ano, valor, função, situação, link Portal; detalhe expansível (documentos, localidade) |
 | A4 | Copy de produto: «indicativo Portal»; município sem match → empty state claro | Não inventar vínculo IBGE se o payload não permitir |
