@@ -279,7 +279,7 @@ final class PortalTransparenciaApiClient
         $baseUrl = $this->baseUrl();
         $headers = $this->headers($apiKey);
         $out = [];
-        $maxPages = max(1, min(50, $maxPages));
+        $maxPages = max(1, min(100, $maxPages));
 
         $queryBase = [
             'ano' => $year,

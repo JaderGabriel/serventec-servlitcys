@@ -1272,6 +1272,11 @@ return [
                     'IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS',
                     'educacao,educação,fnde,pnae,pnate,pdde,fundeb,escolar,merenda,transporte escolar'
                 ))))),
+                /** Páginas do catálogo anual de emendas (função 12); ~15 itens/página. */
+                'emendas_max_pages' => max(1, min(100, (int) env('IEDUCAR_PORTAL_EMENDAS_MAX_PAGES', 50))),
+                'emendas_timeout' => max(15, (int) env('IEDUCAR_PORTAL_EMENDAS_TIMEOUT', 30)),
+                'emendas_fetch_documentos' => filter_var(env('IEDUCAR_PORTAL_EMENDAS_FETCH_DOCS', true), FILTER_VALIDATE_BOOL),
+                'emendas_documentos_max_pages' => max(1, min(10, (int) env('IEDUCAR_PORTAL_EMENDAS_DOCS_MAX_PAGES', 3))),
             ],
             'tesouro_ckan' => [
                 'enabled' => filter_var(env('IEDUCAR_TESOURO_CKAN_ENABLED', true), FILTER_VALIDATE_BOOL),

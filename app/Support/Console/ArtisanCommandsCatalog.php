@@ -328,6 +328,23 @@ final class ArtisanCommandsCatalog
                         'details' => __('Por omissão percorre cidades activas com i-Educar+IBGE. Importa Portal/Tesouro omitindo programa FUNDEB; aquece cache da aba Financiamentos.'),
                     ],
                     [
+                        'name' => 'funding:enrich-consultoria-emendas',
+                        'summary' => __('Importa emendas parlamentares de educação (Portal) para consultorias — match por localidadeDoGasto.'),
+                        'signature' => 'funding:enrich-consultoria-emendas {--ano=} {--city=} {--cities=} {--dry-run}',
+                        'examples' => [
+                            'php artisan funding:enrich-consultoria-emendas --ano=2025 --dry-run',
+                            'php artisan funding:enrich-consultoria-emendas --ano=2025',
+                            'php artisan funding:enrich-consultoria-emendas --ano=2025 --city=1',
+                        ],
+                        'env' => [
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'IEDUCAR_PORTAL_TRANSPARENCIA_ENABLED',
+                            'IEDUCAR_PORTAL_EMENDAS_MAX_PAGES',
+                        ],
+                        'doc_anchor' => 'fundeb-repasses',
+                        'details' => __('FIN-08 A2: catálogo anual função 12 + filtro município; opcionalmente documentos por código. Persistência em municipal_emenda_snapshots.'),
+                    ],
+                    [
                         'name' => 'weekly-mass-sync:run',
                         'summary' => __('Sincronização massiva semanal (geo, FUNDEB, repasses, SAEB) — enfileira ou retoma com checkpoint.'),
                         'signature' => 'weekly-mass-sync:run {--resume=} {--sync} {--force}',

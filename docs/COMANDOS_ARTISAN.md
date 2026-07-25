@@ -288,6 +288,7 @@ Grava em **`municipal_transfer_snapshots`** (IBGE, ano civil, fonte, `programa_i
 |------------------|-----------|
 | `funding:rebuild-finance-realtime` | **Rebuild completo:** apaga snapshots do(s) ano(s) e reimporta por município (`MunicipalTransferImportService` — Tesouro CSV, SISWEB, BB, Portal). |
 | `funding:enrich-consultoria-financiamentos` | **Financiamentos (além do FUNDEB):** Portal (`codigoFavorecido`/CNPJ + convênios) e Tesouro **sem** `programa_id=fundeb`; aquece consultas públicas nas consultorias activas. |
+| `funding:enrich-consultoria-emendas` | **Emendas educação (FIN-08):** catálogo Portal função 12 + match `localidadeDoGasto` → `municipal_emenda_snapshots` (consultorias). Opções: `--ano=` `--city=` `--cities=` `--dry-run`. |
 | Fila `funding::import_transfers_city_year` | Mesma importação **por cidade/ano** via Admin → Dados públicos (sem apagar outros anos). |
 | `weekly-mass-sync:run` | Enfileira repasses entre outras tarefas semanais (checkpoint retomável). |
 
@@ -339,6 +340,9 @@ php artisan funding:enrich-consultoria-financiamentos --ano=2025 --dry-run
 php artisan funding:enrich-consultoria-financiamentos --ano=2025
 php artisan funding:enrich-consultoria-financiamentos --ano=2025 --city=1
 php artisan funding:enrich-consultoria-financiamentos --ano=2025 --skip-import
+php artisan funding:enrich-consultoria-emendas --ano=2025 --dry-run
+php artisan funding:enrich-consultoria-emendas --ano=2025
+php artisan funding:enrich-consultoria-emendas --ano=2025 --city=1
 ```
 
 | Opção | Uso |
