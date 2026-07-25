@@ -129,4 +129,33 @@ final class ObrasgovWorkFieldExtractorTest extends TestCase
             'percentual_execucao_fisica' => 83.41,
         ]));
     }
+
+    #[Test]
+    public function porte_extrai_escola_e_salas_da_meta(): void
+    {
+        $porte = ObrasgovWorkFieldExtractor::porte([
+            'desc_meta_global' => 'Escola 6 Salas',
+            'desc_nome' => 'Comunidade do Gregóreo - Tarauacá - AC',
+            'populacao_beneficiada' => null,
+        ]);
+
+        $this->assertSame('escola', $porte['tipology']);
+        $this->assertSame(6, $porte['salas']);
+        $this->assertSame('Escola 6 Salas', $porte['porte_resumo']);
+        $this->assertNull($porte['populacao_beneficiada']);
+    }
+
+    #[Test]
+    public function porte_identifica_creche_e_populacao_api(): void
+    {
+        $porte = ObrasgovWorkFieldExtractor::porte([
+            'desc_meta_global' => 'Creche Pré-Escola - Tipo 1',
+            'desc_nome' => 'Creche Municipal de Xapuri',
+            'populacao_beneficiada' => 188,
+        ]);
+
+        $this->assertSame('creche', $porte['tipology']);
+        $this->assertSame(188, $porte['populacao_beneficiada']);
+        $this->assertSame('populacao_beneficiada', $porte['populacao_fonte']);
+    }
 }

@@ -126,6 +126,7 @@ final class HorizonteMunicipalObrasSyncService
                     }
 
                     $ibge = $this->resolveIbge($idProjeto, $projeto, $geometriaMap);
+                    $porte = ObrasgovWorkFieldExtractor::porte($projeto);
 
                     $data = [
                         'id_projeto_investimento' => $idProjeto,
@@ -137,6 +138,10 @@ final class HorizonteMunicipalObrasSyncService
                         'natureza_intervencao' => trim((string) ($projeto['natureza_intervencao'] ?? '')) ?: null,
                         'desc_nome' => mb_substr(trim((string) ($projeto['desc_nome'] ?? '')), 0, 512) ?: null,
                         'desc_meta_global' => mb_substr(trim((string) ($projeto['desc_meta_global'] ?? '')), 0, 255) ?: null,
+                        'populacao_beneficiada' => $porte['populacao_beneficiada'],
+                        'desc_populacao_beneficiada' => mb_substr(trim((string) ($projeto['desc_populacao_beneficiada'] ?? '')), 0, 255) ?: null,
+                        'salas_projeto' => $porte['salas'],
+                        'tipology' => $porte['tipology'] !== 'outro' ? $porte['tipology'] : null,
                         'sistema_resp' => trim((string) ($projeto['sistema_resp'] ?? '')) ?: null,
                         'organizacao_resp' => mb_substr(trim((string) ($projeto['organizacao_resp'] ?? '')), 0, 255) ?: null,
                         'cnpj_organizacao_resp' => preg_replace('/\D/', '', (string) ($projeto['cnpj_organizacao_resp'] ?? '')) ?: null,

@@ -7,12 +7,16 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * Marcadores Canteiro para a aba Unidades escolares (por IBGE do município).
+ * Obras Canteiro para a aba Unidades escolares (por IBGE do município).
+ *
+ * Pins no mapa foram descontinuados (coordenadas Obrasgov costumam ser da capital da UF).
+ * A UI consome `items` em tabela gestional.
  */
 final class MunicipalEducationWorksForCity
 {
     /**
      * @return array{
+     *     items: list<array<string, mixed>>,
      *     markers: list<array<string, mixed>>,
      *     without_geo: list<array<string, mixed>>,
      *     total: int,
@@ -27,6 +31,7 @@ final class MunicipalEducationWorksForCity
         );
 
         $empty = [
+            'items' => [],
             'markers' => [],
             'without_geo' => [],
             'total' => 0,
@@ -46,11 +51,12 @@ final class MunicipalEducationWorksForCity
             'id_projeto_investimento',
             'desc_nome',
             'situacao',
+            'especie_intervencao',
+            'natureza_intervencao',
+            'desc_meta_global',
             'percentual_execucao_fisica',
             'valor_pago',
             'valor_empenhado',
-            'latitude',
-            'longitude',
         ];
         if (Schema::hasColumn('municipal_education_works', 'valor_previsto')) {
             $columns = array_merge($columns, [
@@ -60,32 +66,29 @@ final class MunicipalEducationWorksForCity
                 'data_ultima_afericao',
             ]);
         }
+        foreach (['populacao_beneficiada', 'desc_populacao_beneficiada', 'salas_projeto', 'tipology'] as $col) {
+            if (Schema::hasColumn('municipal_education_works', $col)) {
+                $columns[] = $col;
+            }
+        }
 
         $rows = MunicipalEducationWork::query()
             ->where('ibge_municipio', $ibge)
             ->get($columns);
 
-        $markers = [];
-        $withoutGeo = [];
-
+        $items = [];
         foreach ($rows as $row) {
-            $item = self::rowToArray($row, $simecUrl);
-            $lat = $item['lat'];
-            $lng = $item['lng'];
-            if ($lat !== null && $lng !== null) {
-                $markers[] = $item;
-            } else {
-                $withoutGeo[] = $item;
-            }
+            $items[] = self::rowToArray($row, $simecUrl);
         }
 
-        usort($markers, [self::class, 'sortBySituacao']);
-        usort($withoutGeo, [self::class, 'sortBySituacao']);
+        usort($items, [self::class, 'sortBySituacao']);
 
         return [
-            'markers' => $markers,
-            'without_geo' => $withoutGeo,
-            'total' => count($markers) + count($withoutGeo),
+            'items' => $items,
+            // Mantidos vazios para não marcar pins no mapa (coords não são do território municipal).
+            'markers' => [],
+            'without_geo' => [],
+            'total' => count($items),
             'simec_url' => $simecUrl,
         ];
     }
@@ -95,19 +98,52 @@ final class MunicipalEducationWorksForCity
      */
     private static function rowToArray(MunicipalEducationWork $row, string $simecUrl): array
     {
-        $lat = $row->latitude !== null ? (float) $row->latitude : null;
-        $lng = $row->longitude !== null ? (float) $row->longitude : null;
-        if ($lat !== null && (abs($lat) < 0.0001 || abs($lat) > 90)) {
-            $lat = null;
+        $porte = ObrasgovWorkFieldExtractor::porte([
+            'desc_meta_global' => $row->desc_meta_global,
+            'desc_nome' => $row->desc_nome,
+            'populacao_beneficiada' => $row->populacao_beneficiada ?? null,
+            'desc_populacao_beneficiada' => $row->desc_populacao_beneficiada ?? null,
+        ]);
+
+        if (isset($row->salas_projeto) && $row->salas_projeto !== null && (int) $row->salas_projeto > 0) {
+            $porte['salas'] = (int) $row->salas_projeto;
         }
-        if ($lng !== null && (abs($lng) < 0.0001 || abs($lng) > 180)) {
-            $lng = null;
+        if (isset($row->populacao_beneficiada) && $row->populacao_beneficiada !== null && (int) $row->populacao_beneficiada > 0) {
+            $porte['populacao_beneficiada'] = (int) $row->populacao_beneficiada;
+            $porte['populacao_fonte'] = $porte['populacao_fonte'] ?? 'populacao_beneficiada';
         }
+        if (! empty($row->tipology) && is_string($row->tipology)) {
+            $porte['tipology'] = $row->tipology;
+            if (($porte['meta_global'] ?? null) === null || $porte['tipology_label'] === __('Não informado')) {
+                $porte['tipology_label'] = ObrasgovWorkFieldExtractor::tipologyLabel($row->tipology, (string) ($row->desc_meta_global ?? ''));
+            }
+        }
+
+        $parts = [];
+        if (($porte['tipology_label'] ?? '') !== '' && $porte['tipology_label'] !== __('Não informado')) {
+            $parts[] = $porte['tipology_label'];
+        } elseif (! empty($porte['meta_global'])) {
+            $parts[] = $porte['meta_global'];
+        }
+        if (($porte['salas'] ?? null) !== null && ! preg_match('/\bsalas?\b/iu', implode(' ', $parts))) {
+            $parts[] = (int) $porte['salas'] === 1
+                ? __('1 sala')
+                : __(':n salas', ['n' => (string) $porte['salas']]);
+        }
+        $porteResumo = $parts !== [] ? implode(' · ', $parts) : __('Não informado');
 
         return [
             'id' => (string) $row->id_projeto_investimento,
             'nome' => trim((string) ($row->desc_nome ?? '')) ?: __('Obra sem nome'),
             'situacao' => trim((string) ($row->situacao ?? '')),
+            'especie' => trim((string) ($row->especie_intervencao ?? '')) ?: null,
+            'natureza' => trim((string) ($row->natureza_intervencao ?? '')) ?: null,
+            'meta_global' => $porte['meta_global'],
+            'tipology' => $porte['tipology'],
+            'tipology_label' => $porte['tipology_label'],
+            'porte_resumo' => $porteResumo,
+            'salas' => $porte['salas'],
+            'populacao_beneficiada' => $porte['populacao_beneficiada'],
             'percentual' => $row->percentual_execucao_fisica !== null ? (float) $row->percentual_execucao_fisica : null,
             'valor_pago' => $row->valor_pago !== null ? (float) $row->valor_pago : null,
             'valor_empenhado' => $row->valor_empenhado !== null ? (float) $row->valor_empenhado : null,
@@ -115,8 +151,6 @@ final class MunicipalEducationWorksForCity
             'data_inicio' => isset($row->data_inicio) ? $row->data_inicio?->toDateString() : null,
             'data_paralisacao' => isset($row->data_paralisacao) ? $row->data_paralisacao?->toDateString() : null,
             'data_ultima_afericao' => isset($row->data_ultima_afericao) ? $row->data_ultima_afericao?->toDateString() : null,
-            'lat' => $lat,
-            'lng' => $lng,
             'simec_url' => $simecUrl,
         ];
     }
@@ -138,6 +172,11 @@ final class MunicipalEducationWorksForCity
             };
         };
 
-        return $rank((string) ($a['situacao'] ?? '')) <=> $rank((string) ($b['situacao'] ?? ''));
+        $bySit = $rank((string) ($a['situacao'] ?? '')) <=> $rank((string) ($b['situacao'] ?? ''));
+        if ($bySit !== 0) {
+            return $bySit;
+        }
+
+        return strcmp((string) ($a['nome'] ?? ''), (string) ($b['nome'] ?? ''));
     }
 }

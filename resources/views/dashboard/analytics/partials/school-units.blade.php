@@ -14,9 +14,8 @@
     $tabErr = $tab['error'] ?? null;
     $topErr = is_array($schoolUnitsData) ? ($schoolUnitsData['error'] ?? null) : null;
     $inepCatalogUrl = 'https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos/inep-data/catalogo-de-escolas';
-    $obrasMarkers = is_array($tab['obras_markers'] ?? null) ? $tab['obras_markers'] : [];
-    $obrasWithoutGeo = is_array($tab['obras_without_geo'] ?? null) ? $tab['obras_without_geo'] : [];
-    $obrasTotal = (int) ($tab['obras_total'] ?? (count($obrasMarkers) + count($obrasWithoutGeo)));
+    $obrasItems = is_array($tab['obras_items'] ?? null) ? $tab['obras_items'] : [];
+    $obrasTotal = (int) ($tab['obras_total'] ?? count($obrasItems));
     $obrasSimecUrl = (string) ($tab['obras_simec_url'] ?? config('horizonte.obras.alerts.simec_painel_url', 'https://simec.mec.gov.br/painelObras/'));
     $markerCount = is_array($markers) ? count($markers) : 0;
     $mapPopupFootnote = __('O IDEB e o SAEB não vêm do ArcGIS; use o link QEdu (INEP) no rodapé do modal ou o Catálogo de Escolas no gov.br.');
@@ -113,34 +112,13 @@
                 </div>
             </div>
 
-            @if ($markerCount > 0 || $obrasTotal > 0)
+            @if ($markerCount > 0)
                 <div
                     class="relative z-0"
                     x-data="schoolUnitsMap(@js($markers), @js($mapPopupFootnote), {
                         qeduEscolaBaseUrl: @js($qeduEscolaBaseUrl),
-                        obrasMarkers: @js($obrasMarkers),
-                        obrasWithoutGeo: @js($obrasWithoutGeo),
-                        obrasSimecUrl: @js($obrasSimecUrl),
                     })"
                 >
-                    @if (count($obrasMarkers) > 0)
-                        <div class="flex flex-wrap items-center gap-2 border-b border-emerald-100 px-4 py-2 dark:border-emerald-900/40">
-                            <button
-                                type="button"
-                                class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold transition"
-                                :class="showObrasLayer
-                                    ? 'border-amber-400 bg-amber-50 text-amber-950 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100'
-                                    : 'border-slate-300 bg-white text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200'"
-                                @click="toggleObrasLayer()"
-                            >
-                                <span class="inline-block h-2.5 w-2.5 rotate-45" :style="`background:${showObrasLayer ? '#b45309' : '#94a3b8'}`"></span>
-                                <span x-text="showObrasLayer ? '{{ __('Ocultar obras (Canteiro)') }}' : '{{ __('Mostrar obras (Canteiro)') }}'"></span>
-                            </button>
-                            <p class="text-[11px] text-emerald-900/80 dark:text-emerald-200/80">
-                                {{ __('Losangos = obras federais no município (cor por status). Círculos = escolas. Sem vínculo obra↔INEP.') }}
-                            </p>
-                        </div>
-                    @endif
                     <div x-ref="mapContainer" class="z-0 h-[min(32rem,62vh)] w-full min-h-[280px] bg-slate-100 dark:bg-slate-900 [&_.leaflet-container]:h-full [&_.leaflet-container]:z-[1]"></div>
 
                     {{-- Modal (identidade do sistema) --}}
@@ -162,7 +140,7 @@
                                 <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
                                     <div class="min-w-0">
                                         <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 break-words" x-text="modal?.title || '—'"></h3>
-                                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs" x-show="modalKind === 'school'">
+                                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs">
                                             <span class="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 font-medium text-sky-800 dark:bg-sky-950/60 dark:text-sky-200">
                                                 <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 21s6-5.686 6-10a6 6 0 1 0-12 0c0 4.314 6 10 6 10Z" />
@@ -179,10 +157,6 @@
                                             </span>
                                             <span class="text-gray-500 dark:text-gray-400" x-show="modal?.status" x-text="modal?.status"></span>
                                         </div>
-                                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs" x-show="modalKind === 'obra'" x-cloak>
-                                            <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-900 dark:bg-amber-950/50 dark:text-amber-100" x-text="modal?.situacao || '—'"></span>
-                                            <span class="text-gray-500 dark:text-gray-400">{{ __('Canteiro · obra federal no município') }}</span>
-                                        </div>
                                     </div>
                                     <button
                                         type="button"
@@ -197,48 +171,7 @@
                                     </button>
                                 </div>
 
-                                <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 space-y-4 [scrollbar-gutter:stable]" x-show="modalKind === 'obra'" x-cloak>
-                                    <p class="rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2 text-xs text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
-                                        {{ __('Obra federal no município (Obrasgov/SIMEC) — não vinculada a uma unidade INEP específica.') }}
-                                    </p>
-                                    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-sm">
-                                        <div class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
-                                            <dt class="text-[11px] font-semibold uppercase text-slate-500">{{ __('% físico') }}</dt>
-                                            <dd class="mt-1 font-semibold tabular-nums" x-text="modal?.percentual != null ? (Number(modal.percentual).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + '%') : '—'"></dd>
-                                        </div>
-                                        <div class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
-                                            <dt class="text-[11px] font-semibold uppercase text-slate-500">{{ __('Investido') }}</dt>
-                                            <dd class="mt-1 font-semibold tabular-nums">
-                                                <span x-text="modal?.investido != null ? formatBrl(modal.investido) : '—'"></span>
-                                                <span class="text-xs font-medium text-slate-500" x-show="modal?.investidoLabel" x-text="modal?.investidoLabel ? (' (' + modal.investidoLabel + ')') : ''"></span>
-                                            </dd>
-                                        </div>
-                                        <div class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
-                                            <dt class="text-[11px] font-semibold uppercase text-slate-500">{{ __('Previsto (indicativo)') }}</dt>
-                                            <dd class="mt-1 font-semibold tabular-nums" x-text="modal?.previsto != null ? formatBrl(modal.previsto) : '—'"></dd>
-                                        </div>
-                                        <div class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600">
-                                            <dt class="text-[11px] font-semibold uppercase text-slate-500">{{ __('Início') }}</dt>
-                                            <dd class="mt-1 font-semibold" x-text="formatDate(modal?.data_inicio)"></dd>
-                                        </div>
-                                        <div class="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-600 sm:col-span-2">
-                                            <dt class="text-[11px] font-semibold uppercase text-slate-500" x-text="modal?.gestaoLabel || '{{ __('Paralisação / aferição') }}'"></dt>
-                                            <dd class="mt-1 font-semibold" x-text="formatDate(modal?.gestaoDate)"></dd>
-                                        </div>
-                                    </dl>
-                                    <p class="text-xs text-slate-600 dark:text-slate-300" x-show="modal?.lat != null">
-                                        {{ __('Coordenadas') }}:
-                                        <span class="font-mono tabular-nums" x-text="(modal?.lat != null ? Number(modal.lat).toFixed(5) : '—') + ', ' + (modal?.lng != null ? Number(modal.lng).toFixed(5) : '—')"></span>
-                                    </p>
-                                    <a
-                                        class="inline-flex text-sm font-semibold text-amber-800 underline dark:text-amber-200"
-                                        :href="modal?.simec_url || '#'"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >{{ __('Abrir painel SIMEC Obras') }}</a>
-                                </div>
-
-                                <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 space-y-4 [scrollbar-gutter:stable]" x-show="modalKind === 'school'">
+                                <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 space-y-4 [scrollbar-gutter:stable]">
                                     {{-- Localização: duas colunas (geográfico | endereços) --}}
                                     <div class="w-full rounded-xl border border-slate-200/90 bg-gradient-to-b from-slate-50/95 to-white dark:from-slate-900/50 dark:to-gray-900/80 dark:border-slate-600 p-4 shadow-sm">
                                         <p class="text-center text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-200">{{ __('Localização') }}</p>
@@ -411,7 +344,7 @@
 
                                 <div class="shrink-0 border-t border-gray-100 px-4 py-3 dark:border-gray-700 bg-gray-50/70 dark:bg-gray-900/40 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                     <a
-                                        x-show="modalKind === 'school' && modal?.inep && modal?.inepPortal?.page_url && modal.inepPortal.page_url !== '#'"
+                                        x-show="modal?.inep && modal?.inepPortal?.page_url && modal.inepPortal.page_url !== '#'"
                                         class="inline-flex w-full sm:w-auto items-center justify-center rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -431,22 +364,6 @@
                         </div>
                     </template>
 
-                    @if (count($obrasWithoutGeo) > 0)
-                        <div class="border-t border-amber-100 px-4 py-3 dark:border-amber-900/40">
-                            <h4 class="text-xs font-semibold uppercase tracking-wide text-amber-950 dark:text-amber-100">{{ __('Obras no município sem coordenadas') }}</h4>
-                            <ul class="mt-2 space-y-1.5 text-xs text-amber-950/90 dark:text-amber-100/90">
-                                @foreach ($obrasWithoutGeo as $obra)
-                                    <li class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                                        <span class="font-semibold">{{ $obra['situacao'] ?? '—' }}</span>
-                                        <span>{{ $obra['nome'] ?? __('Obra') }}</span>
-                                        @if (! empty($obra['percentual']))
-                                            <span class="tabular-nums text-amber-800 dark:text-amber-200">{{ number_format((float) $obra['percentual'], 0, ',', '.') }}% físico</span>
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
                 </div>
             @else
                 <div class="px-4 py-10 text-center text-sm text-gray-600 dark:text-gray-400 border-t border-emerald-100/60 dark:border-emerald-900/40">
@@ -527,7 +444,7 @@
                             <div>
                                 <h4 class="text-xs font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Outras seções desta aba') }}</h4>
                                 <p class="mt-2">
-                                    {{ __('Abaixo do mapa pode haver resumos de capacidade das turmas, distribuição geográfica (totais), um mapa de “cobertura” com tamanho dos marcadores proporcional às matrículas, e transporte escolar — cada bloco responde a uma pergunta diferente; use o mapa principal para o detalhe por escola.') }}
+                                    {{ __('Abaixo do mapa: obras federais (Canteiro) em tabela — sem pins, porque as coordenadas Obrasgov costumam ser da capital da UF. Também podem aparecer capacidade das turmas, distribuição geográfica e transporte escolar.') }}
                                 </p>
                             </div>
                         </div>
@@ -543,6 +460,104 @@
                     </div>
                 </div>
             </template>
+        </div>
+    @endif
+
+    {{-- 2b) OBRAS (Canteiro) — tabela gestional; sem pins no mapa --}}
+    @if ($yearFilterReady)
+        <div class="rounded-xl border border-amber-200/90 dark:border-amber-800/70 bg-white dark:bg-gray-900 overflow-hidden shadow-sm ring-1 ring-amber-100/80 dark:ring-amber-900/40">
+            <div class="border-b border-amber-100 dark:border-amber-900/50 px-4 py-3 bg-amber-50/90 dark:bg-amber-950/40">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <div class="flex items-start gap-3 min-w-0">
+                        <svg class="h-5 w-5 mt-0.5 shrink-0 text-amber-800 dark:text-amber-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                        <div class="min-w-0">
+                            <h3 class="text-base font-semibold uppercase tracking-wide text-amber-950 dark:text-amber-100">{{ __('Obras') }}</h3>
+                            <p class="mt-1 text-xs text-amber-900/85 dark:text-amber-200/90 leading-relaxed">
+                                {{ __('Inventário federal no município (Obrasgov / SIMEC-FNDE). Sem marcação no mapa — as coordenadas da origem costumam ser da capital da UF, não do terreno da obra. Porte e salas vêm da meta do projeto; população beneficiada só quando a API informa.') }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="shrink-0 text-right">
+                        <p class="text-xs font-semibold tabular-nums text-amber-950 dark:text-amber-100">{{ trans_choice(':count obra|:count obras', $obrasTotal, ['count' => $obrasTotal]) }}</p>
+                        <a href="{{ $obrasSimecUrl }}" target="_blank" rel="noopener noreferrer" class="mt-1 inline-flex text-xs font-semibold text-amber-800 underline dark:text-amber-200">{{ __('Painel SIMEC') }}</a>
+                    </div>
+                </div>
+            </div>
+
+            @if ($obrasTotal > 0)
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-amber-50/60 text-left text-[11px] uppercase tracking-wide text-amber-900/80 dark:bg-amber-950/30 dark:text-amber-200/80">
+                            <tr>
+                                <th class="px-3 py-2 font-semibold">{{ __('Obra') }}</th>
+                                <th class="px-3 py-2 font-semibold">{{ __('Situação') }}</th>
+                                <th class="px-3 py-2 font-semibold">{{ __('Porte / tipologia') }}</th>
+                                <th class="px-3 py-2 font-semibold text-right">{{ __('Salas') }}</th>
+                                <th class="px-3 py-2 font-semibold text-right">{{ __('Pop. beneficiada') }}</th>
+                                <th class="px-3 py-2 font-semibold text-right">{{ __('% físico') }}</th>
+                                <th class="px-3 py-2 font-semibold text-right">{{ __('Início') }}</th>
+                                <th class="px-3 py-2 font-semibold">{{ __('SIMEC') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-amber-100/80 dark:divide-amber-900/40">
+                            @foreach ($obrasItems as $obra)
+                                @php
+                                    $sit = (string) ($obra['situacao'] ?? '');
+                                    $badge = match (true) {
+                                        str_contains(mb_strtolower($sit), 'paralis') => 'bg-amber-100 text-amber-950 dark:bg-amber-900/50 dark:text-amber-100',
+                                        str_contains(mb_strtolower($sit), 'execu') => 'bg-teal-100 text-teal-950 dark:bg-teal-900/40 dark:text-teal-100',
+                                        str_contains(mb_strtolower($sit), 'inacab') => 'bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100',
+                                        str_contains(mb_strtolower($sit), 'cancel') => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
+                                        default => 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-200',
+                                    };
+                                    $inicio = $obra['data_inicio'] ?? null;
+                                    $inicioFmt = is_string($inicio) && $inicio !== ''
+                                        ? \Illuminate\Support\Carbon::parse($inicio)->format('d/m/Y')
+                                        : '—';
+                                @endphp
+                                <tr class="align-top text-slate-800 dark:text-slate-100">
+                                    <td class="px-3 py-2.5 max-w-[18rem]">
+                                        <p class="font-medium leading-snug">{{ $obra['nome'] ?? __('Obra') }}</p>
+                                        <p class="mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ $obra['id'] ?? '' }}</p>
+                                    </td>
+                                    <td class="px-3 py-2.5 whitespace-nowrap">
+                                        <span class="inline-flex rounded-md px-2 py-0.5 text-xs font-semibold {{ $badge }}">{{ $sit !== '' ? $sit : '—' }}</span>
+                                    </td>
+                                    <td class="px-3 py-2.5 max-w-[14rem]">
+                                        <p class="leading-snug">{{ $obra['porte_resumo'] ?? ($obra['tipology_label'] ?? '—') }}</p>
+                                        @if (! empty($obra['meta_global']) && ($obra['porte_resumo'] ?? '') !== $obra['meta_global'])
+                                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ $obra['meta_global'] }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">
+                                        {{ isset($obra['salas']) && $obra['salas'] !== null ? number_format((int) $obra['salas'], 0, ',', '.') : '—' }}
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">
+                                        @if (! empty($obra['populacao_beneficiada']))
+                                            {{ number_format((int) $obra['populacao_beneficiada'], 0, ',', '.') }}
+                                        @else
+                                            <span class="text-slate-400" title="{{ __('API Obrasgov sem população beneficiada numérica neste projeto') }}">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">
+                                        {{ isset($obra['percentual']) && $obra['percentual'] !== null ? number_format((float) $obra['percentual'], 0, ',', '.').'%' : '—' }}
+                                    </td>
+                                    <td class="px-3 py-2.5 text-right tabular-nums whitespace-nowrap">{{ $inicioFmt }}</td>
+                                    <td class="px-3 py-2.5 whitespace-nowrap">
+                                        <a href="{{ $obra['simec_url'] ?? $obrasSimecUrl }}" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-amber-800 underline dark:text-amber-200">{{ __('Abrir') }}</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="px-4 py-8 text-center text-sm text-slate-600 dark:text-slate-400">
+                    {{ __('Nenhuma obra federal sincronizada para este município (filtro IBGE).') }}
+                </div>
+            @endif
         </div>
     @endif
 

@@ -364,35 +364,17 @@ export default function createSchoolUnitsMap(
         typeof options.qeduEscolaBaseUrl === "string"
             ? options.qeduEscolaBaseUrl.trim()
             : "";
-    const obrasMarkers = Array.isArray(options.obrasMarkers)
-        ? options.obrasMarkers
-        : [];
-    const obrasWithoutGeo = Array.isArray(options.obrasWithoutGeo)
-        ? options.obrasWithoutGeo
-        : [];
-    const obrasSimecUrl =
-        typeof options.obrasSimecUrl === "string" &&
-        options.obrasSimecUrl.trim() !== ""
-            ? options.obrasSimecUrl.trim()
-            : "https://simec.mec.gov.br/painelObras/";
-
     return {
         markers,
         footnote,
         mode,
         qeduEscolaBaseUrl,
-        obrasMarkers,
-        obrasWithoutGeo,
-        obrasSimecUrl,
-        showObrasLayer: true,
         map: null,
         group: null,
-        obrasGroup: null,
         graphLayer: null,
         booted: false,
         modalOpen: false,
         modal: null,
-        modalKind: "school",
         _onTab: null,
         _bootAttempts: 0,
 
@@ -421,77 +403,13 @@ export default function createSchoolUnitsMap(
                 this.graphLayer.remove();
                 this.graphLayer = null;
             }
-            if (this.obrasGroup) {
-                this.obrasGroup.clearLayers();
-                this.obrasGroup.remove();
-                this.obrasGroup = null;
-            }
             if (this.map) {
                 this.map.remove();
                 this.map = null;
             }
         },
 
-        formatBrl(n) {
-            if (n === null || n === undefined || Number.isNaN(Number(n))) {
-                return "—";
-            }
-            return Number(n).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
-        },
-
-        formatDate(iso) {
-            if (!iso) {
-                return "—";
-            }
-            const raw = String(iso).trim();
-            const d = new Date(raw.length <= 10 ? `${raw}T12:00:00` : raw);
-            if (Number.isNaN(d.getTime())) {
-                return "—";
-            }
-            return d.toLocaleDateString("pt-BR");
-        },
-
-        obraStatusTone(situacao) {
-            const s = String(situacao || "").toLowerCase();
-            if (s.includes("paralis")) {
-                return "paralisada";
-            }
-            if (s.includes("execu")) {
-                return "execucao";
-            }
-            if (s.includes("inacab")) {
-                return "inacabada";
-            }
-            if (s.includes("cancel")) {
-                return "cancelada";
-            }
-            return "cadastrada";
-        },
-
-        obraColor(situacao) {
-            const tone = this.obraStatusTone(situacao);
-            if (tone === "paralisada") {
-                return "#b45309";
-            }
-            if (tone === "execucao") {
-                return "#0f766e";
-            }
-            if (tone === "inacabada") {
-                return "#b91c1c";
-            }
-            if (tone === "cancelada") {
-                return "#64748b";
-            }
-            return "#78716c";
-        },
-
         openSchoolModal(mk) {
-            this.modalKind = "school";
             this.modal = buildSchoolModalPayload(mk, this.qeduEscolaBaseUrl);
             const gd = this.modal?.geo_divergence;
             if (
@@ -515,124 +433,12 @@ export default function createSchoolUnitsMap(
             this.modalOpen = true;
         },
 
-        openObraModal(obra) {
-            if (!obra || typeof obra !== "object") {
-                return;
-            }
-            const pago = Number(obra.valor_pago);
-            const emp = Number(obra.valor_empenhado);
-            let investido = null;
-            let investidoLabel = "";
-            if (Number.isFinite(pago) && pago > 0) {
-                investido = pago;
-                investidoLabel = "pago";
-            } else if (Number.isFinite(emp) && emp > 0) {
-                investido = emp;
-                investidoLabel = "empenho";
-            }
-            const isParalis = String(obra.situacao || "")
-                .toLowerCase()
-                .includes("paralis");
-            const isExec = String(obra.situacao || "")
-                .toLowerCase()
-                .includes("execu");
-            let gestaoDate = null;
-            let gestaoLabel = "Paralisação / aferição";
-            if (isParalis && obra.data_paralisacao) {
-                gestaoDate = obra.data_paralisacao;
-                gestaoLabel = "Data da paralisação";
-            } else if (isExec && obra.data_ultima_afericao) {
-                gestaoDate = obra.data_ultima_afericao;
-                gestaoLabel = "Última aferição";
-            } else if (obra.data_paralisacao) {
-                gestaoDate = obra.data_paralisacao;
-                gestaoLabel = "Data da paralisação";
-            } else if (obra.data_ultima_afericao) {
-                gestaoDate = obra.data_ultima_afericao;
-                gestaoLabel = "Última aferição";
-            }
-
-            this.modalKind = "obra";
-            this.modal = {
-                title: String(obra.nome || "Obra"),
-                situacao: String(obra.situacao || "—"),
-                tone: this.obraStatusTone(obra.situacao),
-                percentual:
-                    obra.percentual != null &&
-                    Number.isFinite(Number(obra.percentual))
-                        ? Number(obra.percentual)
-                        : null,
-                investido,
-                investidoLabel,
-                previsto:
-                    obra.valor_previsto != null &&
-                    Number(obra.valor_previsto) > 0
-                        ? Number(obra.valor_previsto)
-                        : null,
-                data_inicio: obra.data_inicio || null,
-                gestaoDate,
-                gestaoLabel,
-                id: String(obra.id || ""),
-                lat: obra.lat ?? null,
-                lng: obra.lng ?? null,
-                simec_url: String(obra.simec_url || this.obrasSimecUrl),
-            };
-            this.modalOpen = true;
-        },
-
         closeSchoolModal() {
             this.modalOpen = false;
         },
 
-        toggleObrasLayer() {
-            this.showObrasLayer = !this.showObrasLayer;
-            this.refreshObrasLayer();
-        },
-
-        refreshObrasLayer() {
-            if (!this.map) {
-                return;
-            }
-            if (this.obrasGroup) {
-                this.obrasGroup.clearLayers();
-                this.map.removeLayer(this.obrasGroup);
-                this.obrasGroup = null;
-            }
-            if (!this.showObrasLayer || this.obrasMarkers.length === 0) {
-                return;
-            }
-            this.obrasGroup = L.layerGroup().addTo(this.map);
-            this.obrasMarkers.forEach((obra) => {
-                const lat = toFiniteNumber(obra.lat);
-                const lng = toFiniteNumber(obra.lng);
-                if (
-                    lat === null ||
-                    lng === null ||
-                    Math.abs(lat) > 90 ||
-                    Math.abs(lng) > 180
-                ) {
-                    return;
-                }
-                const color = this.obraColor(obra.situacao);
-                L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        className: "serv-canteiro-obra-marker",
-                        html: `<span style="display:block;width:14px;height:14px;border:2px solid #fff;box-shadow:0 0 0 1px ${color};background:${color};transform:rotate(45deg);"></span>`,
-                        iconSize: [14, 14],
-                        iconAnchor: [7, 7],
-                    }),
-                    title: String(obra.nome || "Obra"),
-                })
-                    .on("click", () => this.openObraModal(obra))
-                    .addTo(this.obrasGroup);
-            });
-        },
-
         tryBoot() {
-            if (
-                this.booted ||
-                (this.markers.length === 0 && this.obrasMarkers.length === 0)
-            ) {
+            if (this.booted || this.markers.length === 0) {
                 return;
             }
             const el = this.$refs.mapContainer;
@@ -660,16 +466,7 @@ export default function createSchoolUnitsMap(
                         Math.abs(toFiniteNumber(m.lng)) <= 180,
                 )
                 .map((m) => [toFiniteNumber(m.lat), toFiniteNumber(m.lng)]);
-            const obraLatlngs = this.obrasMarkers
-                .filter(
-                    (m) =>
-                        toFiniteNumber(m.lat) !== null &&
-                        toFiniteNumber(m.lng) !== null &&
-                        Math.abs(toFiniteNumber(m.lat)) <= 90 &&
-                        Math.abs(toFiniteNumber(m.lng)) <= 180,
-                )
-                .map((m) => [toFiniteNumber(m.lat), toFiniteNumber(m.lng)]);
-            const allLatlngs = [...latlngs, ...obraLatlngs];
+            const allLatlngs = [...latlngs];
             const graphPts = this.markers
                 .map((m) => {
                     const la = toFiniteNumber(m.lat);
@@ -779,8 +576,6 @@ export default function createSchoolUnitsMap(
                     .on("click", () => this.openSchoolModal(mk))
                     .addTo(this.group);
             });
-
-            this.refreshObrasLayer();
 
             if (allLatlngs.length === 1) {
                 this.map.setView(allLatlngs[0], 14);

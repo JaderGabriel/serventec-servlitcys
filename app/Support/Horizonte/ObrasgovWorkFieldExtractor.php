@@ -311,6 +311,149 @@ final class ObrasgovWorkFieldExtractor
         return $keep !== [] ? $keep : null;
     }
 
+    /**
+     * Porte / tipologia e população beneficiada a partir do projeto Obrasgov.
+     *
+     * Preferência: `populacao_beneficiada` numérica da API; salas e rótulo a partir de
+     * `desc_meta_global` / `desc_nome` (ex.: «Escola 6 Salas», creche, Proinfância).
+     *
+     * @param  array<string, mixed>  $projeto
+     * @return array{
+     *     tipology: string,
+     *     tipology_label: string,
+     *     meta_global: string|null,
+     *     salas: int|null,
+     *     populacao_beneficiada: int|null,
+     *     populacao_fonte: string|null,
+     *     porte_resumo: string
+     * }
+     */
+    public static function porte(array $projeto): array
+    {
+        $meta = trim((string) ($projeto['desc_meta_global'] ?? ''));
+        $nome = trim((string) ($projeto['desc_nome'] ?? ''));
+        $funcao = trim((string) ($projeto['desc_funcao_social'] ?? ''));
+        $blob = trim(implode(' ', array_filter([$meta, $nome, $funcao], static fn ($s) => $s !== '')));
+
+        $salas = self::parseSalas($blob);
+        $tipology = self::inferTipology($blob, $meta);
+        $tipologyLabel = self::tipologyLabel($tipology, $meta);
+
+        $pop = null;
+        $popFonte = null;
+        $rawPop = $projeto['populacao_beneficiada'] ?? null;
+        if (is_numeric($rawPop) && (int) $rawPop > 0) {
+            $pop = (int) $rawPop;
+            $popFonte = 'populacao_beneficiada';
+        } else {
+            $fromDesc = self::parsePopulacaoTexto((string) ($projeto['desc_populacao_beneficiada'] ?? ''));
+            if ($fromDesc !== null) {
+                $pop = $fromDesc;
+                $popFonte = 'desc_populacao_beneficiada';
+            }
+        }
+
+        $parts = [];
+        if ($tipologyLabel !== '') {
+            $parts[] = $tipologyLabel;
+        }
+        if ($salas !== null && ! preg_match('/\bsalas?\b/iu', $tipologyLabel)) {
+            $parts[] = $salas === 1
+                ? __('1 sala')
+                : __(':n salas', ['n' => (string) $salas]);
+        }
+        $resumo = $parts !== [] ? implode(' · ', $parts) : ($meta !== '' ? $meta : __('Não informado'));
+
+        return [
+            'tipology' => $tipology,
+            'tipology_label' => $tipologyLabel !== '' ? $tipologyLabel : __('Não informado'),
+            'meta_global' => $meta !== '' ? $meta : null,
+            'salas' => $salas,
+            'populacao_beneficiada' => $pop,
+            'populacao_fonte' => $popFonte,
+            'porte_resumo' => $resumo,
+        ];
+    }
+
+    public static function parseSalas(string $text): ?int
+    {
+        if ($text === '') {
+            return null;
+        }
+        if (preg_match('/\b(\d{1,2})\s*salas?\b/iu', $text, $m) === 1) {
+            $n = (int) $m[1];
+
+            return $n > 0 && $n <= 48 ? $n : null;
+        }
+        if (preg_match('/\b(\d{1,2})\s*sala(?:s)?\b/iu', $text, $m) === 1) {
+            $n = (int) $m[1];
+
+            return $n > 0 && $n <= 48 ? $n : null;
+        }
+
+        return null;
+    }
+
+    public static function parsePopulacaoTexto(string $text): ?int
+    {
+        $text = trim($text);
+        if ($text === '' || stripos($text, 'descrição') !== false) {
+            return null;
+        }
+        if (preg_match('/\b(\d{2,6})\b/u', $text, $m) === 1) {
+            $n = (int) $m[1];
+
+            return $n >= 10 && $n <= 500_000 ? $n : null;
+        }
+
+        return null;
+    }
+
+    public static function inferTipology(string $blob, string $meta = ''): string
+    {
+        $t = mb_strtolower($blob !== '' ? $blob : $meta);
+        if ($t === '') {
+            return 'outro';
+        }
+        if (str_contains($t, 'quadra')) {
+            return 'quadra';
+        }
+        if (str_contains($t, 'proinf') || str_contains($t, 'educação infantil') || str_contains($t, 'educacao infantil')) {
+            return 'educacao_infantil';
+        }
+        if (str_contains($t, 'creche')) {
+            return 'creche';
+        }
+        if (str_contains($t, 'pré-escola') || str_contains($t, 'pre-escola') || str_contains($t, 'pré escola')) {
+            return 'pre_escola';
+        }
+        if (str_contains($t, 'escola') || str_contains($t, 'espaço educativo') || str_contains($t, 'espaco educativo')) {
+            return 'escola';
+        }
+        if (str_contains($t, 'reforma') || str_contains($t, 'amplia')) {
+            return 'reforma_ampliacao';
+        }
+
+        return 'outro';
+    }
+
+    public static function tipologyLabel(string $tipology, string $meta = ''): string
+    {
+        if ($meta !== '' && ! in_array(mb_strtolower($meta), ['reforma', 'ampliação', 'ampliacao', 'construção', 'construcao', 'obra'], true)) {
+            return $meta;
+        }
+
+        return match ($tipology) {
+            'creche' => __('Creche'),
+            'pre_escola' => __('Pré-escola'),
+            'educacao_infantil' => __('Educação infantil'),
+            'escola' => __('Escola'),
+            'quadra' => __('Quadra escolar'),
+            'reforma_ampliacao' => __('Reforma / ampliação'),
+            default => $meta !== '' ? $meta : '',
+        };
+    }
+
     public static function parseDate(mixed $raw): ?string
     {
         if ($raw === null || $raw === '') {

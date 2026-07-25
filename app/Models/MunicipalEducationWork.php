@@ -18,6 +18,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $natureza_intervencao
  * @property string|null $desc_nome
  * @property string|null $desc_meta_global
+ * @property int|null $populacao_beneficiada
+ * @property string|null $desc_populacao_beneficiada
+ * @property int|null $salas_projeto
+ * @property string|null $tipology
  * @property string|null $sistema_resp
  * @property string|null $organizacao_resp
  * @property string|null $cnpj_organizacao_resp
@@ -52,6 +56,10 @@ final class MunicipalEducationWork extends Model
         'natureza_intervencao',
         'desc_nome',
         'desc_meta_global',
+        'populacao_beneficiada',
+        'desc_populacao_beneficiada',
+        'salas_projeto',
+        'tipology',
         'sistema_resp',
         'organizacao_resp',
         'cnpj_organizacao_resp',
@@ -78,6 +86,8 @@ final class MunicipalEducationWork extends Model
         'valor_empenhado' => 'decimal:2',
         'valor_pago' => 'decimal:2',
         'valor_previsto' => 'decimal:2',
+        'populacao_beneficiada' => 'integer',
+        'salas_projeto' => 'integer',
         'data_inicio' => 'date',
         'data_paralisacao' => 'date',
         'data_ultima_afericao' => 'date',

@@ -349,11 +349,12 @@ php artisan horizonte:canteiro-alerts --dry-run
 | **HOR-19** | MVP Canteiro — sync + modal + feed | **Implementado** | Sync UF, modal, fase `obras_sync` |
 | **HOR-20** | Camada mapa + filtros | **Implementado** | Pins + toggles «paralisada / em execução» |
 | **HOR-21** | Enriquecimento financeiro + scoring | **Implementado** | Empenhos, % físico, histórico, `infra_works` |
-| **UI gestional** | Detalhe no Horizonte + Unidades | **Implementado** | Tabela full-width; pins/modal em Unidades; datas + previsto indicativo |
+| **UI gestional** | Detalhe no Horizonte + Unidades | **Implementado** | Tabela full-width no Horizonte; **Unidades: card/tabela Obras (sem pins no mapa)**; porte/salas da meta; pop. beneficiada quando API informar |
+| **Qualidade pin** | Coordenadas reais no terreno | **Limitação aceite** | Pins Obrasgov ≈ capital da UF — removidos da aba Unidades; manter só tabela por IBGE |
 | **INT-10** | Client Obrasgov + catálogo | **Implementado** | `ObrasgovClient` + `SafeOutboundUrl` |
 | **Fase 7** | Alertas consultoria + PDF | **Implementado** | Mensal; só `hasDataSetup()`; `--pdf` |
 
-**UI gestional:** modal Horizonte com Canteiro em linha completa (KPIs + tabela). Aba Unidades: losangos coloridos por status + modal; lista sem geo. Re-sync com enrich para datas/previsto: `horizonte:sync-obras --uf=XX`.
+**UI gestional:** modal Horizonte com Canteiro em linha completa (KPIs + tabela). Aba Unidades: **sem losangos no mapa** (coords não são municipais); card **Obras** com tabela (situação, porte/tipologia, salas, pop. beneficiada, % físico, início, SIMEC). Re-sync: `horizonte:sync-obras --uf=XX`.
 
 **Rotinas:**
 

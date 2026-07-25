@@ -14,6 +14,7 @@ final class MunicipalEducationWorksForCityTest extends TestCase
         $payload = MunicipalEducationWorksForCity::payloadForIbge(null);
 
         $this->assertSame(0, $payload['total']);
+        $this->assertSame([], $payload['items']);
         $this->assertSame([], $payload['markers']);
         $this->assertSame([], $payload['without_geo']);
         $this->assertNotSame('', $payload['simec_url']);
@@ -25,6 +26,7 @@ final class MunicipalEducationWorksForCityTest extends TestCase
         $payload = MunicipalEducationWorksForCity::payloadForIbge('abc');
 
         $this->assertSame(0, $payload['total']);
+        $this->assertSame([], $payload['items']);
         $this->assertSame([], $payload['markers']);
     }
 }
