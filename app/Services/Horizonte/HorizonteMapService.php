@@ -11,9 +11,11 @@ use App\Models\MunicipalDemographySnapshot;
 use App\Models\MunicipalFiscalSnapshot;
 use App\Models\MunicipalPnadSnapshot;
 use App\Models\MunicipalTransparencySnapshot;
+use App\Models\PortalProcurementSnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\MunicipalAreaSnapshotRepository;
+use App\Repositories\PortalProcurementSnapshotRepository;
 use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
 use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
 use App\Support\Brazil\BrazilStateCapitals;
@@ -37,6 +39,7 @@ use App\Support\Horizonte\HorizonteSaebTrend;
 use App\Support\Horizonte\HorizonteCanteiroAlertsCache;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
+use App\Support\Horizonte\HorizonteProcurementMarketScorer;
 use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -56,6 +59,7 @@ final class HorizonteMapService
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
         private readonly HorizonteMunicipalAlertsSyncService $municipalAlerts,
         private readonly HorizonteMunicipalAlertsResolver $municipalAlertsResolver,
+        private readonly PortalProcurementSnapshotRepository $procurementSnapshots,
     ) {}
 
     /**
@@ -954,6 +958,8 @@ final class HorizonteMapService
         $areaByIbge = $this->areaByIbge($ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
         $obrasByIbge = $this->obrasAggByIbge($ibgePrefix);
+        $procurementByIbge = $this->procurementSnapshots->licitacoesMarketByIbge($refYear, $ibgePrefix);
+        $procurementNational = $this->procurementSnapshots->nationalVendorMarketSummary($refYear);
 
         $currentYear = HorizonteFundebRepasseOutlook::currentYear();
         $fundebCurrentByIbge = $currentYear > $refYear
@@ -1001,6 +1007,9 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($transparencyByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($procurementByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($pnadByIbge) as $ibge) {
@@ -1077,6 +1086,7 @@ final class HorizonteMapService
             $fiscal = $fiscalByIbge[$ibge] ?? null;
             $transparency = $transparencyByIbge[$ibge] ?? null;
             $pnad = $pnadByIbge[$ibge] ?? null;
+            $procurement = $procurementByIbge[$ibge] ?? null;
             $area = $areaByIbge[$ibge] ?? null;
             $transfer = $transfersByIbge[$ibge] ?? null;
             $fundebRealtime = $fundebRealtimeByIbge[$ibge] ?? null;
@@ -1123,6 +1133,30 @@ final class HorizonteMapService
 
             $consultoriaActive = (bool) ($city['consultoria_active'] ?? false);
 
+            $sge = $this->sgeResolver->resolve(
+                $ibge,
+                $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
+                $sgeRegistry[$ibge] ?? null,
+            );
+
+            $licitacoesCount = (int) ($procurement['licitacoes'] ?? 0);
+            $licitacoesSoftware = (int) ($procurement['licitacoes_software'] ?? 0);
+            $proxySgeScore = HorizonteProcurementMarketScorer::proxySge([
+                'sge_found' => (bool) ($sge['found'] ?? false),
+                'sge_status' => (string) ($sge['status'] ?? ''),
+                'transparency_contratos_software' => $transparency['contratos_software'] ?? null,
+                'licitacoes_software' => $licitacoesSoftware,
+                'national_vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
+            ]);
+            $timingLicitacaoScore = HorizonteProcurementMarketScorer::timingLicitacao(
+                $licitacoesCount,
+                $licitacoesSoftware,
+            );
+            $hasSistemasMercado = $proxySgeScore > 0
+                || $timingLicitacaoScore > 0
+                || $licitacoesCount > 0
+                || ((int) ($transparency['contratos_software'] ?? 0) > 0);
+
             $scoreInput = [
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
                 'complementacao_total' => $fundeb['complementacao_total'] ?? null,
@@ -1151,6 +1185,8 @@ final class HorizonteMapService
                 'has_pnad' => $pnad !== null,
                 'has_obras' => $obras !== null && ($obras['total'] ?? 0) > 0,
                 'infra_works_score' => $obras['infra_works_score'] ?? 0,
+                'proxy_sge_score' => $proxySgeScore,
+                'timing_licitacao_score' => $timingLicitacaoScore,
                 'consultoria_active' => $consultoriaActive,
                 'in_catalog' => $inCatalog,
             ];
@@ -1159,11 +1195,6 @@ final class HorizonteMapService
             $minHeat = $consultoriaActive ? 0.0 : ($scores['tier'] === 'data_sparse' ? 0.08 : 0.0);
             $heatIntensity = max($minHeat, min(1.0, $rawHeat));
 
-            $sge = $this->sgeResolver->resolve(
-                $ibge,
-                $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
-                $sgeRegistry[$ibge] ?? null,
-            );
             $muniAlerts = $this->municipalAlertsResolver->resolve(
                 $alertsRegistry[$ibge] ?? null,
                 $alertsMeta,
@@ -1196,6 +1227,8 @@ final class HorizonteMapService
                 'enrollment_momentum' => $scores['enrollment_momentum'],
                 'inclusion_gap' => $scores['inclusion_gap'],
                 'infra_works' => $scores['infra_works'] ?? ($obras['infra_works_score'] ?? 0),
+                'proxy_sge' => $scores['proxy_sge'] ?? $proxySgeScore,
+                'timing_licitacao' => $scores['timing_licitacao'] ?? $timingLicitacaoScore,
                 'data_readiness' => $scores['data_readiness'],
                 'heat_intensity' => round($heatIntensity, 3),
                 'consultoria_active' => $consultoriaActive,
@@ -1307,6 +1340,15 @@ final class HorizonteMapService
                 'transparency_empenhos_tecnologia' => $transparency['empenhos_tecnologia'] ?? null,
                 'transparency_contratos_software' => $transparency['contratos_software'] ?? null,
                 'transparency_highlights' => $transparency['highlights'] ?? [],
+                'has_sistemas_mercado' => $hasSistemasMercado,
+                'procurement_licitacoes' => $licitacoesCount,
+                'procurement_licitacoes_software' => $licitacoesSoftware,
+                'procurement_valor_licitacoes' => $procurement['valor_total'] ?? null,
+                'procurement_samples' => $procurement['samples'] ?? [],
+                'procurement_imported_at' => $procurement['imported_at'] ?? null,
+                'procurement_national_vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
+                'procurement_national_itens_software' => (int) ($procurementNational['itens_software'] ?? 0),
+                'procurement_national_top_vendors' => $procurementNational['top_vendors'] ?? [],
                 'pnad_escolaridade_media' => $pnad['escolaridade_media'] ?? null,
                 'pnad_pct_neet' => $pnad['pct_neet_jovem'] ?? null,
                 'pnad_ano' => $pnad['ano'] ?? null,
@@ -2143,6 +2185,7 @@ final class HorizonteMapService
             [MunicipalDemographySnapshot::class, 'imported_at'],
             [MunicipalFiscalSnapshot::class, 'imported_at'],
             [MunicipalTransparencySnapshot::class, 'imported_at'],
+            [PortalProcurementSnapshot::class, 'imported_at'],
             [MunicipalPnadSnapshot::class, 'imported_at'],
             [MunicipalAreaSnapshot::class, 'imported_at'],
         ] as [$model, $col]) {

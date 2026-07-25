@@ -2525,6 +2525,16 @@ html.serv-horizonte-muni-modal-open body {
     background: rgb(23 37 84 / 0.28);
 }
 
+.serv-horizonte-muni-tooltip__enrich-block--market {
+    border-color: rgb(199 210 254 / 0.9);
+    background: rgb(238 242 255 / 0.65);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--market {
+    border-color: rgb(67 56 202 / 0.45);
+    background: rgb(30 27 75 / 0.28);
+}
+
 .serv-horizonte-muni-tooltip__enrich-block--canteiro {
     border-color: rgb(253 186 116 / 0.9);
     background: rgb(255 251 235 / 0.7);
@@ -2572,6 +2582,14 @@ html.serv-horizonte-muni-modal-open body {
     border-bottom-color: rgb(30 64 175 / 0.35);
 }
 
+.serv-horizonte-muni-tooltip__enrich-block--market .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(199 210 254 / 0.7);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--market .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(67 56 202 / 0.35);
+}
+
 .serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-head {
     border-bottom-color: rgb(253 186 116 / 0.7);
 }
@@ -2617,6 +2635,14 @@ html.serv-horizonte-muni-modal-open body {
 
 .dark .serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-icon-wrap {
     color: rgb(147 197 253);
+}
+
+.serv-horizonte-muni-tooltip__enrich-block--market .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(79 70 229);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--market .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(165 180 252);
 }
 
 .serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-icon-wrap {

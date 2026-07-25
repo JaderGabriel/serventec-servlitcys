@@ -152,6 +152,160 @@ class PortalProcurementSnapshotRepository
             ->count();
     }
 
+    /**
+     * Licitações com IBGE — sinal municipal de timing / objeto software (HOR-08e/B4).
+     *
+     * @return array<string, array{
+     *     licitacoes: int,
+     *     licitacoes_software: int,
+     *     valor_total: float,
+     *     samples: list<array{
+     *         numero: ?string,
+     *         objeto: ?string,
+     *         situacao: ?string,
+     *         valor: ?float,
+     *         data_publicacao: ?string,
+     *         orgao_sigla: ?string,
+     *         itens_software: bool
+     *     }>,
+     *     imported_at: ?string
+     * }>
+     */
+    public function licitacoesMarketByIbge(int $year, ?string $ibgePrefix = null, int $sampleLimit = 5): array
+    {
+        if ($year < 2000 || ! \Illuminate\Support\Facades\Schema::hasTable('portal_procurement_snapshots')) {
+            return [];
+        }
+
+        $years = array_values(array_unique([$year, $year - 1]));
+        $query = PortalProcurementSnapshot::query()
+            ->licitacoes()
+            ->whereIn('ano', $years)
+            ->whereNotNull('ibge_municipio')
+            ->where('ibge_municipio', '!=', '');
+
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
+        }
+
+        $rows = $query
+            ->orderByDesc('data_publicacao')
+            ->orderByDesc('valor')
+            ->orderBy('external_id')
+            ->get([
+                'ibge_municipio',
+                'numero',
+                'objeto',
+                'situacao',
+                'valor',
+                'data_publicacao',
+                'orgao_sigla',
+                'itens_software',
+                'imported_at',
+            ]);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge((string) $row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            if (! isset($out[$ibge])) {
+                $out[$ibge] = [
+                    'licitacoes' => 0,
+                    'licitacoes_software' => 0,
+                    'valor_total' => 0.0,
+                    'samples' => [],
+                    'imported_at' => null,
+                ];
+            }
+            $out[$ibge]['licitacoes']++;
+            if ($row->itens_software) {
+                $out[$ibge]['licitacoes_software']++;
+            }
+            if ($row->valor !== null) {
+                $out[$ibge]['valor_total'] += (float) $row->valor;
+            }
+            $imported = $row->imported_at?->toIso8601String();
+            if ($imported !== null && (
+                $out[$ibge]['imported_at'] === null || strcmp($imported, (string) $out[$ibge]['imported_at']) > 0
+            )) {
+                $out[$ibge]['imported_at'] = $imported;
+            }
+            if (count($out[$ibge]['samples']) < $sampleLimit) {
+                $out[$ibge]['samples'][] = [
+                    'numero' => $row->numero,
+                    'objeto' => $row->objeto !== null ? mb_substr((string) $row->objeto, 0, 160) : null,
+                    'situacao' => $row->situacao,
+                    'valor' => $row->valor !== null ? (float) $row->valor : null,
+                    'data_publicacao' => $row->data_publicacao,
+                    'orgao_sigla' => $row->orgao_sigla,
+                    'itens_software' => (bool) $row->itens_software,
+                ];
+            }
+        }
+
+        foreach ($out as &$agg) {
+            $agg['valor_total'] = round($agg['valor_total'], 2);
+        }
+        unset($agg);
+
+        return $out;
+    }
+
+    /**
+     * Contratos com CNPJ curado / itens software — nível órgão (sem IBGE municipal).
+     *
+     * @return array{
+     *     vendor_matched: int,
+     *     itens_software: int,
+     *     top_vendors: list<array{label: string, count: int, valor: float}>
+     * }
+     */
+    public function nationalVendorMarketSummary(int $year, int $top = 5): array
+    {
+        if ($year < 2000 || ! \Illuminate\Support\Facades\Schema::hasTable('portal_procurement_snapshots')) {
+            return [
+                'vendor_matched' => 0,
+                'itens_software' => 0,
+                'top_vendors' => [],
+            ];
+        }
+
+        $years = array_values(array_unique([$year, $year - 1]));
+        $base = PortalProcurementSnapshot::query()
+            ->contratos()
+            ->whereIn('ano', $years);
+
+        $vendorMatched = (clone $base)->where('vendor_matched', true)->count();
+        $itensSoftware = (clone $base)->where('itens_software', true)->count();
+
+        $vendorRows = (clone $base)
+            ->where('vendor_matched', true)
+            ->whereNotNull('vendor_label')
+            ->where('vendor_label', '!=', '')
+            ->selectRaw('vendor_label as label, count(*) as c, coalesce(sum(valor), 0) as v')
+            ->groupBy('vendor_label')
+            ->orderByDesc('c')
+            ->limit(max(1, $top))
+            ->get();
+
+        $topVendors = [];
+        foreach ($vendorRows as $row) {
+            $topVendors[] = [
+                'label' => (string) $row->label,
+                'count' => (int) $row->c,
+                'valor' => round((float) $row->v, 2),
+            ];
+        }
+
+        return [
+            'vendor_matched' => $vendorMatched,
+            'itens_software' => $itensSoftware,
+            'top_vendors' => $topVendors,
+        ];
+    }
+
     private static function nullableString(mixed $raw, int $max): ?string
     {
         $str = trim((string) ($raw ?? ''));

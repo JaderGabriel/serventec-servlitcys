@@ -33,16 +33,20 @@ return [
     'medium_opportunity_threshold' => max(1, min(98, (int) env('HORIZONTE_MEDIUM_THRESHOLD', 40))),
 
     'weights' => [
-        'financial_pressure' => 0.18,
-        'pedagogical_gap' => 0.16,
+        'financial_pressure' => 0.17,
+        'pedagogical_gap' => 0.15,
         'scale' => 0.10,
-        'social_demand' => 0.16,
+        'social_demand' => 0.15,
         'transfer_dependency' => 0.08,
         'fiscal_capacity' => 0.10,
         'enrollment_momentum' => 0.06,
         'data_readiness' => 0.04,
-        'benefit_scale' => 0.08,
-        'infra_works' => 0.04,
+        'benefit_scale' => 0.07,
+        'infra_works' => 0.03,
+        /** HOR-08f/B4 — presença SGE / contratos software (moderado). */
+        'proxy_sge' => 0.03,
+        /** HOR-08e/B4 — editais recentes com IBGE (moderado). */
+        'timing_licitacao' => 0.02,
     ],
 
     'siconfi' => [

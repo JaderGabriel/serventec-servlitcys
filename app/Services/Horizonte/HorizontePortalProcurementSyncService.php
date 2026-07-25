@@ -5,6 +5,7 @@ namespace App\Services\Horizonte;
 use App\Models\PortalProcurementSnapshot;
 use App\Repositories\PortalProcurementSnapshotRepository;
 use App\Support\Funding\PortalTransparenciaApiClient;
+use App\Support\Horizonte\HorizonteMapCacheBuster;
 use App\Support\Horizonte\PortalProcurementConfig;
 use Illuminate\Support\Facades\Log;
 
@@ -148,9 +149,12 @@ final class HorizontePortalProcurementSyncService
                     if (! is_array($item)) {
                         continue;
                     }
-                    $mapped = $this->mapLicitacao($item, $orgao, $year);
+                    $mapped = $this->mapLicitacao($item, $orgao, $year, $itemKeywords);
                     if ($mapped === null) {
                         continue;
+                    }
+                    if ($mapped['itens_software']) {
+                        $swCount++;
                     }
                     $rows[] = $mapped;
                 }
@@ -200,6 +204,10 @@ final class HorizontePortalProcurementSyncService
             $vendorMatched += $vendorResult['vendor_matched'];
             $itensSoftware += $vendorResult['itens_software'];
             $contratosFetched += $vendorResult['fetched'];
+        }
+
+        if (! $dryRun && $upserted > 0) {
+            HorizonteMapCacheBuster::bust();
         }
 
         return [
@@ -527,9 +535,10 @@ final class HorizontePortalProcurementSyncService
     /**
      * @param  array<string, mixed>  $item
      * @param  array{codigo: string, sigla: string, nome: string}  $orgao
+     * @param  list<string>  $itemKeywords
      * @return array<string, mixed>|null
      */
-    private function mapLicitacao(array $item, array $orgao, int $year): ?array
+    private function mapLicitacao(array $item, array $orgao, int $year, array $itemKeywords = []): ?array
     {
         $id = $item['id'] ?? null;
         if ($id === null || $id === '') {
@@ -542,6 +551,8 @@ final class HorizontePortalProcurementSyncService
         $ug = is_array($item['unidadeGestora'] ?? null) ? $item['unidadeGestora'] : [];
 
         $valor = $item['valor'] ?? null;
+        $objeto = (string) ($licitacao['objeto'] ?? '');
+        $itensSoftware = $this->objetoSuggestSoftware($objeto, $itemKeywords);
 
         return [
             'tipo' => PortalProcurementSnapshot::TIPO_LICITACAO,
@@ -551,7 +562,7 @@ final class HorizontePortalProcurementSyncService
             'orgao_nome' => $orgao['nome'],
             'external_id' => (string) $id,
             'numero' => $licitacao['numero'] ?? null,
-            'objeto' => $licitacao['objeto'] ?? null,
+            'objeto' => $objeto !== '' ? $objeto : null,
             'situacao' => $item['situacaoCompra'] ?? null,
             'modalidade' => $item['modalidadeLicitacao'] ?? null,
             'valor' => is_numeric($valor) ? (float) $valor : null,
@@ -569,7 +580,7 @@ final class HorizontePortalProcurementSyncService
             'ug_nome' => $ug['nome'] ?? null,
             'vendor_matched' => false,
             'vendor_label' => null,
-            'itens_software' => false,
+            'itens_software' => $itensSoftware,
             'itens' => null,
             'payload' => $item,
             'fonte' => 'portal_transparencia',

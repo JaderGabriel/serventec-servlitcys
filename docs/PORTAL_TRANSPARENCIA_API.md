@@ -85,7 +85,7 @@ Ver detalhe e aceitação em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.
 | Eixo | IDs | Objectivo |
 |------|-----|-----------|
 | **A · Consultoria Finanças** | FIN-08, HOR-08c | **A1–A4 feitos** — client, persistência, UI Financiamentos → Emendas (empty state + copy indicativo) |
-| **B · Horizonte ocorrência** | HOR-08d…g | **B1–B3 feitos** (sync órgãos + CNPJ/itens); B4 UI/score · B5 sanções |
+| **B · Horizonte ocorrência** | HOR-08d…g | **B1–B4 feitos** (sync + UI/score Sistemas/mercado); B5 sanções |
 
 Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs). Testes com `Http::fake` por path. Respeitar rate limit nos loops `--continue`.
 

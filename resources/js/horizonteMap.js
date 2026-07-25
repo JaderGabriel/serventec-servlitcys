@@ -1322,6 +1322,9 @@ function muniDimensionsHtml(m, transferAno, methodology = null) {
         { key: "transfer_dependency", label: "Transf. fed." },
         { key: "fiscal_capacity", label: "Cap. fiscal", invert: true },
         { key: "data_readiness", label: "Prontidão" },
+        { key: "infra_works", label: "Infra obras" },
+        { key: "proxy_sge", label: "Proxy SGE" },
+        { key: "timing_licitacao", label: "Timing licit." },
     ];
     const rows = [
         `<p class="serv-horizonte-muni-tooltip__dims-title">${escapeHtml("Dimensões (0–100)")}</p>`,
@@ -1385,6 +1388,7 @@ const HORIZONTE_ENRICH_ICONS = {
     users: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.193M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>`,
     building: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18h10.5V3.75M6.75 9h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/></svg>`,
     social: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>`,
+    market: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5M9 11.25v1.5M12 9v3.75m3-6v6"/></svg>`,
     canteiro: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>`,
 };
 
@@ -1854,6 +1858,11 @@ function muniEnrichmentHtml(m) {
         }
     }
 
+    const sistemasBlock = muniSistemasMercadoEnrichmentHtml(m);
+    if (sistemasBlock !== "") {
+        blocks.push(sistemasBlock);
+    }
+
     const hasPedagogy =
         m.has_saeb ||
         m.has_censo ||
@@ -1878,7 +1887,7 @@ function muniEnrichmentHtml(m) {
         }
     }
 
-    if (blocks.length === 0 && !(m.has_obras || Number(m.obras_total ?? 0) > 0)) {
+    if (blocks.length === 0 && !(m.has_obras || Number(m.obras_total ?? 0) > 0) && !m.has_sistemas_mercado) {
         return "";
     }
 
@@ -1890,6 +1899,159 @@ function muniEnrichmentHtml(m) {
         m.has_obras || Number(m.obras_total ?? 0) > 0 ? muniCanteiroEnrichmentHtml(m) : "";
 
     return `${enrichmentGrid}${canteiroBlock}`;
+}
+
+function sistemasMercadoEnrichmentSignal(m) {
+    const timing = Number(m.timing_licitacao ?? 0);
+    const proxy = Number(m.proxy_sge ?? 0);
+    const soft = Number(m.procurement_licitacoes_software ?? 0);
+    if (soft > 0 || (m.sge_found && String(m.sge_status ?? "") === "registry")) {
+        return { tone: "warn", text: "Incumbente / software" };
+    }
+    if (timing >= 55) {
+        return { tone: "info", text: "Editais recentes" };
+    }
+    if (proxy > 0 || timing > 0) {
+        return { tone: "neutral", text: "Sinais de mercado" };
+    }
+    return null;
+}
+
+function muniSistemasMercadoEnrichmentHtml(m) {
+    if (!m) {
+        return "";
+    }
+
+    const licitacoes = Number(m.procurement_licitacoes ?? 0);
+    const licitSoft = Number(m.procurement_licitacoes_software ?? 0);
+    const contratosSoft = Number(m.transparency_contratos_software ?? 0);
+    const proxy = Number(m.proxy_sge ?? 0);
+    const timing = Number(m.timing_licitacao ?? 0);
+    const sgeFound = Boolean(m.sge_found);
+    const nationalVendors = Number(m.procurement_national_vendor_matched ?? 0);
+
+    const has =
+        m.has_sistemas_mercado ||
+        proxy > 0 ||
+        timing > 0 ||
+        licitacoes > 0 ||
+        contratosSoft > 0 ||
+        (sgeFound && String(m.sge_status ?? "") === "registry");
+
+    if (!has) {
+        return "";
+    }
+
+    const metrics = [];
+    const sgeLabel =
+        sgeFound && (m.sge_system || m.sge?.system_label || m.sge?.system)
+            ? String(m.sge?.system_label || m.sge_system || m.sge?.system || "Identificado")
+            : "Não identificado";
+    metrics.push(
+        enrichMetricHtml({
+            label: "Incumbente SGE",
+            hint: sgeFound ? String(m.sge_status || m.sge?.status_label || "") : "Registo / catálogo",
+            valueHtml: escapeHtml(sgeLabel),
+            tone: sgeFound ? "warn" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.building,
+        }),
+    );
+    metrics.push(
+        enrichMetricHtml({
+            label: "Proxy SGE",
+            hint: "Peso moderado no score",
+            valueHtml: escapeHtml(String(Math.round(proxy))),
+            tone: proxy >= 40 ? "warn" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+        }),
+    );
+    metrics.push(
+        enrichMetricHtml({
+            label: "Timing licitação",
+            hint: "Editais com IBGE",
+            valueHtml: escapeHtml(String(Math.round(timing))),
+            tone: timing >= 55 ? "info" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.scale,
+        }),
+    );
+    if (licitacoes > 0) {
+        metrics.push(
+            enrichMetricHtml({
+                label: "Licitações MEC/FNDE",
+                hint: licitSoft > 0 ? `${licitSoft} c/ objeto software` : "Janela sincronizada",
+                valueHtml: escapeHtml(nf(licitacoes)),
+                tone: licitSoft > 0 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+            }),
+        );
+    }
+    if (contratosSoft > 0) {
+        metrics.push(
+            enrichMetricHtml({
+                label: "Contratos software",
+                hint: "Snapshot transparência municipal",
+                valueHtml: escapeHtml(nf(contratosSoft)),
+                tone: "warn",
+                iconHtml: HORIZONTE_ENRICH_ICONS.education,
+            }),
+        );
+    }
+
+    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 4) : [];
+    let samplesHtml = "";
+    if (samples.length > 0) {
+        const rows = samples
+            .map((s) => {
+                const obj = String(s.objeto || "—");
+                const short = obj.length > 72 ? `${obj.slice(0, 72)}…` : obj;
+                const softTag = s.itens_software
+                    ? `<span class="serv-horizonte-canteiro-badge serv-horizonte-canteiro-badge--warn">soft</span> `
+                    : "";
+                return (
+                    `<tr>` +
+                    `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(obj)}">${softTag}${escapeHtml(short)}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(s.orgao_sigla || "—"))}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(s.data_publicacao || "—"))}</td>` +
+                    `</tr>`
+                );
+            })
+            .join("");
+        samplesHtml =
+            `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
+            `<thead><tr><th>Objeto</th><th>Órgão</th><th>Pub.</th></tr></thead>` +
+            `<tbody>${rows}</tbody></table></div>`;
+    }
+
+    const topVendors = Array.isArray(m.procurement_national_top_vendors)
+        ? m.procurement_national_top_vendors.slice(0, 3)
+        : [];
+    const notes = [];
+    if (nationalVendors > 0 && topVendors.length > 0) {
+        notes.push(
+            `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com CNPJ curado — ${topVendors
+                .map((v) => `${v.label} (${v.count})`)
+                .join(", ")}. Sem IBGE municipal nos contratos.`,
+        );
+    } else if (nationalVendors > 0) {
+        notes.push(
+            `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com fornecedores curados — sinal de órgão, não do município.`,
+        );
+    }
+    notes.push("Proxy indicativo: não prova qual SGE está instalado na rede municipal.");
+
+    const block = enrichBlockHtml({
+        tone: "market",
+        title: "Sistemas / mercado",
+        year: "",
+        lead: "Incumbente, editais MEC/FNDE e proxy de software educação.",
+        signal: sistemasMercadoEnrichmentSignal(m),
+        iconHtml: HORIZONTE_ENRICH_ICONS.market,
+        metricsHtml: metrics.join(""),
+        foot: "",
+        notes,
+    });
+
+    return samplesHtml !== "" ? `${block}${samplesHtml}` : block;
 }
 
 function canteiroEnrichmentSignal(m) {

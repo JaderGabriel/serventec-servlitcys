@@ -82,6 +82,10 @@ final class HorizonteMapPresenter
                     'feeds' => __('Convênios MEC/FNDE, empenhos educação/tecnologia e contratos software (proxy SGE concorrente).'),
                 ],
                 [
+                    'label' => __('Procurement MEC/FNDE (Portal)'),
+                    'feeds' => __('Licitações com IBGE (timing) e contratos/itens com CNPJs curados — bloco Sistemas/mercado; pesos moderados proxy_sge e timing_licitacao.'),
+                ],
+                [
                     'label' => __('IBGE PNAD Contínua'),
                     'feeds' => __('Escolaridade média e NEET jovem — argumento para EJA e expansão de oferta.'),
                 ],
@@ -131,7 +135,7 @@ final class HorizonteMapPresenter
                 ],
             ],
             'success_title' => __('Propensão a sucesso (0–100)'),
-            'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + capacidade fiscal :wfc% + dinâmica matrículas :wm% + prontidão :wr% + benefício×escala :wb%.', [
+            'success_formula' => __('Σ (peso × dimensão): financeira :wf% + pedagógica :wp% + escala :ws% + demanda social :wd% + transferências :wt% + capacidade fiscal :wfc% + dinâmica matrículas :wm% + prontidão :wr% + benefício×escala :wb% + infra :wi% + proxy SGE :wps% + timing licitação :wtl%.', [
                 'wf' => $pct('financial_pressure'),
                 'wp' => $pct('pedagogical_gap'),
                 'ws' => $pct('scale'),
@@ -141,6 +145,9 @@ final class HorizonteMapPresenter
                 'wm' => $pct('enrollment_momentum'),
                 'wr' => $pct('data_readiness'),
                 'wb' => $pct('benefit_scale'),
+                'wi' => $pct('infra_works'),
+                'wps' => $pct('proxy_sge'),
+                'wtl' => $pct('timing_licitacao'),
             ]),
             'benefit_title' => __('Benefício territorial (0–100)'),
             'benefit_formula' => __('24% pedagógico + 22% financeiro + 16% social + 12% escala + 10% dinâmica matrículas + 8% (100−cap. fiscal) + 8% transferências.'),
@@ -281,6 +288,42 @@ final class HorizonteMapPresenter
                     'scenarios' => [
                         __('Alto: rede média/grande com complementação elevada — impacto regional potencial.'),
                         __('Baixo: município pequeno ou pressão financeira fraca.'),
+                    ],
+                ],
+                [
+                    'key' => 'infra_works',
+                    'label' => __('Pressão infra (Canteiro)'),
+                    'weight' => $pct('infra_works'),
+                    'formula' => __('Obras MEC/FNDE paralisadas, inacabadas e em execução — peso moderado.'),
+                    'detects' => __('Agregado municipal de obras de educação (SIMEC/Canteiro).'),
+                    'indicates' => __('Quanto maior, mais pressão de obras — oportunidade de apoio gestorial; não substitui visita técnica.'),
+                    'scenarios' => [
+                        __('Alto: várias obras paralisadas/inacabadas.'),
+                        __('Zero: sem obras importadas para o IBGE.'),
+                    ],
+                ],
+                [
+                    'key' => 'proxy_sge',
+                    'label' => __('Proxy SGE / mercado'),
+                    'weight' => $pct('proxy_sge'),
+                    'formula' => __('Registo SGE + contratos software (transparência) + editais com objeto software — peso moderado (~3%).'),
+                    'detects' => __('Incumbente no registo Horizonte, contratos software municipais e licitações MEC/FNDE com keywords.'),
+                    'indicates' => __('Quanto maior, mais sinais de mercado/SGE no território — proxy, não prova de sistema instalado.'),
+                    'scenarios' => [
+                        __('Alto: SGE no registo e/ou contratos/editais software.'),
+                        __('Zero: sem registo nem sinais Portal de software.'),
+                    ],
+                ],
+                [
+                    'key' => 'timing_licitacao',
+                    'label' => __('Timing licitação'),
+                    'weight' => $pct('timing_licitacao'),
+                    'formula' => __('Contagem de licitações MEC/FNDE com IBGE municipal na janela sincronizada — peso moderado (~2%).'),
+                    'detects' => __('Linhas portal_procurement_snapshots tipo licitação com código IBGE.'),
+                    'indicates' => __('Quanto maior, mais editais recentes no município — janela comercial; órgão SIAFI ≠ prefeitura necessariamente.'),
+                    'scenarios' => [
+                        __('Alto: vários editais recentes (bónus se objeto sugere software).'),
+                        __('Zero: sem licitações georreferenciadas no cache.'),
                     ],
                 ],
             ],

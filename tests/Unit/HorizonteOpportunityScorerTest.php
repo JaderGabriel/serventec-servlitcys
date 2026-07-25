@@ -136,4 +136,42 @@ class HorizonteOpportunityScorerTest extends TestCase
         $this->assertGreaterThan($without['success_score'], $with['success_score']);
         $this->assertSame(80, $with['infra_works']);
     }
+
+    #[Test]
+    public function proxy_sge_and_timing_raise_success_score_moderately(): void
+    {
+        $base = [
+            'matriculas_censo' => 20000,
+            'complementacao_total' => 800_000,
+            'receita_total' => 4_000_000,
+            'saeb_lp' => 200,
+            'saeb_mat' => 205,
+            'cadunico_escolar' => null,
+            'sidra_pop_4_17' => null,
+            'pct_criancas_pbf' => null,
+            'transfer_total' => null,
+            'has_fundeb' => true,
+            'has_censo' => true,
+            'has_saeb' => true,
+            'has_cadunico' => false,
+            'has_demography' => false,
+            'has_transfers' => false,
+            'consultoria_active' => false,
+            'in_catalog' => false,
+            'proxy_sge_score' => 0,
+            'timing_licitacao_score' => 0,
+        ];
+        $ctx = ['saeb_p25' => 210, 'compl_ratio_median' => 0.15, 'transfer_ratio_median' => null];
+
+        $without = $this->scorer->score($base, $ctx, 70, 40);
+        $with = $this->scorer->score(array_merge($base, [
+            'proxy_sge_score' => 80,
+            'timing_licitacao_score' => 70,
+        ]), $ctx, 70, 40);
+
+        $this->assertGreaterThan($without['success_score'], $with['success_score']);
+        $this->assertSame(80, $with['proxy_sge']);
+        $this->assertSame(70, $with['timing_licitacao']);
+        $this->assertLessThanOrEqual(8, $with['success_score'] - $without['success_score']);
+    }
 }

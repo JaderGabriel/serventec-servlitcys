@@ -96,6 +96,8 @@ final class HorizonteOpportunityScorer
         $momentum = (int) ($row['enrollment_momentum_score'] ?? 35);
         $readiness = $this->dataReadiness($row);
         $infraWorks = (int) ($row['infra_works_score'] ?? 0);
+        $proxySge = (int) ($row['proxy_sge_score'] ?? 0);
+        $timingLicitacao = (int) ($row['timing_licitacao_score'] ?? 0);
 
         if (! $row['has_fundeb'] && ! $row['has_censo'] && ! $row['has_saeb'] && ! ($row['has_cadunico'] ?? false)) {
             return $this->packTier(
@@ -118,16 +120,18 @@ final class HorizonteOpportunityScorer
 
         $weights = config('horizonte.weights', []);
         $success = (int) round(
-            ($weights['financial_pressure'] ?? 0.18) * $financial
-            + ($weights['pedagogical_gap'] ?? 0.16) * $pedagogical
+            ($weights['financial_pressure'] ?? 0.17) * $financial
+            + ($weights['pedagogical_gap'] ?? 0.15) * $pedagogical
             + ($weights['scale'] ?? 0.10) * $scale
-            + ($weights['social_demand'] ?? 0.16) * $social
+            + ($weights['social_demand'] ?? 0.15) * $social
             + ($weights['transfer_dependency'] ?? 0.08) * $transfer
             + ($weights['fiscal_capacity'] ?? 0.10) * (100 - $fiscal)
             + ($weights['enrollment_momentum'] ?? 0.06) * $momentum
             + ($weights['data_readiness'] ?? 0.04) * $readiness
-            + ($weights['benefit_scale'] ?? 0.08) * min($scale, $financial)
-            + ($weights['infra_works'] ?? 0.04) * $infraWorks
+            + ($weights['benefit_scale'] ?? 0.07) * min($scale, $financial)
+            + ($weights['infra_works'] ?? 0.03) * $infraWorks
+            + ($weights['proxy_sge'] ?? 0.03) * $proxySge
+            + ($weights['timing_licitacao'] ?? 0.02) * $timingLicitacao
         );
         $success = max(0, min(100, $success));
 
@@ -156,6 +160,8 @@ final class HorizonteOpportunityScorer
 
         $packed = $this->packTier($success, $benefit, $financial, $pedagogical, $scale, $social, $transfer, $fiscal, $learning, $momentum, $inclusion, $readiness, $tier, $tierLabel);
         $packed['infra_works'] = max(0, min(100, $infraWorks));
+        $packed['proxy_sge'] = max(0, min(100, $proxySge));
+        $packed['timing_licitacao'] = max(0, min(100, $timingLicitacao));
 
         return $packed;
     }
@@ -300,6 +306,8 @@ final class HorizonteOpportunityScorer
             'inclusion_gap' => max(0, min(100, $inclusion)),
             'data_readiness' => max(0, min(100, $readiness)),
             'infra_works' => 0,
+            'proxy_sge' => 0,
+            'timing_licitacao' => 0,
             'tier' => $tier,
             'tier_label' => $tierLabel,
         ];
