@@ -159,7 +159,7 @@ final class MunicipalTransferImportService
             ]);
         }
 
-        return __(':n registro(s) gravados apenas como total da UF (publicação STN) para :city / :ano — não aparecem em Finanças → Tempo Real. Reexecute a importação; o espelho CKAN/SISWEB deve trazer o FUNDEB municipal.', [
+        return __(':n registro(s) gravados apenas como total da UF (publicação STN) para :city / :ano — não aparecem em Finanças → Tempo Real. Reexecute a importação até gravar a série municipal do Tesouro CKAN (tesouro_csv).', [
             'n' => $written,
             'city' => $city->name,
             'ano' => (string) $year,
