@@ -92,6 +92,16 @@ final class HorizonteFortnightlyFeedPhaseCatalog
                 'incremental' => false,
             ],
             [
+                'key' => 'procurement_sync',
+                'label' => 'Procurement',
+                'skip_option' => 'skip_procurement',
+                'icon' => 'building-storefront',
+                'tone' => 'cyan',
+                'group' => 'financeiro',
+                'description' => __('Contratos e licitações MEC/FNDE (Portal) — editais, fornecedor, valor/valor_final e proxy SGE.'),
+                'incremental' => false,
+            ],
+            [
                 'key' => 'obras_sync',
                 'label' => 'Canteiro (Obras)',
                 'skip_option' => 'skip_obras',
@@ -172,7 +182,7 @@ final class HorizonteFortnightlyFeedPhaseCatalog
         return [
             'financeiro' => [
                 'label' => __('Financeiro'),
-                'description' => __('FUNDEB, repasses, SICONFI e transparência fiscal.'),
+                'description' => __('FUNDEB, repasses, SICONFI, transparência e procurement MEC/FNDE.'),
             ],
             'educacional' => [
                 'label' => __('Educacional'),

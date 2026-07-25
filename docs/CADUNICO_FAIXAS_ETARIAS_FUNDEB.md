@@ -134,6 +134,8 @@ Implementação futura: nova faixa em `faixas_etarias`, KPI separado, documenta�
 |----------|--------|
 | `app/Services/Cadunico/CadunicoRedeGapAnalyzer.php` | Lacuna, faixas, cobertura |
 | `app/Services/Cadunico/CadunicoEscolarizacaoDecisionCardBuilder.php` | Card escolarização (na escola / fora / Censo / EJA) |
+| `app/Services/Cadunico/CadunicoBeneficiosEscolarizacaoCalloutBuilder.php` | CUN-04 — callouts PBF/NBF/BPC no card |
+| `app/Console/Commands/CadunicoSyncBeneficiosPortalCommand.php` | `cadunico:sync-beneficios-portal` |
 | `app/Services/Cadunico/CadunicoEscolarizacaoFeedService.php` | Abastecimento bimestral CadÚnico + Censo |
 | `app/Console/Commands/CadunicoEscolarizacaoFeedCommand.php` | `cadunico:escolarizacao-feed` |
 | `app/Services/Cadunico/CadunicoFinanceScenarioBuilder.php` | Cenários NEE/AEE/VAAR |

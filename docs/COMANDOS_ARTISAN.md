@@ -77,6 +77,7 @@ Procedimento e requisitos (`unrar`/`p7zip`): [IMPORTACAO_SAEB_PLANILHAS_INEP.md]
 | `cadunico:pull-territorio` | **Produção:** download HTTP do CSV (`IEDUCAR_CADUNICO_TERRITORIO_CSV_URL`) + import (`--all`, `--force`, `--download-only`) |
 | `cadunico:sync-territorio` | IBGE Censo 2022 (FTP) + malha WFS; rateia CadÚnico municipal (`--all`, `--ano=`, `--queue`) |
 | `cadunico:escolarizacao-feed` | **Bimestral:** CadÚnico + Censo para card Escolarização (`--staged`, `--reset`, `--continue`, `--all`) |
+| `cadunico:sync-beneficios-portal` | **CUN-04:** PBF/NBF/BPC agregados por IBGE (Portal) → callouts no card Escolarização. Opções: `--city=`, `--cities=`, `--meses=`, `--programas=nbf,pbf,bpc`, `--dry-run`. Agendamento bimestral (dia 9). |
 
 **Interface web:** `/admin/cadunico-sync` · hub `/admin/dados-publicos`
 
@@ -179,7 +180,7 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--continue`, `--reset`, `--refresh`, `--dry-run`. Fase `siconfi_sync` no feed. **Agendamento semestral** (jan/jul) com lotes `--continue`. |
 | `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
-| `horizonte:sync-procurement` | **HOR-08d/e/f** — contratos + licitações por órgão SIAFI (FNDE/MEC) e enrich por CNPJs curados (`/contratos/cpf-cnpj` + itens). Tabela `portal_procurement_snapshots`. Opções: `--year=`, `--orgao=`, `--tipos=`, `--max-pages=`, `--licitacoes-months=`, `--skip-orgaos`, `--skip-vendors`, `--with-sanctions`, `--dry-run`. |
+| `horizonte:sync-procurement` | **HOR-08d/e/f** — contratos + licitações por órgão SIAFI (FNDE/MEC) e enrich por CNPJs curados (`/contratos/cpf-cnpj` + itens). Tabela `portal_procurement_snapshots`. Opções: `--year=`, `--orgao=`, `--tipos=`, `--max-pages=`, `--licitacoes-months=`, `--skip-orgaos`, `--skip-vendors`, `--with-sanctions`, `--dry-run`. **Fase bimestral** `procurement_sync` no `horizonte:fortnightly-feed`. |
 | `horizonte:sync-sanctions` | **HOR-08g** — CEIS/CNEP/CEPIM nos CNPJs de `HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS`. Tabela `portal_vendor_sanction_snapshots`. Due diligence (filtro de risco). Opções: `--max-pages=`, `--dry-run`. |
 | `horizonte:sync-obras` | **Canteiro** — obras educação FNDE/SIMEC (API pública Obrasgov). Opções: `--uf=`, `--situacao=`, `--continue`, `--reset`, `--limit-pages=`, `--no-enrich-finance`, `--dry-run`. Enrich grava % físico, **empenho** (`valor_empenho`/`pago`/`liquidado`), previsto (ignora `0.01`), datas (`dt_inicial_execucao`, histórico, `dt_atualizacao_execucao`). Fase `obras_sync`. **Agendamento mensal** staged. |
 | `horizonte:canteiro-alerts` | Snapshot mensal de alertas Canteiro **só consultoria activa** (`hasDataSetup`). Opções: `--dry-run`, `--pdf`. Deep-link SIMEC no payload. |
@@ -225,6 +226,7 @@ php artisan horizonte:canteiro-alerts --dry-run
 php artisan horizonte:canteiro-alerts --pdf
 php artisan horizonte:fortnightly-feed --phase=siconfi_sync
 php artisan horizonte:fortnightly-feed --phase=transparency_sync
+php artisan horizonte:fortnightly-feed --phase=procurement_sync
 php artisan horizonte:fortnightly-feed --phase=obras_sync
 php artisan horizonte:warm-map-cache
 php artisan horizonte:sync-ibge-centroids --reset

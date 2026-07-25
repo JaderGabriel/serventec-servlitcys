@@ -25,9 +25,18 @@ use Illuminate\Support\Facades\Log;
  * - GET /api-de-dados/ceis (`codigoSancionado` CNPJ/CPF)
  * - GET /api-de-dados/cnep (`codigoSancionado` CNPJ/CPF)
  * - GET /api-de-dados/cepim (`cnpjSancionado`)
+ * - GET /api-de-dados/bolsa-familia-por-municipio (`codigoIbge`, `mesAno` AAAAMM)
+ * - GET /api-de-dados/novo-bolsa-familia-por-municipio
+ * - GET /api-de-dados/bpc-por-municipio
  */
 final class PortalTransparenciaApiClient
 {
+    public const PROGRAMA_PBF = 'pbf';
+
+    public const PROGRAMA_NBF = 'nbf';
+
+    public const PROGRAMA_BPC = 'bpc';
+
     public const CADASTRO_URL = 'https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email';
 
     public const DOCS_URL = 'https://portaldatransparencia.gov.br/api-de-dados';
@@ -666,6 +675,213 @@ final class PortalTransparenciaApiClient
                 $out[] = $item;
             }
             usleep(80_000);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Bolsa Família agregado por município (sem NIS/CPF).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function bolsaFamiliaPorMunicipio(
+        string $codigoIbge,
+        int $mesAno,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPages = 3,
+    ): array {
+        return $this->beneficioPorMunicipio(
+            '/api-de-dados/bolsa-familia-por-municipio',
+            'bolsa_familia',
+            $codigoIbge,
+            $mesAno,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Novo Bolsa Família agregado por município (sem NIS/CPF).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function novoBolsaFamiliaPorMunicipio(
+        string $codigoIbge,
+        int $mesAno,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPages = 3,
+    ): array {
+        return $this->beneficioPorMunicipio(
+            '/api-de-dados/novo-bolsa-familia-por-municipio',
+            'novo_bolsa_familia',
+            $codigoIbge,
+            $mesAno,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * BPC agregado por município (sem NIS/CPF).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function bpcPorMunicipio(
+        string $codigoIbge,
+        int $mesAno,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPages = 3,
+    ): array {
+        return $this->beneficioPorMunicipio(
+            '/api-de-dados/bpc-por-municipio',
+            'bpc',
+            $codigoIbge,
+            $mesAno,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Soma quantidade e valor de uma lista BeneficioPorMunicipioDTO.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return array{quantidade: int, valor: float|null, data_referencia: string|null, tipo_descricao: string|null}
+     */
+    public static function aggregateBeneficioPorMunicipio(array $items): array
+    {
+        $quantidade = 0;
+        $valor = 0.0;
+        $hasValor = false;
+        $dataRef = null;
+        $tipoDesc = null;
+
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $q = (int) ($item['quantidadeBeneficiados'] ?? 0);
+            if ($q > 0) {
+                $quantidade += $q;
+            }
+            $v = self::parseValorBrl($item['valor'] ?? null);
+            if ($v !== null) {
+                $valor += $v;
+                $hasValor = true;
+            }
+            if ($dataRef === null && filled($item['dataReferencia'] ?? null)) {
+                $dataRef = (string) $item['dataReferencia'];
+            }
+            $tipo = is_array($item['tipo'] ?? null) ? $item['tipo'] : [];
+            if ($tipoDesc === null && filled($tipo['descricao'] ?? null)) {
+                $tipoDesc = (string) $tipo['descricao'];
+            }
+        }
+
+        return [
+            'quantidade' => $quantidade,
+            'valor' => $hasValor ? round($valor, 2) : null,
+            'data_referencia' => $dataRef,
+            'tipo_descricao' => $tipoDesc,
+        ];
+    }
+
+    /**
+     * Lista de competências AAAAMM (mês civil anterior para trás).
+     *
+     * @return list<int>
+     */
+    public static function mesAnoWindow(int $months = 6, ?\DateTimeInterface $from = null): array
+    {
+        $months = max(1, min(24, $months));
+        $cursor = $from !== null
+            ? \Carbon\Carbon::instance(\DateTimeImmutable::createFromInterface($from))->startOfMonth()
+            : now()->startOfMonth()->subMonth();
+        $out = [];
+        for ($i = 0; $i < $months; $i++) {
+            $out[] = ((int) $cursor->format('Y')) * 100 + (int) $cursor->format('m');
+            $cursor = $cursor->copy()->subMonth();
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function beneficioPorMunicipio(
+        string $path,
+        string $logKey,
+        string $codigoIbge,
+        int $mesAno,
+        string $apiKey,
+        int $timeout,
+        int $maxPages,
+    ): array {
+        $ibge = preg_replace('/\D/', '', $codigoIbge) ?: '';
+        $apiKey = trim($apiKey);
+        if (strlen($ibge) !== 7 || $apiKey === '' || $mesAno < 200001 || $mesAno > 210012) {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(10, $maxPages));
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.$path, [
+                        'codigoIbge' => $ibge,
+                        'mesAno' => $mesAno,
+                        'pagina' => $page,
+                    ]);
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.'.$logKey.'_failed', [
+                    'ibge' => $ibge,
+                    'mes_ano' => $mesAno,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.'.$logKey.'_http', [
+                    'ibge' => $ibge,
+                    'mes_ano' => $mesAno,
+                    'page' => $page,
+                    'status' => $response->status(),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+
+            foreach ($items as $item) {
+                if (is_array($item)) {
+                    $out[] = $item;
+                }
+            }
+
+            if (count($items) < 10) {
+                break;
+            }
         }
 
         return $out;

@@ -173,7 +173,7 @@ Detalhe: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) §
 | CUN-01 | P2 | Lacuna por faixa Cecad com matrículas reais por idade/série (i-Educar) | Concluído | Onda 2 |
 | CUN-02 | P2 | Mapa: CadÚnico territorial CRAS/bairro + desconto matrículas Censo estadual/privada | Concluído | Onda 2 |
 | CUN-03 | P3 | Busca ativa: match CPF/NIS Conecta ↔ i-Educar (módulo admin, LGPD) | Pendente | Onda 2–3 |
-| CUN-04 | P3 | Série agregada PBF/NBF/BPC por IBGE (Portal Transparência) | Pendente | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) §2 P3 · sem NIS |
+| CUN-04 | P3 | Série agregada PBF/NBF/BPC por IBGE (Portal Transparência) + callouts Escolarização | **Feito (1.º corte)** | `cadunico:sync-beneficios-portal` · `municipal_benefit_snapshots` · sem NIS |
 
 *Complementa INT-07 (entregue parcialmente). Qualidade de cadastro i-Educar (P0):* [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
 

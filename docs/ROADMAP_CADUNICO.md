@@ -11,13 +11,14 @@
 | CUN-01 | Lacuna CadÚnico × Censo no mapa / modal | Concluído |
 | CUN-02 | Automação import nacional / cron | Concluído |
 | CUN-03 | Busca activa territorial (Onda 2) | Pendente |
+| CUN-04 | Série agregada PBF/NBF/BPC (Portal) + callouts Escolarização | **Primeiro corte** — `cadunico:sync-beneficios-portal` |
 
 ## 2. Próximos passos
 
 1. CUN-03 — busca activa com faixas etárias e território.
 2. Cruzar com HOR-10/HOR-18 (PNAD) quando disponível.
 3. Manter agregados sem CPF/NIS em massa (LGPD).
-4. **Opcional (CUN-04):** série mensal agregada Bolsa Família / Novo Bolsa Família / BPC por IBGE via Portal (`bolsa-familia-por-municipio`, `novo-bolsa-familia-por-municipio`, `bpc-por-municipio`) — ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) §2 P3; **nunca** endpoints por NIS/CPF.
+4. **CUN-04 (entregue — 1.º corte):** sync bimestral de `novo-bolsa-familia-por-municipio`, `bolsa-familia-por-municipio` e `bpc-por-municipio` → `municipal_benefit_snapshots`; callouts no card Escolarização (contexto social ≠ identificação de alunos fora da escola).
 
 ---
 

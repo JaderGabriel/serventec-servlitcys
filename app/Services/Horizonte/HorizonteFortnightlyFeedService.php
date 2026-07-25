@@ -49,6 +49,7 @@ final class HorizonteFortnightlyFeedService
         private readonly HorizonteIbgeMunicipalGeoImportService $municipalGeoImport,
         private readonly HorizonteSiconfiMunicipalSyncService $siconfiSync,
         private readonly HorizonteMunicipalTransparencySyncService $transparencySync,
+        private readonly HorizontePortalProcurementSyncService $procurementSync,
         private readonly HorizonteMunicipalObrasSyncService $obrasSync,
     ) {}
 
@@ -211,6 +212,7 @@ final class HorizonteFortnightlyFeedService
                 'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
                 'siconfi_sync' => $this->syncSiconfi($refYear, $options),
                 'transparency_sync' => $this->syncTransparency($refYear, $options),
+                'procurement_sync' => $this->syncProcurement($refYear, $options),
                 'obras_sync' => $this->syncObras($options),
                 'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
                 'ibge_catalog' => $this->warmIbgeCatalog($options),
@@ -484,6 +486,7 @@ final class HorizonteFortnightlyFeedService
             'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
             'skip_siconfi' => (bool) ($options['skip_siconfi'] ?? false),
             'skip_transparency' => (bool) ($options['skip_transparency'] ?? false),
+            'skip_procurement' => (bool) ($options['skip_procurement'] ?? false),
             'skip_obras' => (bool) ($options['skip_obras'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
@@ -1040,6 +1043,42 @@ final class HorizonteFortnightlyFeedService
                 'success' => false,
                 'partial' => true,
                 'message' => __('Transparência: falha neste passo — :erro', ['erro' => $e->getMessage()]),
+                'imported' => 0,
+            ];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int, partial?: bool, skipped?: bool}
+     */
+    private function syncProcurement(int $refYear, array $options = []): array
+    {
+        $this->debugLog($options, __('Procurement — contratos e licitações MEC/FNDE…'));
+        try {
+            $result = $this->procurementSync->sync([
+                'year' => $refYear,
+                'dry_run' => (bool) ($options['dry_run'] ?? false),
+            ]);
+            $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return [
+                'key' => 'procurement_sync',
+                'success' => (bool) ($result['success'] ?? false),
+                'skipped' => (bool) ($result['skipped'] ?? false),
+                'message' => (string) ($result['message'] ?? ''),
+                'imported' => (int) ($result['upserted'] ?? 0),
+                'contratos_fetched' => (int) ($result['contratos_fetched'] ?? 0),
+                'licitacoes_fetched' => (int) ($result['licitacoes_fetched'] ?? 0),
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.procurement_sync_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'key' => 'procurement_sync',
+                'success' => false,
+                'partial' => true,
+                'message' => __('Procurement: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'imported' => 0,
             ];
         }

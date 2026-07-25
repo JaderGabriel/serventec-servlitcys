@@ -299,6 +299,15 @@
                     x-text="enrollmentSeriesFootnote"
                     class="serv-horizonte-muni-tooltip__enrollment-series-footnote"
                 ></p>
+                <div
+                    x-show="active && isIeducarServentecSge(active)"
+                    x-cloak
+                    class="serv-horizonte-muni-tooltip__sge-badge serv-horizonte-muni-tooltip__sge-badge--ieducar"
+                    role="status"
+                >
+                    <span class="serv-horizonte-muni-tooltip__sge-badge-label">{{ __('SGE') }}</span>
+                    <span class="serv-horizonte-muni-tooltip__sge-badge-value">iEducar</span>
+                </div>
             </section>
             <div x-show="active" x-html="active ? tooltipBodyHtml(active) : ''"></div>
             <div x-show="canManageSge && active && canEditSgeFor(active)" x-cloak class="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 space-y-2">

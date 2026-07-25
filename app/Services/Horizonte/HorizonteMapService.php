@@ -1140,14 +1140,20 @@ final class HorizonteMapService
 
             $consultoriaActive = (bool) ($city['consultoria_active'] ?? false);
 
+            $licitacoesCount = (int) ($procurement['licitacoes'] ?? 0);
+            $licitacoesSoftware = (int) ($procurement['licitacoes_software'] ?? 0);
+
             $sge = $this->sgeResolver->resolve(
                 $ibge,
                 $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
                 $sgeRegistry[$ibge] ?? null,
+                [
+                    'samples' => $procurement['samples'] ?? [],
+                    'top_vendors' => $procurementNational['top_vendors'] ?? [],
+                    'vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
+                ],
             );
 
-            $licitacoesCount = (int) ($procurement['licitacoes'] ?? 0);
-            $licitacoesSoftware = (int) ($procurement['licitacoes_software'] ?? 0);
             $proxySgeScore = HorizonteProcurementMarketScorer::proxySge([
                 'sge_found' => (bool) ($sge['found'] ?? false),
                 'sge_status' => (string) ($sge['status'] ?? ''),
@@ -1159,10 +1165,12 @@ final class HorizonteMapService
                 $licitacoesCount,
                 $licitacoesSoftware,
             );
-            $hasSistemasMercado = $proxySgeScore > 0
+            $hasSistemasMercado = $consultoriaActive
+                || $proxySgeScore > 0
                 || $timingLicitacaoScore > 0
                 || $licitacoesCount > 0
-                || ((int) ($transparency['contratos_software'] ?? 0) > 0);
+                || ((int) ($transparency['contratos_software'] ?? 0) > 0)
+                || (bool) ($sge['found'] ?? false);
 
             $scoreInput = [
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
@@ -1367,11 +1375,15 @@ final class HorizonteMapService
                     ? route('dashboard.analytics', ['city_id' => $city['id']])
                     : null,
                 'cities_url' => $city !== null ? route('cities.edit', $city['id']) : null,
-                'sge_editable' => ! $inCatalog && ! $consultoriaActive,
+                'sge_editable' => ! $consultoriaActive && (! $inCatalog || ($sge['status'] ?? '') !== 'consultoria_active'),
                 'sge' => $sge,
                 'sge_found' => (bool) ($sge['found'] ?? false),
                 'sge_system' => $sge['system'] ?? null,
                 'sge_status' => $sge['status'] ?? 'not_found',
+                'sge_vendor' => $sge['vendor'] ?? null,
+                'sge_company' => $sge['company'] ?? null,
+                'sge_cnpj' => $sge['cnpj'] ?? null,
+                'sge_badge' => $sge['badge'] ?? null,
                 'muni_alerts' => $muniAlerts,
                 'muni_alerts_status' => $muniAlerts['status'] ?? 'unavailable',
                 'coord_source' => $meta['coord_source'] ?? null,

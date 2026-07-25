@@ -26,6 +26,8 @@ final class HorizonteProcurementMarketScorer
         $sgeStatus = (string) ($signals['sge_status'] ?? '');
         if ($sgeFound && $sgeStatus === 'registry') {
             $score += 65;
+        } elseif ($sgeFound && in_array($sgeStatus, ['market', 'market_national'], true)) {
+            $score += 45;
         } elseif ($sgeFound && in_array($sgeStatus, ['catalog_pending', 'catalog_configured'], true)) {
             $score += 35;
         }

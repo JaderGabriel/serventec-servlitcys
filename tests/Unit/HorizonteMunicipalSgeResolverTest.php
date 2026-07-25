@@ -17,7 +17,7 @@ final class HorizonteMunicipalSgeResolverTest extends TestCase
     }
 
     #[Test]
-    public function resolves_consultoria_active_from_catalog(): void
+    public function resolves_consultoria_active_as_ieducar_serventec(): void
     {
         $result = $this->resolver->resolve('2910800', [
             'consultoria_active' => true,
@@ -27,28 +27,33 @@ final class HorizonteMunicipalSgeResolverTest extends TestCase
 
         $this->assertTrue($result['found']);
         $this->assertSame('consultoria_active', $result['status']);
-        $this->assertSame('i-Educar', $result['system']);
+        $this->assertSame('iEducar', $result['system']);
+        $this->assertSame('Serventec', $result['company']);
+        $this->assertSame('ieducar', $result['badge']);
         $this->assertSame('https://ieducar.exemplo.gov.br', $result['app_url']);
+        $this->assertStringContainsString('Serventec', (string) $result['system_label']);
     }
 
     #[Test]
-    public function resolves_catalog_pending_when_city_without_setup(): void
+    public function catalog_without_consultoria_does_not_assume_ieducar(): void
     {
         $result = $this->resolver->resolve('2910800', [
             'consultoria_active' => false,
-            'has_data_setup' => false,
+            'has_data_setup' => true,
             'is_active' => true,
         ]);
 
-        $this->assertTrue($result['found']);
-        $this->assertSame('catalog_pending', $result['status']);
-        $this->assertSame('i-Educar', $result['system']);
+        $this->assertFalse($result['found']);
+        $this->assertSame('not_found', $result['status']);
+        $this->assertNull($result['system']);
     }
 
     #[Test]
-    public function resolves_external_registry_when_not_in_catalog(): void
+    public function resolves_external_registry_when_not_consultoria(): void
     {
-        $result = $this->resolver->resolve('3550308', null, [
+        $result = $this->resolver->resolve('3550308', [
+            'consultoria_active' => false,
+        ], [
             'system' => 'GDAE',
             'vendor' => 'SME-SP',
             'notes' => 'Portal municipal',
@@ -59,6 +64,25 @@ final class HorizonteMunicipalSgeResolverTest extends TestCase
         $this->assertSame('registry', $result['status']);
         $this->assertSame('GDAE', $result['system']);
         $this->assertStringContainsString('GDAE', $result['system_label']);
+    }
+
+    #[Test]
+    public function resolves_from_procurement_sample_when_no_registry(): void
+    {
+        $result = $this->resolver->resolve('2915700', null, null, [
+            'samples' => [[
+                'itens_software' => true,
+                'vendor_label' => 'Proesc',
+                'fornecedor_nome' => 'PROESC LTDA',
+                'fornecedor_cnpj' => '33324175000103',
+            ]],
+        ]);
+
+        $this->assertTrue($result['found']);
+        $this->assertSame('market', $result['status']);
+        $this->assertSame('Proesc', $result['system']);
+        $this->assertSame('33324175000103', $result['cnpj']);
+        $this->assertSame('PROESC LTDA', $result['company']);
     }
 
     #[Test]

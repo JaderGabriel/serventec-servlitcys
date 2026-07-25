@@ -390,6 +390,23 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'cadunico',
                     ],
                     [
+                        'name' => 'cadunico:sync-beneficios-portal',
+                        'summary' => __('CUN-04 — PBF/NBF/BPC agregados (Portal) para callouts do card Escolarização.'),
+                        'signature' => 'cadunico:sync-beneficios-portal {--city=} {--cities=} {--meses=} {--programas=} {--dry-run}',
+                        'examples' => [
+                            'php artisan cadunico:sync-beneficios-portal --dry-run',
+                            'php artisan cadunico:sync-beneficios-portal --city=1 --meses=6',
+                            'php artisan cadunico:sync-beneficios-portal --programas=nbf,bpc',
+                        ],
+                        'env' => [
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_ENABLED',
+                            'IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_MONTHS',
+                        ],
+                        'doc_anchor' => 'cadunico',
+                        'details' => __('Só endpoints *-por-municipio (BeneficioPorMunicipioDTO). Sem NIS/CPF. Agendamento bimestral dia 9.'),
+                    ],
+                    [
                         'name' => 'cadunico:sync-city',
                         'summary' => __('Um município ou --all (analytics).'),
                         'signature' => 'cadunico:sync-city {city?} {--ano=} {--all}',
@@ -611,7 +628,7 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_EDUCACENSO_YEARS_PER_STEP',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, siconfi_sync, transparency_sync, saeb_planilhas, ibge_catalog, ibge_municipal_geo, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE, SIDRA e SICONFI aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, siconfi_sync, transparency_sync, procurement_sync, obras_sync, saeb_planilhas, ibge_catalog, ibge_municipal_geo, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE, SIDRA e SICONFI aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [
@@ -758,6 +775,7 @@ final class ArtisanCommandsCatalog
                             'php artisan horizonte:sync-procurement --year=2025 --dry-run',
                             'php artisan horizonte:sync-procurement --orgao=FNDE --tipos=contratos --skip-vendors',
                             'php artisan horizonte:sync-procurement --skip-orgaos --with-sanctions',
+                            'php artisan horizonte:fortnightly-feed --phase=procurement_sync',
                         ],
                         'env' => [
                             'PORTAL_TRANSPARENCIA_API_KEY',
@@ -767,7 +785,7 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('HOR-08d/e/f: codigoOrgao obrigatório (não IBGE). Licitações limitadas a 1 mês na API — sync varre mês a mês. CNPJs em SOFTWARE_VENDORS marcam vendor_matched. --with-sanctions chama CEIS/CNEP/CEPIM (HOR-08g).'),
+                        'details' => __('HOR-08d/e/f: codigoOrgao obrigatório (não IBGE). Licitações limitadas a 1 mês na API — sync varre mês a mês. CNPJs em SOFTWARE_VENDORS marcam vendor_matched. --with-sanctions chama CEIS/CNEP/CEPIM (HOR-08g). Fase procurement_sync no feed bimestral.'),
                     ],
                     [
                         'name' => 'horizonte:sync-sanctions',

@@ -246,6 +246,18 @@ return Application::configure(basePath: dirname(__DIR__))
             }
         }
 
+        if (filter_var(config('ieducar.cadunico.beneficios_portal.enabled', true), FILTER_VALIDATE_BOOLEAN)
+            && filter_var(config('ieducar.cadunico.beneficios_portal.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            $timezone = $timezone ?? (string) config('app.timezone', 'UTC');
+            $benCron = \App\Support\Cadunico\CadunicoBeneficiosPortalScheduleCadence::cronExpression();
+            $schedule->command('cadunico:sync-beneficios-portal')
+                ->cron($benCron)
+                ->name('cadunico-beneficios-portal')
+                ->withoutOverlapping(180)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
+
         if ((bool) config('public_data_availability.enabled', true)
             && (bool) config('public_data_availability.schedule.enabled', true)) {
             $timezone = (string) config('app.timezone', 'UTC');

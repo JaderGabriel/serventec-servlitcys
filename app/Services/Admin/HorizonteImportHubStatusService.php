@@ -121,6 +121,9 @@ final class HorizonteImportHubStatusService
                 ->count('ibge_municipio')
             : 0;
         $transparencyApiKey = trim((string) config('ieducar.other_funding.public_queries.portal_transparencia.api_key', ''));
+        $procurementRows = \Illuminate\Support\Facades\Schema::hasTable('portal_procurement_snapshots')
+            ? (int) \App\Models\PortalProcurementSnapshot::query()->count()
+            : 0;
         $alertsMeta = HorizonteMunicipalAlertsCache::getMeta();
 
         return [
@@ -335,6 +338,22 @@ final class HorizonteImportHubStatusService
                 'ok' => $transparencyApiKey !== '' && $transparencyMunicipios >= 50,
                 'metric' => $transparencyMunicipios,
                 'metric_label' => __('municípios'),
+                'blocked' => $transparencyApiKey === ''
+                    ? __('PORTAL_TRANSPARENCIA_API_KEY não configurada no .env')
+                    : null,
+            ],
+            [
+                'key' => 'procurement_sync',
+                'label' => __('Procurement — contratos/licitações MEC·FNDE'),
+                'description' => __('Editais e contratos (fornecedor, valor, valor_final) via Portal — fase procurement_sync / horizonte:sync-procurement.'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
+                'cli' => 'php artisan horizonte:sync-procurement --year='.$refYear,
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=procurement_sync',
+                'ok' => $transparencyApiKey !== '' && $procurementRows >= 1,
+                'metric' => $procurementRows,
+                'metric_label' => __('registos'),
                 'blocked' => $transparencyApiKey === ''
                     ? __('PORTAL_TRANSPARENCIA_API_KEY não configurada no .env')
                     : null,

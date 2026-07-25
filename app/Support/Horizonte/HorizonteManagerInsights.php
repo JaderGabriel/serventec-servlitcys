@@ -102,7 +102,7 @@ final class HorizonteManagerInsights
             match ($status) {
                 'consultoria_active' => $consultoria++,
                 'catalog_pending', 'catalog_configured' => $catalog++,
-                'registry' => $registry++,
+                'registry', 'market', 'market_national' => $registry++,
                 default => null,
             };
 

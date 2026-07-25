@@ -40,8 +40,8 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 
 | Endpoint | Filtros úteis | Uso proposto | ID sugerido |
 |----------|---------------|--------------|-------------|
-| `contratos` | `codigoOrgao` (obrig.), datas | Contratos MEC/FNDE/UG educação — proxy SGE / incumbente (órgao SIAFI) | HOR-08d · `horizonte:sync-procurement` |
-| `licitacoes` | `codigoOrgao`, datas (máx. **1 mês**) | Licitações abertas/recentes do órgão — timing comercial | HOR-08e · sync varre mês a mês |
+| `contratos` | `codigoOrgao` (obrig.), datas | Contratos MEC/FNDE/UG educação — proxy SGE / incumbente (órgao SIAFI) | HOR-08d · `horizonte:sync-procurement` · fase `procurement_sync` |
+| `licitacoes` | `codigoOrgao`, datas (máx. **1 mês**) | Licitações abertas/recentes do órgão — timing comercial; IBGE quando API envia `municipio.codigoIBGE` | HOR-08e · sync varre mês a mês · fase `procurement_sync` |
 | `contratos/cpf-cnpj` + `itens-contratados` | CNPJ fornecedor | Cruzar fornecedores de software educação (lista curada) | HOR-08f |
 | `ceis` / `cnep` / `cepim` | CNPJ | Sanções em fornecedores / convenentes (due diligence leve) | HOR-08g |
 
@@ -76,7 +76,7 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 3. **HOR-08b** — persistir convênios educação na ficha Horizonte (além de contagens).
 4. **FIN-08** — emendas função 12 + documentos na aba Financiamentos (consultoria; sem Horizonte).
 5. **HOR-08d/e** — contratos/licitações por lista curada de órgãos MEC/FNDE (config).
-6. **CUN-04 (opcional)** — série PBF/NBF mensal agregada por IBGE (sem beneficiários).
+6. **CUN-04 (1.º corte)** — série PBF/NBF/BPC mensal agregada por IBGE (`cadunico:sync-beneficios-portal`) + callouts no card Escolarização; **nunca** endpoints por NIS/CPF.
 
 ### Pacote activo (2026-07-25) — to-do operacional
 

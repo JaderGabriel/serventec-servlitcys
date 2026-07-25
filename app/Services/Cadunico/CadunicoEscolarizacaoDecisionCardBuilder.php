@@ -32,9 +32,15 @@ final class CadunicoEscolarizacaoDecisionCardBuilder
 
     /**
      * @param  array<string, mixed>  $gap  Resultado de CadunicoRedeGapAnalyzer::analyze
+     * @param  array<string, mixed>|null  $beneficiosPortal  Callouts CUN-04 (opcional)
      * @return array<string, mixed>
      */
-    public function build(array $gap, ?InepCensoMunicipioMatricula $censoRow, ?int $ieducarEjaMatriculas = null): array
+    public function build(
+        array $gap,
+        ?InepCensoMunicipioMatricula $censoRow,
+        ?int $ieducarEjaMatriculas = null,
+        ?array $beneficiosPortal = null,
+    ): array
     {
         if (! ($gap['available'] ?? false)) {
             return [
@@ -78,6 +84,7 @@ final class CadunicoEscolarizacaoDecisionCardBuilder
 
         $eja = $this->buildEjaBlock($censoRow, $ieducarEjaMatriculas);
         $prioridades = $this->prioridadesAcao($linhas, $eja, $gap);
+        $totaisFmt = $this->formatTotais($totais, $gap);
 
         return [
             'available' => true,
@@ -85,9 +92,10 @@ final class CadunicoEscolarizacaoDecisionCardBuilder
             'faixa_cobertura_nascimento_pct' => $gap['faixa_cobertura_nascimento_pct'] ?? null,
             'censo_ajuste_aplicado' => (bool) ($gap['censo_ajuste_aplicado'] ?? false),
             'linhas' => $linhas,
-            'totais' => $this->formatTotais($totais, $gap),
+            'totais' => $totaisFmt,
             'eja' => $eja,
             'prioridades_acao' => $prioridades,
+            'beneficios_portal' => is_array($beneficiosPortal) ? $beneficiosPortal : [],
             'legenda' => [
                 'cadunico' => __('Famílias CadÚnico na faixa etária (vulnerabilidade no município).'),
                 'na_rede' => __('Alunos distintos na rede municipal filtrada (i-Educar).'),
@@ -95,6 +103,7 @@ final class CadunicoEscolarizacaoDecisionCardBuilder
                 'fora_rede' => __('CadÚnico − rede municipal: candidatos a busca ativa na rede filtrada.'),
                 'fora_escola' => __('CadÚnico − Censo na faixa: estimativa sem matrícula em qualquer rede do município.'),
                 'eja' => __('EJA não entra nas faixas 4–17; bloco separado com oferta Censo e rede municipal.'),
+                'beneficios' => __('PBF/NBF/BPC agregados (Portal) — contexto social; não identifica quem está fora da escola.'),
             ],
         ];
     }

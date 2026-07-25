@@ -6,12 +6,20 @@
     $totais = is_array($c['totais'] ?? null) ? $c['totais'] : [];
     $eja = is_array($c['eja'] ?? null) ? $c['eja'] : [];
     $prioridades = is_array($c['prioridades_acao'] ?? null) ? $c['prioridades_acao'] : [];
+    $beneficios = is_array($c['beneficios_portal'] ?? null) ? $c['beneficios_portal'] : [];
+    $beneficioCallouts = is_array($beneficios['callouts'] ?? null) ? $beneficios['callouts'] : [];
+    $beneficioMetrics = is_array($beneficios['metrics'] ?? null) ? $beneficios['metrics'] : [];
     $legenda = is_array($c['legenda'] ?? null) ? $c['legenda'] : [];
     $prioridadeBadge = static fn (?string $p): string => match ($p) {
         'alta' => 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200',
         'media' => 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-100',
         'baixa' => 'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-100',
         default => '',
+    };
+    $calloutTone = static fn (string $tone): string => match ($tone) {
+        'warning' => 'serv-callout serv-callout--warning',
+        'muted' => 'serv-callout text-slate-600 dark:text-slate-400',
+        default => 'serv-callout',
     };
 @endphp
 
@@ -26,6 +34,40 @@
                     @endforeach
                 </ul>
             </div>
+        @endif
+
+        @if (($beneficios['available'] ?? false) && count($beneficioCallouts) > 0)
+            <div class="space-y-2">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {{ __('Benefícios sociais (Portal)') }}
+                    @if (filled($beneficios['mes_referencia'] ?? null))
+                        <span class="font-normal normal-case">· {{ __('ref. :mes', ['mes' => $beneficios['mes_referencia']]) }}</span>
+                    @endif
+                </p>
+                @if (count($beneficioMetrics) > 0)
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+                        @foreach ($beneficioMetrics as $metric)
+                            <div class="serv-panel p-3 border-l-4 border-l-teal-500">
+                                <p class="text-xs text-slate-500 uppercase">{{ $metric['label'] ?? '' }}</p>
+                                <p class="text-lg font-semibold tabular-nums">{{ $metric['quantidade_fmt'] ?? '—' }}</p>
+                                <p class="text-xs text-slate-500">{{ $metric['valor_fmt'] ?? '' }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+                @foreach ($beneficioCallouts as $callout)
+                    <div class="{{ $calloutTone((string) ($callout['tone'] ?? 'info')) }} text-sm">
+                        {{ $callout['text'] ?? '' }}
+                    </div>
+                @endforeach
+            </div>
+        @elseif (filled($beneficios['message'] ?? null))
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                {{ $beneficios['message'] }}
+                @if (filled($beneficios['enrich_hint'] ?? null))
+                    <code class="ms-1 text-[11px]">{{ $beneficios['enrich_hint'] }}</code>
+                @endif
+            </p>
         @endif
 
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-sm">
@@ -127,6 +169,9 @@
                 <li>{{ $legenda['censo'] ?? '' }}</li>
                 <li>{{ $legenda['fora_rede'] ?? '' }}</li>
                 <li>{{ $legenda['fora_escola'] ?? '' }}</li>
+                @if (filled($legenda['beneficios'] ?? null))
+                    <li>{{ $legenda['beneficios'] }}</li>
+                @endif
                 @if ($c['censo_ajuste_aplicado'] ?? false)
                     <li>{{ __('Lacuna global já desconta matrículas em redes não municipais quando o Censo INEP está indexado.') }}</li>
                 @endif

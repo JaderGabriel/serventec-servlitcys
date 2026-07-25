@@ -21,6 +21,8 @@ final class HorizonteFortnightlyFeedPipelineTest extends TestCase
             'skip_repasses' => true,
             'skip_siconfi' => true,
             'skip_transparency' => true,
+            'skip_procurement' => true,
+            'skip_obras' => true,
             'skip_saeb' => true,
             'skip_ibge' => false,
             'skip_ibge_municipal_geo' => true,

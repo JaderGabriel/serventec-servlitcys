@@ -1858,11 +1858,6 @@ function muniEnrichmentHtml(m) {
         }
     }
 
-    const sistemasBlock = muniSistemasMercadoEnrichmentHtml(m);
-    if (sistemasBlock !== "") {
-        blocks.push(sistemasBlock);
-    }
-
     const hasPedagogy =
         m.has_saeb ||
         m.has_censo ||
@@ -1887,21 +1882,30 @@ function muniEnrichmentHtml(m) {
         }
     }
 
-    if (blocks.length === 0 && !(m.has_obras || Number(m.obras_total ?? 0) > 0) && !m.has_sistemas_mercado) {
+    if (m.has_obras || Number(m.obras_total ?? 0) > 0) {
+        const canteiroBlock = muniCanteiroEnrichmentHtml(m);
+        if (canteiroBlock !== "") {
+            blocks.push(canteiroBlock);
+        }
+    }
+
+    // Último bloco antes das dimensões do score.
+    const sistemasBlock = muniSistemasMercadoEnrichmentHtml(m);
+    if (sistemasBlock !== "") {
+        blocks.push(sistemasBlock);
+    }
+
+    if (blocks.length === 0) {
         return "";
     }
 
-    const enrichmentGrid =
-        blocks.length > 0
-            ? `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`
-            : "";
-    const canteiroBlock =
-        m.has_obras || Number(m.obras_total ?? 0) > 0 ? muniCanteiroEnrichmentHtml(m) : "";
-
-    return `${enrichmentGrid}${canteiroBlock}`;
+    return `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`;
 }
 
 function sistemasMercadoEnrichmentSignal(m) {
+    if (String(m.sge_badge ?? m.sge?.badge ?? "") === "ieducar" || m.consultoria_active) {
+        return { tone: "ok", text: "iEducar · Serventec" };
+    }
     const timing = Number(m.timing_licitacao ?? 0);
     const proxy = Number(m.proxy_sge ?? 0);
     const soft = Number(m.procurement_licitacoes_software ?? 0);
@@ -1909,16 +1913,24 @@ function sistemasMercadoEnrichmentSignal(m) {
     if (sanctioned > 0) {
         return { tone: "warn", text: "Sanção CEIS/CNEP" };
     }
-    if (soft > 0 || (m.sge_found && String(m.sge_status ?? "") === "registry")) {
+    if (soft > 0 || ["registry", "market", "market_national"].includes(String(m.sge_status ?? ""))) {
         return { tone: "warn", text: "Incumbente / software" };
     }
     if (timing >= 55) {
         return { tone: "info", text: "Editais recentes" };
     }
-    if (proxy > 0 || timing > 0) {
+    if (proxy > 0 || timing > 0 || m.sge_found) {
         return { tone: "neutral", text: "Sinais de mercado" };
     }
     return null;
+}
+
+function formatCnpjBr(raw) {
+    const digits = String(raw ?? "").replace(/\D/g, "");
+    if (digits.length !== 14) {
+        return digits || "—";
+    }
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
 }
 
 function muniSistemasMercadoEnrichmentHtml(m) {
@@ -1926,6 +1938,10 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         return "";
     }
 
+    const isIeducar =
+        Boolean(m.consultoria_active) ||
+        String(m.sge_badge ?? m.sge?.badge ?? "") === "ieducar" ||
+        String(m.sge_status ?? "") === "consultoria_active";
     const licitacoes = Number(m.procurement_licitacoes ?? 0);
     const licitSoft = Number(m.procurement_licitacoes_software ?? 0);
     const contratosSoft = Number(m.transparency_contratos_software ?? 0);
@@ -1933,51 +1949,86 @@ function muniSistemasMercadoEnrichmentHtml(m) {
     const timing = Number(m.timing_licitacao ?? 0);
     const sgeFound = Boolean(m.sge_found);
     const nationalVendors = Number(m.procurement_national_vendor_matched ?? 0);
+    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 5) : [];
 
     const has =
+        isIeducar ||
         m.has_sistemas_mercado ||
         proxy > 0 ||
         timing > 0 ||
         licitacoes > 0 ||
         contratosSoft > 0 ||
-        (sgeFound && String(m.sge_status ?? "") === "registry");
+        sgeFound ||
+        samples.length > 0;
 
     if (!has) {
         return "";
     }
 
+    const system =
+        m.sge_system ||
+        m.sge?.system ||
+        (isIeducar ? "iEducar" : null) ||
+        (sgeFound ? m.sge?.system_label : null) ||
+        "Não identificado";
+    const company =
+        m.sge_company ||
+        m.sge?.company ||
+        m.sge_vendor ||
+        m.sge?.vendor ||
+        (isIeducar ? "Serventec" : null) ||
+        "—";
+    const cnpjRaw = m.sge_cnpj || m.sge?.cnpj || null;
+    const cnpj = cnpjRaw ? formatCnpjBr(cnpjRaw) : "—";
+
     const metrics = [];
-    const sgeLabel =
-        sgeFound && (m.sge_system || m.sge?.system_label || m.sge?.system)
-            ? String(m.sge?.system_label || m.sge_system || m.sge?.system || "Identificado")
-            : "Não identificado";
     metrics.push(
         enrichMetricHtml({
-            label: "Incumbente SGE",
-            hint: sgeFound ? String(m.sge_status || m.sge?.status_label || "") : "Registo / catálogo",
-            valueHtml: escapeHtml(sgeLabel),
-            tone: sgeFound ? "warn" : "neutral",
+            label: "Sistema",
+            hint: isIeducar ? "Consultoria activa" : String(m.sge_status || m.sge?.status_label || "Identificação"),
+            valueHtml: escapeHtml(String(system)),
+            tone: isIeducar ? "ok" : sgeFound ? "warn" : "neutral",
             iconHtml: HORIZONTE_ENRICH_ICONS.building,
         }),
     );
     metrics.push(
         enrichMetricHtml({
-            label: "Proxy SGE",
-            hint: "Peso moderado no score",
-            valueHtml: escapeHtml(String(Math.round(proxy))),
-            tone: proxy >= 40 ? "warn" : "neutral",
-            iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+            label: "Empresa",
+            hint: "Fornecedor / mantenedor",
+            valueHtml: escapeHtml(String(company)),
+            tone: isIeducar ? "ok" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.education,
         }),
     );
     metrics.push(
         enrichMetricHtml({
-            label: "Timing licitação",
-            hint: "Editais com IBGE",
-            valueHtml: escapeHtml(String(Math.round(timing))),
-            tone: timing >= 55 ? "info" : "neutral",
+            label: "CNPJ",
+            hint: cnpjRaw ? "Cadastro do fornecedor" : "Não informado na fonte",
+            valueHtml: escapeHtml(cnpj),
+            tone: "neutral",
             iconHtml: HORIZONTE_ENRICH_ICONS.scale,
         }),
     );
+    if (!isIeducar) {
+        metrics.push(
+            enrichMetricHtml({
+                label: "Proxy SGE",
+                hint: "Peso moderado no score",
+                valueHtml: escapeHtml(String(Math.round(proxy))),
+                tone: proxy >= 40 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+            }),
+        );
+        metrics.push(
+            enrichMetricHtml({
+                label: "Timing licitação",
+                hint: "Editais com IBGE",
+                valueHtml: escapeHtml(String(Math.round(timing))),
+                tone: timing >= 55 ? "info" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+            }),
+        );
+    }
     if (licitacoes > 0) {
         metrics.push(
             enrichMetricHtml({
@@ -1989,40 +2040,54 @@ function muniSistemasMercadoEnrichmentHtml(m) {
             }),
         );
     }
-    if (contratosSoft > 0) {
+    if (m.procurement_valor_licitacoes != null && Number(m.procurement_valor_licitacoes) > 0) {
         metrics.push(
             enrichMetricHtml({
-                label: "Contratos software",
-                hint: "Snapshot transparência municipal",
-                valueHtml: escapeHtml(nf(contratosSoft)),
-                tone: "warn",
-                iconHtml: HORIZONTE_ENRICH_ICONS.education,
+                label: "Valor editais",
+                hint: "Soma licitações com IBGE",
+                valueHtml: escapeHtml(formatCurrencyBrl(m.procurement_valor_licitacoes)),
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
             }),
         );
     }
 
-    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 4) : [];
     let samplesHtml = "";
     if (samples.length > 0) {
         const rows = samples
             .map((s) => {
                 const obj = String(s.objeto || "—");
-                const short = obj.length > 72 ? `${obj.slice(0, 72)}…` : obj;
+                const short = obj.length > 56 ? `${obj.slice(0, 56)}…` : obj;
                 const softTag = s.itens_software
                     ? `<span class="serv-horizonte-canteiro-badge serv-horizonte-canteiro-badge--warn">soft</span> `
                     : "";
+                const companyCell = String(s.fornecedor_nome || s.vendor_label || "—");
+                const cnpjCell = s.fornecedor_cnpj ? formatCnpjBr(s.fornecedor_cnpj) : "—";
+                const valorBase = s.valor_final != null ? s.valor_final : s.valor;
+                const valorCell = valorBase != null ? formatCurrencyBrl(valorBase) : "—";
+                const aditivo =
+                    s.valor != null &&
+                    s.valor_final != null &&
+                    Number(s.valor_final) !== Number(s.valor)
+                        ? ` · adit. ${formatCurrencyBrl(s.valor_final)}`
+                        : "";
+                const vigenciaParts = [];
+                if (s.data_inicio_vigencia) vigenciaParts.push(String(s.data_inicio_vigencia));
+                if (s.data_fim_vigencia) vigenciaParts.push(String(s.data_fim_vigencia));
+                const vigencia = vigenciaParts.length ? vigenciaParts.join(" → ") : "—";
                 return (
                     `<tr>` +
                     `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(obj)}">${softTag}${escapeHtml(short)}</td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(s.orgao_sigla || "—"))}</td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(s.data_publicacao || "—"))}</td>` +
+                    `<td>${escapeHtml(companyCell)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(cnpjCell)}</div></td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}${aditivo ? `<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(aditivo.replace(/^ · /, ""))}</div>` : ""}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(vigencia)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(String(s.situacao || s.modalidade || s.orgao_sigla || ""))}</div></td>` +
                     `</tr>`
                 );
             })
             .join("");
         samplesHtml =
             `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
-            `<thead><tr><th>Objeto</th><th>Órgão</th><th>Pub.</th></tr></thead>` +
+            `<thead><tr><th>Objeto</th><th>Empresa / CNPJ</th><th>Valor</th><th>Vigência</th></tr></thead>` +
             `<tbody>${rows}</tbody></table></div>`;
     }
 
@@ -2030,6 +2095,9 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         ? m.procurement_national_top_vendors.slice(0, 3)
         : [];
     const notes = [];
+    if (isIeducar) {
+        notes.push("Consultoria activa: SGE confirmado como iEducar (Serventec) no catálogo ServLITCYS.");
+    }
     if (nationalVendors > 0 && topVendors.length > 0) {
         notes.push(
             `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com CNPJ curado — ${topVendors
@@ -2051,16 +2119,22 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         if (Number(by.cnep ?? 0) > 0) parts.push(`CNEP ${by.cnep}`);
         if (Number(by.cepim ?? 0) > 0) parts.push(`CEPIM ${by.cepim}`);
         notes.push(
-            `Due diligence: ${sanctioned} CNPJ(s) curado(s) com sanção${parts.length ? ` (${parts.join(" · ")})` : ""} — filtro de risco, não classifica o SGE.`,
+            `Due diligence: ${sanctioned} CNPJ(s) curado(s) com sanção${parts.length ? ` (${parts.join(" · ")})` : ""} — filtro de risco.`,
         );
     }
-    notes.push("Proxy indicativo: não prova qual SGE está instalado na rede municipal.");
+    if (!isIeducar) {
+        notes.push("Sinais de Portal/licitação são proxy: não comprovam sozinhos o SGE instalado na rede.");
+    }
+
+    const lead = isIeducar
+        ? "Sistema da consultoria Serventec e contexto de mercado (editais MEC/FNDE)."
+        : "Sistema, empresa e CNPJ a partir de registo SGE, licitações e recursos públicos.";
 
     const block = enrichBlockHtml({
         tone: "market",
         title: "Sistemas / mercado",
         year: "",
-        lead: "Incumbente, editais MEC/FNDE e proxy de software educação.",
+        lead,
         signal: sistemasMercadoEnrichmentSignal(m),
         iconHtml: HORIZONTE_ENRICH_ICONS.market,
         metricsHtml: metrics.join(""),
@@ -2294,10 +2368,20 @@ function muniMetaHtml(m) {
 
     const sge = m.sge && typeof m.sge === "object" ? m.sge : null;
     if (sge) {
+        const isIeducar =
+            Boolean(m.consultoria_active) ||
+            String(m.sge_badge ?? sge.badge ?? "") === "ieducar" ||
+            String(m.sge_status ?? sge.status ?? "") === "consultoria_active";
+        const label = isIeducar
+            ? "iEducar"
+            : sge.system_label || sge.system || m.sge_system || "Desconhecido";
+        const valueClass = isIeducar
+            ? "serv-horizonte-muni-tooltip__meta-value serv-horizonte-muni-tooltip__meta-value--ieducar"
+            : "serv-horizonte-muni-tooltip__meta-value";
         segments.push(
             `<span class="serv-horizonte-muni-tooltip__meta-item">` +
                 `<span class="serv-horizonte-muni-tooltip__meta-label">${escapeHtml("SGE")}</span>` +
-                `<span class="serv-horizonte-muni-tooltip__meta-value">${escapeHtml(sge.system_label || sge.system || "Desconhecido")}</span>` +
+                `<span class="${valueClass}">${escapeHtml(String(label))}</span>` +
                 `</span>`,
         );
     }
@@ -9223,17 +9307,28 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (!this.canManageSge || !m) {
                 return false;
             }
-            if (m.sge_editable === false) {
+            if (m.consultoria_active) {
                 return false;
             }
             if (m.sge_editable === true) {
                 return true;
             }
-            if (m.in_catalog || m.consultoria_active) {
+            if (m.sge_editable === false) {
                 return false;
             }
             const status = String(m.sge_status ?? m.sge?.status ?? "");
-            return status === "not_found" || status === "registry";
+            return ["not_found", "registry", "market", "market_national"].includes(status);
+        },
+
+        isIeducarServentecSge(m) {
+            if (!m) {
+                return false;
+            }
+            return (
+                Boolean(m.consultoria_active) ||
+                String(m.sge_badge ?? m.sge?.badge ?? "") === "ieducar" ||
+                String(m.sge_status ?? m.sge?.status ?? "") === "consultoria_active"
+            );
         },
 
         sgeHasRegistry(m) {

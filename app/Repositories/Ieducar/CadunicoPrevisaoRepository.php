@@ -5,6 +5,7 @@ namespace App\Repositories\Ieducar;
 use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
+use App\Services\Cadunico\CadunicoBeneficiosEscolarizacaoCalloutBuilder;
 use App\Services\Cadunico\CadunicoDemandaOfertaSlice;
 use App\Services\Cadunico\CadunicoEscolarizacaoDecisionCardBuilder;
 use App\Services\Cadunico\CadunicoRedeGapAnalyzer;
@@ -28,6 +29,7 @@ final class CadunicoPrevisaoRepository
         private InepCensoMunicipioMatriculaRepository $censoMunicipio,
         private CadunicoRedeGapAnalyzer $gapAnalyzer,
         private CadunicoEscolarizacaoDecisionCardBuilder $escolarizacaoCard,
+        private CadunicoBeneficiosEscolarizacaoCalloutBuilder $beneficiosCallouts,
         private CadunicoTerritorialPressureBuilder $territorialBuilder,
         private SchoolUnitsRepository $schoolUnits,
     ) {}
@@ -122,6 +124,13 @@ final class CadunicoPrevisaoRepository
             );
 
             $escolarizacaoCard = $this->escolarizacaoCard->build($gap, $censoRow, $ieducarEja);
+            $beneficios = $this->beneficiosCallouts->build(
+                FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio),
+                is_array($escolarizacaoCard['totais'] ?? null) ? $escolarizacaoCard['totais'] : null,
+            );
+            if ($escolarizacaoCard['available'] ?? false) {
+                $escolarizacaoCard['beneficios_portal'] = $beneficios;
+            }
 
             $report = array_merge($empty, [
                 'available' => true,

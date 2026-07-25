@@ -1642,6 +1642,28 @@ return [
                 'step_interval_minutes' => max(5, (int) env('IEDUCAR_CADUNICO_ESCOLARIZACAO_FEED_STEP_INTERVAL', 30)),
             ],
         ],
+        /** CUN-04 — PBF/NBF/BPC agregados (Portal) para callouts do card Escolarização. */
+        'beneficios_portal' => [
+            'enabled' => filter_var(env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'months' => max(1, min(24, (int) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_MONTHS', 6))),
+            'programas' => array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_PROGRAMAS', 'nbf,pbf,bpc')),
+            ))),
+            'timeout' => max(10, (int) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_TIMEOUT', 25)),
+            'max_pages' => max(1, min(5, (int) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_MAX_PAGES', 2))),
+            'sleep_us' => max(0, (int) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_SLEEP_US', 80000)),
+            'schedule' => [
+                'enabled' => filter_var(env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+                /** Dia do mês — após escolarização (dia 8). */
+                'day' => max(1, min(28, (int) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_SCHEDULE_DAY', 9))),
+                'months' => array_values(array_filter(array_map(
+                    'intval',
+                    explode(',', (string) env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_SCHEDULE_MONTHS', '1,3,5,7,9,11')),
+                ))),
+                'time' => env('IEDUCAR_CADUNICO_BENEFICIOS_PORTAL_SCHEDULE_TIME', '05:30'),
+            ],
+        ],
         'weekly_allow_partial' => filter_var(env('IEDUCAR_CADUNICO_WEEKLY_PARTIAL_OK', true), FILTER_VALIDATE_BOOL),
         'fontes_oficiais' => [
             'SAGI/Misocial — Matriz de Informação Social (MDS)',
