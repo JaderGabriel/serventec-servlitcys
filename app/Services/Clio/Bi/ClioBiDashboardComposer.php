@@ -208,11 +208,12 @@ final class ClioBiDashboardComposer
             $out['turmas_tipo'] = $turmasTipo;
         }
 
-        $cor = $this->assocDoughnutOrBar(
+        $cor = $this->assocBarHorizontal(
             __('Cor/Raça'),
             is_array($dem['by_cor_raca'] ?? null) ? $dem['by_cor_raca'] : [],
-            __('Matrículas nas Relações'),
+            __('Alunos'),
             __('Fonte: INF-DEM · sem identificação pessoal.'),
+            true,
         );
         if ($cor !== null) {
             $out['dem_cor'] = $cor;

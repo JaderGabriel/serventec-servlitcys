@@ -193,6 +193,12 @@ final class ClioBiDashboardComposerTest extends TestCase
         $this->assertArrayHasKey('densidade', $charts);
         $this->assertArrayHasKey('docentes', $charts);
         $this->assertArrayHasKey('dem_cor', $charts);
+        $this->assertSame('bar', $charts['dem_cor']['type']);
+        $this->assertSame('y', $charts['dem_cor']['options']['indexAxis'] ?? null);
+        $this->assertArrayHasKey('dem_sexo', $charts);
+        $this->assertSame('doughnut', $charts['dem_sexo']['type']);
+        $this->assertArrayHasKey('dem_idade', $charts);
+        $this->assertSame('bar', $charts['dem_idade']['type']);
         $this->assertArrayHasKey('tra_local', $charts);
         $this->assertArrayHasKey('jornada_turno', $charts);
         $this->assertArrayHasKey('turmas_tipo', $charts);
