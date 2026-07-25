@@ -32,7 +32,7 @@
             <tr>
                 <td style="width: 33%;">
                     <span class="pdf-footer__brand-name">SERVLITCYS</span>
-                    <span class="pdf-footer__brand-tag">{{ __('Clio — Painel gerencial') }}</span>
+                    <span class="pdf-footer__brand-tag">{{ __('Clio — PDF Gerencial') }}</span>
                 </td>
                 <td style="width: 34%; text-align: center;">
                     <span class="pdf-footer__doc-title">{{ $campaign->municipality_name }}</span>
@@ -49,7 +49,7 @@
 <div class="cover-pro__band">
     <div class="cover-pro__band-inner">
         <p class="cover-pro__eyebrow">{{ __('Clio') }}</p>
-        <p class="cover-pro__type">{{ __('Painel gerencial — Matrícula inicial') }}</p>
+            <p class="cover-pro__type">{{ __('PDF Gerencial — Matrícula inicial') }}</p>
         <h1 class="cover-pro__city">{{ $campaign->municipality_name }}</h1>
         <p class="cover-pro__sub">{{ $campaign->uf }} · {{ $campaign->year }} · {{ $campaign->profileLabel() }}</p>
     </div>

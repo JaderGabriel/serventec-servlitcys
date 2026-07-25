@@ -131,7 +131,9 @@ Indicadores que o Clio **já calcula e expõe** de forma estável (UI, inferênc
 |-------|---------------------|-----|
 | **Excel / CSV** | Contadores, INF-*, Diagnóstico Geral, escolas ativas × demais, o que corrigir | Sem PII no CSV |
 | **PDF detalhado** | Mesmos + distorção (+ amostra), NEE, matriz, Diagnóstico Geral, nome/CPF | Uso interno |
-| **PDF do gestor** | KPIs BI, insights (sem `error`), etapas, série, tempo escolar, Diagnóstico Geral | Sem PII operacional |
+| **PDF Gerencial** | KPIs BI, insights, etapas, série, tempo escolar, Diagnóstico Geral | Sem PII operacional |
+| **PDF Final** | Um tema educativo por página (status, números, diagnóstico, erros/avisos) + Diagnóstico Geral com tríade | Retrato do gestor |
+| **PDF Detalhado** | Contadores, o que corrigir, amostras operacionais | Pode incluir detalhe sensível da coleta |
 | **Power BI / painel nativo (`bi_clio_*`)** | KPIs, etapas, inclusão, qualidade | Sem PII — UI `/insights` |
 
 ---

@@ -93,7 +93,7 @@ final class CampaignPdfExporter
         $refDate = $campaign->reference_date
             ? $campaign->reference_date->format('Y-m-d')
             : (string) ((int) $campaign->year);
-        $filename = sprintf('clio_%s_%s_%s.pdf', $citySlug, $ibge, $refDate);
+        $filename = sprintf('clio_detalhado_%s_%s_%s.pdf', $citySlug, $ibge, $refDate);
 
         return $pdf->download($filename);
     }

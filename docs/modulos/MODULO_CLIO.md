@@ -46,7 +46,7 @@ Ver [IMPLANTACAO_PRODUCAO.md](../IMPLANTACAO_PRODUCAO.md) §4.8.
 | Painel analítico | `/clio/coletas/{uuid}/analise` |
 | Vincular i-Educar | `/clio/coletas/{uuid}/vincular-ieducar` (admin) |
 | Cruzamento | `/clio/coletas/{uuid}/cruzamento` |
-| Export | `/clio/coletas/{uuid}/export/csv` · `…/export/pdf` · `…/export/pdf-gestor` · Excel |
+| Export | `/clio/coletas/{uuid}/export/csv` · `…/export/pdf` · `…/export/pdf-gestor` · `…/export/pdf-final` · Excel |
 | Aba Censo | Consultoria → **Censo** → bloco Clio |
 | Painel RX | Bloco ranking coletas do exercício |
 | Documentação | Menu lateral **9 · Clio — Educacenso** |

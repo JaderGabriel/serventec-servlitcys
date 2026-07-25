@@ -21,39 +21,7 @@
                 </button>
             </x-slot>
             <x-slot name="content">
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.pdf', $campaign)"
-                    icon="document-text"
-                    :title="__('Relatório PDF com contadores e o que corrigir')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando PDF') }}"
-                    data-serv-loading-message="{{ __('Montando o relatório da coleta. Aguarde…') }}"
-                >
-                    {{ __('PDF da coleta') }}
-                </x-dropdown-link>
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.pdf-gestor', $campaign)"
-                    icon="chart-bar"
-                    :title="__('PDF gerencial com indicadores, gráficos e tempo escolar')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando PDF gestor') }}"
-                    data-serv-loading-message="{{ __('Montando o painel gerencial. Aguarde…') }}"
-                >
-                    {{ __('PDF do gestor') }}
-                </x-dropdown-link>
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.xlsx', $campaign)"
-                    icon="clipboard-document-list"
-                    :title="__('Planilha Excel com escolas ativas e demais status')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando Excel') }}"
-                    data-serv-loading-message="{{ __('Preparando o arquivo de exportação. Aguarde…') }}"
-                >
-                    {{ __('Excel da coleta') }}
-                </x-dropdown-link>
+                @include('clio.campaigns.partials.downloads-menu-links', ['campaign' => $campaign])
             </x-slot>
         </x-dropdown>
     @else
@@ -72,39 +40,7 @@
                 </button>
             </x-slot>
             <x-slot name="content">
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.pdf', $campaign)"
-                    icon="document-text"
-                    :title="__('Relatório PDF com contadores e o que corrigir')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando PDF') }}"
-                    data-serv-loading-message="{{ __('Montando o relatório da coleta. Aguarde…') }}"
-                >
-                    {{ __('PDF da coleta') }}
-                </x-dropdown-link>
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.pdf-gestor', $campaign)"
-                    icon="chart-bar"
-                    :title="__('PDF gerencial com indicadores, gráficos e tempo escolar')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando PDF gestor') }}"
-                    data-serv-loading-message="{{ __('Montando o painel gerencial. Aguarde…') }}"
-                >
-                    {{ __('PDF do gestor') }}
-                </x-dropdown-link>
-                <x-dropdown-link
-                    :href="route('clio.campaigns.export.xlsx', $campaign)"
-                    icon="clipboard-document-list"
-                    :title="__('Planilha Excel com escolas ativas e demais status')"
-                    data-serv-loading-on-click
-                    data-serv-loading-download
-                    data-serv-loading-title="{{ __('Gerando Excel') }}"
-                    data-serv-loading-message="{{ __('Preparando o arquivo de exportação. Aguarde…') }}"
-                >
-                    {{ __('Excel da coleta') }}
-                </x-dropdown-link>
+                @include('clio.campaigns.partials.downloads-menu-links', ['campaign' => $campaign])
             </x-slot>
         </x-dropdown>
     @endif

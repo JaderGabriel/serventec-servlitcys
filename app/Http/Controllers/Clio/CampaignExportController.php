@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clio;
 use App\Http\Controllers\Controller;
 use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Export\CampaignExcelExporter;
+use App\Services\Clio\Export\CampaignFinalPdfExporter;
 use App\Services\Clio\Export\CampaignInsightsPdfExporter;
 use App\Services\Clio\Export\CampaignPdfExporter;
 use Illuminate\Http\Response;
@@ -33,6 +34,13 @@ class CampaignExportController extends Controller
     }
 
     public function pdfGestor(ClioCampaign $campaign, CampaignInsightsPdfExporter $exporter): Response
+    {
+        $this->authorize('export', $campaign);
+
+        return $exporter->download($campaign);
+    }
+
+    public function pdfFinal(ClioCampaign $campaign, CampaignFinalPdfExporter $exporter): Response
     {
         $this->authorize('export', $campaign);
 
