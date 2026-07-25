@@ -428,6 +428,7 @@ final class DocumentationCatalog
                     ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
                     ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Feito · em curso · planeado')],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Obrasgov / SIMEC')],
                     ['label' => __('Índice de módulos'), 'path' => 'docs/modulos/README.md', 'hint' => __('Consultoria · Horizonte · RX')],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
                     ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
@@ -489,6 +490,7 @@ final class DocumentationCatalog
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_HORIZONTE.md', 'hint' => __('Porta de entrada')],
                     ['label' => __('Documentação técnica'), 'path' => 'docs/HORIZONTE.md', 'hint' => __('Scoring · SICONFI · modal')],
                     ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Panorama Horizonte')],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Obrasgov / SIMEC · HOR-19')],
                 ],
                 'submenus' => [[
                     'title' => __('Operação (admin)'),
@@ -556,8 +558,8 @@ final class DocumentationCatalog
             ],
             [
                 'key' => 'funding',
-                'title' => __('10 · Financiamento (FUNDEB)'),
-                'description' => __('Aba Finanças — VAAF, repasses, exportações e fontes públicas.'),
+                'title' => __('10 · Financiamento'),
+                'description' => __('Aba Finanças — VAAF, repasses, Financiamentos complementares e fontes públicas.'),
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_FUNDEB.md', 'hint' => __('Porta de entrada')],
@@ -567,6 +569,7 @@ final class DocumentationCatalog
                     ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
                     ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
                     ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Roadmap · Obrasgov'), 'audience' => self::AUDIENCE_ADMIN],
                 ],
             ],
             [
@@ -581,6 +584,7 @@ final class DocumentationCatalog
                     ['label' => __('Catálogo API i-Educar'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
                     ['label' => __('Estudo: agentes e IA'), 'path' => 'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md'],
                     ['label' => __('Estudo: setor público'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('INT-10 · Obrasgov')],
                 ],
             ],
             [

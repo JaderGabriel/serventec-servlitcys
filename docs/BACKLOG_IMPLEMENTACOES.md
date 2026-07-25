@@ -128,6 +128,7 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Parcial (lacuna por faixa, cenários, mapa territorial, demanda×oferta) | Onda 2 |
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
+| INT-10 | P2 | Client Obrasgov.br (`api-publica`) — obras educação / Canteiro | Pendente | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · HOR-19 |
 
 ---
 
@@ -166,6 +167,9 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-13 | P2 | Comparativo antes/depois `compliance_score` (clientes) | Pendente | v3 |
 | HOR-14 | P2 | Versão mão — detecção automática + alternância manual | Concluído | v6.5 |
 | HOR-18 | **P1** | Importação PNAD municipal (SIDRA → `municipal_pnad_snapshots`) | Pendente | Onda 2 · desbloqueia Social no modal |
+| HOR-19 | P2 | **Canteiro** — sync Obrasgov educação (FNDE/SIMEC) + bloco modal Horizonte | Pendente | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · Onda 1–2 |
+| HOR-20 | P2 | Canteiro — camada mapa + filtros (paralisada / em execução) | Pendente | Depende HOR-19 |
+| HOR-21 | P3 | Canteiro — empenho/% físico/histórico + `infra_works_pressure` | Pendente | Depende HOR-19 |
 
 ---
 

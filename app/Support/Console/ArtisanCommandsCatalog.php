@@ -311,6 +311,23 @@ final class ArtisanCommandsCatalog
                         'confirm_slugs' => ['rebuild-repasses-{ano}'],
                     ],
                     [
+                        'name' => 'funding:enrich-consultoria-financiamentos',
+                        'summary' => __('Enriquece Finanças → Financiamentos (PNAE/PNATE/PDDE + consultas públicas) para municípios com consultoria — sem reimportar extratos FUNDEB.'),
+                        'signature' => 'funding:enrich-consultoria-financiamentos {--ano=} {--city=} {--cities=} {--dry-run} {--skip-import} {--skip-warm}',
+                        'examples' => [
+                            'php artisan funding:enrich-consultoria-financiamentos --ano=2025 --dry-run',
+                            'php artisan funding:enrich-consultoria-financiamentos --ano=2025',
+                            'php artisan funding:enrich-consultoria-financiamentos --ano=2025 --city=1',
+                        ],
+                        'env' => [
+                            'IEDUCAR_FUNDING_TRANSFERS_ENABLED',
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES',
+                        ],
+                        'doc_anchor' => 'fundeb-repasses',
+                        'details' => __('Por omissão percorre cidades activas com i-Educar+IBGE. Importa Portal/Tesouro omitindo programa FUNDEB; aquece cache da aba Financiamentos.'),
+                    ],
+                    [
                         'name' => 'weekly-mass-sync:run',
                         'summary' => __('Sincronização massiva semanal (geo, FUNDEB, repasses, SAEB) — enfileira ou retoma com checkpoint.'),
                         'signature' => 'weekly-mass-sync:run {--resume=} {--sync} {--force}',

@@ -116,6 +116,7 @@ mindmap
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação |
 | [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin — KPIs, atalhos, mapa mental |
 | [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (6.x) — propensão, calor, feed bimestral, alta pressão |
+| [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) | **Canteiro** — obras educação (Obrasgov/SIMEC): roadmap, filtros, custo |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 

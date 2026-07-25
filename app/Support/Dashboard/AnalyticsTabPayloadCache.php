@@ -96,6 +96,15 @@ final class AnalyticsTabPayloadCache
         return 'analytics:tab_payload:v'.self::CACHE_VERSION.':'.$tab.':'.(int) $city->id.':'.md5(json_encode($params));
     }
 
+    public static function forget(string $tab, City $city, IeducarFilterState $filters): void
+    {
+        try {
+            Cache::forget(self::key($tab, $city, $filters));
+        } catch (\Throwable) {
+            //
+        }
+    }
+
     /**
      * @param  array<string, mixed>  $payload
      */

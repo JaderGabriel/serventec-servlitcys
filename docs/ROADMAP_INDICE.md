@@ -69,7 +69,7 @@ flowchart TD
 | Onda | Foco | Documento mestre | IDs principais |
 |------|------|------------------|----------------|
 | **Onda 0** | Quick wins Horizonte (geo escolas) | [HORIZONTE.md](HORIZONTE.md) §11.3 | HOR-01 |
-| **Onda 1** | IDHM, SIDRA ampliado, programas FNDE, segmentos comerciais | [HORIZONTE.md](HORIZONTE.md) §11.4–§11.5 · [ESTUDO_INTEGRACOES…](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | HOR-05–07, HOR-11–12, INT-01–04 |
+| **Onda 1** | IDHM, SIDRA ampliado, programas FNDE, segmentos comerciais, **Canteiro (obras)** | [HORIZONTE.md](HORIZONTE.md) §11.4–§11.5 · [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · [ESTUDO_INTEGRACOES…](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | HOR-05–07, HOR-11–12, HOR-19–20, INT-01–04, INT-10 |
 | **Onda 2** | CNES, busca ativa CadÚnico, PNAD completo | [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) · [HORIZONTE.md](HORIZONTE.md) §11.6 | HOR-09–10, HOR-18, CUN-03, INT-07–08 |
 | **Onda 3** | e-SUS escola, comparativo compliance clientes | [HORIZONTE.md](HORIZONTE.md) §11.7 | HOR-13, INT-09 |
 | **Transversal** | Power BI, plugins i-Educar, inclusão NEE | Ver tabela abaixo | PBI-*, PLG-*, CAD-* |
@@ -85,6 +85,7 @@ flowchart TD
 |-----------|----------|
 | [HORIZONTE.md](HORIZONTE.md) | Guia completo — scoring, modal, feed, CLI |
 | [HORIZONTE.md §11 — Roadmap](HORIZONTE.md#11-roadmap) | Ondas 0–2, IDs `HOR-*`, ordem de implementação |
+| [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) | **Canteiro** — obras educação (Obrasgov/SIMEC): filtros, etapas, custo |
 | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) §11 | Hub abastecimento e fases do feed |
 | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §3.2 | `horizonte:*`, sync nacional |
 
@@ -106,6 +107,7 @@ flowchart TD
 | HOR-13 | Comparativo `compliance_score` (v3) | Pendente |
 | HOR-14 | Versão mão no mapa | Concluído (6.5.0) |
 | HOR-18 | Importação PNAD (SIDRA → snapshots) | Pendente |
+| HOR-19–21 | **Canteiro** — obras educação (Obrasgov/SIMEC) | Planeado — [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) |
 
 ### Integrações setor público e previsão de demanda
 

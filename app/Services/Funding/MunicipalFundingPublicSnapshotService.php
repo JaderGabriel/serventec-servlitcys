@@ -65,6 +65,22 @@ final class MunicipalFundingPublicSnapshotService
     }
 
     /**
+     * Invalida e reconstrói o snapshot de consultas públicas (aba Financiamentos).
+     *
+     * @return array<string, mixed>
+     */
+    public function refresh(City $city, IeducarFilterState $filters): array
+    {
+        $ibge = FundebMunicipioReferenceRepository::normalizeIbge($city->ibge_municipio);
+        $year = $this->resolveYear($filters);
+        if ($ibge !== null && $year !== null) {
+            Cache::forget('other_funding_public:'.(int) $city->id.':'.$ibge.':'.$year);
+        }
+
+        return $this->build($city, $filters);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function buildFresh(City $city, IeducarFilterState $filters, string $ibge, int $year): array

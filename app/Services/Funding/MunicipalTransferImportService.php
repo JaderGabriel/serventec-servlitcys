@@ -125,6 +125,103 @@ final class MunicipalTransferImportService
     }
 
     /**
+     * Importa apenas programas complementares (PNAE, PNATE, PDDE, educação geral) —
+     * Portal da Transparência + Tesouro CKAN/CSV — sem extratos FUNDEB (SISWEB/BB/publicação).
+     * Alimenta Finanças → Financiamentos sem reescrever a série Tempo Real.
+     *
+     * @return array{
+     *   success: bool,
+     *   message: string,
+     *   rows: int,
+     *   by_fonte: array<string, int>,
+     *   by_programa: array<string, int>,
+     *   skipped_fundeb: int
+     * }
+     */
+    public function importComplementaryForCityYear(City $city, int $year): array
+    {
+        $ibge = MunicipalTransferSnapshotRepository::normalizeIbge((string) $city->ibge_municipio);
+        if ($ibge === null) {
+            return [
+                'success' => false,
+                'message' => __('IBGE do município não configurado.'),
+                'rows' => 0,
+                'by_fonte' => [],
+                'by_programa' => [],
+                'skipped_fundeb' => 0,
+            ];
+        }
+
+        $cfg = config('ieducar.funding.transfers', []);
+        if (! (bool) ($cfg['enabled'] ?? true)) {
+            return [
+                'success' => false,
+                'message' => __('Importação de repasses desactivada (IEDUCAR_FUNDING_TRANSFERS_ENABLED).'),
+                'rows' => 0,
+                'by_fonte' => [],
+                'by_programa' => [],
+                'skipped_fundeb' => 0,
+            ];
+        }
+
+        $timeout = max(5, (int) ($cfg['timeout'] ?? 20));
+        $importedAt = now();
+        $allRows = [];
+        $byFonte = [];
+        $skippedFundeb = 0;
+
+        foreach (array_merge(
+            $this->fetchTesouroRows($city, $ibge, $year, $timeout),
+            $this->fetchPortalTransparenciaRows($ibge, $year, $timeout),
+        ) as $row) {
+            $programaId = strtolower((string) ($row['programa_id'] ?? ''));
+            if ($programaId === 'fundeb') {
+                $skippedFundeb++;
+
+                continue;
+            }
+            $allRows[] = $row;
+            $fonte = (string) ($row['fonte'] ?? 'unknown');
+            $byFonte[$fonte] = ($byFonte[$fonte] ?? 0) + 1;
+        }
+
+        $allRows = $this->granularityEnricher->enrichRows($allRows, $year);
+        $written = $this->snapshots->upsertBatch($city, $allRows, $importedAt);
+
+        $byPrograma = [];
+        foreach ($allRows as $row) {
+            $pid = (string) ($row['programa_id'] ?? 'geral_educacao');
+            $byPrograma[$pid] = ($byPrograma[$pid] ?? 0) + 1;
+        }
+
+        if ($written === 0) {
+            $message = $skippedFundeb > 0
+                ? __('Nenhum programa complementar (além do FUNDEB) encontrado para :ano — :n linha(s) FUNDEB omitida(s) de propósito.', [
+                    'ano' => $year,
+                    'n' => $skippedFundeb,
+                ])
+                : __('Nenhum repasse complementar identificado (Portal/Tesouro) para :ano. Confirme PORTAL_TRANSPARENCIA_API_KEY e fontes Tesouro.', [
+                    'ano' => $year,
+                ]);
+        } else {
+            $message = __(':n registro(s) complementares gravados para :city (IBGE :ibge) — Finanças → Financiamentos.', [
+                'n' => $written,
+                'city' => $city->name,
+                'ibge' => $ibge,
+            ]);
+        }
+
+        return [
+            'success' => $written > 0,
+            'message' => $message,
+            'rows' => $written,
+            'by_fonte' => $byFonte,
+            'by_programa' => $byPrograma,
+            'skipped_fundeb' => $skippedFundeb,
+        ];
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $rows
      */
     private function countMunicipalRows(array $rows): int

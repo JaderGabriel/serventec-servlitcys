@@ -684,8 +684,9 @@ Fontes **já importáveis** no hub `/admin/dados-publicos`; falta expor no Horiz
 | **HOR-06** | **IBGE SIDRA ampliado** | API agregados (urbanização, migração, domicílios c/ crianças) · base INT-05 parcial | Choropleth «pressão demográfica» | População 0–14, taxa urbanização, saldo migratório | Dimensão `demographic_pressure`; segmento «crescimento populacional» | v2.2c |
 | **HOR-07** | **Programas FNDE** (PDDE, PNAE, PNATE) | CKAN FNDE / CSV repasses programáticos | Intensidade por município (opcional) | Volume histórico por programa | Segmento «dependência de programas»; risco prestação de contas | v2.2c |
 | **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) | — | Convénios MEC/FNDE activos; empenhos tech/educação | Proxy «SGE/incumbent» + projecto em curso | v2.2c · **7.0.0** (*sync em curso*) |
+| **HOR-19** | **Canteiro / Obrasgov** (obras educação FNDE·SIMEC) | API pública Obrasgov (`api-publica`…/obras) · ver [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) | Pins opcionais (HOR-20) | Contagens por situação; lista de obras ≠ concluída | Dimensão `infra_works_pressure`; segmento «obra travada / em curso» | Planeado · Onda 1–2 |
 
-**Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots` — incluir no bundle offline v3 quando existir.
+**Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots`, `municipal_education_works` (Canteiro) — incluir no bundle offline v3 quando existir.
 
 ---
 
@@ -702,17 +703,21 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 | `network_fragmentation` | Geo INEP + Censo | Muitas escolas pequenas / km² | Dor de gestão — fit i-Educar |
 | `demographic_pressure` | SIDRA migração | Crescimento 0–14 vs oferta | Expansão futura de matrículas |
 | `program_dependency` | FNDE programas | Alto PDDE/PNAE sem VAAR OK | Risco operacional / oportunidade consultoria |
+| `infra_works_pressure` | Obrasgov / Canteiro | Obras paralisadas, inacabadas ou em execução | Dor de infraestrutura física + gatilho de visita |
 | `regional_cluster` | Catálogo `cities` | Consultorias activas em corredor geográfico | Planeamento de visitas comerciais |
 
-**Segmentos «Onde buscar clientes»** previstos: mercado em retração · alta fragmentação · capacidade fiscal · tendência IDEB negativa · corredor regional.
+**Segmentos «Onde buscar clientes»** previstos: mercado em retração · alta fragmentação · capacidade fiscal · tendência IDEB negativa · corredor regional · obra escolar travada / em curso.
 
 **Scoring v3:** rebalancear pesos actuais (§5.1) após calibragem com amostra nacional; manter benchmarks dinâmicos (`saeb_p25`, medianas FUNDEB/transferências).
 
 | ID | Entrega |
 |----|---------|
-| **HOR-11** | Novos segmentos + filtros mapa (depende HOR-01–04) |
+| **HOR-11** | Novos segmentos + filtros mapa (depende HOR-01–04; inclui Canteiro quando HOR-19) |
 | **HOR-12** | Visual «corredor regional» — consultorias activas + prospectos adjacentes |
 | **HOR-13** | Comparativo antes/depois `compliance_score` (clientes com Consultoria activa) — **v3** |
+| **HOR-19** | Sync + modal **Canteiro** — [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) |
+| **HOR-20** | Camada mapa obras |
+| **HOR-21** | Empenho/% físico + scoring `infra_works_pressure` |
 
 ---
 
@@ -760,6 +765,7 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 | HOR-06 | INT-05 | SIDRA demografia |
 | HOR-07 | — | Programas FNDE (catálogo `PublicDataSourcesCatalog`) |
 | HOR-08 | — | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) § Portal Transparência |
+| HOR-19–21 | INT-10 | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · Obrasgov |
 | HOR-09 | INT-08 | DATASUS / CNES |
 | HOR-01 | — | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · `geo_inep` |
 

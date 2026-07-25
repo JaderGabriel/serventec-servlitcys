@@ -1264,6 +1264,9 @@ final class HorizonteMapService
                 'cadunico_fora_escola' => $cadunicoEnrichment['criancas_fora_escola'] ?? null,
                 'cadunico_pct_fora_escola' => $cadunicoEnrichment['pct_fora_escola'] ?? null,
                 'fiscal_ano' => $fiscal['ano'] ?? null,
+                'fiscal_periodo' => $fiscal['periodo'] ?? null,
+                'fiscal_fonte' => $fiscal['fonte'] ?? null,
+                'fiscal_imported_at' => $fiscal['imported_at'] ?? null,
                 'fiscal_receita_corrente' => $fiscal['receita_corrente_liquida'] ?? null,
                 'fiscal_despesa_educacao' => $fiscal['despesa_educacao_liquidada'] ?? null,
                 'fiscal_pct_educacao' => $fiscal['pct_educacao_receita_corrente'] ?? null,
@@ -1630,6 +1633,8 @@ final class HorizonteMapService
             }
             $out[$ibge] = [
                 'ano' => (int) $row->ano,
+                'periodo' => (int) ($row->periodo ?? 6),
+                'fonte' => (string) ($row->fonte ?? 'siconfi_rreo'),
                 'receita_corrente_liquida' => $row->receita_corrente_liquida,
                 'despesa_educacao_liquidada' => $row->despesa_educacao_liquidada,
                 'pct_educacao_receita_corrente' => $row->pct_educacao_receita_corrente,
@@ -1639,6 +1644,7 @@ final class HorizonteMapService
                 'restos_pagar_processados' => $row->restos_pagar_processados,
                 'pct_receita_propria' => $row->pct_receita_propria,
                 'fiscal_capacity_score' => $row->fiscal_capacity_score,
+                'imported_at' => $row->imported_at?->toIso8601String(),
             ];
         }
 

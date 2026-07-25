@@ -277,10 +277,11 @@ Grava em **`municipal_transfer_snapshots`** (IBGE, ano civil, fonte, `programa_i
 | Comando / tarefa | Descrição |
 |------------------|-----------|
 | `funding:rebuild-finance-realtime` | **Rebuild completo:** apaga snapshots do(s) ano(s) e reimporta por município (`MunicipalTransferImportService` — Tesouro CSV, SISWEB, BB, Portal). |
+| `funding:enrich-consultoria-financiamentos` | **Financiamentos (além do FUNDEB):** Portal/Tesouro sem `programa_id=fundeb` + aquece consultas públicas nas consultorias activas. |
 | Fila `funding::import_transfers_city_year` | Mesma importação **por cidade/ano** via Admin → Dados públicos (sem apagar outros anos). |
 | `weekly-mass-sync:run` | Enfileira repasses entre outras tarefas semanais (checkpoint retomável). |
 
-**Interface web:** `/admin/dados-publicos` (tema Repasses) · impacto na consultoria: `?tab=finance_realtime`
+**Interface web:** `/admin/dados-publicos` (tema Repasses) · Tempo Real: `?tab=finance_realtime` · Financiamentos: `?tab=other_funding`
 
 **Variáveis:** `IEDUCAR_FUNDING_TRANSFERS_*`, `IEDUCAR_FINANCE_REALTIME_*`, `IEDUCAR_TESOURO_CSV_ENABLED`, `IEDUCAR_BB_EXTRATO_URL_TEMPLATE` — ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) §3.4 e [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md).
 
@@ -319,7 +320,28 @@ php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --confirm=r
 php artisan funding:rebuild-finance-realtime --all-cities --ano=2025 --purge-only
 ```
 
-Ver também: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md).
+### 4.1b Financiamentos complementares (consultoria)
+
+Aba **Finanças → Financiamentos** (`tab=other_funding`) — PNAE, PNATE, PDDE e consultas públicas. **Não** substitui o rebuild FUNDEB do Tempo Real.
+
+```bash
+php artisan funding:enrich-consultoria-financiamentos --ano=2025 --dry-run
+php artisan funding:enrich-consultoria-financiamentos --ano=2025
+php artisan funding:enrich-consultoria-financiamentos --ano=2025 --city=1
+php artisan funding:enrich-consultoria-financiamentos --ano=2025 --skip-import
+```
+
+| Opção | Uso |
+|-------|-----|
+| `--ano=` | Ano de referência (default: ano civil actual). |
+| `--city=` / `--cities=` | Subconjunto; omissão = todas as consultorias (activo + i-Educar + IBGE). |
+| `--dry-run` | Lista o plano sem gravar. |
+| `--skip-import` | Só aquece consultas FNDE/Tesouro/Portal. |
+| `--skip-warm` | Só importa snapshots complementares. |
+
+**Pré-requisitos:** `IEDUCAR_FUNDING_TRANSFERS_ENABLED`, `PORTAL_TRANSPARENCIA_API_KEY`, `IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true`.
+
+Ver também: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md), [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md).
 
 ---
 
@@ -437,6 +459,7 @@ Procedimento completo: [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md).
 | **CadÚnico / Cecad** | `cadunico:auto-sync` | `/admin/cadunico-sync` · fila `#fila-cadastro` |
 | FUNDEB (VAAF) | `fundeb:import-api` | ieducar-compatibility |
 | **Repasses / Tempo Real** | `funding:rebuild-finance-realtime` · fila `funding::import_transfers_city_year` | `/admin/dados-publicos` |
+| **Financiamentos (consultoria)** | `funding:enrich-consultoria-financiamentos` | Consultoria `?tab=other_funding` |
 | **Dados públicos (hub)** | vários (`fundeb`, `funding`, `cadastro`, `system`) | `/admin/dados-publicos` |
 | **Verificação diária** | `public-data:check-official` | notificação sino + hub |
 | **Educacenso 1ª etapa** | `censo:analyze-educacenso-file` | Analytics → Censo |

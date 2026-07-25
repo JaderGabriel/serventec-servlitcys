@@ -1410,7 +1410,7 @@ function enrichMetricHtml({ label, hint, valueHtml, tone = "neutral", iconHtml =
     );
 }
 
-function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtml, foot = "" }) {
+function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtml, foot = "", notes = [] }) {
     const yearTag =
         year !== ""
             ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(year)}</span>`
@@ -1418,6 +1418,18 @@ function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtm
     const signalHtml =
         signal && typeof signal === "object" && signal.text
             ? `<span class="serv-horizonte-muni-tooltip__enrich-signal serv-horizonte-muni-tooltip__enrich-signal--${escapeHtml(signal.tone)}">${escapeHtml(signal.text)}</span>`
+            : "";
+    const notesList = Array.isArray(notes)
+        ? notes.filter((n) => typeof n === "string" && n.trim() !== "")
+        : [];
+    const notesHtml =
+        notesList.length > 0
+            ? `<div class="serv-horizonte-muni-tooltip__enrich-notes">${notesList
+                  .map(
+                      (n) =>
+                          `<p class="serv-horizonte-muni-tooltip__enrich-note">${escapeHtml(n)}</p>`,
+                  )
+                  .join("")}</div>`
             : "";
 
     return (
@@ -1431,6 +1443,7 @@ function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtm
         `</div></div>` +
         `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metricsHtml}</div>` +
         (foot ? `<p class="serv-horizonte-muni-tooltip__enrich-foot">${escapeHtml(foot)}</p>` : "") +
+        notesHtml +
         `</section>`
     );
 }
@@ -1468,6 +1481,31 @@ function pedagogyEnrichmentSignal(m) {
         return { tone: "neutral", text: "Rede estável" };
     }
     return null;
+}
+
+function formatFiscalCaptureDate(iso) {
+    if (iso == null || String(iso).trim() === "") {
+        return null;
+    }
+    const d = new Date(String(iso));
+    if (Number.isNaN(d.getTime())) {
+        return null;
+    }
+    return d.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function fiscalPeriodLabel(periodo) {
+    const p = Number(periodo);
+    if (!Number.isFinite(p) || p < 1 || p > 6) {
+        return null;
+    }
+    return `${p}.º bimestre`;
 }
 
 function muniFiscalEnrichmentHtml(m) {
@@ -1539,6 +1577,17 @@ function muniFiscalEnrichmentHtml(m) {
     }
 
     const signal = fiscalEnrichmentSignal(m);
+    const period = fiscalPeriodLabel(m.fiscal_periodo);
+    const capture = formatFiscalCaptureDate(m.fiscal_imported_at);
+    const periodNote =
+        ano !== "" && period
+            ? `Exercício RREO ${ano} · ${period}.`
+            : ano !== ""
+              ? `Exercício RREO ${ano}.`
+              : null;
+    const captureNote = capture
+        ? `Dados captados em ${capture}.`
+        : "Data de captação indisponível (sincronize o SICONFI).";
 
     return enrichBlockHtml({
         tone: "fiscal",
@@ -1548,7 +1597,14 @@ function muniFiscalEnrichmentHtml(m) {
         signal,
         iconHtml: HORIZONTE_ENRICH_ICONS.fiscal,
         metricsHtml: rows.join(""),
-        foot: "Fonte: SICONFI/RREO. Valores indicativos.",
+        foot: "Fonte: SICONFI/RREO (Tesouro Nacional).",
+        notes: [
+            captureNote,
+            periodNote,
+            "Conceito: resume a capacidade do município para investir em educação a partir do Relatório Resumido de Execução Orçamentária (RREO) publicado no SICONFI.",
+            "Regras: alerta se a despesa em educação for inferior a 25% da receita corrente (piso CF art. 212) ou se o cumprimento do mínimo constitucional ficar abaixo de 100%; dívida/caixa e restos a pagar indicam pressão de liquidez.",
+            "Uso no Horizonte: alimenta a dimensão fiscal_capacity do score (maior pressão fiscal relativa = maior propensão). Valores são indicativos de prospecção e não substituem análise contabilística ou parecer jurídico.",
+        ].filter(Boolean),
     });
 }
 
