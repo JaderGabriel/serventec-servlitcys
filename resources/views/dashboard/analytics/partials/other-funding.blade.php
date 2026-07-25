@@ -76,7 +76,7 @@
     </x-slot>
 
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            {{ __('Hierarquia: (1) Portal da Transparência — recursos e convênios educação. (2) Série observada importada. (3) Cadastro i-Educar — só cobertura de campos, agregado. Não some blocos entre si nem com Tempo Real / VAAF.') }}
+            {{ __('Hierarquia: (1) Portal — recursos e convênios. (2) Emendas educação. (3) Série observada. (4) Cadastro i-Educar — só cobertura. Não some blocos entre si nem com Tempo Real / VAAF.') }}
         </p>
 
         <x-dashboard.municipal-public-queries
@@ -93,6 +93,128 @@
                 {{ __('Portal com amostra acima; para consolidar a série histórica, rode funding:enrich-consultoria-financiamentos no ano do filtro.') }}
             </p>
         @endif
+
+        @php
+            $emendas = is_array($d['emendas'] ?? null) ? $d['emendas'] : [];
+            $emendasRows = is_array($emendas['rows'] ?? null) ? $emendas['rows'] : [];
+            $emendasCount = (int) ($emendas['count'] ?? count($emendasRows));
+        @endphp
+
+        <x-dashboard.consultoria-section
+            anchor="financiamentos-emendas"
+            :title="__('Emendas (educação)')"
+            :subtitle="$emendas['intro'] ?? __('Emendas parlamentares com função Educação no Portal da Transparência.')"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <p class="tabular-nums font-semibold text-slate-800 dark:text-slate-100">
+                    {{ trans_choice(':count emenda|:count emendas', $emendasCount, ['count' => $emendasCount]) }}
+                    @if (filled($emendas['year'] ?? null))
+                        <span class="font-normal text-slate-500 dark:text-slate-400">· {{ $emendas['year'] }}</span>
+                    @endif
+                </p>
+                @if (filled($emendas['portal_url'] ?? null))
+                    <a href="{{ $emendas['portal_url'] }}" target="_blank" rel="noopener noreferrer" class="font-semibold text-amber-800 underline dark:text-amber-200">
+                        {{ __('Consulta no Portal') }}
+                    </a>
+                @endif
+            </div>
+
+            @if (filled($emendas['total_empenhado_fmt'] ?? null) || filled($emendas['total_pago_fmt'] ?? null))
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    @if (filled($emendas['total_empenhado_fmt'] ?? null))
+                        <div class="rounded-md border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 px-3 py-2">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">{{ __('Total empenhado (catálogo)') }}</p>
+                            <p class="text-base font-bold tabular-nums text-amber-950 dark:text-amber-50">{{ $emendas['total_empenhado_fmt'] }}</p>
+                        </div>
+                    @endif
+                    @if (filled($emendas['total_pago_fmt'] ?? null))
+                        <div class="rounded-md border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 px-3 py-2">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-amber-800/80 dark:text-amber-200/80">{{ __('Total pago (catálogo)') }}</p>
+                            <p class="text-base font-bold tabular-nums text-amber-950 dark:text-amber-50">{{ $emendas['total_pago_fmt'] }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            @if ($emendasCount > 0)
+                <div class="overflow-x-auto">
+                    <table class="serv-table w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Autor') }}</th>
+                                <th>{{ __('Tipo / nº') }}</th>
+                                <th class="text-right">{{ __('Empenhado') }}</th>
+                                <th class="text-right">{{ __('Pago') }}</th>
+                                <th>{{ __('Detalhe') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($emendasRows as $em)
+                                <tr class="align-top">
+                                    <td>
+                                        <p class="font-medium leading-snug">{{ $em['autor'] ?? '—' }}</p>
+                                        <p class="mt-0.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ $em['codigo'] ?? '' }}</p>
+                                        @if (filled($em['subfuncao'] ?? null))
+                                            <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{{ $em['subfuncao'] }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="text-xs text-slate-700 dark:text-slate-300 max-w-[14rem]">
+                                        <p class="leading-snug">{{ $em['tipo'] ?? '—' }}</p>
+                                        @if (filled($em['numero'] ?? null))
+                                            <p class="mt-0.5 tabular-nums text-slate-500">n.º {{ $em['numero'] }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="text-right tabular-nums font-medium whitespace-nowrap">{{ $em['valor_empenhado_fmt'] ?? '—' }}</td>
+                                    <td class="text-right tabular-nums font-medium whitespace-nowrap">{{ $em['valor_pago_fmt'] ?? '—' }}</td>
+                                    <td class="text-xs">
+                                        <details class="group">
+                                            <summary class="cursor-pointer font-semibold text-amber-800 dark:text-amber-200 list-none [&::-webkit-details-marker]:hidden">
+                                                {{ __('Ver') }}
+                                                @if (($em['documentos_count'] ?? 0) > 0)
+                                                    <span class="font-normal text-slate-500">({{ (int) $em['documentos_count'] }} {{ __('docs') }})</span>
+                                                @endif
+                                            </summary>
+                                            <div class="mt-2 space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300 max-w-xs">
+                                                <p><span class="font-semibold">{{ __('Localidade') }}:</span> {{ $em['localidade'] ?? '—' }}</p>
+                                                <p><span class="font-semibold">{{ __('Função') }}:</span> {{ $em['funcao'] ?? '—' }}</p>
+                                                <p><span class="font-semibold">{{ __('Liquidado') }}:</span> {{ $em['valor_liquidado_fmt'] ?? '—' }}</p>
+                                                @if (($em['documentos_count'] ?? 0) > 0)
+                                                    <p class="font-semibold pt-1">{{ __('Documentos orçamentais') }}</p>
+                                                    <ul class="space-y-1">
+                                                        @foreach ($em['documentos'] as $doc)
+                                                            <li class="rounded border border-slate-200 dark:border-slate-700 px-2 py-1">
+                                                                <span class="font-medium">{{ $doc['fase'] ?? '—' }}</span>
+                                                                · {{ $doc['data'] ?? '—' }}
+                                                                <span class="block font-mono text-slate-500">{{ $doc['codigo'] ?? '' }}</span>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @else
+                                                    <p class="text-slate-500">{{ __('Sem documentos importados para esta emenda.') }}</p>
+                                                @endif
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="rounded-md border border-amber-200/80 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-950/20 px-3 py-3 space-y-1.5">
+                    <p class="text-sm text-amber-950 dark:text-amber-100">
+                        {{ $emendas['empty_message'] ?? __('Nenhuma emenda de educação catalogada para este município/ano.') }}
+                    </p>
+                    @if (filled($emendas['enrich_hint'] ?? null))
+                        <p class="text-[11px] font-mono text-amber-900/90 dark:text-amber-200/90 break-all">{{ $emendas['enrich_hint'] }}</p>
+                    @endif
+                </div>
+            @endif
+
+            @if (filled($emendas['footnote'] ?? null))
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">{{ $emendas['footnote'] }}</p>
+            @endif
+        </x-dashboard.consultoria-section>
 
         @if ($transferSeries['available'] ?? false)
             <x-dashboard.consultoria-section

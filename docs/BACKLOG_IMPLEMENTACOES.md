@@ -79,8 +79,8 @@ Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequeno
 |---|--------|-------------------|
 | A1 | Estender `PortalTransparenciaApiClient` para `emendas` (+ `emendas/documentos/{codigo}` quando útil) | **Feito (fase 1)** — `emendas`, `emendasParaMunicipio`, `emendasDocumentos`, `parseValorBrl`, `localidadeMatchesMunicipio` |
 | A2 | Persistência por município/ano (snapshot ou tabela dedicada) + comando/job de enrich (consultoria primeiro) | **Feito** — `municipal_emenda_snapshots` + `funding:enrich-consultoria-emendas` (catálogo anual em cache + match localidade; docs opcionais) |
-| A3 | UI **Finanças → Emendas** (ou secção na aba Financiamentos): catálogo tabular | Colunas mín.: autor/autoría, ano, valor, função, situação, link Portal; detalhe expansível (documentos, localidade) |
-| A4 | Copy de produto: «indicativo Portal»; município sem match → empty state claro | Não inventar vínculo IBGE se o payload não permitir |
+| A3 | UI **Finanças → Emendas** (ou secção na aba Financiamentos): catálogo tabular | **Feito** — secção na aba Financiamentos (`other-funding`) com totais, tabela e detalhe/docs |
+| A4 | Copy de produto: «indicativo Portal»; município sem match → empty state claro | **Feito** — empty + hint `funding:enrich-consultoria-emendas`; footnote de não somar |
 
 #### Eixo B — `HOR-08d`…`g` · Ocorrência comercial Horizonte (proxy SGE / mercado)
 

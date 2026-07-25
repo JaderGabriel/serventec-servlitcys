@@ -4,6 +4,7 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Services\CityDataConnection;
+use App\Services\Funding\MunicipalEmendaCatalogService;
 use App\Services\Funding\MunicipalFundingPublicSnapshotService;
 use App\Services\Funding\MunicipalTransferSeriesService;
 use App\Services\Funding\ProgramRepasseVsMatriculasService;
@@ -27,6 +28,7 @@ class OtherFundingRepository
         private MunicipalFundingPublicSnapshotService $publicSnapshot,
         private MunicipalTransferSeriesService $transferSeries,
         private ProgramRepasseVsMatriculasService $programRepasse,
+        private MunicipalEmendaCatalogService $emendasCatalog,
     ) {}
 
     /**
@@ -46,6 +48,8 @@ class OtherFundingRepository
             'funding_pillars' => [],
             'chart_programas' => null,
             'public_municipal' => [],
+            'transfer_series' => [],
+            'emendas' => [],
             'error' => null,
         ];
 
@@ -53,6 +57,10 @@ class OtherFundingRepository
             $empty['intro'] = __('Selecione cidade e ano letivo para consultar demais financiamentos.');
             if ($city !== null) {
                 $empty['public_municipal'] = $this->publicSnapshot->build($city, $filters);
+                $anoHint = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
+                    ? (int) $filters->ano_letivo
+                    : (int) date('Y');
+                $empty['emendas'] = $this->emendasCatalog->build($city, $anoHint);
             }
 
             return $empty;
@@ -60,12 +68,11 @@ class OtherFundingRepository
 
         $skeleton = $empty;
         $skeleton['city_name'] = (string) $city->name;
+        $ano = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
+            ? (int) $filters->ano_letivo
+            : (int) date('Y');
 
         try {
-            $ano = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
-                ? (int) $filters->ano_letivo
-                : (int) date('Y');
-
             return $this->cityData->run($city, function ($db) use ($city, $filters, $yearLabel, $ano) {
                 $totalMat = MatriculaChartQueries::totalMatriculasAtivasFiltradas($db, $city, $filters);
                 $programs = $this->buildPrograms($db, $city, $filters);
@@ -81,10 +88,10 @@ class OtherFundingRepository
                     'year_label' => $yearLabel,
                     'city_name' => (string) $city->name,
                     'intro' => __(
-                        'Prioridade: Portal da Transparência (recursos ao município + convênios educação). Em seguida a série observada importada. O i-Educar entra só como cobertura agregada de cadastro — não são valores financeiros.'
+                        'Prioridade: Portal da Transparência (recursos, convênios e emendas educação). Em seguida a série observada importada. O i-Educar entra só como cobertura agregada de cadastro — não são valores financeiros.'
                     ),
                     'footnote' => __(
-                        'Não some Portal + série observada + Tempo Real / VAAF. Cobertura i-Educar = % de campos preenchidos. Totais do Portal são amostra filtrada por educação/FNDE.'
+                        'Não some Portal + emendas + série observada + Tempo Real / VAAF. Cobertura i-Educar = % de campos preenchidos. Totais do Portal são amostra filtrada por educação/FNDE; emendas são indicativas por localidade.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,
@@ -93,11 +100,13 @@ class OtherFundingRepository
                     'chart_programas' => $this->chartProgramCoverage($programs),
                     'public_municipal' => $this->publicSnapshot->build($city, $filters),
                     'transfer_series' => $transferSeries,
+                    'emendas' => $this->emendasCatalog->build($city, $ano),
                     'error' => null,
                 ];
             });
         } catch (QueryException|\Throwable $e) {
             $skeleton['error'] = $e->getMessage();
+            $skeleton['emendas'] = $this->emendasCatalog->build($city, $ano);
 
             return $skeleton;
         }

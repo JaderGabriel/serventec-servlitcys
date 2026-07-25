@@ -84,7 +84,7 @@ Ver detalhe e aceitação em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.
 
 | Eixo | IDs | Objectivo |
 |------|-----|-----------|
-| **A · Consultoria Finanças** | FIN-08, HOR-08c | Catálogo + detalhe de **emendas educação** recebidas / ligadas ao município · A1–A2 feitos (`funding:enrich-consultoria-emendas`); falta UI A3–A4 |
+| **A · Consultoria Finanças** | FIN-08, HOR-08c | **A1–A4 feitos** — client, persistência, UI Financiamentos → Emendas (empty state + copy indicativo) |
 | **B · Horizonte ocorrência** | HOR-08d…g | Proxy SGE/concorrentes via contratos·licitações·CNPJ curado·sanções (pesos moderados; sem IBGE-only) |
 
 Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs). Testes com `Http::fake` por path. Respeitar rate limit nos loops `--continue`.
