@@ -1,6 +1,6 @@
 # Roadmap — Canteiro (obras de educação / Obrasgov · SIMEC)
 
-**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24 · **Estado:** implementado (fases 0–7)
+**Versão do produto:** 9.0.0 · **Última revisão:** 2026-07-25 · **Estado:** implementado (fases 0–7) · extrator alinhado à API real
 
 > **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Horizonte:** [ROADMAP_HORIZONTE.md](ROADMAP_HORIZONTE.md) · **Guia técnico:** [HORIZONTE.md](HORIZONTE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) § J · **Consultas:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)
 
@@ -110,8 +110,9 @@ Exemplo: Bahia + Em execução + FNDE ≈ **198** obras. Quase todas com `sistem
 
 | Camada | Campos | Nota |
 |--------|--------|------|
-| Previsto no projeto | `investimentos_previstos[].desc_nome_fonte_recurso` (ex.: `Federal`) + `vl_investimento_previsto` | No spike FNDE o valor veio frequentemente como placeholder (`0.01`) — **não usar como verdade financeira** |
-| Empenho | `/empenho`: `fonte`, `sistema_origem_empenho`, `bd_origem_empenho`, `unidade_orcamentaria`, `programa_trabalho`, `acao_orcamentaria`, `codigo_autor_emenda`, valores liquidado/pago/RP | **Fonte preferida** para origem e volume |
+| Previsto no projeto | `investimentos_previstos[].vl_investimento_previsto` | Placeholder `0.01` **ignorado** pelo extrator (`ObrasgovWorkFieldExtractor::valorPrevisto`) |
+| Empenho | `/empenho`: `valor_empenho`, `liquidado`, `pago` (não `valor_empenhado`/`valor_pago`) | Extrator `totaisEmpenho` |
+| Datas | Projeto: `dt_inicial_efetiva`/`dt_inicial_prevista`; execução: `dt_inicial_execucao`, `dt_atualizacao_execucao`; histórico: `data_historico_situacao_investimento` | Extrator datas |
 | Contrato | `/contrato`: fornecedor, valores, modalidade, `link_transparencia` | Complemento |
 
 ### 4.3 Detalhes do ente

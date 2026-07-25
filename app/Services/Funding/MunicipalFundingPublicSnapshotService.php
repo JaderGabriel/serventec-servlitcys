@@ -587,7 +587,7 @@ final class MunicipalFundingPublicSnapshotService
             : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'transporte escolar', 'mec'];
 
         try {
-            $recursos = $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout, maxPages: 3);
+            $recursos = $this->portalClient->recursosRecebidosParaMunicipio($ibge, $year, $apiKey, $timeout, maxPages: 3);
             $conveniosRaw = $this->portalClient->convenios($ibge, $apiKey, $timeout, $year, maxPages: 2);
 
             $recursosMatched = [];
@@ -709,8 +709,8 @@ final class MunicipalFundingPublicSnapshotService
                 PortalTransparenciaApiClient::DOCS_URL,
                 $flatRows,
                 $hasData
-                    ? __('Amostra: recursos-recebidos (até 3 páginas) + convênios função 12. Classificação por palavras-chave — não é auditoria completa. Use «Repasse observado» após funding:enrich-consultoria-financiamentos.')
-                    : __('Nenhum recurso/convênio com perfil educação neste município/ano na amostra. Confira a chave API, o ano do filtro e o portal manualmente.'),
+                    ? __('Amostra: recursos ao CNPJ do município (codigoFavorecido) + convênios função 12 (última liberação no ano). Sem rótulo PNAE/PNATE/PDDE no Portal, o valor agrega-se como educação/FNDE. Use enrich para gravar a série.')
+                    : __('Nenhum recurso/convênio com perfil educação neste município/ano. Confirme a chave API, o CNPJ resolvido via convênios e o ano do filtro.'),
                 $sections !== [] ? $sections : null,
                 $highlights,
             );
@@ -740,6 +740,12 @@ final class MunicipalFundingPublicSnapshotService
             }
         }
 
+        // Órgãos SIAFI educação (FNDE / MEC) mesmo sem keyword no payload.
+        $orgao = (string) ($item['codigoOrgao'] ?? $item['codigoOrgaoSuperior'] ?? '');
+        if (in_array($orgao, ['26298', '26000'], true)) {
+            return true;
+        }
+
         return false;
     }
 
@@ -750,6 +756,14 @@ final class MunicipalFundingPublicSnapshotService
     {
         $funcao = strtolower((string) ($item['funcao'] ?? $item['nomeFuncao'] ?? $item['codigoFuncao'] ?? ''));
         if ($funcao === '12' || str_contains($funcao, 'educa')) {
+            return true;
+        }
+
+        $sub = is_array($item['subfuncao'] ?? null) ? $item['subfuncao'] : [];
+        $nested = is_array($sub['funcao'] ?? null) ? $sub['funcao'] : [];
+        $codigo = (string) ($nested['codigoFuncao'] ?? '');
+        $desc = strtolower((string) ($nested['descricaoFuncao'] ?? ''));
+        if ($codigo === '12' || str_contains($desc, 'educa')) {
             return true;
         }
 

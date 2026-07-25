@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **9.0.0** · release `20260724f-Opus` · **Ramo:** `main` · **Última revisão:** 2026-07-24
+**Versão em produção:** **9.0.0** · release `20260724f-Opus` · **Ramo:** `main` · **Última revisão:** 2026-07-25
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -189,7 +189,7 @@ flowchart TB
 | Repasses Tesouro CSV + snapshots municipais | Implementado |
 | PDF analítico (fila + comparativos + quadros FUNDEB) | Implementado |
 | Dashboard admin / Conexões | Implementado |
-| Financiamentos (consultas públicas FNDE/Tesouro/Transparência) | Implementado (requer `.env`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
+| Financiamentos (Portal em destaque + série observada; i-Educar agregado) | Implementado (requer `PORTAL_TRANSPARENCIA_API_KEY`; ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)) |
 | Censo (ritmo, meta ano anterior, enturmações) | Implementado |
 | Serventec (diagnóstico + PDF) | Implementado |
 | Gestão de usuários (ativar / desativar / excluir) | Implementado |

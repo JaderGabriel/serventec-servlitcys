@@ -406,8 +406,9 @@ final class MunicipalTransferImportService
             ? $portal['education_keywords']
             : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'mec'];
 
+        // recursos-recebidos exige CNPJ do ente (codigoFavorecido); IBGE sozinho vem vazio.
         $items = array_merge(
-            $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout),
+            $this->portalClient->recursosRecebidosParaMunicipio($ibge, $year, $apiKey, $timeout),
             $this->normalizeConvenioItems(
                 $this->portalClient->convenios($ibge, $apiKey, $timeout, $year),
             ),
@@ -500,6 +501,7 @@ final class MunicipalTransferImportService
             $dim = is_array($item['dimConvenio'] ?? null) ? $item['dimConvenio'] : [];
             $orgao = is_array($item['orgao'] ?? null) ? $item['orgao'] : [];
             $subfuncao = is_array($item['subfuncao'] ?? null) ? $item['subfuncao'] : [];
+            $funcao = is_array($subfuncao['funcao'] ?? null) ? $subfuncao['funcao'] : [];
             $out[] = [
                 'valor' => $item['valorLiberado'] ?? $item['valor'] ?? null,
                 'valorLiberado' => $item['valorLiberado'] ?? null,
@@ -509,8 +511,14 @@ final class MunicipalTransferImportService
                 'data' => $item['dataUltimaLiberacao'] ?? $item['dataReferencia'] ?? null,
                 'objeto' => (string) ($dim['objeto'] ?? ''),
                 'descricao' => (string) ($dim['objeto'] ?? $dim['numero'] ?? ''),
-                'nomeOrgao' => (string) ($orgao['nome'] ?? $orgao['nomeMaximo'] ?? $orgao['descricao'] ?? ''),
-                'subfuncao' => (string) ($subfuncao['descricao'] ?? $subfuncao['nome'] ?? ''),
+                'nomeOrgao' => (string) ($orgao['nome'] ?? $orgao['sigla'] ?? $orgao['nomeMaximo'] ?? $orgao['descricao'] ?? ''),
+                'subfuncao' => (string) (
+                    $subfuncao['descricao']
+                    ?? $subfuncao['descricaoSubfuncap']
+                    ?? $subfuncao['nome']
+                    ?? ''
+                ),
+                'funcao' => (string) ($funcao['descricaoFuncao'] ?? $funcao['codigoFuncao'] ?? ''),
                 'fonte_registro' => 'convenio',
             ];
         }

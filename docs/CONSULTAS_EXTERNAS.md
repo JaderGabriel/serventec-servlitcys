@@ -1,6 +1,6 @@
 # Consultas externas — fontes, necessidade e uso no sistema
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 9.0.0 · **Última revisão:** 2026-07-25
 
 > **Índice:** [README.md](README.md) · **Comandos repasses:** [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1  
 **Âmbito:** servlitcys (painel de análise i-Educar municipal)
@@ -100,7 +100,7 @@ Registos com `fonte` `referencia_nacional_config` são **ignorados** pelo resolv
 |------|---------|
 | **Serviço** | `App\Services\Funding\MunicipalFundingPublicSnapshotService` |
 | **Orquestração** | `OtherFundingRepository` → campo `public_municipal` |
-| **Vista** | `resources/views/dashboard/analytics/partials/other-funding.blade.php` |
+| **Vista** | `resources/views/dashboard/analytics/partials/other-funding.blade.php` — **Portal em destaque**; FUNDEB/FNDE/Tesouro em cards compactos; i-Educar agregado numa tabela de cobertura |
 | **Cache** | `Cache::remember` — chave `other_funding_public:{city_id}:{ibge}:{ano}`, TTL `IEDUCAR_OTHER_FUNDING_PUBLIC_CACHE_TTL` |
 
 Quatro consultas são executadas em cada carregamento (após cache expirar):
@@ -132,15 +132,19 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 
 | | |
 |--|--|
-| **Endpoint** | `GET …/api-de-dados/despesas/recursos-recebidos?codigoIBGE={ibge}&mesAnoInicio=01/{ano}&mesAnoFim=12/{ano}&pagina=1` (+ `convenios?codigoIBGE=`) |
+| **Endpoint recursos** | `GET …/despesas/recursos-recebidos` com **`codigoFavorecido` = CNPJ da prefeitura** (resolvido via convênios e cacheado). `codigoIBGE` sozinho costuma devolver lista vazia para o ente. |
+| **Endpoint convênios** | `GET …/convenios?codigoIBGE=&funcao=12` — filtro de ano por **`dataUltimaLiberacaoInicial/Final`** (não início de vigência). |
+| **Cliente** | `App\Support\Funding\PortalTransparenciaApiClient` |
 | **Autenticação** | Header `chave-api-dados: {PORTAL_TRANSPARENCIA_API_KEY}` |
 | **Cadastro** | [portaldatransparencia.gov.br/api-de-dados/cadastrar-email](https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email) (gratuito; gov.br) |
 | **Swagger** | [api.portaldatransparencia.gov.br/swagger-ui](https://api.portaldatransparencia.gov.br/swagger-ui/index.html) |
 
-- **Necessidade:** cruzar **execução federal** no município com programas educacionais (filtro por palavras-chave em `IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS`).
-- **Impacto:** card com **totais** (recursos filtrados + convênios função 12), amostras em secções e destaque numérico; até `IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS` linhas por secção. Sem chave, consulta fica «Não consultado».
-- **Nota:** amostra filtrada por palavras-chave; não lista todos os programas — uso de apoio à consultoria, não auditoria completa. Para série por programa (PNAE/PNATE/PDDE): `funding:enrich-consultoria-financiamentos`.
-- **Oportunidades / roadmap:** inventário completo (~106 endpoints) e IDs FIN-07–10 / HOR-08b–g em **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)**.
+- **UI (2026-07):** bloco **principal** da aba Financiamentos (totais + amostras). FUNDEB/FNDE/Tesouro ficam em cards compactos de contexto.
+- **Necessidade:** cruzar **execução federal** no município com perfil educação (keywords + órgãos FNDE/MEC).
+- **Impacto:** highlights de recursos/convênios; enrich grava série em `municipal_transfer_snapshots` (`fonte=portal_transparencia`). Sem chave, consulta fica «Não consultado».
+- **Limitação:** payload mensal do FNDE **não** rotula PNAE/PNATE/PDDE — agregados sem keyword vão para `geral_educacao` («Educação / transferências»).
+- **Ops:** `php artisan funding:enrich-consultoria-financiamentos --ano=YYYY` · após `.env`: `config:clear` / `config:cache`.
+- **Roadmap:** [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) (FIN-07–10 / HOR-08b–g).
 
 #### E) Obrasgov.br — obras de educação (Canteiro)
 
@@ -150,12 +154,13 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 | **Auth** | Não requerida (dados abertos) |
 | **Filtro educação (MVP)** | CNPJ FNDE `00378257000262` |
 | **Persistência** | `municipal_education_works`, `education_work_finance_snapshots` |
+| **Extrator** | `ObrasgovWorkFieldExtractor` — nomes reais da API (`dt_inicial_*`, `dt_inicial_execucao`, `valor_empenho`/`pago`/`liquidado`; ignora previsto `0.01`) |
 | **Comandos** | `horizonte:sync-obras` · `horizonte:canteiro-alerts` · fase `obras_sync` |
 | **Doc** | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) |
 
 - **Necessidade:** inventário físico de obras escolares (paralisadas, em execução, inacabadas, etc.) distinto de convênios/empenhos (HOR-08).
 - **Impacto:** bloco **Canteiro** no modal Horizonte, pins no mapa, scoring `infra_works`, alertas mensais só para consultoria activa.
-- **Riscos mitigados:** não usar `investimentos_previstos` como R$ oficial; preferir `/empenho` e `%` físico; IBGE via `/geometria`; API antiga desligada em 31/08/2026.
+- **Riscos mitigados:** não usar `investimentos_previstos` placeholder como R$ oficial; preferir `/empenho` e `%` físico; IBGE via `/geometria`.
 
 **Variáveis `.env` (Financiamentos)**
 
@@ -177,12 +182,14 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 | Item | Detalhe |
 |------|---------|
 | **Serviço** | `OtherFundingRepository` |
-| **Fonte** | Base **municipal** i-Educar (`matricula`, colunas configuráveis em `config/ieducar.php` → `other_funding.programs`) |
-| **Rede externa** | Não — apenas detecção automática de colunas (`transporte_escolar`, `alimentacao_escolar`, etc.) |
+| **Fonte** | Base **municipal** i-Educar (`matricula`, colunas em `config/ieducar.php` → `other_funding.programs`) |
+| **Rede externa** | Não — detecção de colunas (`transporte_escolar`, `alimentacao_escolar`, etc.) |
+| **UI** | Bloco **secundário** na aba Financiamentos: tabela agregada de cobertura (% / estado); detalhe (transporte, pilares, gráfico) recolhido |
 
 **Necessidade**
 
 - Medir **cobertura de cadastro** que alimenta elegibilidade a PNAE, PNATE e PDDE no Censo.
+- **Não** substituir valores do Portal / série observada — a UI deixa explícito que i-Educar ≠ R$ de repasse.
 - Ligar ao pilar «Programas complementares» das discrepâncias (`DiscrepanciesFundingImpact::fundingPillars`).
 
 **Impacto**
@@ -201,7 +208,7 @@ IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID=
 | **Conciliação** | `FundebExtratoFontePriority` + `FundebTransferScope` — totais em **Finanças → Tempo Real** ignoram `tesouro_publicacao` (agregado **UF**, folha STN `M_TOTAL`); usam fontes municipais (`tesouro_csv`, `sisweb_*`, `bb_extrato`, etc.). O extrato visual lista todas as fontes gravadas, mas o saldo acumulado por município só soma snapshots municipais. |
 | **Rebuild Tempo Real** | `php artisan funding:rebuild-finance-realtime` — apaga `municipal_transfer_snapshots` do(s) ano(s) e reimporta por município (`MunicipalTransferImportService`). Em **production** exige `--confirm=rebuild-repasses-{ano}`. |
 | **Enriquecer Financiamentos (consultoria)** | `php artisan funding:enrich-consultoria-financiamentos --ano=2025` — importa Portal/Tesouro **sem** FUNDEB e aquece consultas públicas para cidades com consultoria activa. Ver [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1b. |
-| **UI** | Seção «Repasse observado (série histórica)» na aba Financiamentos; comparativo e extrato simulado em **Finanças → Tempo Real** (`?tab=finance_realtime`). CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1 |
+| **UI** | Aba Financiamentos: **Portal em destaque** → série observada → cobertura i-Educar agregada. Comparativo/extrato FUNDEB em **Finanças → Tempo Real** (`?tab=finance_realtime`). CLI: [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) §4.1 |
 | **Deduplicação na aba Financiamentos (4.1.6)** | Totais por ano e repasse por programa (PNAE, PNATE, …) usam `FundebExtratoFontePriority::pickPrimaryPerProgram` — **uma fonte por programa**, mesma regra que Tempo Real. Evita somar CKAN + SISWEB + BB no mesmo ano. A UI avisa: não somar com VAAF nem com Tempo Real. Com snapshots locais, consultas CKAN em paralelo ficam desligadas (`MunicipalFundingPublicSnapshotService`). |
 
 ### 3.5 Censo INEP × i-Educar (v2.3)

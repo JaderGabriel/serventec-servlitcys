@@ -179,7 +179,7 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--continue`, `--reset`, `--refresh`, `--dry-run`. Fase `siconfi_sync` no feed. **Agendamento semestral** (jan/jul) com lotes `--continue`. |
 | `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
-| `horizonte:sync-obras` | **Canteiro** — obras educação FNDE/SIMEC (API pública Obrasgov). Opções: `--uf=`, `--situacao=`, `--continue`, `--reset`, `--limit-pages=`, `--no-enrich-finance`, `--dry-run`. Enrich grava % físico, empenho/pago, **previsto (indicativo)**, datas de início/paralisação/aferição. Fase `obras_sync` no feed. **Agendamento mensal** staged. |
+| `horizonte:sync-obras` | **Canteiro** — obras educação FNDE/SIMEC (API pública Obrasgov). Opções: `--uf=`, `--situacao=`, `--continue`, `--reset`, `--limit-pages=`, `--no-enrich-finance`, `--dry-run`. Enrich grava % físico, **empenho** (`valor_empenho`/`pago`/`liquidado`), previsto (ignora `0.01`), datas (`dt_inicial_execucao`, histórico, `dt_atualizacao_execucao`). Fase `obras_sync`. **Agendamento mensal** staged. |
 | `horizonte:canteiro-alerts` | Snapshot mensal de alertas Canteiro **só consultoria activa** (`hasDataSetup`). Opções: `--dry-run`, `--pdf`. Deep-link SIMEC no payload. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
 | `horizonte:warm-map-cache` | Aquece cache JSON do mapa (overview + UFs) — evita 503 na primeira visita. Opções: `--uf=`, `--skip-overview`. Agendado semanalmente (domingo 05:30). |
@@ -287,7 +287,7 @@ Grava em **`municipal_transfer_snapshots`** (IBGE, ano civil, fonte, `programa_i
 | Comando / tarefa | Descrição |
 |------------------|-----------|
 | `funding:rebuild-finance-realtime` | **Rebuild completo:** apaga snapshots do(s) ano(s) e reimporta por município (`MunicipalTransferImportService` — Tesouro CSV, SISWEB, BB, Portal). |
-| `funding:enrich-consultoria-financiamentos` | **Financiamentos (além do FUNDEB):** Portal/Tesouro sem `programa_id=fundeb` + aquece consultas públicas nas consultorias activas. |
+| `funding:enrich-consultoria-financiamentos` | **Financiamentos (além do FUNDEB):** Portal (`codigoFavorecido`/CNPJ + convênios) e Tesouro **sem** `programa_id=fundeb`; aquece consultas públicas nas consultorias activas. |
 | Fila `funding::import_transfers_city_year` | Mesma importação **por cidade/ano** via Admin → Dados públicos (sem apagar outros anos). |
 | `weekly-mass-sync:run` | Enfileira repasses entre outras tarefas semanais (checkpoint retomável). |
 

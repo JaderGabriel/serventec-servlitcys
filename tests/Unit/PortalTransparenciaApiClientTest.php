@@ -12,6 +12,7 @@ use App\Services\Funding\TesouroFundebPublicacaoService;
 use App\Services\Funding\TesouroTransferenciasCsvService;
 use App\Support\Funding\MunicipalTransferGranularityEnricher;
 use App\Support\Funding\PortalTransparenciaApiClient;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Mockery;
 use PHPUnit\Framework\Attributes\Test;
@@ -63,8 +64,67 @@ final class PortalTransparenciaApiClientTest extends TestCase
     }
 
     #[Test]
+    public function recursos_para_municipio_usa_cnpj_favorecido(): void
+    {
+        Cache::flush();
+
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/convenios*' => Http::response([
+                [
+                    'convenente' => [
+                        'nome' => 'MUNICIPIO DE ITAMARI',
+                        'cnpjFormatado' => '13.753.959/0001-40',
+                    ],
+                ],
+            ], 200),
+            'api.portaldatransparencia.gov.br/api-de-dados/despesas/recursos-recebidos*' => Http::response([
+                [
+                    'anoMes' => 202503,
+                    'nomeOrgao' => 'Fundo Nacional de Desenvolvimento da Educação',
+                    'nomeUG' => 'FUNDO NACIONAL DE DESENVOLVIMENTO DA EDUCACAO',
+                    'codigoOrgao' => '26298',
+                    'valor' => 15000.5,
+                ],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $rows = $client->recursosRecebidosParaMunicipio('2915700', 2025, 'token-teste', 10, 1);
+
+        $this->assertCount(1, $rows);
+        Http::assertSent(function ($request): bool {
+            if (! str_contains($request->url(), '/despesas/recursos-recebidos')) {
+                return false;
+            }
+
+            return ($request['codigoFavorecido'] ?? null) === '13753959000140'
+                && ! isset($request['codigoIBGE']);
+        });
+    }
+
+    #[Test]
+    public function convenios_filtra_ano_pela_ultima_liberacao(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/convenios*' => Http::response([], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $client->convenios('2907608', 'token-teste', 10, 2026, 1);
+
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/convenios')
+                && ($request['dataUltimaLiberacaoInicial'] ?? null) === '01/01/2026'
+                && ($request['dataUltimaLiberacaoFinal'] ?? null) === '31/12/2026'
+                && ! isset($request['dataInicial']);
+        });
+    }
+
+    #[Test]
     public function import_complementar_grava_pnae_do_portal_e_omite_fundeb(): void
     {
+        Cache::flush();
+
         config([
             'ieducar.funding.transfers.enabled' => true,
             'ieducar.other_funding.public_queries.portal_transparencia.enabled' => true,
@@ -74,6 +134,14 @@ final class PortalTransparenciaApiClientTest extends TestCase
         ]);
 
         Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/convenios*' => Http::response([
+                [
+                    'convenente' => [
+                        'nome' => 'MUNICIPIO DE ITAMARI',
+                        'cnpjFormatado' => '13.753.959/0001-40',
+                    ],
+                ],
+            ], 200),
             'api.portaldatransparencia.gov.br/api-de-dados/despesas/recursos-recebidos*' => Http::response([
                 [
                     'anoMes' => 202504,
@@ -86,7 +154,6 @@ final class PortalTransparenciaApiClientTest extends TestCase
                     'valor' => 999999,
                 ],
             ], 200),
-            'api.portaldatransparencia.gov.br/api-de-dados/convenios*' => Http::response([], 200),
         ]);
 
         $city = new City([

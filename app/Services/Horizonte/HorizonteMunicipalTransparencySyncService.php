@@ -108,7 +108,7 @@ final class HorizonteMunicipalTransparencySyncService
         array $techKeywords,
     ): ?array {
         try {
-            $despesaItems = $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout, maxPages: 3);
+            $despesaItems = $this->portalClient->recursosRecebidosParaMunicipio($ibge, $year, $apiKey, $timeout, maxPages: 3);
             $convenioItems = $this->portalClient->convenios($ibge, $apiKey, $timeout, $year, maxPages: 2);
         } catch (\Throwable $e) {
             Log::warning('horizonte.transparency_fetch_failed', ['ibge' => $ibge, 'message' => $e->getMessage()]);

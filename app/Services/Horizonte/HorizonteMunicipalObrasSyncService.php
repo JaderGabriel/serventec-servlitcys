@@ -277,49 +277,37 @@ final class HorizonteMunicipalObrasSyncService
      */
     private function enrichFinance(string $idProjeto, string $situacao, array $projeto = []): array
     {
-        $percentual = null;
-        $valorEmpenhado = null;
-        $valorPago = null;
         $historico = null;
-        $execucao = null;
 
         $execucao = $this->client->getExecucaoFisica($idProjeto);
-        if (is_array($execucao) && isset($execucao['percentual_execucao_fisica']) && is_numeric($execucao['percentual_execucao_fisica'])) {
-            $percentual = (float) $execucao['percentual_execucao_fisica'];
-        }
+        $percentual = ObrasgovWorkFieldExtractor::percentualExecucao(is_array($execucao) ? $execucao : null);
 
         $empenhos = $this->client->getEmpenhos($idProjeto);
-        if ($empenhos !== []) {
-            $sumEmpenhado = 0.0;
-            $sumPago = 0.0;
-            foreach ($empenhos as $emp) {
-                if (! is_array($emp)) {
-                    continue;
-                }
-                $sumEmpenhado += (float) ($emp['valor_empenhado'] ?? 0);
-                $sumPago += (float) ($emp['valor_pago'] ?? 0);
-            }
-            if ($sumEmpenhado > 0) {
-                $valorEmpenhado = $sumEmpenhado;
-            }
-            if ($sumPago > 0) {
-                $valorPago = $sumPago;
-            }
+        $totaisEmp = ObrasgovWorkFieldExtractor::totaisEmpenho($empenhos);
+        $valorEmpenhado = $totaisEmp['valor_empenhado'];
+        $valorPago = $totaisEmp['valor_pago'];
 
-            if ($empenhos !== [] && count($empenhos) > 0 && is_array($empenhos[0])) {
-                $primeiro = $empenhos[0];
-                EducationWorkFinanceSnapshot::query()->updateOrCreate(
-                    ['id_projeto_investimento' => $idProjeto],
-                    [
-                        'fonte_orcamentaria' => mb_substr(trim((string) ($primeiro['fonte'] ?? '')), 0, 128) ?: null,
-                        'valor_empenho' => $valorEmpenhado,
-                        'valor_liquidado' => (float) ($primeiro['valor_liquidado'] ?? 0) > 0 ? (float) $primeiro['valor_liquidado'] : null,
-                        'valor_pago' => $valorPago,
-                        'meta' => is_array($primeiro['meta'] ?? null) ? $primeiro['meta'] : null,
-                        'imported_at' => now(),
-                    ]
-                );
-            }
+        if ($empenhos !== [] && is_array($empenhos[0] ?? null)) {
+            EducationWorkFinanceSnapshot::query()->updateOrCreate(
+                ['id_projeto_investimento' => $idProjeto],
+                [
+                    'fonte_orcamentaria' => $totaisEmp['fonte'],
+                    'valor_empenho' => $valorEmpenhado,
+                    'valor_liquidado' => $totaisEmp['valor_liquidado'],
+                    'valor_pago' => $valorPago,
+                    'meta' => is_array($empenhos[0]['meta'] ?? null) ? $empenhos[0]['meta'] : [
+                        'empenhos_count' => count($empenhos),
+                        'amostra' => array_intersect_key($empenhos[0], array_flip([
+                            'nr_empenho',
+                            'sistema_origem_empenho',
+                            'bd_origem_empenho',
+                            'programa_trabalho',
+                            'ug_emitente',
+                        ])),
+                    ],
+                    'imported_at' => now(),
+                ]
+            );
         }
 
         if (in_array($situacao, ['Paralisada', 'Cancelada'], true)) {

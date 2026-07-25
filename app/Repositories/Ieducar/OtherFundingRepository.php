@@ -81,10 +81,10 @@ class OtherFundingRepository
                     'year_label' => $yearLabel,
                     'city_name' => (string) $city->name,
                     'intro' => __(
-                        'Financiamentos complementares: consultas públicas (FUNDEB local, FNDE, Tesouro, Portal — recursos recebidos + convênios educação) e cobertura PNAE/PNATE/PDDE no i-Educar. O Portal classifica por palavras-chave; a série «Repasse observado» usa snapshots importados (deduplicados por programa).'
+                        'Prioridade: Portal da Transparência (recursos ao município + convênios educação). Em seguida a série observada importada. O i-Educar entra só como cobertura agregada de cadastro — não são valores financeiros.'
                     ),
                     'footnote' => __(
-                        'VAAF/VAAT ≠ repasse em R$. Não some Consultas públicas + Repasse observado + Tempo Real. Cobertura i-Educar = preenchimento de campos, não valores financeiros. Previsto Portal ≠ empenho/pago.'
+                        'Não some Portal + série observada + Tempo Real / VAAF. Cobertura i-Educar = % de campos preenchidos. Totais do Portal são amostra filtrada por educação/FNDE.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,
