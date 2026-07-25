@@ -139,6 +139,28 @@
     table.data--compact th,
     table.data--compact td { padding: 4px 5px; }
     table.data--schools td:first-child { width: 52%; }
+
+    /* Diagnóstico Geral — quebra segura (DomPDF): thead repetido, linhas curtas, sem invadir rodapé */
+    table.diag-geral-table {
+        page-break-inside: auto;
+    }
+    table.diag-geral-table thead {
+        display: table-header-group;
+    }
+    table.diag-geral-table tfoot {
+        display: table-row-group;
+    }
+    table.diag-geral-table tr.diag-geral-row {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    table.diag-geral-totals {
+        page-break-inside: avoid;
+    }
+    .diag-geral-notice {
+        page-break-inside: avoid;
+    }
+
     .box { background: #ecfdf5; border: 1px solid #99f6e4; border-left: 4px solid {{ $primary }}; padding: 10px 12px; margin: 10px 0; color: #1e293b; page-break-inside: avoid; }
     .chart-block { text-align: center; margin: 14px 0; page-break-inside: avoid; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 8px 12px; background: #fff; max-width: 100%; overflow: hidden; }
     .chart-block svg { max-width: 100%; height: auto; }

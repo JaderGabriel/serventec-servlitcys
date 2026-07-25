@@ -535,6 +535,7 @@
                                             <th class="px-4 py-2 font-medium text-right" title="{{ __('Alunos elegíveis no indicador') }}">{{ __('Elegíveis') }}</th>
                                             <th class="px-4 py-2 font-medium text-right" title="{{ __('Atraso ≥ 2 anos vs idade esperada em 31/03') }}">{{ __('Distorção') }}</th>
                                             <th class="px-4 py-2 font-medium text-right" title="{{ __('Exatamente 1 ano acima da idade esperada') }}">{{ __('Atraso 1 ano') }}</th>
+                                            <th class="px-4 py-2 font-medium text-right" title="{{ __('Idade abaixo da esperada para a série') }}">{{ __('Adiantados') }}</th>
                                             <th class="px-4 py-2 font-medium text-right" title="{{ __('Idade alinhada à esperada') }}">{{ __('Adequados') }}</th>
                                             <th class="px-4 py-2 font-medium text-right" title="{{ __('Distorção ÷ Elegíveis') }}">%</th>
                                         </tr>
@@ -546,6 +547,7 @@
                                                 <td class="px-4 py-2 text-right tabular-nums">{{ number_format((int) $row['eligible']) }}</td>
                                                 <td class="px-4 py-2 text-right tabular-nums">{{ number_format((int) $row['distorcao']) }}</td>
                                                 <td class="px-4 py-2 text-right tabular-nums">{{ number_format((int) $row['atraso_1']) }}</td>
+                                                <td class="px-4 py-2 text-right tabular-nums">{{ number_format((int) ($row['adiantado'] ?? 0)) }}</td>
                                                 <td class="px-4 py-2 text-right tabular-nums">{{ number_format((int) $row['adequado']) }}</td>
                                                 <td class="px-4 py-2 text-right tabular-nums">{{ isset($row['pct']) ? number_format((float) $row['pct'], 1).'%' : '—' }}</td>
                                             </tr>

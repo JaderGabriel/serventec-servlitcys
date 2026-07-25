@@ -2,10 +2,15 @@
 
 namespace App\Services\Clio\Export;
 
+use App\Models\Bi\BiClioInclusion;
+use App\Models\Bi\BiClioSchool;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
+use App\Services\Clio\Analysis\EtapaLabelOrder;
 use App\Services\Clio\Parse\CampaignParseService;
+use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
+use App\Support\Analytics\AnalyticsReportChartSvg;
 use Illuminate\Support\Collection;
 
 /**
@@ -17,6 +22,7 @@ final class CampaignFinalPdfComposer
         private readonly CampaignParseService $parser,
         private readonly CampaignAnalysisPresenter $presenter,
         private readonly DiagnosticoGeralComposer $diagnosticoGeral,
+        private readonly HorizonteMunicipioEnrollmentSeriesService $enrollmentSeries,
     ) {}
 
     /**
@@ -25,6 +31,7 @@ final class CampaignFinalPdfComposer
      *   themes: list<array<string, mixed>>,
      *   diagnostico_geral: array<string, mixed>,
      *   schools_triade: list<array<string, mixed>>,
+     *   triade_summary: array{kpis: list<array{label: string, value: string}>, diagnosis: list<string>},
      *   coverage: array<string, mixed>
      * }
      */
@@ -50,15 +57,18 @@ final class CampaignFinalPdfComposer
         $findings = $campaign->findings;
 
         $themes = array_values(array_filter([
-            $this->themeRede($dashboard, $findings),
+            $this->themeSerieHistorica($campaign),
             $this->themeMatriculas($dashboard, $findings),
-            $this->themeInclusao($dashboard, $findings),
+            $this->themeInclusao($campaign, $dashboard, $findings),
+            $this->themeDensidade($dashboard, $findings),
             $this->themeDistorcao($dashboard, $findings),
             $this->themeDemografia($dashboard, $findings),
             $this->themeTransporte($dashboard, $findings),
             $this->themeTemposEscolares($dashboard, $findings),
-            $this->themeDensidade($dashboard, $findings),
         ], static fn (?array $theme): bool => $theme !== null));
+
+        $counters = is_array($dashboard['counters'] ?? null) ? $dashboard['counters'] : [];
+        $triade = is_array($dashboard['triade'] ?? null) ? $dashboard['triade'] : [];
 
         $schoolsTriade = collect($dashboard['schools_active'] ?? [])
             ->map(static function (array $row): array {
@@ -84,49 +94,150 @@ final class CampaignFinalPdfComposer
             'themes' => $themes,
             'diagnostico_geral' => $this->diagnosticoGeral->compose($campaign),
             'schools_triade' => $schoolsTriade,
+            'triade_summary' => [
+                'kpis' => [
+                    ['label' => __('Escolas ativas'), 'value' => $this->fmtInt($counters['schools_active'] ?? 0)],
+                    ['label' => __('Tríade completa'), 'value' => $this->fmtInt($counters['schools_triade'] ?? 0)],
+                    ['label' => __('Cobertura tríade'), 'value' => $this->fmtPct($triade['pct'] ?? null)],
+                    ['label' => __('Com erros'), 'value' => $this->fmtInt($counters['schools_with_errors'] ?? 0)],
+                ],
+                'diagnosis' => $this->highlightSummary($dashboard, ['INF-COL', 'INF-ESC', 'INF-COE']),
+            ],
             'coverage' => $coverage,
         ];
     }
 
     /**
-     * @param  array<string, mixed>  $dashboard
-     * @param  Collection<int, ClioCampaignFinding>  $findings
+     * Série histórica Censo INEP (primeiro tópico do PDF Final).
+     *
      * @return array<string, mixed>|null
      */
-    private function themeRede(array $dashboard, Collection $findings): ?array
+    private function themeSerieHistorica(ClioCampaign $campaign): ?array
     {
-        $counters = is_array($dashboard['counters'] ?? null) ? $dashboard['counters'] : [];
-        $triade = is_array($dashboard['triade'] ?? null) ? $dashboard['triade'] : [];
-        $buckets = is_array($dashboard['collection_buckets'] ?? null) ? $dashboard['collection_buckets'] : [];
+        $ibge = (string) ($campaign->ibge_municipio ?: $campaign->city?->ibge_municipio ?? '');
+        if ($ibge === '') {
+            return null;
+        }
+
+        $series = $this->enrollmentSeries->forIbge($ibge, 5, 'municipal', allowConsultoriaActive: true);
+        if (($series['ok'] ?? false) !== true) {
+            return null;
+        }
+
+        $chart = is_array($series['chart'] ?? null) ? $series['chart'] : [];
+        $labels = is_array($chart['labels'] ?? null) ? $chart['labels'] : [];
+        $datasets = is_array($chart['datasets'] ?? null) ? $chart['datasets'] : [];
+        if ($labels === [] || $datasets === []) {
+            return null;
+        }
+
+        $chartImg = null;
+        try {
+            $chartImg = AnalyticsReportChartSvg::renderDataUri($chart, 520, 248);
+        } catch (\Throwable) {
+            $chartImg = null;
+        }
+
+        $latest = is_array($series['latest_summary'] ?? null) ? $series['latest_summary'] : [];
+        $latestAno = (string) ($latest['ano'] ?? (end($labels) ?: '—'));
+        $latestTotal = (int) ($latest['total'] ?? 0);
+        if ($latestTotal === 0) {
+            foreach ($datasets as $ds) {
+                if (! is_array($ds)) {
+                    continue;
+                }
+                $key = mb_strtolower((string) ($ds['key'] ?? $ds['label'] ?? ''));
+                if ($key === 'total' || str_contains($key, 'total')) {
+                    $data = is_array($ds['data'] ?? null) ? $ds['data'] : [];
+                    $latestTotal = (int) (end($data) ?: 0);
+                    break;
+                }
+            }
+        }
+
+        $prevTotal = null;
+        foreach ($datasets as $ds) {
+            if (! is_array($ds)) {
+                continue;
+            }
+            $key = mb_strtolower((string) ($ds['key'] ?? $ds['label'] ?? ''));
+            if ($key === 'total' || str_contains($key, 'total')) {
+                $data = is_array($ds['data'] ?? null) ? array_values($ds['data']) : [];
+                if (count($data) >= 2) {
+                    $prevTotal = (int) $data[count($data) - 2];
+                }
+                break;
+            }
+        }
+
+        $deltaLabel = '—';
+        if ($prevTotal !== null) {
+            $delta = $latestTotal - $prevTotal;
+            $deltaLabel = ($delta > 0 ? '+' : '').$this->fmtInt($delta);
+        }
 
         $kpis = [
-            ['label' => __('Escolas ativas'), 'value' => $this->fmtInt($counters['schools_active'] ?? 0)],
-            ['label' => __('Tríade completa'), 'value' => $this->fmtInt($counters['schools_triade'] ?? 0)],
-            ['label' => __('Cobertura tríade'), 'value' => $this->fmtPct($triade['pct'] ?? null)],
-            ['label' => __('Com erros'), 'value' => $this->fmtInt($counters['schools_with_errors'] ?? 0)],
+            ['label' => __('Último ano (:y)', ['y' => $latestAno]), 'value' => $this->fmtInt($latestTotal)],
+            ['label' => __('Variação vs ano anterior'), 'value' => $deltaLabel],
+            ['label' => __('Anos na série'), 'value' => $this->fmtInt(count($labels))],
+            ['label' => __('Recorte'), 'value' => (string) ($series['dependencia_label'] ?? __('Municipal'))],
         ];
 
-        $table = [
-            'headers' => [__('Indicador'), __('Qtd.')],
-            'rows' => [
-                [__('Em andamento'), $this->fmtInt($buckets['em_andamento'] ?? 0)],
-                [__('Não iniciou'), $this->fmtInt($buckets['nao_iniciou'] ?? 0)],
-                [__('Fechada'), $this->fmtInt($buckets['fechada'] ?? 0)],
-                [__('Bloqueada'), $this->fmtInt($buckets['bloqueada'] ?? 0)],
-                [__('Incompletas (tríade)'), $this->fmtInt($counters['schools_incomplete'] ?? 0)],
-                [__('Completas sem erro'), $this->fmtInt($counters['schools_ok'] ?? 0)],
-            ],
-        ];
+        $headers = array_merge([__('Indicador')], array_map(static fn ($y): string => (string) $y, $labels));
+        $rows = [];
+        foreach ($datasets as $ds) {
+            if (! is_array($ds)) {
+                continue;
+            }
+            $row = [(string) ($ds['label'] ?? '—')];
+            foreach (is_array($ds['data'] ?? null) ? $ds['data'] : [] as $val) {
+                $row[] = ($val === null || $val === '') ? '—' : $this->fmtInt($val);
+            }
+            $rows[] = $row;
+        }
 
-        return $this->makeTheme(
-            key: 'rede',
-            title: __('Rede e cobertura da tríade'),
-            lead: __('Retrato da coleta: escolas em atividade, completude aluno+turma+profissional e andamento declarado.'),
+        $diagnosis = [];
+        $footnote = trim((string) ($series['footnote'] ?? ''));
+        if ($footnote !== '') {
+            $diagnosis[] = $footnote;
+        }
+        $diagnosis[] = __('Fonte: Censo Escolar / Educacenso (INEP), agregação municipal indexada — não substitui os totais da coleta Clio.');
+
+        $stageItems = is_array($series['stage_counters']['items'] ?? null) ? $series['stage_counters']['items'] : [];
+        if ($stageItems !== []) {
+            $parts = [];
+            foreach ($stageItems as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $parts[] = ((string) ($item['label'] ?? '')).': '.$this->fmtInt($item['value'] ?? 0);
+            }
+            if ($parts !== []) {
+                $diagnosis[] = __('Último ano com dados (:y) — :p', [
+                    'y' => (string) ($series['stage_counters']['ano'] ?? $latestAno),
+                    'p' => implode(' · ', $parts),
+                ]);
+            }
+        }
+
+        $theme = $this->makeTheme(
+            key: 'serie_historica',
+            title: __('Série histórica de matrículas'),
+            lead: __('Evolução das matrículas da rede municipal no Censo INEP (últimos anos indexados), com gráfico e tabela por segmento.'),
             kpis: $kpis,
-            diagnosis: $this->highlightSummary($dashboard, ['INF-COL', 'INF-ESC', 'INF-COE']),
-            tables: [$table],
-            findings: $this->findingsFor($findings, ['TRIAD', 'COL', 'COE', 'DUP']),
+            diagnosis: $diagnosis,
+            tables: [[
+                'title' => __('Matrículas por ano (Censo)'),
+                'headers' => $headers,
+                'rows' => $rows,
+            ]],
+            findings: [],
         );
+
+        $theme['chart_img'] = $chartImg;
+        $theme['chart_alt'] = __('Série histórica de matrículas');
+
+        return $theme;
     }
 
     /**
@@ -173,11 +284,27 @@ final class CampaignFinalPdfComposer
             ];
         }
 
-        $etapaRows = [];
-        foreach (array_slice(is_array($report['matriculas_por_ano'] ?? null) ? $report['matriculas_por_ano'] : [], 0, 12) as $bar) {
+        $etapaBars = [];
+        $outrosBar = null;
+        foreach (is_array($report['matriculas_por_ano'] ?? null) ? $report['matriculas_por_ano'] : [] as $bar) {
             if (! is_array($bar)) {
                 continue;
             }
+            $label = (string) ($bar['label'] ?? '');
+            if ($label === __('Outros') || mb_strtolower($label) === 'outros') {
+                $outrosBar = $bar;
+
+                continue;
+            }
+            $etapaBars[] = $bar;
+        }
+        $etapaBars = (new EtapaLabelOrder)->sortRowsByEtapaKey($etapaBars, 'label');
+        if ($outrosBar !== null) {
+            $etapaBars[] = $outrosBar;
+        }
+
+        $etapaRows = [];
+        foreach ($etapaBars as $bar) {
             $etapaRows[] = [
                 (string) ($bar['label'] ?? '—'),
                 $this->fmtInt($bar['count'] ?? 0),
@@ -212,7 +339,7 @@ final class CampaignFinalPdfComposer
      * @param  Collection<int, ClioCampaignFinding>  $findings
      * @return array<string, mixed>|null
      */
-    private function themeInclusao(array $dashboard, Collection $findings): ?array
+    private function themeInclusao(ClioCampaign $campaign, array $dashboard, Collection $findings): ?array
     {
         $profile = is_array($dashboard['profile'] ?? null) ? $dashboard['profile'] : [];
         $reportInc = is_array(($dashboard['report']['inclusion'] ?? null)) ? $dashboard['report']['inclusion'] : [];
@@ -221,11 +348,15 @@ final class CampaignFinalPdfComposer
             return null;
         }
 
+        $semAee = (int) ($profile['nee_without_aee'] ?? 0);
+        $aeeSemNee = (int) ($profile['nee_aee_without_condition'] ?? 0);
+        $under = (int) ($profile['underreporting_flagged'] ?? 0);
+
         $kpis = [
             ['label' => __('Com marcador NEE'), 'value' => $this->fmtInt($profile['nee_flagged'] ?? $reportInc['flagged'] ?? 0)],
-            ['label' => __('Alunos lidos'), 'value' => $this->fmtInt($profile['scanned'] ?? $reportInc['scanned'] ?? 0)],
-            ['label' => __('Deficiências'), 'value' => $this->fmtInt($profile['deficiency_flagged'] ?? 0)],
-            ['label' => __('Transtornos'), 'value' => $this->fmtInt($profile['disorder_flagged'] ?? 0)],
+            ['label' => __('NEE sem AEE'), 'value' => $this->fmtInt($semAee)],
+            ['label' => __('AEE sem NEE'), 'value' => $this->fmtInt($aeeSemNee)],
+            ['label' => __('Alertas tipificação'), 'value' => $this->fmtInt($under)],
         ];
 
         $rows = [];
@@ -245,13 +376,35 @@ final class CampaignFinalPdfComposer
             'rows' => $rows,
         ]];
 
+        $schoolRows = $this->inclusaoSchoolCaseRows($campaign);
+        if ($schoolRows !== []) {
+            $tables[] = [
+                'title' => __('Escolas com NEE sem AEE ou AEE sem tipificação'),
+                'headers' => [__('INEP'), __('Escola'), __('NEE sem AEE'), __('AEE sem NEE'), __('Com NEE')],
+                'rows' => $schoolRows,
+            ];
+        }
+
         $diagnosis = $this->highlightSummary($dashboard, ['INF-NEE', 'INF-GAP']);
+        if ($semAee > 0) {
+            array_unshift($diagnosis, __('Há :n pessoa(s) com NEE/TEA/AH sem matrícula AEE identificada — revisar oferta e vínculo nas escolas listadas.', [
+                'n' => $semAee,
+            ]));
+        }
+        if ($aeeSemNee > 0) {
+            array_unshift($diagnosis, __('Há :n pessoa(s) em AEE sem tipificação NEE/TEA/AH — conferir declaração das condições.', [
+                'n' => $aeeSemNee,
+            ]));
+        }
         foreach (['nee_note_def_vs_trs', 'nee_note_sub'] as $noteKey) {
             $note = trim((string) ($profile[$noteKey] ?? ''));
             if ($note !== '') {
                 $diagnosis[] = $note;
             }
         }
+
+        $themeFindings = $this->findingsFor($findings, ['NEE', 'AEE', 'GAP']);
+        $themeFindings = $this->prependInclusaoGapFindings($themeFindings, $semAee, $aeeSemNee);
 
         return $this->makeTheme(
             key: 'inclusao',
@@ -260,8 +413,155 @@ final class CampaignFinalPdfComposer
             kpis: $kpis,
             diagnosis: array_slice(array_values(array_unique($diagnosis)), 0, 6),
             tables: $tables,
-            findings: $this->findingsFor($findings, ['NEE', 'AEE', 'GAP']),
+            findings: $themeFindings,
         );
+    }
+
+    /**
+     * @param  list<array{severity: string, code: string, message: string, school: string|null}>  $findings
+     * @return list<array{severity: string, code: string, message: string, school: string|null}>
+     */
+    private function prependInclusaoGapFindings(array $findings, int $semAee, int $aeeSemNee): array
+    {
+        $codes = array_map(static fn (array $f): string => (string) ($f['code'] ?? ''), $findings);
+        $extra = [];
+
+        if ($semAee > 0 && ! in_array('CLIO-NEE-SEM-AEE', $codes, true)) {
+            $extra[] = [
+                'severity' => ClioCampaignFinding::SEVERITY_WARNING,
+                'code' => 'CLIO-NEE-SEM-AEE',
+                'message' => __(':n pessoa(s) com NEE/TEA/AH sem matrícula AEE', ['n' => $semAee]),
+                'school' => null,
+            ];
+        }
+        if ($aeeSemNee > 0 && ! in_array('CLIO-AEE-SEM-NEE', $codes, true)) {
+            $extra[] = [
+                'severity' => ClioCampaignFinding::SEVERITY_WARNING,
+                'code' => 'CLIO-AEE-SEM-NEE',
+                'message' => __(':n pessoa(s) em AEE sem tipificação NEE/TEA/AH', ['n' => $aeeSemNee]),
+                'school' => null,
+            ];
+        }
+
+        return array_merge($extra, $findings);
+    }
+
+    /**
+     * @return list<list<string>>
+     */
+    private function inclusaoSchoolCaseRows(ClioCampaign $campaign): array
+    {
+        try {
+            $rows = BiClioInclusion::query()
+                ->where('campaign_id', $campaign->id)
+                ->where(static function ($q): void {
+                    $q->where('qt_without_aee', '>', 0)
+                        ->orWhere('qt_aee_without_nee', '>', 0);
+                })
+                ->orderByDesc('qt_without_aee')
+                ->orderByDesc('qt_aee_without_nee')
+                ->get(['inep', 'qt_without_aee', 'qt_aee_without_nee', 'qt_nee_people']);
+        } catch (\Throwable) {
+            $rows = collect();
+        }
+
+        if ($rows->isEmpty()) {
+            return $this->inclusaoSchoolCaseRowsFromCensus($campaign);
+        }
+
+        $ineps = $rows->pluck('inep')->filter()->map(static fn ($v) => (string) $v)->all();
+        $names = $this->inclusaoSchoolNames($campaign, $ineps);
+
+        $out = [];
+        foreach ($rows as $row) {
+            $inep = (string) ($row->inep ?? '');
+            $out[] = [
+                $inep !== '' ? $inep : '—',
+                (string) ($names[$inep] ?? ($inep !== '' ? $inep : '—')),
+                $this->fmtInt($row->qt_without_aee ?? 0),
+                $this->fmtInt($row->qt_aee_without_nee ?? 0),
+                $this->fmtInt($row->qt_nee_people ?? 0),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Fallback quando o BI ainda não foi atualizado: censo por escola a partir das Relações.
+     *
+     * @return list<list<string>>
+     */
+    private function inclusaoSchoolCaseRowsFromCensus(ClioCampaign $campaign): array
+    {
+        try {
+            $builder = app(\App\Services\Clio\Analysis\CampaignNeeCensusBuilder::class);
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $campaign->loadMissing('schools');
+        $out = [];
+        foreach ($campaign->schools as $school) {
+            if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status ?? null)) {
+                continue;
+            }
+            try {
+                $census = $builder->build($campaign, (int) $school->id);
+            } catch (\Throwable) {
+                continue;
+            }
+            $semAee = (int) ($census['without_aee'] ?? 0);
+            $aeeSem = (int) ($census['aee_without_nee'] ?? 0);
+            if ($semAee === 0 && $aeeSem === 0) {
+                continue;
+            }
+            $out[] = [
+                (string) ($school->inep ?? '—'),
+                (string) ($school->name ?? $school->inep ?? '—'),
+                $this->fmtInt($semAee),
+                $this->fmtInt($aeeSem),
+                $this->fmtInt($census['flagged'] ?? 0),
+                $semAee, // sort key
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => ($b[5] ?? 0) <=> ($a[5] ?? 0));
+
+        return array_map(static fn (array $row): array => array_slice($row, 0, 5), $out);
+    }
+
+    /**
+     * @param  list<string>  $ineps
+     * @return array<string, string>
+     */
+    private function inclusaoSchoolNames(ClioCampaign $campaign, array $ineps): array
+    {
+        $names = [];
+        try {
+            $names = BiClioSchool::query()
+                ->where('campaign_id', $campaign->id)
+                ->whereIn('inep', $ineps)
+                ->pluck('name', 'inep')
+                ->map(static fn ($v) => (string) $v)
+                ->all();
+        } catch (\Throwable) {
+            $names = [];
+        }
+
+        if ($names !== []) {
+            return $names;
+        }
+
+        $campaign->loadMissing('schools');
+        foreach ($campaign->schools as $school) {
+            $inep = (string) ($school->inep ?? '');
+            if ($inep !== '') {
+                $names[$inep] = (string) ($school->name ?? $inep);
+            }
+        }
+
+        return $names;
     }
 
     /**
@@ -277,31 +577,41 @@ final class CampaignFinalPdfComposer
             return null;
         }
 
-        $density = is_array($stage['density'] ?? null) ? $stage['density'] : [];
-
         $kpis = [
             ['label' => __('Distorção rede'), 'value' => $this->fmtPct($dis['pct'] ?? null)],
             ['label' => __('Alunos elegíveis'), 'value' => $this->fmtInt($dis['eligible'] ?? 0)],
-            ['label' => __('Com distorção'), 'value' => $this->fmtInt($dis['distorcao'] ?? 0)],
-            ['label' => __('Densidade média'), 'value' => $this->fmtNum($density['media'] ?? null)],
+            ['label' => __('Atraso 1 ano'), 'value' => $this->fmtInt($dis['atraso_1'] ?? 0)],
+            ['label' => __('Adiantados'), 'value' => $this->fmtInt($dis['adiantado'] ?? 0)],
         ];
 
+        $etapaBars = is_array($dis['by_etapa'] ?? null) ? $dis['by_etapa'] : [];
+        $etapaBars = (new EtapaLabelOrder)->sortRowsByEtapaKey(
+            array_values(array_filter($etapaBars, static fn ($row): bool => is_array($row))),
+            'etapa',
+        );
+
         $rows = [];
-        foreach (array_slice(is_array($dis['by_etapa'] ?? null) ? $dis['by_etapa'] : [], 0, 12) as $info) {
-            if (! is_array($info)) {
-                continue;
-            }
+        foreach ($etapaBars as $info) {
             $rows[] = [
                 (string) ($info['etapa'] ?? '—'),
                 $this->fmtInt($info['eligible'] ?? 0),
                 $this->fmtInt($info['distorcao'] ?? 0),
                 $this->fmtPct($info['pct'] ?? null),
+                $this->fmtInt($info['atraso_1'] ?? 0),
+                $this->fmtInt($info['adiantado'] ?? 0),
             ];
         }
 
         $tables = $rows === [] ? [] : [[
             'title' => __('Distorção por etapa'),
-            'headers' => [__('Etapa'), __('Elegíveis'), __('Distorção'), __('%')],
+            'headers' => [
+                __('Etapa'),
+                __('Elegíveis'),
+                __('Distorção'),
+                __('%'),
+                __('Atraso 1 ano'),
+                __('Adiantados'),
+            ],
             'rows' => $rows,
         ]];
 
@@ -310,11 +620,12 @@ final class CampaignFinalPdfComposer
         if ($note !== '') {
             array_unshift($diagnosis, $note);
         }
+        $diagnosis[] = __('Atraso 1 ano = defasagem leve (ainda não é distorção oficial). Adiantados = idade abaixo da esperada para a série.');
 
         return $this->makeTheme(
             key: 'distorcao',
             title: __('Distorção idade-série'),
-            lead: __('Estimativa INEP: alunos com 2 ou mais anos acima da idade esperada para a série.'),
+            lead: __('Estimativa INEP: alunos com 2 ou mais anos acima da idade esperada para a série. Todas as etapas do município na ordem pedagógica.'),
             kpis: $kpis,
             diagnosis: array_slice(array_values(array_unique($diagnosis)), 0, 6),
             tables: $tables,
@@ -550,35 +861,73 @@ final class CampaignFinalPdfComposer
     private function themeDensidade(array $dashboard, Collection $findings): ?array
     {
         $stage = is_array($dashboard['stage_metrics'] ?? null) ? $dashboard['stage_metrics'] : [];
-        if (empty($stage['available']) && ! $this->hasHighlight($dashboard, 'INF-DEN') && ! $this->hasHighlight($dashboard, 'INF-DOC')) {
+        $profile = is_array($dashboard['profile'] ?? null) ? $dashboard['profile'] : [];
+        $faixaBars = is_array($profile['by_faixa_etaria'] ?? null) ? $profile['by_faixa_etaria'] : [];
+
+        $hasDensidade = ! empty($stage['available'])
+            || $this->hasHighlight($dashboard, 'INF-DEN')
+            || $this->hasHighlight($dashboard, 'INF-DOC');
+        $hasFaixa = $faixaBars !== [];
+
+        if (! $hasDensidade && ! $hasFaixa) {
             return null;
         }
 
         $density = is_array($stage['density'] ?? null) ? $stage['density'] : [];
         $staff = is_array($stage['staff'] ?? null) ? $stage['staff'] : [];
 
+        $faixaTotal = 0;
+        foreach ($faixaBars as $bar) {
+            if (is_array($bar)) {
+                $faixaTotal += (int) ($bar['count'] ?? 0);
+            }
+        }
+
         $kpis = [
             ['label' => __('Densidade média'), 'value' => $this->fmtNum($density['media'] ?? null)],
             ['label' => __('Turmas ≥ 40'), 'value' => $this->fmtInt($density['turmas_ge_40'] ?? 0)],
-            ['label' => __('Turmas sem aluno'), 'value' => $this->fmtInt($density['turmas_sem_aluno'] ?? 0)],
             ['label' => __('Vínculos profissionais'), 'value' => $this->fmtInt($staff['rows'] ?? 0)],
+            ['label' => __('Alunos c/ faixa etária'), 'value' => $this->fmtInt($faixaTotal > 0 ? $faixaTotal : ($profile['scanned'] ?? 0))],
         ];
 
-        $diagnosis = $this->highlightSummary($dashboard, ['INF-DEN', 'INF-DOC']);
+        $tables = [];
+        $faixaRows = [];
+        foreach (array_slice($faixaBars, 0, 12) as $bar) {
+            if (! is_array($bar)) {
+                continue;
+            }
+            $faixaRows[] = [
+                (string) ($bar['label'] ?? '—'),
+                $this->fmtInt($bar['count'] ?? 0),
+                $this->fmtPct($bar['pct'] ?? null),
+            ];
+        }
+        if ($faixaRows !== []) {
+            $tables[] = [
+                'title' => __('Faixa etária'),
+                'headers' => [__('Faixa'), __('Alunos'), __('%')],
+                'rows' => $faixaRows,
+            ];
+        }
+
+        $diagnosis = $this->highlightSummary($dashboard, ['INF-DEN', 'INF-DOC', 'INF-DEM']);
         foreach ([$density['summary'] ?? null, $staff['summary'] ?? null] as $summary) {
             $summary = trim((string) $summary);
             if ($summary !== '') {
                 $diagnosis[] = $summary;
             }
         }
+        if ($faixaRows !== []) {
+            $diagnosis[] = __('Faixa etária calculada a partir da Data de nascimento nas Relações de alunos (agregado, sem PII).');
+        }
 
         return $this->makeTheme(
             key: 'densidade',
-            title: __('Densidade e profissionais'),
-            lead: __('Alunos por turma e volume de profissionais nas relações — pressão operacional da rede.'),
+            title: __('Densidade, profissionais e faixa etária'),
+            lead: __('Alunos por turma, volume de profissionais e pirâmide etária agregada — pressão operacional e perfil etário da rede.'),
             kpis: $kpis,
             diagnosis: array_slice(array_values(array_unique($diagnosis)), 0, 6),
-            tables: [],
+            tables: $tables,
             findings: $this->findingsFor($findings, ['DEN', 'DOC']),
         );
     }
@@ -618,7 +967,7 @@ final class CampaignFinalPdfComposer
 
         return [
             'key' => $key,
-            'title' => $title,
+            'title' => mb_strtoupper($title, 'UTF-8'),
             'lead' => $lead,
             'status' => $status,
             'status_tone' => $statusTone,

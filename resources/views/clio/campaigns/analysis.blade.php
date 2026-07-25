@@ -768,6 +768,7 @@
                                         <li><strong>{{ __('Distorção') }}</strong> — {{ __('Alunos com atraso de 2 anos ou mais em relação à idade esperada em 31/03 do exercício (critério alinhado ao INEP).') }}</li>
                                         <li><strong>{{ __('%') }}</strong> — {{ __('Percentual de distorção nesta etapa: Distorção ÷ No escopo.') }}</li>
                                         <li><strong>{{ __('Atraso 1 ano') }}</strong> — {{ __('Alunos com exatamente 1 ano acima da idade esperada — defasagem leve, ainda não conta como distorção oficial.') }}</li>
+                                        <li><strong>{{ __('Adiantados') }}</strong> — {{ __('Alunos com idade abaixo da esperada para a série.') }}</li>
                                     </ul>
                                 </div>
                                 <div class="clio-table-wrap">
@@ -779,6 +780,7 @@
                                                 <th class="px-4 py-2 font-medium text-right" title="{{ __('Atraso ≥ 2 anos vs idade esperada em 31/03') }}">{{ __('Distorção') }}</th>
                                                 <th class="px-4 py-2 font-medium text-right" title="{{ __('Distorção ÷ No escopo') }}">{{ __('%') }}</th>
                                                 <th class="px-4 py-2 font-medium text-right" title="{{ __('Exatamente 1 ano acima da idade esperada') }}">{{ __('Atraso 1 ano') }}</th>
+                                                <th class="px-4 py-2 font-medium text-right" title="{{ __('Idade abaixo da esperada para a série') }}">{{ __('Adiantados') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -789,6 +791,7 @@
                                                     <td class="px-4 py-2 text-right tabular-nums {{ ($row['distorcao'] ?? 0) > 0 ? 'text-rose-700 dark:text-rose-300 font-medium' : '' }}">{{ $row['distorcao'] }}</td>
                                                     <td class="px-4 py-2 text-right tabular-nums">{{ $row['pct'] === null ? '—' : number_format((float) $row['pct'], 1, ',', '.').'%' }}</td>
                                                     <td class="px-4 py-2 text-right tabular-nums">{{ $row['atraso_1'] }}</td>
+                                                    <td class="px-4 py-2 text-right tabular-nums">{{ $row['adiantado'] ?? 0 }}</td>
                                                 </tr>
                                             @endforeach
                                         </tbody>

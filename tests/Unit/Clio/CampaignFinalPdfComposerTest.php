@@ -124,12 +124,52 @@ final class CampaignFinalPdfComposerTest extends TestCase
 
         $this->assertNotNull($theme);
         $this->assertSame('tempos_escolares', $theme['key']);
-        $this->assertSame('Tempos escolares', $theme['title']);
+        $this->assertSame('TEMPOS ESCOLARES', $theme['title']);
         $this->assertCount(2, $theme['tables']);
         $this->assertSame('Alunos e tempo na escola', $theme['tables'][0]['title']);
         $this->assertSame('Turmas por carga horária', $theme['tables'][1]['title']);
         $this->assertContains('Jornada disponível na rede.', $theme['diagnosis']);
         $this->assertContains('Nota fund+AEE', $theme['diagnosis']);
+    }
+
+    #[Test]
+    public function inclusao_marca_atencao_quando_ha_nee_sem_aee(): void
+    {
+        $composer = $this->composer();
+        $method = new ReflectionMethod(CampaignFinalPdfComposer::class, 'themeInclusao');
+
+        $campaign = new \App\Models\Clio\ClioCampaign;
+        $campaign->id = 1;
+        $campaign->setRelation('schools', collect());
+
+        $dashboard = [
+            'highlights' => [
+                ['code' => 'INF-NEE', 'summary' => 'Inclusão: 100 pessoa(s) · NEE sem AEE 57.'],
+            ],
+            'profile' => [
+                'available' => true,
+                'nee_flagged' => 100,
+                'nee_without_aee' => 57,
+                'nee_aee_without_condition' => 3,
+                'underreporting_flagged' => 0,
+                'by_nee' => [
+                    ['label' => 'TEA', 'count' => 40],
+                    ['label' => 'Deficiência intelectual', 'count' => 30],
+                ],
+            ],
+            'report' => [],
+        ];
+
+        $theme = $method->invoke($composer, $campaign, $dashboard, collect());
+
+        $this->assertNotNull($theme);
+        $this->assertSame('Atenção', $theme['status']);
+        $this->assertSame('amber', $theme['status_tone']);
+        $this->assertSame('57', $theme['kpis'][1]['value']);
+        $this->assertSame(__('Tipificação NEE (agregado)'), $theme['tables'][0]['title']);
+        $this->assertTrue(
+            collect($theme['findings'])->contains(fn (array $f): bool => ($f['code'] ?? '') === 'CLIO-NEE-SEM-AEE')
+        );
     }
 
     private function composer(): CampaignFinalPdfComposer
@@ -138,6 +178,7 @@ final class CampaignFinalPdfComposerTest extends TestCase
             app(CampaignParseService::class),
             app(CampaignAnalysisPresenter::class),
             app(DiagnosticoGeralComposer::class),
+            app(\App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService::class),
         );
     }
 }

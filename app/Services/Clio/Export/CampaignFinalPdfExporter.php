@@ -26,6 +26,7 @@ final class CampaignFinalPdfExporter
             'themes' => $payload['themes'],
             'diagnosticoGeral' => $payload['diagnostico_geral'],
             'schoolsTriade' => $payload['schools_triade'],
+            'triadeSummary' => $payload['triade_summary'] ?? [],
             'dashboard' => $payload['dashboard'],
             'coverage' => $payload['coverage'],
             'generated_at' => $generatedAt,

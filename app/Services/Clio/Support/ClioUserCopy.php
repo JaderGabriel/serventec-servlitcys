@@ -111,6 +111,8 @@ final class ClioUserCopy
             'CLIO-DEM-SEM-SEXO' => __('Reexporte a Relação de alunos pelo portal com a coluna Sexo, se disponível na tela de exportação.'),
             'CLIO-DEM-SEM-NEE' => __('Reexporte a Relação incluindo campos de deficiência/TEA/AH, se o portal os oferecer neste relatório.'),
             'CLIO-NEE-SUB' => __('Revise tipificação (DEF vs TEA) e possíveis comorbidades; confirme com a escola se há subnotificação.'),
+            'CLIO-NEE-SEM-AEE' => __('Verifique se alunos com NEE/TEA/AH têm turma AEE quando pertinente, ou documente a inclusão apenas em turma regular.'),
+            'CLIO-AEE-SEM-NEE' => __('Complete a tipificação (deficiência, TEA ou AH) das pessoas matriculadas em AEE sem condição declarada.'),
             'CLIO-TRA-SEM-COL' => __('Reexporte a Relação de alunos com as colunas de transporte escolar, se disponíveis no portal.'),
             'CLIO-TRA-VAZIO' => __('Complete o campo de uso de transporte escolar nas matrículas e gere novamente a Relação.'),
             'CLIO-TRA-SEM-PODER' => __('Informe o poder público responsável pelo transporte para os alunos que o utilizam.'),

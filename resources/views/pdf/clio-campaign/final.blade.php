@@ -7,6 +7,10 @@
     <style>
         .theme-page { page-break-after: always; }
         .theme-page:last-of-type { page-break-after: auto; }
+        .theme-page--diagnostico { page-break-inside: auto; }
+        .theme-page--diagnostico table.data.diag-geral-table tr.diag-geral-row {
+            page-break-inside: avoid;
+        }
         .theme-status {
             display: inline-block;
             padding: 3px 8px;
@@ -38,6 +42,7 @@
         .triade-ok { color: #047857; font-weight: 700; }
         .triade-miss { color: #94a3b8; }
         .note { font-size: 9px; color: #64748b; margin: 0 0 8px; }
+        .chart-block { margin: 8px 0 12px; text-align: center; page-break-inside: avoid; }
     </style>
 </head>
 <body>
@@ -81,7 +86,7 @@
     </div>
     <div class="cover-pro__body">
         <p class="cover-pro__lead">
-            {{ __('Cada página apresenta uma área temática da educação: status, números, diagnóstico curto e erros ou avisos. No fim, o Diagnóstico Geral com a situação da tríade nas escolas em atividade.') }}
+            {{ __('Cada página apresenta uma área temática da educação: status, números, diagnóstico curto e erros ou avisos. Abre com a série histórica do Censo; no fim, o Diagnóstico Geral e a rede/cobertura da tríade nas escolas em atividade.') }}
         </p>
         <p class="note" style="margin-top: 6px;">
             {{ __('Estado :s · tríade :p% (:c/:t escolas ativas) · :n temas · ref. :d', [
@@ -102,7 +107,8 @@
                         — <span class="theme-status theme-status--{{ $theme['status_tone'] ?? 'slate' }}">{{ $theme['status'] ?? '' }}</span>
                     </li>
                 @endforeach
-                <li><strong>{{ __('Diagnóstico Geral') }}</strong> — {{ __('alertas por escola + indicador da tríade') }}</li>
+                <li><strong>{{ mb_strtoupper(__('Diagnóstico Geral'), 'UTF-8') }}</strong> — {{ __('alertas por escola') }}</li>
+                <li><strong>{{ mb_strtoupper(__('Rede e cobertura da tríade'), 'UTF-8') }}</strong> — {{ __('KPIs e situação por escola em atividade') }}</li>
             </ol>
         @endif
     </div>
@@ -115,7 +121,7 @@
             <tr>
                 <td style="vertical-align: top;">
                     <p class="note" style="margin: 0 0 2px; text-transform: uppercase; letter-spacing: 0.06em;">{{ __('Tema educativo') }}</p>
-                    <h2 style="margin: 0;">{{ $theme['title'] ?? '' }}</h2>
+                    <h2 style="margin: 0; text-transform: uppercase;">{{ $theme['title'] ?? '' }}</h2>
                 </td>
                 <td style="text-align: right; vertical-align: top; white-space: nowrap;">
                     <span class="theme-status theme-status--{{ $theme['status_tone'] ?? 'slate' }}">{{ $theme['status'] ?? '' }}</span>
@@ -145,6 +151,12 @@
                     @endforeach
                 </tr>
             </table>
+        @endif
+
+        @if (! empty($theme['chart_img']))
+            <div class="chart-block">
+                <img src="{{ $theme['chart_img'] }}" alt="{{ $theme['chart_alt'] ?? ($theme['title'] ?? '') }}" width="520" height="248" style="max-width: 100%; height: auto;">
+            </div>
         @endif
 
         @if (! empty($theme['diagnosis']))
@@ -203,20 +215,50 @@
 @endforeach
 
 {{-- Diagnóstico Geral + tríade --}}
-<div class="theme-page">
+<div class="theme-page theme-page--diagnostico">
     @include('pdf.clio-campaign.partials.diagnostico-geral', [
         'diagnosticoGeral' => $diagnosticoGeral ?? [],
+        'diagAlertChunkSize' => 3,
+        'diagTitleUpper' => true,
     ])
 
-    <h2 style="margin-top: 18px;">{{ __('Indicador da tríade — escolas em atividade') }}</h2>
+    @php
+        $triadeSummary = $triadeSummary ?? [];
+        $triadeKpis = is_array($triadeSummary['kpis'] ?? null) ? $triadeSummary['kpis'] : [];
+        $triadeDiagnosis = is_array($triadeSummary['diagnosis'] ?? null) ? $triadeSummary['diagnosis'] : [];
+    @endphp
+
+    <h2 style="margin-top: 18px; page-break-before: auto; text-transform: uppercase;">{{ __('Rede e cobertura da tríade') }}</h2>
     <p class="note">
-        {{ __('Mesma leitura da coluna «Situação» na análise: Completa, Incompleta, Com erros ou Sem arquivos, com presença de Alunos, Turmas e Profissionais.') }}
+        {{ __('Retrato da coleta: escolas em atividade, completude aluno+turma+profissional e situação por unidade (Completa, Incompleta, Com erros ou Sem arquivos).') }}
     </p>
+
+    @if ($triadeKpis !== [])
+        <table class="data kpi-grid" style="margin-bottom: 10px;">
+            <tr>
+                @foreach ($triadeKpis as $kpi)
+                    <td>
+                        <span class="kpi-value">{{ $kpi['value'] ?? '—' }}</span>
+                        <span class="kpi-label">{{ $kpi['label'] ?? '' }}</span>
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    @endif
+
+    @if ($triadeDiagnosis !== [])
+        <h3 style="font-size: 11px; margin: 8px 0 4px;">{{ __('Leitura') }}</h3>
+        <ul class="diag-list">
+            @foreach ($triadeDiagnosis as $line)
+                <li>{{ $line }}</li>
+            @endforeach
+        </ul>
+    @endif
 
     @if ($schoolsTriade === [])
         <p class="note">{{ __('Nenhuma escola em atividade nesta coleta.') }}</p>
     @else
-        <table class="data">
+        <table class="data diag-geral-table">
             <thead>
                 <tr>
                     <th style="width: 12%;">{{ __('INEP') }}</th>
@@ -243,7 +285,7 @@
                             default => '#475569',
                         };
                     @endphp
-                    <tr>
+                    <tr class="diag-geral-row">
                         <td style="font-family: DejaVu Sans Mono, monospace; font-size: 8.5px;">{{ $row['inep'] }}</td>
                         <td style="font-size: 9px;"><strong>{{ $row['name'] }}</strong></td>
                         <td>

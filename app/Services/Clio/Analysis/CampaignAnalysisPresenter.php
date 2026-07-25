@@ -591,7 +591,10 @@ final class CampaignAnalysisPresenter
             ],
             'turmas_por_ano' => $agg->toBars(is_array($turPayload['by_etapa_ensino'] ?? null) ? $turPayload['by_etapa_ensino'] : []),
             'turmas_por_etapa_agregada' => $agg->toBars(is_array($turPayload['by_etapa_agregada'] ?? null) ? $turPayload['by_etapa_agregada'] : []),
-            'matriculas_por_ano' => $agg->toBars(is_array($matPayload['by_etapa_ensino'] ?? null) ? $matPayload['by_etapa_ensino'] : []),
+            'matriculas_por_ano' => $this->barsByEtapaOrder(
+                is_array($matPayload['by_etapa_ensino'] ?? null) ? $matPayload['by_etapa_ensino'] : [],
+                $agg,
+            ),
             'composicao_turmas' => array_map(fn (array $b) => [
                 ...$b,
                 'pct' => round(100 * $b['count'] / $tipoMax, 1),
@@ -904,6 +907,7 @@ final class CampaignAnalysisPresenter
                 'distorcao' => (int) ($row['distorcao'] ?? 0),
                 'atraso_1' => (int) ($row['atraso_1'] ?? 0),
                 'adequado' => (int) ($row['adequado'] ?? 0),
+                'adiantado' => (int) ($row['adiantado'] ?? 0),
                 'pct' => $row['pct_distorcao'] ?? null,
             ];
         }
@@ -2078,6 +2082,7 @@ final class CampaignAnalysisPresenter
                 'distorcao' => (int) ($row['distorcao'] ?? 0),
                 'atraso_1' => (int) ($row['atraso_1'] ?? 0),
                 'adequado' => (int) ($row['adequado'] ?? 0),
+                'adiantado' => (int) ($row['adiantado'] ?? 0),
                 'pct' => $row['pct_distorcao'] ?? null,
             ];
         }
@@ -2172,5 +2177,18 @@ final class CampaignAnalysisPresenter
             'INF-GAP' => __('Escolas só no Clio, só no i-Educar, ou nos dois.'),
             default => '',
         };
+    }
+
+    /**
+     * Barras de matrícula por etapa na ordem pedagógica (infantil → EF → EM → EJA…).
+     *
+     * @param  array<string, int>  $byEtapa
+     * @return list<array{label: string, count: int, pct: float}>
+     */
+    private function barsByEtapaOrder(array $byEtapa, RelationCsvAggregator $agg): array
+    {
+        $ordered = (new EtapaLabelOrder)->sortAssocByLabel($byEtapa);
+
+        return $agg->toBars($ordered, max(12, count($ordered)));
     }
 }

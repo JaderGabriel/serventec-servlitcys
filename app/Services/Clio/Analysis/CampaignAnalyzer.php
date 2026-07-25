@@ -597,7 +597,6 @@ final class CampaignAnalyzer
             $merged['by_etapa'][$etapa]['pct_distorcao'] = round(100 * ((int) ($row['distorcao'] ?? 0)) / $elig, 1);
         }
         $merged['by_etapa'] = (new EtapaLabelOrder)->sortAssocByLabel($merged['by_etapa']);
-        $merged['by_etapa'] = array_slice($merged['by_etapa'], 0, 40, true);
 
         if ($scanned > 0 && ! $hasNasc) {
             $this->addFinding(
@@ -782,6 +781,30 @@ final class CampaignAnalyzer
                         's' => $flagged,
                         'p' => round(100 * $underFlagged / max(1, $flagged), 1),
                     ]),
+                );
+            }
+
+            if ($hasNeeCol && $withoutAee > 0) {
+                $this->addFinding(
+                    $campaign,
+                    'CLIO-NEE-SEM-AEE',
+                    ClioCampaignFinding::SEVERITY_WARNING,
+                    __('NEE sem AEE: :n pessoa(s) com marcador NEE/TEA/AH sem matrícula AEE identificada.', [
+                        'n' => $withoutAee,
+                    ]),
+                    meta: ['without_aee' => $withoutAee],
+                );
+            }
+
+            if ($hasNeeCol && $aeeWithoutNee > 0) {
+                $this->addFinding(
+                    $campaign,
+                    'CLIO-AEE-SEM-NEE',
+                    ClioCampaignFinding::SEVERITY_WARNING,
+                    __('AEE sem tipificação: :n pessoa(s) em AEE sem deficiência/TEA/AH declarada.', [
+                        'n' => $aeeWithoutNee,
+                    ]),
+                    meta: ['aee_without_nee' => $aeeWithoutNee],
                 );
             }
 

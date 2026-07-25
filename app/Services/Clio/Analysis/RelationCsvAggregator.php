@@ -628,17 +628,12 @@ final class RelationCsvAggregator
         $order = new EtapaLabelOrder;
         $byEtapa = $order->sortAssocByLabel($byEtapa);
         $out = [];
-        $i = 0;
         foreach ($byEtapa as $label => $row) {
-            if ($i >= 40) {
-                break;
-            }
             $elig = max(1, (int) ($row['eligible'] ?? 0));
             $out[$label] = [
                 ...$row,
                 'pct_distorcao' => round(100 * ((int) ($row['distorcao'] ?? 0)) / $elig, 1),
             ];
-            $i++;
         }
 
         return $out;
