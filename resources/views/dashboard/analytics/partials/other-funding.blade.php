@@ -38,7 +38,7 @@
     </x-slot>
 
         <p class="serv-callout serv-callout--warning text-xs leading-relaxed">
-            {{ __('Esta aba cruza programas complementares (PNAE, PNATE, PDDE) com cadastro i-Educar. Valores em R$ vêm de importações deduplicadas por programa — não some com VAAF (FUNDEB) nem duplique a leitura da aba Tempo Real.') }}
+            {{ __('Leitura da tela: (1) Consultas públicas — FUNDEB local, FNDE/Tesouro e Portal (recursos + convênios educação). (2) Repasse observado — série importada e deduplicada por programa (PNAE/PNATE/PDDE…). (3) Cobertura i-Educar — campos de cadastro, não R$. Não some estes blocos entre si nem com Tempo Real / VAAF.') }}
         </p>
 
         <x-dashboard.municipal-public-queries
@@ -46,6 +46,20 @@
             anchor="financiamentos-consultas-publicas"
         />
 
+        @php
+            $portalQ = collect($publicMunicipal['queries'] ?? [])->firstWhere('id', 'portal_transparencia');
+            $portalOk = is_array($portalQ) && ($portalQ['status'] ?? '') === 'success';
+            $portalSkipped = is_array($portalQ) && ($portalQ['status'] ?? '') === 'skipped';
+        @endphp
+        @if ($portalSkipped)
+            <p class="text-xs text-amber-900 dark:text-amber-100 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                {{ __('Portal da Transparência ainda sem chave: defina PORTAL_TRANSPARENCIA_API_KEY e rode funding:enrich-consultoria-financiamentos para popular «Repasse observado» com PNAE/PNATE/PDDE a partir de recursos/convênios.') }}
+            </p>
+        @elseif ($portalOk && ! ($transferSeries['available'] ?? false))
+            <p class="text-xs text-sky-900 dark:text-sky-100 bg-sky-50/80 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800 rounded-md px-3 py-2">
+                {{ __('Há amostra no Portal acima, mas ainda sem série importada. Para consolidar por programa, rode o enrich de Financiamentos no ano do filtro (funding:enrich-consultoria-financiamentos).') }}
+            </p>
+        @endif
         @if ($transferSeries['available'] ?? false)
             <x-dashboard.consultoria-section
                 anchor="financiamentos-repasse-observado"

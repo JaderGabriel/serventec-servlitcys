@@ -138,8 +138,8 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 | **Swagger** | [api.portaldatransparencia.gov.br/swagger-ui](https://api.portaldatransparencia.gov.br/swagger-ui/index.html) |
 
 - **Necessidade:** cruzar **execução federal** no município com programas educacionais (filtro por palavras-chave em `IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS`).
-- **Impacto:** até `IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS` linhas na UI; sem chave, consulta fica em estado «Não consultado».
-- **Nota:** amostra filtrada por palavras-chave; não lista todos os programas — uso de apoio à consultoria, não auditoria completa.
+- **Impacto:** card com **totais** (recursos filtrados + convênios função 12), amostras em secções e destaque numérico; até `IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS` linhas por secção. Sem chave, consulta fica «Não consultado».
+- **Nota:** amostra filtrada por palavras-chave; não lista todos os programas — uso de apoio à consultoria, não auditoria completa. Para série por programa (PNAE/PNATE/PDDE): `funding:enrich-consultoria-financiamentos`.
 - **Oportunidades / roadmap:** inventário completo (~106 endpoints) e IDs FIN-07–10 / HOR-08b–g em **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)**.
 
 #### E) Obrasgov.br — obras de educação (Canteiro)

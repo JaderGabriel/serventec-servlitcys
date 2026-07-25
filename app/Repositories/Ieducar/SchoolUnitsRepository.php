@@ -8,6 +8,7 @@ use App\Services\CityDataConnection;
 use App\Services\Inep\InepCatalogoEscolasGeoService;
 use App\Services\Inep\InepCensoEscolaGeoAggService;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Horizonte\MunicipalEducationWorksForCity;
 use App\Support\Ieducar\EscolaSubstatusResolver;
 use App\Support\Ieducar\EscolaTurmaJoin;
 use App\Support\Ieducar\IeducarColumnInspector;
@@ -73,6 +74,10 @@ class SchoolUnitsRepository
                     'geo_distribution' => null,
                     'map_scope' => 'matricula',
                     'show_waiting_capacity' => true,
+                    'obras_markers' => [],
+                    'obras_without_geo' => [],
+                    'obras_total' => 0,
+                    'obras_simec_url' => (string) config('horizonte.obras.alerts.simec_painel_url', 'https://simec.mec.gov.br/painelObras/'),
                     'error' => null,
                 ],
                 'error' => null,
@@ -111,6 +116,8 @@ class SchoolUnitsRepository
                     ? $this->waitingListHint($db, $city, $filters)
                     : null;
 
+                $obras = MunicipalEducationWorksForCity::payloadForIbge($city->ibge_municipio);
+
                 return [
                     'overview' => [
                         'year_global_rows' => $yearGlobalRows,
@@ -128,12 +135,18 @@ class SchoolUnitsRepository
                         'geo_distribution' => $geoDistribution,
                         'map_scope' => $mapScope,
                         'show_waiting_capacity' => $showWaitingCapacity,
+                        'obras_markers' => $obras['markers'],
+                        'obras_without_geo' => $obras['without_geo'],
+                        'obras_total' => $obras['total'],
+                        'obras_simec_url' => $obras['simec_url'],
                         'error' => null,
                     ],
                     'error' => null,
                 ];
             });
         } catch (\Throwable $e) {
+            $obras = MunicipalEducationWorksForCity::payloadForIbge($city->ibge_municipio);
+
             return [
                 'overview' => [
                     'year_global_rows' => [],
@@ -151,6 +164,10 @@ class SchoolUnitsRepository
                     'geo_distribution' => null,
                     'map_scope' => 'matricula',
                     'show_waiting_capacity' => true,
+                    'obras_markers' => $obras['markers'],
+                    'obras_without_geo' => $obras['without_geo'],
+                    'obras_total' => $obras['total'],
+                    'obras_simec_url' => $obras['simec_url'],
                     'error' => $e->getMessage(),
                 ],
                 'error' => $e->getMessage(),

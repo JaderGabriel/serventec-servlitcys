@@ -58,7 +58,36 @@
                             {{ __('Abrir fonte') }} ↗
                         </a>
                     @endif
-                    @if (count($q['rows'] ?? []) > 0)
+                    @if (count($q['highlights'] ?? []) > 0)
+                        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            @foreach ($q['highlights'] as $h)
+                                <div class="rounded border border-violet-200/80 dark:border-violet-800/60 bg-white/70 dark:bg-violet-950/30 px-2 py-1.5">
+                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-violet-800/80 dark:text-violet-200/80">{{ $h['label'] ?? '' }}</p>
+                                    <p class="text-sm font-bold tabular-nums text-violet-950 dark:text-violet-50">{{ $h['value'] ?? '—' }}</p>
+                                    @if (filled($h['hint'] ?? null))
+                                        <p class="text-[10px] text-violet-800/70 dark:text-violet-300/70">{{ $h['hint'] }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    @if (count($q['sections'] ?? []) > 0)
+                        <div class="mt-2 space-y-2">
+                            @foreach ($q['sections'] as $section)
+                                <div>
+                                    <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $section['title'] ?? '' }}</p>
+                                    <dl class="mt-1 space-y-1 text-xs">
+                                        @foreach ($section['rows'] ?? [] as $row)
+                                            <div class="flex flex-col sm:flex-row sm:gap-2">
+                                                <dt class="text-gray-500 dark:text-gray-400 shrink-0 min-w-0">{{ $row['label'] ?? '' }}</dt>
+                                                <dd class="font-medium text-gray-900 dark:text-gray-100 tabular-nums">{{ $row['value'] ?? '—' }}</dd>
+                                            </div>
+                                        @endforeach
+                                    </dl>
+                                </div>
+                            @endforeach
+                        </div>
+                    @elseif (count($q['rows'] ?? []) > 0)
                         <dl class="mt-2 space-y-1 text-xs">
                             @foreach ($q['rows'] as $row)
                                 <div class="flex flex-col sm:flex-row sm:gap-2">

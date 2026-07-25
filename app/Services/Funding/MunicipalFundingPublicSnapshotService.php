@@ -558,7 +558,7 @@ final class MunicipalFundingPublicSnapshotService
         if (! (bool) ($portal['enabled'] ?? true)) {
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — despesas federais'),
+                __('Portal da Transparência — educação federal'),
                 'skipped',
                 __('API dados.gov.br / Transparência'),
                 'https://portaldatransparencia.gov.br',
@@ -573,12 +573,12 @@ final class MunicipalFundingPublicSnapshotService
         if ($apiKey === '') {
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — recursos recebidos'),
+                __('Portal da Transparência — educação federal'),
                 'skipped',
                 __('API Portal da Transparência'),
                 PortalTransparenciaApiClient::CADASTRO_URL,
                 [],
-                __('Defina PORTAL_TRANSPARENCIA_API_KEY no .env para consultar recursos/convênios por município (cadastro gratuito no portal).')
+                __('Defina PORTAL_TRANSPARENCIA_API_KEY no .env para consultar recursos recebidos e convênios (função 12) por município.')
             );
         }
 
@@ -587,21 +587,13 @@ final class MunicipalFundingPublicSnapshotService
             : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'transporte escolar', 'mec'];
 
         try {
-            $items = $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout, maxPages: 2);
-            $rows = [];
-            foreach ($items as $item) {
-                if (! is_array($item) || count($rows) >= $maxRows) {
-                    break;
-                }
-                $blob = strtolower(json_encode($item, JSON_UNESCAPED_UNICODE) ?: '');
-                $matchKw = false;
-                foreach ($keywords as $kw) {
-                    if ($kw !== '' && str_contains($blob, strtolower($kw))) {
-                        $matchKw = true;
-                        break;
-                    }
-                }
-                if (! $matchKw) {
+            $recursos = $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout, maxPages: 3);
+            $conveniosRaw = $this->portalClient->convenios($ibge, $apiKey, $timeout, $year, maxPages: 2);
+
+            $recursosMatched = [];
+            $recursosTotal = 0.0;
+            foreach ($recursos as $item) {
+                if (! is_array($item) || ! $this->portalItemMatchesEducation($item, $keywords)) {
                     continue;
                 }
                 $anoItem = PortalTransparenciaApiClient::yearFromAnoMes($item['anoMes'] ?? null)
@@ -609,31 +601,123 @@ final class MunicipalFundingPublicSnapshotService
                 if ($anoItem >= 2000 && $anoItem !== $year) {
                     continue;
                 }
-                $orgao = (string) ($item['nomeOrgao'] ?? $item['nomeUG'] ?? $item['orgao'] ?? $item['ug'] ?? '—');
                 $valor = $item['valor'] ?? $item['valorEmpenhado'] ?? $item['valorPago'] ?? null;
-                $rows[] = [
-                    'label' => mb_substr($orgao, 0, 72),
+                if (is_numeric($valor) && (float) $valor > 0) {
+                    $recursosTotal += (float) $valor;
+                }
+                $recursosMatched[] = $item;
+            }
+
+            $conveniosMatched = [];
+            $conveniosTotal = 0.0;
+            foreach ($conveniosRaw as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                // Endpoint já filtra funcao=12; keywords só se o blob não for claramente educação
+                if (! $this->portalItemMatchesEducation($item, $keywords) && ! $this->portalConvenioLooksEducation($item)) {
+                    continue;
+                }
+                $valor = $item['valorLiberado'] ?? $item['valor'] ?? $item['valorGlobal'] ?? null;
+                if (is_numeric($valor) && (float) $valor > 0) {
+                    $conveniosTotal += (float) $valor;
+                }
+                $conveniosMatched[] = $item;
+            }
+
+            $highlights = [
+                [
+                    'label' => __('Recursos educação (amostra)'),
+                    'value' => DiscrepanciesFundingImpact::formatBrl($recursosTotal),
+                    'hint' => __(':n lançamento(s) com perfil educação/FNDE', ['n' => (string) count($recursosMatched)]),
+                ],
+                [
+                    'label' => __('Convênios educação'),
+                    'value' => DiscrepanciesFundingImpact::formatBrl($conveniosTotal),
+                    'hint' => __(':n convênio(s) função 12 / keywords', ['n' => (string) count($conveniosMatched)]),
+                ],
+            ];
+
+            $recursoRows = [];
+            foreach (array_slice($recursosMatched, 0, $maxRows) as $item) {
+                $orgao = (string) ($item['nomeOrgao'] ?? $item['nomeUG'] ?? $item['orgao'] ?? $item['ug'] ?? '—');
+                $mes = PortalTransparenciaApiClient::monthFromAnoMes($item['anoMes'] ?? null);
+                $valor = $item['valor'] ?? $item['valorEmpenhado'] ?? $item['valorPago'] ?? null;
+                $label = mb_substr($orgao, 0, 64);
+                if ($mes !== null) {
+                    $label .= ' · '.$mes.'/'.$year;
+                }
+                $recursoRows[] = [
+                    'label' => $label,
                     'value' => is_numeric($valor)
                         ? DiscrepanciesFundingImpact::formatBrl((float) $valor)
-                        : __('sem valor numérico'),
+                        : __('sem valor'),
                 ];
             }
 
+            $convenioRows = [];
+            foreach (array_slice($conveniosMatched, 0, min(5, $maxRows)) as $item) {
+                $objeto = trim((string) ($item['objeto'] ?? $item['descricao'] ?? $item['nomePrograma'] ?? __('Convênio')));
+                $valor = $item['valorLiberado'] ?? $item['valor'] ?? $item['valorGlobal'] ?? null;
+                $situacao = trim((string) ($item['situacaoConvenio'] ?? $item['situacao'] ?? ''));
+                $label = mb_substr($objeto, 0, 56);
+                if ($situacao !== '') {
+                    $label .= ' ('.$situacao.')';
+                }
+                $convenioRows[] = [
+                    'label' => $label,
+                    'value' => is_numeric($valor)
+                        ? DiscrepanciesFundingImpact::formatBrl((float) $valor)
+                        : __('sem valor'),
+                ];
+            }
+
+            $sections = [];
+            if ($recursoRows !== []) {
+                $sections[] = [
+                    'title' => __('Recursos recebidos (amostra)'),
+                    'rows' => $recursoRows,
+                ];
+            }
+            if ($convenioRows !== []) {
+                $sections[] = [
+                    'title' => __('Convênios educação'),
+                    'rows' => $convenioRows,
+                ];
+            }
+
+            $hasData = $recursosMatched !== [] || $conveniosMatched !== [];
+            $flatRows = array_merge(
+                [
+                    [
+                        'label' => __('Total recursos (filtro educação)'),
+                        'value' => DiscrepanciesFundingImpact::formatBrl($recursosTotal),
+                    ],
+                    [
+                        'label' => __('Total convênios (liberado)'),
+                        'value' => DiscrepanciesFundingImpact::formatBrl($conveniosTotal),
+                    ],
+                ],
+                array_slice($recursoRows, 0, 3),
+            );
+
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — recursos com perfil educação/FNDE'),
-                $rows !== [] ? 'success' : 'empty',
-                __('API Portal da Transparência'),
+                __('Portal da Transparência — recursos + convênios educação'),
+                $hasData ? 'success' : 'empty',
+                __('API Portal da Transparência (CGU)'),
                 PortalTransparenciaApiClient::DOCS_URL,
-                $rows,
-                $rows === []
-                    ? __('Nenhum recurso com palavras-chave educacionais neste município/ano — amplie a busca no portal manualmente.')
-                    : __('Amostra filtrada por palavras-chave (recursos recebidos); não lista todos os programas complementares.')
+                $flatRows,
+                $hasData
+                    ? __('Amostra: recursos-recebidos (até 3 páginas) + convênios função 12. Classificação por palavras-chave — não é auditoria completa. Use «Repasse observado» após funding:enrich-consultoria-financiamentos.')
+                    : __('Nenhum recurso/convênio com perfil educação neste município/ano na amostra. Confira a chave API, o ano do filtro e o portal manualmente.'),
+                $sections !== [] ? $sections : null,
+                $highlights,
             );
         } catch (\Throwable $e) {
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — recursos federais'),
+                __('Portal da Transparência — educação federal'),
                 'error',
                 __('API Portal da Transparência'),
                 PortalTransparenciaApiClient::DOCS_URL,
@@ -641,6 +725,35 @@ final class MunicipalFundingPublicSnapshotService
                 $e->getMessage()
             );
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @param  list<string>  $keywords
+     */
+    private function portalItemMatchesEducation(array $item, array $keywords): bool
+    {
+        $blob = strtolower(json_encode($item, JSON_UNESCAPED_UNICODE) ?: '');
+        foreach ($keywords as $kw) {
+            if ($kw !== '' && str_contains($blob, strtolower((string) $kw))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     */
+    private function portalConvenioLooksEducation(array $item): bool
+    {
+        $funcao = strtolower((string) ($item['funcao'] ?? $item['nomeFuncao'] ?? $item['codigoFuncao'] ?? ''));
+        if ($funcao === '12' || str_contains($funcao, 'educa')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -686,6 +799,7 @@ final class MunicipalFundingPublicSnapshotService
 
     /**
      * @param  list<array{label: string, value: string}>  $rows
+     * @param  list<array{title: string, rows: list<array{label: string, value: string}>}>|null  $sections
      * @return array<string, mixed>
      */
     private function queryResult(
@@ -696,6 +810,8 @@ final class MunicipalFundingPublicSnapshotService
         string $sourceUrl,
         array $rows,
         ?string $note = null,
+        ?array $sections = null,
+        ?array $highlights = null,
     ): array {
         $statusLabel = match ($status) {
             'success' => __('Dados encontrados'),
@@ -705,7 +821,7 @@ final class MunicipalFundingPublicSnapshotService
             default => $status,
         };
 
-        return [
+        $out = [
             'id' => $id,
             'titulo' => $titulo,
             'status' => $status,
@@ -715,5 +831,13 @@ final class MunicipalFundingPublicSnapshotService
             'rows' => $rows,
             'note' => $note,
         ];
+        if ($sections !== null && $sections !== []) {
+            $out['sections'] = $sections;
+        }
+        if ($highlights !== null && $highlights !== []) {
+            $out['highlights'] = $highlights;
+        }
+
+        return $out;
     }
 }

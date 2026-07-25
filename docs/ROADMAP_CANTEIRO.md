@@ -348,8 +348,11 @@ php artisan horizonte:canteiro-alerts --dry-run
 | **HOR-19** | MVP Canteiro — sync + modal + feed | **Implementado** | Sync UF, modal, fase `obras_sync` |
 | **HOR-20** | Camada mapa + filtros | **Implementado** | Pins + toggles «paralisada / em execução» |
 | **HOR-21** | Enriquecimento financeiro + scoring | **Implementado** | Empenhos, % físico, histórico, `infra_works` |
+| **UI gestional** | Detalhe no Horizonte + Unidades | **Implementado** | Tabela full-width; pins/modal em Unidades; datas + previsto indicativo |
 | **INT-10** | Client Obrasgov + catálogo | **Implementado** | `ObrasgovClient` + `SafeOutboundUrl` |
 | **Fase 7** | Alertas consultoria + PDF | **Implementado** | Mensal; só `hasDataSetup()`; `--pdf` |
+
+**UI gestional:** modal Horizonte com Canteiro em linha completa (KPIs + tabela). Aba Unidades: losangos coloridos por status + modal; lista sem geo. Re-sync com enrich para datas/previsto: `horizonte:sync-obras --uf=XX`.
 
 **Rotinas:**
 

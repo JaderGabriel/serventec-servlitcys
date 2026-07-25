@@ -2188,6 +2188,186 @@ html.serv-horizonte-muni-modal-open body {
     gap: 0.5rem;
 }
 
+.serv-horizonte-canteiro-panel {
+    margin-top: 0.65rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.serv-horizonte-canteiro-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: 0.4rem;
+    margin: 0.45rem 0 0.55rem;
+}
+
+.serv-horizonte-canteiro-kpi {
+    padding: 0.35rem 0.45rem;
+    border-radius: 0.4rem;
+    background: rgb(255 251 235 / 0.85);
+    border: 1px solid rgb(253 230 138 / 0.7);
+}
+
+.dark .serv-horizonte-canteiro-kpi {
+    background: rgb(69 26 3 / 0.35);
+    border-color: rgb(146 64 14 / 0.45);
+}
+
+.serv-horizonte-canteiro-kpi__label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: rgb(120 113 108);
+}
+
+.dark .serv-horizonte-canteiro-kpi__label {
+    color: rgb(214 211 209);
+}
+
+.serv-horizonte-canteiro-kpi__value {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: rgb(41 37 36);
+}
+
+.dark .serv-horizonte-canteiro-kpi__value {
+    color: rgb(250 250 249);
+}
+
+.serv-horizonte-canteiro-kpi__value.is-warn {
+    color: rgb(180 83 9);
+}
+
+.serv-horizonte-canteiro-kpi__sep {
+    margin: 0 0.15rem;
+    opacity: 0.55;
+    font-weight: 500;
+}
+
+.serv-horizonte-canteiro-table-wrap {
+    overflow-x: auto;
+    margin: 0.25rem 0 0.4rem;
+    border-radius: 0.4rem;
+    border: 1px solid rgb(226 232 240 / 0.95);
+}
+
+.dark .serv-horizonte-canteiro-table-wrap {
+    border-color: rgb(51 65 85 / 0.85);
+}
+
+.serv-horizonte-canteiro-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.6875rem;
+    line-height: 1.35;
+}
+
+.serv-horizonte-canteiro-table th,
+.serv-horizonte-canteiro-table td {
+    padding: 0.35rem 0.45rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid rgb(226 232 240 / 0.9);
+}
+
+.dark .serv-horizonte-canteiro-table th,
+.dark .serv-horizonte-canteiro-table td {
+    border-bottom-color: rgb(51 65 85 / 0.75);
+}
+
+.serv-horizonte-canteiro-table th {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: rgb(71 85 105);
+    background: rgb(248 250 252 / 0.9);
+    white-space: nowrap;
+}
+
+.dark .serv-horizonte-canteiro-table th {
+    color: rgb(203 213 225);
+    background: rgb(15 23 42 / 0.65);
+}
+
+.serv-horizonte-canteiro-table__obra {
+    max-width: 14rem;
+    font-weight: 600;
+    color: rgb(30 41 59);
+}
+
+.dark .serv-horizonte-canteiro-table__obra {
+    color: rgb(226 232 240);
+}
+
+.serv-horizonte-canteiro-table__num {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.serv-horizonte-canteiro-table__hint {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: rgb(100 116 139);
+}
+
+.serv-horizonte-canteiro-table__link {
+    font-weight: 600;
+    color: rgb(180 83 9);
+    text-decoration: underline;
+}
+
+.serv-horizonte-canteiro-badge {
+    display: inline-block;
+    padding: 0.12rem 0.4rem;
+    border-radius: 0.3rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.serv-horizonte-canteiro-badge--paralisada {
+    background: rgb(254 243 199);
+    color: rgb(146 64 14);
+}
+
+.serv-horizonte-canteiro-badge--execucao {
+    background: rgb(204 251 241);
+    color: rgb(15 118 110);
+}
+
+.serv-horizonte-canteiro-badge--inacabada {
+    background: rgb(254 226 226);
+    color: rgb(153 27 27);
+}
+
+.serv-horizonte-canteiro-badge--cancelada {
+    background: rgb(226 232 240);
+    color: rgb(71 85 105);
+}
+
+.serv-horizonte-canteiro-badge--cadastrada,
+.serv-horizonte-canteiro-badge--neutral {
+    background: rgb(241 245 249);
+    color: rgb(51 65 85);
+}
+
+.serv-horizonte-canteiro-alert {
+    margin: 0.35rem 0 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgb(146 64 14);
+}
+
+.serv-horizonte-canteiro-empty {
+    margin: 0.35rem 0;
+    font-size: 0.75rem;
+    color: rgb(100 116 139);
+}
+
 @media (max-width: 720px) {
     .serv-horizonte-muni-modal__body .serv-horizonte-muni-tooltip__enrichment {
         grid-template-columns: 1fr;

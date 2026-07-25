@@ -1623,7 +1623,20 @@ final class HorizonteMapService
      *     canceladas: int,
      *     cadastradas: int,
      *     total: int,
-     *     samples: list<array{nome: string, situacao: string, percentual: ?float}>,
+     *     samples: list<array{
+     *         id: string,
+     *         nome: string,
+     *         situacao: string,
+     *         percentual: ?float,
+     *         valor_pago: ?float,
+     *         valor_empenhado: ?float,
+     *         valor_previsto: ?float,
+     *         data_inicio: ?string,
+     *         data_paralisacao: ?string,
+     *         data_ultima_afericao: ?string,
+     *         lat: ?float,
+     *         lng: ?float
+     *     }>,
      *     imported_at: ?string,
      *     infra_works_score: int
      * }>
@@ -1643,17 +1656,28 @@ final class HorizonteMapService
             $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
         }
 
-        $rows = $query->get([
+        $select = [
             'ibge_municipio',
             'situacao',
             'desc_nome',
             'percentual_execucao_fisica',
             'valor_pago',
+            'valor_empenhado',
             'latitude',
             'longitude',
             'id_projeto_investimento',
             'imported_at',
-        ]);
+        ];
+        if (\Illuminate\Support\Facades\Schema::hasColumn('municipal_education_works', 'valor_previsto')) {
+            $select = array_merge($select, [
+                'valor_previsto',
+                'data_inicio',
+                'data_paralisacao',
+                'data_ultima_afericao',
+            ]);
+        }
+
+        $rows = $query->get($select);
 
         $agg = [];
         foreach ($rows as $row) {
@@ -1691,21 +1715,24 @@ final class HorizonteMapService
             $lat = $row->latitude !== null ? (float) $row->latitude : null;
             $lng = $row->longitude !== null ? (float) $row->longitude : null;
 
-            if (count($agg[$ibge]['samples']) < 5) {
-                $agg[$ibge]['samples'][] = [
-                    'id' => (string) ($row->id_projeto_investimento ?? ''),
-                    'nome' => mb_substr(trim((string) $row->desc_nome), 0, 80),
-                    'situacao' => $situacao,
-                    'percentual' => $row->percentual_execucao_fisica !== null ? (float) $row->percentual_execucao_fisica : null,
-                    'valor_pago' => $row->valor_pago !== null ? (float) $row->valor_pago : null,
-                    'lat' => $lat,
-                    'lng' => $lng,
-                ];
-            }
+            $agg[$ibge]['samples'][] = [
+                'id' => (string) ($row->id_projeto_investimento ?? ''),
+                'nome' => mb_substr(trim((string) $row->desc_nome), 0, 120),
+                'situacao' => $situacao,
+                'percentual' => $row->percentual_execucao_fisica !== null ? (float) $row->percentual_execucao_fisica : null,
+                'valor_pago' => $row->valor_pago !== null ? (float) $row->valor_pago : null,
+                'valor_empenhado' => $row->valor_empenhado !== null ? (float) $row->valor_empenhado : null,
+                'valor_previsto' => isset($row->valor_previsto) && $row->valor_previsto !== null ? (float) $row->valor_previsto : null,
+                'data_inicio' => isset($row->data_inicio) ? $row->data_inicio?->toDateString() : null,
+                'data_paralisacao' => isset($row->data_paralisacao) ? $row->data_paralisacao?->toDateString() : null,
+                'data_ultima_afericao' => isset($row->data_ultima_afericao) ? $row->data_ultima_afericao?->toDateString() : null,
+                'lat' => $lat,
+                'lng' => $lng,
+            ];
 
             if (
                 $lat !== null && $lng !== null
-                && in_array($situacao, ['Paralisada', 'Em execução', 'Inacabada'], true)
+                && in_array($situacao, ['Paralisada', 'Em execução', 'Inacabada', 'Cancelada', 'Cadastrada'], true)
                 && count($agg[$ibge]['pins']) < 40
             ) {
                 $agg[$ibge]['pins'][] = [
@@ -1724,6 +1751,23 @@ final class HorizonteMapService
         }
 
         foreach ($agg as $ibge => $data) {
+            $samples = $data['samples'];
+            usort($samples, static function (array $a, array $b): int {
+                $rank = static function (string $s): int {
+                    return match ($s) {
+                        'Paralisada' => 0,
+                        'Em execução' => 1,
+                        'Inacabada' => 2,
+                        'Cancelada' => 3,
+                        'Cadastrada' => 4,
+                        default => 5,
+                    };
+                };
+
+                return $rank((string) ($a['situacao'] ?? '')) <=> $rank((string) ($b['situacao'] ?? ''));
+            });
+            $agg[$ibge]['samples'] = array_slice($samples, 0, 40);
+
             $score = ($data['paralisadas'] * 40)
                 + ($data['inacabadas'] * 30)
                 + ($data['em_execucao'] * 15)

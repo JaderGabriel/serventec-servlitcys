@@ -81,10 +81,10 @@ class OtherFundingRepository
                     'year_label' => $yearLabel,
                     'city_name' => (string) $city->name,
                     'intro' => __(
-                        'Programas federais e complementares de educação (transporte, alimentação, PDDE e correlatos) dependem de matrículas e escolas consistentes no Censo Escolar. Esta aba cruza o cadastro do i-Educar com referências FNDE e com o pilar «Programas complementares» das discrepâncias.'
+                        'Financiamentos complementares: consultas públicas (FUNDEB local, FNDE, Tesouro, Portal — recursos recebidos + convênios educação) e cobertura PNAE/PNATE/PDDE no i-Educar. O Portal classifica por palavras-chave; a série «Repasse observado» usa snapshots importados (deduplicados por programa).'
                     ),
                     'footnote' => __(
-                        'VAAF/VAAT (valor por aluno) ≠ repasse em R$. Não some consultas públicas, totais por programa e a aba Tempo Real — cada bloco usa fonte e deduplicação próprias. Cobertura i-Educar = campos de cadastro, não valores financeiros.'
+                        'VAAF/VAAT ≠ repasse em R$. Não some Consultas públicas + Repasse observado + Tempo Real. Cobertura i-Educar = preenchimento de campos, não valores financeiros. Previsto Portal ≠ empenho/pago.'
                     ),
                     'programs' => $programs,
                     'transport' => $transport,

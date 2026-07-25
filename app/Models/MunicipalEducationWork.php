@@ -26,7 +26,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property float|null $percentual_execucao_fisica
  * @property float|null $valor_empenhado
  * @property float|null $valor_pago
+ * @property float|null $valor_previsto
+ * @property \Illuminate\Support\Carbon|null $data_inicio
+ * @property \Illuminate\Support\Carbon|null $data_paralisacao
+ * @property \Illuminate\Support\Carbon|null $data_ultima_afericao
  * @property array|null $historico_paralisacao
+ * @property array|null $meta_execucao
  * @property array|null $meta
  * @property string $fonte
  * @property \Illuminate\Support\Carbon|null $imported_at
@@ -55,7 +60,12 @@ final class MunicipalEducationWork extends Model
         'percentual_execucao_fisica',
         'valor_empenhado',
         'valor_pago',
+        'valor_previsto',
+        'data_inicio',
+        'data_paralisacao',
+        'data_ultima_afericao',
         'historico_paralisacao',
+        'meta_execucao',
         'meta',
         'fonte',
         'imported_at',
@@ -67,7 +77,12 @@ final class MunicipalEducationWork extends Model
         'percentual_execucao_fisica' => 'decimal:2',
         'valor_empenhado' => 'decimal:2',
         'valor_pago' => 'decimal:2',
+        'valor_previsto' => 'decimal:2',
+        'data_inicio' => 'date',
+        'data_paralisacao' => 'date',
+        'data_ultima_afericao' => 'date',
         'historico_paralisacao' => 'array',
+        'meta_execucao' => 'array',
         'meta' => 'array',
         'imported_at' => 'datetime',
         'created_at' => 'datetime',

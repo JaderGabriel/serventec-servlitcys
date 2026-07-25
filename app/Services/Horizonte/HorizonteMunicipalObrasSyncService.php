@@ -8,6 +8,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Obrasgov\ObrasgovClient;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
 use App\Support\Horizonte\HorizonteUfScope;
+use App\Support\Horizonte\ObrasgovWorkFieldExtractor;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -144,18 +145,27 @@ final class HorizonteMunicipalObrasSyncService
                         'percentual_execucao_fisica' => null,
                         'valor_empenhado' => null,
                         'valor_pago' => null,
+                        'valor_previsto' => ObrasgovWorkFieldExtractor::valorPrevisto($projeto),
+                        'data_inicio' => ObrasgovWorkFieldExtractor::dataInicio($projeto),
+                        'data_paralisacao' => null,
+                        'data_ultima_afericao' => null,
                         'historico_paralisacao' => null,
+                        'meta_execucao' => null,
                         'meta' => is_array($projeto['meta'] ?? null) ? $projeto['meta'] : null,
                         'fonte' => 'obrasgov',
                         'imported_at' => now(),
                     ];
 
                     if ($enrichFinance) {
-                        $enriched = $this->enrichFinance($idProjeto, $situacao);
+                        $enriched = $this->enrichFinance($idProjeto, $situacao, $projeto);
                         $data['percentual_execucao_fisica'] = $enriched['percentual'] ?? null;
                         $data['valor_empenhado'] = $enriched['valor_empenhado'] ?? null;
                         $data['valor_pago'] = $enriched['valor_pago'] ?? null;
                         $data['historico_paralisacao'] = $enriched['historico'] ?? null;
+                        $data['meta_execucao'] = $enriched['meta_execucao'] ?? null;
+                        $data['data_inicio'] = $enriched['data_inicio'] ?? $data['data_inicio'];
+                        $data['data_paralisacao'] = $enriched['data_paralisacao'] ?? null;
+                        $data['data_ultima_afericao'] = $enriched['data_ultima_afericao'] ?? null;
                     }
 
                     MunicipalEducationWork::query()->updateOrCreate(
@@ -253,14 +263,25 @@ final class HorizonteMunicipalObrasSyncService
     }
 
     /**
-     * @return array{percentual: float|null, valor_empenhado: float|null, valor_pago: float|null, historico: array|null}
+     * @param  array<string, mixed>  $projeto
+     * @return array{
+     *     percentual: float|null,
+     *     valor_empenhado: float|null,
+     *     valor_pago: float|null,
+     *     historico: array|null,
+     *     meta_execucao: array|null,
+     *     data_inicio: string|null,
+     *     data_paralisacao: string|null,
+     *     data_ultima_afericao: string|null
+     * }
      */
-    private function enrichFinance(string $idProjeto, string $situacao): array
+    private function enrichFinance(string $idProjeto, string $situacao, array $projeto = []): array
     {
         $percentual = null;
         $valorEmpenhado = null;
         $valorPago = null;
         $historico = null;
+        $execucao = null;
 
         $execucao = $this->client->getExecucaoFisica($idProjeto);
         if (is_array($execucao) && isset($execucao['percentual_execucao_fisica']) && is_numeric($execucao['percentual_execucao_fisica'])) {
@@ -308,11 +329,17 @@ final class HorizonteMunicipalObrasSyncService
             }
         }
 
+        $execucaoArr = is_array($execucao) ? $execucao : null;
+
         return [
             'percentual' => $percentual,
             'valor_empenhado' => $valorEmpenhado,
             'valor_pago' => $valorPago,
             'historico' => $historico,
+            'meta_execucao' => ObrasgovWorkFieldExtractor::metaExecucao($execucaoArr),
+            'data_inicio' => ObrasgovWorkFieldExtractor::dataInicio($projeto, $execucaoArr),
+            'data_paralisacao' => ObrasgovWorkFieldExtractor::dataParalisacao($historico),
+            'data_ultima_afericao' => ObrasgovWorkFieldExtractor::dataUltimaAfericao($execucaoArr),
         ];
     }
 

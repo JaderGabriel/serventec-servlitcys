@@ -1878,18 +1878,18 @@ function muniEnrichmentHtml(m) {
         }
     }
 
-    if (m.has_obras || Number(m.obras_total ?? 0) > 0) {
-        const canteiroBlock = muniCanteiroEnrichmentHtml(m);
-        if (canteiroBlock !== "") {
-            blocks.push(canteiroBlock);
-        }
-    }
-
-    if (blocks.length === 0) {
+    if (blocks.length === 0 && !(m.has_obras || Number(m.obras_total ?? 0) > 0)) {
         return "";
     }
 
-    return `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`;
+    const enrichmentGrid =
+        blocks.length > 0
+            ? `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`
+            : "";
+    const canteiroBlock =
+        m.has_obras || Number(m.obras_total ?? 0) > 0 ? muniCanteiroEnrichmentHtml(m) : "";
+
+    return `${enrichmentGrid}${canteiroBlock}`;
 }
 
 function canteiroEnrichmentSignal(m) {
@@ -1925,8 +1925,51 @@ function formatCanteiroCaptureDate(iso) {
     });
 }
 
+function formatCanteiroShortDate(iso) {
+    if (iso == null || String(iso).trim() === "") {
+        return "—";
+    }
+    const raw = String(iso).trim();
+    const d = new Date(raw.length <= 10 ? `${raw}T12:00:00` : raw);
+    if (Number.isNaN(d.getTime())) {
+        return "—";
+    }
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+function canteiroStatusTone(situacao) {
+    const s = String(situacao || "").toLowerCase();
+    if (s.includes("paralis")) {
+        return "paralisada";
+    }
+    if (s.includes("execu")) {
+        return "execucao";
+    }
+    if (s.includes("inacab")) {
+        return "inacabada";
+    }
+    if (s.includes("cancel")) {
+        return "cancelada";
+    }
+    if (s.includes("cadastr")) {
+        return "cadastrada";
+    }
+    return "neutral";
+}
+
+function canteiroInvestidoValor(s) {
+    const pago = s?.valor_pago != null ? Number(s.valor_pago) : NaN;
+    if (Number.isFinite(pago) && pago > 0) {
+        return { value: pago, label: "pago" };
+    }
+    const emp = s?.valor_empenhado != null ? Number(s.valor_empenhado) : NaN;
+    if (Number.isFinite(emp) && emp > 0) {
+        return { value: emp, label: "empenho" };
+    }
+    return null;
+}
+
 function muniCanteiroEnrichmentHtml(m) {
-    const rows = [];
     const par = Number(m.obras_paralisadas ?? 0);
     const exe = Number(m.obras_em_execucao ?? 0);
     const ina = Number(m.obras_inacabadas ?? 0);
@@ -1938,102 +1981,114 @@ function muniCanteiroEnrichmentHtml(m) {
         return "";
     }
 
-    rows.push(
-        enrichMetricHtml({
-            label: "Em execução / paralisadas",
-            hint: "Obras FNDE/SIMEC em curso versus paralisadas (Obrasgov).",
-            valueHtml: `<span>${escapeHtml(String(exe))}</span><span class="serv-horizonte-muni-tooltip__enrich-metric-sep">/</span><span>${escapeHtml(String(par))}</span>`,
-            tone: par > 0 ? "warn" : exe > 0 ? "ok" : "neutral",
-            iconHtml: HORIZONTE_ENRICH_ICONS.building,
-        }),
-    );
-
-    if (ina > 0 || can > 0 || cad > 0) {
-        rows.push(
-            enrichMetricHtml({
-                label: "Inacabadas · canceladas · cadastradas",
-                hint: "Demais situações ≠ concluída no inventário Canteiro.",
-                valueHtml: escapeHtml(`${ina} · ${can} · ${cad}`),
-                tone: ina > 0 ? "warn" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.scale,
-            }),
-        );
-    }
-
-    if (m.infra_works_score != null || m.infra_works != null) {
-        const score = Number(m.infra_works_score ?? m.infra_works ?? 0);
-        rows.push(
-            enrichMetricHtml({
-                label: "Pressão de infraestrutura",
-                hint: "Score indicativo (paralisadas e inacabadas pesam mais).",
-                valueHtml: escapeHtml(String(score)),
-                tone: score >= 40 ? "warn" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
-            }),
-        );
-    }
-
-    const samples = Array.isArray(m.obras_samples) ? m.obras_samples : [];
-    samples.slice(0, 3).forEach((s) => {
-        if (!s || typeof s !== "object") {
-            return;
-        }
-        const pct =
-            s.percentual != null && Number.isFinite(Number(s.percentual))
-                ? ` · ${Number(s.percentual).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% físico`
-                : "";
-        const pago =
-            s.valor_pago != null && Number(s.valor_pago) > 0
-                ? ` · pago ${formatCurrencyBrl(s.valor_pago)}`
-                : "";
-        rows.push(
-            enrichMetricHtml({
-                label: String(s.situacao || "Obra"),
-                hint: "Nome e execução física/pago (empenho) quando disponíveis — valores indicativos.",
-                valueHtml: escapeHtml(`${String(s.nome || "—").slice(0, 48)}${pct}${pago}`),
-                tone: String(s.situacao || "").toLowerCase().includes("paralis") ? "warn" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.building,
-            }),
-        );
-    });
-
-    const alert = m.canteiro_alert && typeof m.canteiro_alert === "object" ? m.canteiro_alert : null;
-    if (alert && m.consultoria_active) {
-        rows.push(
-            enrichMetricHtml({
-                label: "Alerta consultoria",
-                hint: "Snapshot mensal Canteiro — só municípios com consultoria activa.",
-                valueHtml: escapeHtml(
-                    `P ${alert.paralisadas ?? 0} · E ${alert.em_execucao ?? 0} · I ${alert.inacabadas ?? 0}`,
-                ),
-                tone: Number(alert.paralisadas ?? 0) > 0 ? "warn" : "ok",
-                iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
-            }),
-        );
-    }
-
+    const score = Number(m.infra_works_score ?? m.infra_works ?? 0);
+    const signal = canteiroEnrichmentSignal(m);
     const capture = formatCanteiroCaptureDate(m.obras_imported_at);
     const simecUrl =
         typeof m.canteiro_simec_url === "string" && m.canteiro_simec_url.trim() !== ""
             ? m.canteiro_simec_url.trim()
             : "https://simec.mec.gov.br/painelObras/";
 
-    return enrichBlockHtml({
-        tone: "canteiro",
-        title: "Canteiro — obras de educação",
-        year: "",
-        lead: "Inventário FNDE/SIMEC via Obrasgov (situação ≠ concluída). Complementa convênios/empenhos da Transparência.",
-        signal: canteiroEnrichmentSignal(m),
-        iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
-        metricsHtml: rows.join(""),
-        foot: "Fonte: Obrasgov.br (API pública) · SIMEC-FNDE. Valores de empenho/pago são indicativos.",
-        notes: [
-            capture ? `Dados captados em ${capture}.` : "Data de captação indisponível (sincronize horizonte:sync-obras).",
-            "Conceito: obras físicas de educação com recurso federal (creches, escolas, quadras) monitoradas no SIMEC/Obrasgov.",
-            "Regras: MVP só CNPJ FNDE; não usa investimentos_previstos como R$ oficial; IBGE via geometria (confiança alta) ou heurística (baixa).",
-            `Detalhe operacional: ${simecUrl}`,
-        ],
-    });
+    const kpis = [
+        `<div class="serv-horizonte-canteiro-kpi"><span class="serv-horizonte-canteiro-kpi__label">Em execução / paralisadas</span><span class="serv-horizonte-canteiro-kpi__value">${escapeHtml(String(exe))}<span class="serv-horizonte-canteiro-kpi__sep">/</span>${escapeHtml(String(par))}</span></div>`,
+        `<div class="serv-horizonte-canteiro-kpi"><span class="serv-horizonte-canteiro-kpi__label">Inacab. · canc. · cadast.</span><span class="serv-horizonte-canteiro-kpi__value">${escapeHtml(`${ina} · ${can} · ${cad}`)}</span></div>`,
+        `<div class="serv-horizonte-canteiro-kpi"><span class="serv-horizonte-canteiro-kpi__label">Pressão infra</span><span class="serv-horizonte-canteiro-kpi__value ${score >= 40 ? "is-warn" : ""}">${escapeHtml(String(score))}</span></div>`,
+        `<div class="serv-horizonte-canteiro-kpi"><span class="serv-horizonte-canteiro-kpi__label">Total obras</span><span class="serv-horizonte-canteiro-kpi__value">${escapeHtml(String(total))}</span></div>`,
+    ].join("");
+
+    const samples = Array.isArray(m.obras_samples) ? m.obras_samples : [];
+    const tableRows = samples
+        .filter((s) => s && typeof s === "object")
+        .map((s) => {
+            const tone = canteiroStatusTone(s.situacao);
+            const pct =
+                s.percentual != null && Number.isFinite(Number(s.percentual))
+                    ? `${Number(s.percentual).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}%`
+                    : "—";
+            const inv = canteiroInvestidoValor(s);
+            const investido = inv
+                ? `${formatCurrencyBrl(inv.value)}<span class="serv-horizonte-canteiro-table__hint"> (${escapeHtml(inv.label)})</span>`
+                : "—";
+            const previsto =
+                s.valor_previsto != null && Number(s.valor_previsto) > 0
+                    ? `${formatCurrencyBrl(s.valor_previsto)}<span class="serv-horizonte-canteiro-table__hint"> ind.</span>`
+                    : "—";
+            const isParalis = String(s.situacao || "")
+                .toLowerCase()
+                .includes("paralis");
+            const isExec = String(s.situacao || "")
+                .toLowerCase()
+                .includes("execu");
+            let dataGestao = "—";
+            let dataGestaoLabel = "Aferição / paralisação";
+            if (isParalis && s.data_paralisacao) {
+                dataGestao = formatCanteiroShortDate(s.data_paralisacao);
+                dataGestaoLabel = "Paralisação";
+            } else if (isExec && s.data_ultima_afericao) {
+                dataGestao = formatCanteiroShortDate(s.data_ultima_afericao);
+                dataGestaoLabel = "Última aferição";
+            } else if (s.data_paralisacao) {
+                dataGestao = formatCanteiroShortDate(s.data_paralisacao);
+                dataGestaoLabel = "Paralisação";
+            } else if (s.data_ultima_afericao) {
+                dataGestao = formatCanteiroShortDate(s.data_ultima_afericao);
+                dataGestaoLabel = "Última aferição";
+            }
+            const id = String(s.id || "").trim();
+            const linkCell = id
+                ? `<a class="serv-horizonte-canteiro-table__link" href="${escapeHtml(simecUrl)}" target="_blank" rel="noopener noreferrer" title="Abrir painel SIMEC">SIMEC</a>`
+                : "—";
+
+            return (
+                `<tr>` +
+                `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(String(s.nome || ""))}">${escapeHtml(String(s.nome || "—"))}</td>` +
+                `<td><span class="serv-horizonte-canteiro-badge serv-horizonte-canteiro-badge--${tone}">${escapeHtml(String(s.situacao || "—"))}</span></td>` +
+                `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(pct)}</td>` +
+                `<td class="serv-horizonte-canteiro-table__num">${investido}</td>` +
+                `<td class="serv-horizonte-canteiro-table__num">${previsto}</td>` +
+                `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(formatCanteiroShortDate(s.data_inicio))}</td>` +
+                `<td class="serv-horizonte-canteiro-table__num" title="${escapeHtml(dataGestaoLabel)}">${escapeHtml(dataGestao)}</td>` +
+                `<td>${linkCell}</td>` +
+                `</tr>`
+            );
+        })
+        .join("");
+
+    const tableHtml =
+        samples.length > 0
+            ? `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
+              `<thead><tr>` +
+              `<th>Obra</th><th>Status</th><th>% físico</th><th>Investido</th><th>Previsto</th><th>Início</th><th>Paralisação / aferição</th><th></th>` +
+              `</tr></thead><tbody>${tableRows}</tbody></table></div>`
+            : `<p class="serv-horizonte-canteiro-empty">Sem detalhe de obras neste município.</p>`;
+
+    const alert = m.canteiro_alert && typeof m.canteiro_alert === "object" ? m.canteiro_alert : null;
+    const alertHtml =
+        alert && m.consultoria_active
+            ? `<p class="serv-horizonte-canteiro-alert">Alerta consultoria — P ${escapeHtml(String(alert.paralisadas ?? 0))} · E ${escapeHtml(String(alert.em_execucao ?? 0))} · I ${escapeHtml(String(alert.inacabadas ?? 0))}</p>`
+            : "";
+
+    const signalHtml =
+        signal && signal.text
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-signal serv-horizonte-muni-tooltip__enrich-signal--${escapeHtml(signal.tone)}">${escapeHtml(signal.text)}</span>`
+            : "";
+
+    return (
+        `<section class="serv-horizonte-muni-tooltip__enrich-block serv-horizonte-muni-tooltip__enrich-block--canteiro serv-horizonte-canteiro-panel">` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head">` +
+        `<span class="serv-horizonte-muni-tooltip__enrich-icon-wrap" aria-hidden="true">${HORIZONTE_ENRICH_ICONS.canteiro}</span>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head-text">` +
+        `<h4 class="serv-horizonte-muni-tooltip__enrich-title">Canteiro — gestão de obras</h4>` +
+        (signalHtml ? `<div class="serv-horizonte-muni-tooltip__enrich-signal-row">${signalHtml}</div>` : "") +
+        `<p class="serv-horizonte-muni-tooltip__enrich-lead">Inventário FNDE/SIMEC (Obrasgov). Investido = pago (ou empenho). Previsto é indicativo e pode ser placeholder na origem.</p>` +
+        `</div></div>` +
+        `<div class="serv-horizonte-canteiro-kpis">${kpis}</div>` +
+        tableHtml +
+        alertHtml +
+        `<p class="serv-horizonte-muni-tooltip__enrich-foot">Fonte: Obrasgov.br · SIMEC-FNDE. Sem vínculo a escola INEP. ${capture ? `Captado em ${escapeHtml(capture)}.` : "Re-sincronize para datas/previsto."}</p>` +
+        `<p class="serv-horizonte-muni-tooltip__enrich-note"><a href="${escapeHtml(simecUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(simecUrl)}</a></p>` +
+        `</section>`
+    );
 }
 
 function muniMetaHtml(m) {
@@ -6658,10 +6713,21 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     const situacao = String(pin.situacao || "");
                     const isParalisada = situacao.toLowerCase().includes("paralis");
                     const isExecucao = situacao.toLowerCase().includes("execu");
-                    if (!isParalisada && !isExecucao) {
+                    const isInacabada = situacao.toLowerCase().includes("inacab");
+                    const isCancelada = situacao.toLowerCase().includes("cancel");
+                    const isCadastrada = situacao.toLowerCase().includes("cadastr");
+                    if (!isParalisada && !isExecucao && !isInacabada && !isCancelada && !isCadastrada) {
                         continue;
                     }
-                    const color = isParalisada ? "#b45309" : "#0f766e";
+                    const color = isParalisada
+                        ? "#b45309"
+                        : isExecucao
+                          ? "#0f766e"
+                          : isInacabada
+                            ? "#b91c1c"
+                            : isCancelada
+                              ? "#64748b"
+                              : "#a8a29e";
                     const circle = L.circleMarker([lat, lng], {
                         radius: 5,
                         color,

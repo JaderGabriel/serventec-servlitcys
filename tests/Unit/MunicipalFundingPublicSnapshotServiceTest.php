@@ -83,4 +83,68 @@ final class MunicipalFundingPublicSnapshotServiceTest extends TestCase
         $this->assertFalse($payload['available']);
         $this->assertStringContainsString('IBGE', (string) $payload['intro']);
     }
+
+    #[Test]
+    public function portal_agrega_recursos_e_convenios_educacao(): void
+    {
+        Cache::flush();
+
+        config([
+            'ieducar.other_funding.public_queries.enabled' => true,
+            'ieducar.other_funding.public_queries.cache_ttl_seconds' => 60,
+            'ieducar.other_funding.public_queries.portal_transparencia.enabled' => true,
+            'ieducar.other_funding.public_queries.portal_transparencia.api_key' => 'test-key',
+            'ieducar.other_funding.public_queries.portal_transparencia.education_keywords' => ['fnde', 'educacao', 'pnae'],
+            'ieducar.other_funding.public_queries.tesouro.enabled' => false,
+            'ieducar.fundeb.open_data.resource_id' => '',
+        ]);
+
+        $city = new City(['id' => 9, 'name' => 'Central', 'uf' => 'BA', 'ibge_municipio' => '2907608']);
+
+        $repo = Mockery::mock(FundebMunicipioReferenceRepository::class);
+        $repo->shouldReceive('findForCityYear')->andReturn(null);
+
+        $snapRepo = Mockery::mock(MunicipalTransferSnapshotRepository::class);
+        $snapRepo->shouldReceive('forCityYear')->andReturn([]);
+
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/despesas/recursos-recebidos*' => Http::response([
+                [
+                    'anoMes' => '03/2025',
+                    'nomeOrgao' => 'FNDE',
+                    'valor' => 12500.5,
+                ],
+                [
+                    'anoMes' => '04/2025',
+                    'nomeOrgao' => 'Ministério da Saúde',
+                    'valor' => 99999,
+                ],
+            ], 200),
+            'api.portaldatransparencia.gov.br/api-de-dados/convenios*' => Http::response([
+                [
+                    'objeto' => 'Construção de escola',
+                    'funcao' => '12',
+                    'valorLiberado' => 80000,
+                    'situacaoConvenio' => 'Em execução',
+                ],
+            ], 200),
+            '*' => Http::response(['success' => true, 'result' => ['records' => []]], 200),
+        ]);
+
+        $service = new MunicipalFundingPublicSnapshotService($repo, app(FundebOpenDataImportService::class), $snapRepo);
+        $payload = $service->build($city, new IeducarFilterState('2025', null, null, null));
+
+        $portal = collect($payload['queries'])->firstWhere('id', 'portal_transparencia');
+        $this->assertIsArray($portal);
+        $this->assertSame('success', $portal['status']);
+        $this->assertNotEmpty($portal['highlights'] ?? []);
+        $this->assertNotEmpty($portal['sections'] ?? []);
+
+        $titles = array_column($portal['sections'], 'title');
+        $this->assertTrue(
+            collect($titles)->contains(fn ($t) => str_contains(mb_strtolower((string) $t), 'recurso')
+                || str_contains(mb_strtolower((string) $t), 'convênio')
+                || str_contains(mb_strtolower((string) $t), 'convenio'))
+        );
+    }
 }
