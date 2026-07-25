@@ -155,6 +155,7 @@ mindmap
 |-----------|----------|
 | [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md) | VAAF, VAAT, VAAR, previsão |
 | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) | FNDE, Tesouro, INEP, repasses |
+| [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) | Inventário API Portal (~106 paths) + oportunidades FIN/HOR |
 | [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md) | Extrato BB / Open Finance |
 | [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) | Export matriz FUNDEB |
 | [POWERBI.md](POWERBI.md) | Power BI — cenários, licenciamento, roadmap |

@@ -7,6 +7,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Support\Dashboard\IeducarFilterState;
+use App\Support\Funding\PortalTransparenciaApiClient;
 use App\Support\Ieducar\DiscrepanciesFundingImpact;
 use App\Support\Ieducar\FundebMunicipalReferenceResolver;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,7 @@ final class MunicipalFundingPublicSnapshotService
         private FundebMunicipioReferenceRepository $fundebRefs,
         private FundebOpenDataImportService $fundebImport,
         private MunicipalTransferSnapshotRepository $transferSnapshots,
+        private PortalTransparenciaApiClient $portalClient = new PortalTransparenciaApiClient,
     ) {}
 
     /**
@@ -566,48 +568,26 @@ final class MunicipalFundingPublicSnapshotService
         }
 
         $apiKey = trim((string) ($portal['api_key'] ?? ''));
-        $baseUrl = rtrim((string) ($portal['base_url'] ?? 'https://api.portaldatransparencia.gov.br'), '/');
         $maxRows = max(3, min(20, (int) ($portal['max_rows'] ?? 8)));
 
         if ($apiKey === '') {
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — despesas federais'),
+                __('Portal da Transparência — recursos recebidos'),
                 'skipped',
                 __('API Portal da Transparência'),
-                'https://portaldatransparencia.gov.br/pagina-api',
+                PortalTransparenciaApiClient::CADASTRO_URL,
                 [],
-                __('Defina PORTAL_TRANSPARENCIA_API_KEY no .env para consultar despesas/transferências por município (cadastro gratuito no portal).')
+                __('Defina PORTAL_TRANSPARENCIA_API_KEY no .env para consultar recursos/convênios por município (cadastro gratuito no portal).')
             );
         }
 
         $keywords = is_array($portal['education_keywords'] ?? null)
             ? $portal['education_keywords']
-            : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'transporte escolar'];
+            : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'transporte escolar', 'mec'];
 
         try {
-            $response = Http::timeout($timeout)
-                ->acceptJson()
-                ->withHeaders(['chave-api-dados' => $apiKey])
-                ->get($baseUrl.'/api-de-dados/despesas', [
-                    'codigoMunicipio' => $ibge,
-                    'pagina' => 1,
-                ]);
-
-            if (! $response->successful()) {
-                return $this->queryResult(
-                    'portal_transparencia',
-                    __('Portal da Transparência — despesas federais'),
-                    'error',
-                    __('API Portal da Transparência'),
-                    'https://portaldatransparencia.gov.br',
-                    [],
-                    __('HTTP :code — verifique a chave de API.', ['code' => $response->status()])
-                );
-            }
-
-            $data = $response->json();
-            $items = is_array($data) ? $data : [];
+            $items = $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout, maxPages: 2);
             $rows = [];
             foreach ($items as $item) {
                 if (! is_array($item) || count($rows) >= $maxRows) {
@@ -624,11 +604,12 @@ final class MunicipalFundingPublicSnapshotService
                 if (! $matchKw) {
                     continue;
                 }
-                $anoItem = (int) preg_replace('/\D/', '', (string) ($item['ano'] ?? $item['exercicio'] ?? ''));
+                $anoItem = PortalTransparenciaApiClient::yearFromAnoMes($item['anoMes'] ?? null)
+                    ?? (int) preg_replace('/\D/', '', (string) ($item['ano'] ?? $item['exercicio'] ?? ''));
                 if ($anoItem >= 2000 && $anoItem !== $year) {
                     continue;
                 }
-                $orgao = (string) ($item['nomeOrgao'] ?? $item['orgao'] ?? $item['ug'] ?? '—');
+                $orgao = (string) ($item['nomeOrgao'] ?? $item['nomeUG'] ?? $item['orgao'] ?? $item['ug'] ?? '—');
                 $valor = $item['valor'] ?? $item['valorEmpenhado'] ?? $item['valorPago'] ?? null;
                 $rows[] = [
                     'label' => mb_substr($orgao, 0, 72),
@@ -640,22 +621,22 @@ final class MunicipalFundingPublicSnapshotService
 
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — despesas com perfil educação/FNDE'),
+                __('Portal da Transparência — recursos com perfil educação/FNDE'),
                 $rows !== [] ? 'success' : 'empty',
                 __('API Portal da Transparência'),
-                'https://portaldatransparencia.gov.br',
+                PortalTransparenciaApiClient::DOCS_URL,
                 $rows,
                 $rows === []
-                    ? __('Nenhuma despesa com palavras-chave educacionais nesta página — amplie a busca no portal manualmente.')
-                    : __('Amostra da 1.ª página filtrada por palavras-chave; não lista todos os programas complementares.')
+                    ? __('Nenhum recurso com palavras-chave educacionais neste município/ano — amplie a busca no portal manualmente.')
+                    : __('Amostra filtrada por palavras-chave (recursos recebidos); não lista todos os programas complementares.')
             );
         } catch (\Throwable $e) {
             return $this->queryResult(
                 'portal_transparencia',
-                __('Portal da Transparência — despesas federais'),
+                __('Portal da Transparência — recursos federais'),
                 'error',
                 __('API Portal da Transparência'),
-                'https://portaldatransparencia.gov.br',
+                PortalTransparenciaApiClient::DOCS_URL,
                 [],
                 $e->getMessage()
             );

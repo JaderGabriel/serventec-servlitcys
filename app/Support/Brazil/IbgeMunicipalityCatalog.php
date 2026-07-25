@@ -3,7 +3,6 @@
 namespace App\Support\Brazil;
 
 use App\Support\Dashboard\AdminHomeMapCache;
-use App\Support\Brazil\MunicipalityNomeUfKey;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -282,6 +281,33 @@ final class IbgeMunicipalityCatalog
         foreach (array_unique(array_filter(array_map('strtoupper', $ufs))) as $uf) {
             $this->municipalitiesForUf($uf, $fetchRemoteCentroids);
         }
+    }
+
+    /**
+     * Resolve IBGE 7 dígitos a partir do nome do município e UF (heurística / fallback).
+     */
+    public function findByName(string $name, string $uf): ?string
+    {
+        $uf = strtoupper(trim($uf));
+        $key = MunicipalityNomeUfKey::key($name, $uf);
+        if ($key === '') {
+            return null;
+        }
+
+        foreach ($this->municipalitiesForUf($uf) as $meta) {
+            if (! is_array($meta)) {
+                continue;
+            }
+            $candidateKey = MunicipalityNomeUfKey::key((string) ($meta['name'] ?? ''), $uf);
+            if ($candidateKey === $key) {
+                return $this->normalizeIbge((string) ($meta['ibge'] ?? ''));
+            }
+        }
+
+        $index = $this->nationalNomeUfToIbgeIndex();
+        $ibge = $index[$key] ?? null;
+
+        return is_string($ibge) ? $this->normalizeIbge($ibge) : null;
     }
 
     /**

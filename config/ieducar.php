@@ -1243,11 +1243,12 @@ return [
                 ],
             ],
             'program_keywords' => [
-                'fundeb' => ['fundeb', 'fnde', 'salario-educacao', 'salário-educação'],
+                // Ordem importa: programas específicos antes de FUNDEB/geral (matchProgramId = 1.º hit).
                 'pnae' => ['pnae', 'alimentacao', 'alimentação', 'merenda'],
-                'pnate' => ['pnate', 'transporte escolar', 'transporte'],
+                'pnate' => ['pnate', 'transporte escolar'],
                 'pdde' => ['pdde', 'dinheiro direto'],
-                'geral_educacao' => ['educacao', 'educação', 'escolar'],
+                'fundeb' => ['fundeb', 'salario-educacao', 'salário-educação', 'salario educacao'],
+                'geral_educacao' => ['educacao', 'educação', 'escolar', 'fnde', 'mec'],
             ],
         ],
     ],
@@ -1255,7 +1256,7 @@ return [
     'other_funding' => [
         /*
          * Consultas automáticas a bases públicas na aba Financiamentos (por IBGE/ano).
-         * PORTAL_TRANSPARENCIA_API_KEY: cadastro em portaldatransparencia.gov.br/pagina-api
+         * PORTAL_TRANSPARENCIA_API_KEY: cadastro em portaldatransparencia.gov.br/api-de-dados/cadastrar-email
          */
         'public_queries' => [
             'enabled' => filter_var(env('IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES', true), FILTER_VALIDATE_BOOL),

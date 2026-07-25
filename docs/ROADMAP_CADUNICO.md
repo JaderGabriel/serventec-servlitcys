@@ -17,6 +17,7 @@
 1. CUN-03 — busca activa com faixas etárias e território.
 2. Cruzar com HOR-10/HOR-18 (PNAD) quando disponível.
 3. Manter agregados sem CPF/NIS em massa (LGPD).
+4. **Opcional (CUN-04):** série mensal agregada Bolsa Família / Novo Bolsa Família / BPC por IBGE via Portal (`bolsa-familia-por-municipio`, `novo-bolsa-familia-por-municipio`, `bpc-por-municipio`) — ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) §2 P3; **nunca** endpoints por NIS/CPF.
 
 ---
 

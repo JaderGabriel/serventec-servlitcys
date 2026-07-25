@@ -15,9 +15,10 @@
 
 ## 2. Próximos passos
 
-1. Completar cobertura SICONFI e Transparência nacional.
-2. Avançar INT-* da Onda 1–2 (IDHM, SIDRA ampliado, CNES…).
-3. Infra INF-04–07 (CI testes, Redis, filas) em paralelo.
+1. Completar cobertura SICONFI e Transparência nacional (`horizonte:sync-siconfi` / `horizonte:sync-transparency`).
+2. Evoluir Portal da Transparência além do sync actual — inventário e IDs: **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)** (FIN-07–10, HOR-08b–g).
+3. Avançar INT-* da Onda 1–2 (IDHM, SIDRA ampliado, CNES…).
+4. Infra INF-04–07 (CI testes, Redis, filas) em paralelo.
 
 ---
 

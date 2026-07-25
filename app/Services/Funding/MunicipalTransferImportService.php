@@ -6,6 +6,7 @@ use App\Models\City;
 use App\Models\MunicipalTransferSnapshot;
 use App\Repositories\MunicipalTransferSnapshotRepository;
 use App\Support\Funding\MunicipalTransferGranularityEnricher;
+use App\Support\Funding\PortalTransparenciaApiClient;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -20,6 +21,7 @@ final class MunicipalTransferImportService
         private SiswebFundebRepassesService $siswebFundeb,
         private BbFundebExtratoService $bbExtrato,
         private MunicipalTransferGranularityEnricher $granularityEnricher,
+        private PortalTransparenciaApiClient $portalClient = new PortalTransparenciaApiClient,
     ) {}
 
     /**
@@ -400,31 +402,16 @@ final class MunicipalTransferImportService
             return [];
         }
 
-        $baseUrl = rtrim((string) ($portal['base_url'] ?? 'https://api.portaldatransparencia.gov.br'), '/');
         $keywords = is_array($portal['education_keywords'] ?? null)
             ? $portal['education_keywords']
-            : ['educacao', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb'];
+            : ['educacao', 'educação', 'fnde', 'pnae', 'pnate', 'pdde', 'fundeb', 'escolar', 'merenda', 'mec'];
 
-        try {
-            $response = Http::timeout($timeout)
-                ->acceptJson()
-                ->withHeaders(['chave-api-dados' => $apiKey])
-                ->get($baseUrl.'/api-de-dados/transferencias', [
-                    'codigoMunicipio' => $ibge,
-                    'pagina' => 1,
-                ]);
-        } catch (\Throwable) {
-            return [];
-        }
-
-        if (! $response->successful()) {
-            return [];
-        }
-
-        $items = $response->json();
-        if (! is_array($items)) {
-            return [];
-        }
+        $items = array_merge(
+            $this->portalClient->recursosRecebidos($ibge, $year, $apiKey, $timeout),
+            $this->normalizeConvenioItems(
+                $this->portalClient->convenios($ibge, $apiKey, $timeout, $year),
+            ),
+        );
 
         $programKeywords = config('ieducar.funding.transfers.program_keywords', []);
         $aggregated = [];
@@ -444,11 +431,12 @@ final class MunicipalTransferImportService
             if (! $matchKw) {
                 continue;
             }
-            $anoItem = (int) preg_replace('/\D/', '', (string) ($item['ano'] ?? $item['exercicio'] ?? $item['data'] ?? ''));
+            $anoItem = PortalTransparenciaApiClient::yearFromAnoMes($item['anoMes'] ?? null)
+                ?? (int) preg_replace('/\D/', '', (string) ($item['ano'] ?? $item['exercicio'] ?? $item['data'] ?? ''));
             if ($anoItem >= 2000 && $anoItem !== $year) {
                 continue;
             }
-            $valor = $item['valor'] ?? $item['valorTransferencia'] ?? $item['valorRecebido'] ?? null;
+            $valor = $item['valor'] ?? $item['valorLiberado'] ?? $item['valorTransferencia'] ?? $item['valorRecebido'] ?? null;
             if (! is_numeric($valor) || (float) $valor <= 0) {
                 continue;
             }
@@ -465,10 +453,19 @@ final class MunicipalTransferImportService
                 ];
             }
             $parsedDate = $this->parsePortalTransferDate($item, $year);
+            $label = trim((string) (
+                $item['nomeOrgao']
+                ?? $item['nomeUG']
+                ?? $item['descricao']
+                ?? $item['objeto']
+                ?? $item['nomePrograma']
+                ?? $item['acao']
+                ?? 'Transferência'
+            ));
             $repasse = [
                 'valor' => round((float) $valor, 2),
                 'granularity' => $parsedDate['granularity'],
-                'label' => mb_substr(trim((string) ($item['descricao'] ?? $item['nomePrograma'] ?? $item['acao'] ?? 'Transferência')), 0, 120),
+                'label' => mb_substr($label !== '' ? $label : 'Transferência', 0, 120),
             ];
             if ($parsedDate['data'] !== null) {
                 $repasse['data'] = $parsedDate['data'];
@@ -488,12 +485,57 @@ final class MunicipalTransferImportService
     }
 
     /**
+     * Achata DTOs de convénio para o mesmo pipeline de palavras-chave / valores.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return list<array<string, mixed>>
+     */
+    private function normalizeConvenioItems(array $items): array
+    {
+        $out = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $dim = is_array($item['dimConvenio'] ?? null) ? $item['dimConvenio'] : [];
+            $orgao = is_array($item['orgao'] ?? null) ? $item['orgao'] : [];
+            $subfuncao = is_array($item['subfuncao'] ?? null) ? $item['subfuncao'] : [];
+            $out[] = [
+                'valor' => $item['valorLiberado'] ?? $item['valor'] ?? null,
+                'valorLiberado' => $item['valorLiberado'] ?? null,
+                'ano' => $this->extractYearFromRecord([
+                    'data' => $item['dataUltimaLiberacao'] ?? $item['dataReferencia'] ?? $item['dataInicioVigencia'] ?? null,
+                ]),
+                'data' => $item['dataUltimaLiberacao'] ?? $item['dataReferencia'] ?? null,
+                'objeto' => (string) ($dim['objeto'] ?? ''),
+                'descricao' => (string) ($dim['objeto'] ?? $dim['numero'] ?? ''),
+                'nomeOrgao' => (string) ($orgao['nome'] ?? $orgao['nomeMaximo'] ?? $orgao['descricao'] ?? ''),
+                'subfuncao' => (string) ($subfuncao['descricao'] ?? $subfuncao['nome'] ?? ''),
+                'fonte_registro' => 'convenio',
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  array<string, mixed>  $item
      * @return array{data: ?string, mes: ?int, ano: ?int, granularity: string}
      */
     private function parsePortalTransferDate(array $item, int $defaultYear): array
     {
-        foreach (['data', 'dataTransferencia', 'dataRepasse', 'dataPagamento'] as $key) {
+        $mesFromAnoMes = PortalTransparenciaApiClient::monthFromAnoMes($item['anoMes'] ?? null);
+        $anoFromAnoMes = PortalTransparenciaApiClient::yearFromAnoMes($item['anoMes'] ?? null);
+        if ($mesFromAnoMes !== null) {
+            return [
+                'data' => null,
+                'mes' => $mesFromAnoMes,
+                'ano' => $anoFromAnoMes ?? $defaultYear,
+                'granularity' => 'month',
+            ];
+        }
+
+        foreach (['data', 'dataTransferencia', 'dataRepasse', 'dataPagamento', 'dataUltimaLiberacao', 'dataReferencia'] as $key) {
             $raw = trim((string) ($item[$key] ?? ''));
             if ($raw === '') {
                 continue;

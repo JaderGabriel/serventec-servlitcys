@@ -95,6 +95,7 @@ Plano de **melhorias futuras** derivado da análise de julho/2026 (testes, otimi
 |------|-----------------|
 | Funcionalidades comerciais Horizonte (PNAD, IDHM, geo escolas) | [HORIZONTE.md](HORIZONTE.md) §11 · HOR-* no backlog |
 | **Canteiro** — obras educação (Obrasgov/SIMEC) | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) · HOR-19–21 · INT-10 · **concluído** (fases 0–7) |
+| **Portal da Transparência** — emendas, contratos, PBF agregado, etc. | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) · FIN-07–10 · HOR-08b–g |
 | Roadmap produto Clio (indicadores) | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) |
 | Pooling externo / Octane / réplicas | INF-08 · [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) |
 

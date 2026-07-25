@@ -83,7 +83,7 @@ Legenda ingestão: **API** · **CKAN** · **CSV** · **BD** · **MAN** manual ·
 | **i-Educar** (base municipal) | M | BD | PostgreSQL por cidade | Filtros escola/série/ano; matrícula activa | 0 | Sim — núcleo |
 | **FNDE — dados abertos** | F | CKAN / CSV | `datastore_search`; CSV receita Fundeb | IBGE + ano; cache `fundeb/api/{ibge}/{ano}.json` | 0 | Sim |
 | **Tesouro Transparente** | F | CKAN / CSV | Recurso transferências; `TesouroTransferenciasCsvService` | COD_MUN IBGE + exercício | 0 | Sim |
-| **Portal da Transparência** | F | API | REST com `PORTAL_TRANSPARENCIA_API_KEY` | Município + período; cache TTL | 0 | Sim (opcional) |
+| **Portal da Transparência** | F | API | REST com `PORTAL_TRANSPARENCIA_API_KEY` (~106 paths; ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)) | Município + período; cache TTL; rate 400/min | 0 | Sim (opcional) |
 | **INEP — Censo / microdados** | F | CSV / ZIP | Pipeline local; indexador municipal | IBGE + ano Censo | 0 | Sim |
 | **INEP — SAEB / IDEB** | F | CSV / JSON | Import pedagógico; URLs configuráveis | IBGE + ano aplicação | 0 | Sim |
 | **INEP — geo escolas** | F | CSV / ArcGIS | `school_unit_geos` | INEP escola ↔ i-Educar | 0 | Sim |
@@ -334,7 +334,7 @@ Variáveis existentes: [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md). Hub opera
 |-------|------------------|
 | FNDE dados abertos | https://www.fnde.gov.br/dadosabertos |
 | Tesouro Transparente | https://www.tesourotransparente.gov.br |
-| Portal da Transparência — API | https://portaldatransparencia.gov.br/pagina-api |
+| Portal da Transparência — API | https://portaldatransparencia.gov.br/api-de-dados · inventário [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) |
 | INEP microdados | https://www.gov.br/inep/pt-br/acesso-a-informacao/dados-abertos |
 | IBGE SIDRA | https://apisidra.ibge.gov.br |
 | Catálogo APIs gov.br (Conecta) | https://www.gov.br/conecta/catalogo |

@@ -62,8 +62,12 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 | FIN-04 | P2 | Repasse PNAE/PNATE/PDDE vs matrículas elegíveis | Concluído | `ProgramRepasseVsMatriculasService`, aba Financiamentos |
 | FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Concluído | `inep_censo_municipio_matriculas`, discrepâncias |
 | FIN-06 | P3 | Simulador custo hora secretaria na aba Censo | Pendente | Idem §3.3 |
+| FIN-07 | P1 | Portal: paginar `recursos-recebidos` + mapa órgãos FNDE (SIAFI) | Pendente | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) |
+| FIN-08 | P2 | Portal: emendas educação (`emendas` + documentos) | Pendente | Idem · HOR-08c |
+| FIN-09 | P2 | Portal: execução funcional-programática função 12 | Pendente | Idem |
+| FIN-10 | P3 | Portal: `documentos-por-favorecido` (API restrita) | Pendente | Idem · rate limit |
 
-*Produção hoje:* consultas públicas activáveis via `.env` — [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md).
+*Produção hoje:* consultas públicas activáveis via `.env` — [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · inventário API: [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md).
 
 ---
 
@@ -141,6 +145,7 @@ Detalhe: [CADUNICO_PREVISAO_TERRITORIAL.md](CADUNICO_PREVISAO_TERRITORIAL.md) §
 | CUN-01 | P2 | Lacuna por faixa Cecad com matrículas reais por idade/série (i-Educar) | Concluído | Onda 2 |
 | CUN-02 | P2 | Mapa: CadÚnico territorial CRAS/bairro + desconto matrículas Censo estadual/privada | Concluído | Onda 2 |
 | CUN-03 | P3 | Busca ativa: match CPF/NIS Conecta ↔ i-Educar (módulo admin, LGPD) | Pendente | Onda 2–3 |
+| CUN-04 | P3 | Série agregada PBF/NBF/BPC por IBGE (Portal Transparência) | Pendente | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) §2 P3 · sem NIS |
 
 *Complementa INT-07 (entregue parcialmente). Qualidade de cadastro i-Educar (P0):* [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md).
 
@@ -159,7 +164,13 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-05 | P2 | IDHM educação — coroplético mapa + pílula modal (Atlas IPEA) | Pendente | Onda 1 · v2.2b |
 | HOR-06 | P2 | SIDRA ampliado (urbanização, migração, domicílios) | Pendente | Onda 1 · INT-05 · v2.2c |
 | HOR-07 | P2 | Programas FNDE agregados (PDDE, PNAE, PNATE) por município | Pendente | Onda 1 · v2.2c |
-| HOR-08 | P2 | Portal Transparência — convénios e empenhos tech/educação | Concluído (7.0.0) — *sync em curso* | Onda 1 · v2.2c |
+| HOR-08 | P2 | Portal Transparência — recursos + convênios educação (client actual) | Concluído (7.0.0) — *endpoints 2026-07 actualizados* | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) · v2.2c |
+| HOR-08b | P1 | Ficha: lista/alertas convênios educação | Pendente | Portal `convenios` |
+| HOR-08c | P2 | Emendas parlamentares educação | Pendente | Portal `emendas` · FIN-08 |
+| HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) | Pendente | Portal `contratos` |
+| HOR-08e | P2 | Licitações recentes MEC/FNDE | Pendente | Portal `licitacoes` |
+| HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação | Pendente | Portal `contratos/cpf-cnpj` |
+| HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores | Pendente | Portal `ceis`/`cnep` |
 | HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
 | HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Parcial (UI 7.0.0; importação SIDRA pendente — ver HOR-18) | Onda 2 |
 | HOR-11 | P2 | Segmentos comerciais novos (momentum, fiscal, fragmentação rede) | Pendente | v2.2 · depende HOR-01–04 |

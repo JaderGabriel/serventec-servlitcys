@@ -89,10 +89,23 @@ Fontes **já importáveis** no hub `/admin/dados-publicos`; falta expor no Horiz
 | **HOR-05** | **IDHM** (Atlas IPEA/PNUD) | CSV/API quinquenal por município | Coroplético «IDHM educação» (modo Contornos ou UF) | Pílula IDHM educação + ranking na UF | Refina `social_demand` e narrativa socioeconómica | v2.2b |
 | **HOR-06** | **IBGE SIDRA ampliado** | API agregados (urbanização, migração, domicílios c/ crianças) · base INT-05 parcial | Choropleth «pressão demográfica» | População 0–14, taxa urbanização, saldo migratório | Dimensão `demographic_pressure`; segmento «crescimento populacional» | v2.2c |
 | **HOR-07** | **Programas FNDE** (PDDE, PNAE, PNATE) | CKAN FNDE / CSV repasses programáticos | Intensidade por município (opcional) | Volume histórico por programa | Segmento «dependência de programas»; risco prestação de contas | v2.2c |
-| **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) | — | Convénios MEC/FNDE activos; empenhos tech/educação | Proxy «SGE/incumbent» + projecto em curso | v2.2c · **7.0.0** (*sync em curso*) |
+| **HOR-08** | **Portal da Transparência** | API REST (`PORTAL_TRANSPARENCIA_API_KEY`) — client `PortalTransparenciaApiClient` | — | Convénios educação + recursos recebidos (já); próximos: emendas, contratos/licitações MEC-FNDE | Proxy SGE / projeto em curso + due diligence | v2.2c · **7.0.0** + evolução — ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) |
 | **HOR-19** | **Canteiro / Obrasgov** (obras educação FNDE·SIMEC) | API pública Obrasgov (`api-publica`…/obras) · ver [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) | Pins opcionais (HOR-20) | Contagens por situação; lista de obras ≠ concluída | Dimensão `infra_works`; segmento «obra travada / em curso»; alertas mensais só consultoria | **Concluído** · fases 1–7 |
 
-**Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots`, `municipal_education_works` (Canteiro) — incluir no bundle offline v3 quando existir.
+**Persistência sugerida:** `municipal_fiscal_snapshots`, `municipal_idhm_snapshots`, extensão de `municipal_demography_snapshots`, `municipal_program_snapshots`, `municipal_education_works` (Canteiro), evolução de `municipal_transparency_snapshots` (convênios/emendas detalhados) — incluir no bundle offline v3 quando existir.
+
+#### HOR-08 — evolução Portal da Transparência (pós-7.0.0)
+
+Inventário completo de endpoints e prioridades: **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)**.
+
+| Sub-ID | Entrega | Endpoint(s) | Prioridade |
+|--------|---------|-------------|------------|
+| **HOR-08b** | Lista/alertas de convênios educação na ficha | `convenios` (`codigoIBGE`, `funcao=12`) | P1 |
+| **HOR-08c** | Emendas parlamentares educação (ano + função 12) | `emendas` (+ `emendas/documentos/{codigo}`) | P1–P2 |
+| **HOR-08d** | Contratos órgãos MEC/FNDE (lista SIAFI curada) | `contratos` (`codigoOrgao` obrig.) | P2 |
+| **HOR-08e** | Licitações recentes dos mesmos órgãos | `licitacoes` | P2 |
+| **HOR-08f** | Cruzamento CNPJ fornecedores software educação | `contratos/cpf-cnpj`, `itens-contratados` | P2 |
+| **HOR-08g** | Sanções CEIS/CNEP em fornecedores/convenentes | `ceis`, `cnep`, `cepim` | P3 |
 
 ---
 
@@ -170,7 +183,7 @@ Novas **dimensões** candidatas (pesos a calibrar em `config/horizonte.php` apó
 | HOR-04 | INT-06 | SICONFI |
 | HOR-06 | INT-05 | SIDRA demografia |
 | HOR-07 | — | Programas FNDE (catálogo `PublicDataSourcesCatalog`) |
-| HOR-08 | — | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) § Portal Transparência |
+| HOR-08 | — | [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) § Portal · **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)** (inventário Swagger + HOR-08b–g) |
 | HOR-19–21 | INT-10 | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) · Obrasgov |
 | HOR-09 | INT-08 | DATASUS / CNES |
 | HOR-01 | — | [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · `geo_inep` |

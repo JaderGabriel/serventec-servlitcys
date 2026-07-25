@@ -133,7 +133,7 @@ PULSE_SCHEDULE_INTERVAL_MINUTES=3
 # PULSE_CACHE_DRIVER=redis
 
 IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true
-PORTAL_TRANSPARENCIA_API_KEY=   # preencher para despesas na aba Financiamentos
+PORTAL_TRANSPARENCIA_API_KEY=   # preencher para recursos/convênios na aba Financiamentos (cadastro: /api-de-dados/cadastrar-email)
 ```
 
 `SESSION_ENCRYPT` e `SESSION_SECURE_COOKIE` têm default `true` em `config/session.php` (produção HTTPS). Em desenvolvimento HTTP local, force `false` no `.env` — ver comentários em `.env.example`.

@@ -151,7 +151,7 @@ Em outro terminal: `php artisan serve` (ou use o script `composer run dev` se co
 | `IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES` | `true` | Consultas automáticas na aba **Financiamentos** (FNDE, Tesouro, Transparência) |
 | `IEDUCAR_OTHER_FUNDING_PUBLIC_CACHE_TTL` | `3600` | Cache (segundos) das consultas públicas por município/ano |
 | `IEDUCAR_OTHER_FUNDING_LIVE_FNDE` | `false` | Se `true`, consulta CKAN FNDE em tempo real quando não houver cache |
-| `PORTAL_TRANSPARENCIA_API_KEY` | — | Chave da API do [Portal da Transparência](https://portaldatransparencia.gov.br/pagina-api) (despesas por município) |
+| `PORTAL_TRANSPARENCIA_API_KEY` | — | Chave da API do [Portal da Transparência](https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email) (recursos/convênios por município) |
 | `IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID` | — | Recurso CKAN do Tesouro (transferências por município); vazio = tentativa de descoberta automática |
 | `IEDUCAR_WORK_EXCLUDE_LOGINS` | `admin,administrador,suporte,portabilis` | Logins excluídos da contagem de cadastro na aba **Censo** |
 | `IEDUCAR_WORK_EXCLUDE_USER_IDS` | `1` | IDs de usuário excluídos |

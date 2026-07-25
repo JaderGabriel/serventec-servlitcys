@@ -86,4 +86,28 @@ final class IbgeMunicipalityCatalogTest extends TestCase
         $this->assertSame([], $catalog);
         $this->assertNull($repo->get('ibge_municipality_catalog_uf:v2:XX'));
     }
+
+    #[Test]
+    public function find_by_name_resolves_ibge_from_uf_catalog(): void
+    {
+        Http::fake([
+            'servicodados.ibge.gov.br/api/v1/localidades/estados/BA/municipios' => Http::response([
+                [
+                    'id' => 2927408,
+                    'nome' => 'Salvador',
+                    'microrregiao' => [
+                        'mesorregiao' => [
+                            'UF' => ['sigla' => 'BA'],
+                        ],
+                    ],
+                ],
+            ], 200),
+            'servicodados.ibge.gov.br/api/v1/localidades/municipios/*' => Http::response([], 404),
+        ]);
+
+        $ibge = app(IbgeMunicipalityCatalog::class)->findByName('salvador', 'BA');
+
+        $this->assertSame('2927408', $ibge);
+        $this->assertNull(app(IbgeMunicipalityCatalog::class)->findByName('Cidade Inexistente', 'BA'));
+    }
 }

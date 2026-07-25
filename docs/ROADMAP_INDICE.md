@@ -30,6 +30,7 @@ Mapa único dos **roadmaps construídos** (`ROADMAP_*.md`), com ligação por m�
 | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) | Canteiro — obras educação | Fases 0–7 concluídas | HOR-19–21, INT-10 |
 | [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) | Spec Educacenso / Clio S1–S6 | Spec fechada | CEN-04…15 |
 | [ROADMAP_BASES_FINANCEIRAS.md](ROADMAP_BASES_FINANCEIRAS.md) | Motor bases financeiras | Planeado | FIN-* |
+| [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) | Portal Transparência — inventário API | Inventário + backlog | FIN-07–10, HOR-08b–g |
 | [ROADMAP_INCLUSAO.md](ROADMAP_INCLUSAO.md) | Inclusão NEE / cadastro | Parcial | CAD-*, PLG-* |
 | [ROADMAP_POWERBI.md](ROADMAP_POWERBI.md) | Power BI | Estudo · Embedded fora MVP | PBI-* |
 

@@ -406,7 +406,7 @@ Rota: `/admin/monitor-modulos` · Documentação: [COMANDOS_ARTISAN.md](COMANDOS
 | `IEDUCAR_FUNDEB_CKAN_RESOURCE_ID` | Importação FNDE (admin) |
 | `IEDUCAR_FUNDEB_JSON_URL` | URL alternativa `storage://app/fundeb/api/{ibge}/{ano}.json` |
 | `IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES` | Consultas na aba Financiamentos |
-| `PORTAL_TRANSPARENCIA_API_KEY` | API Portal da Transparência (despesas) |
+| `PORTAL_TRANSPARENCIA_API_KEY` | API Portal da Transparência (recursos/convênios; ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)) |
 | `IEDUCAR_TESOURO_TRANSFERENCIAS_RESOURCE_ID` | CKAN Tesouro (opcional) |
 | `IEDUCAR_FUNDEB_USE_IMPORTED_VAAR` | `true` — usa `complementacao_vaar` importada em vez de `IEDUCAR_FUNDEB_VAAR_PCT_BASE` |
 | `IEDUCAR_FUNDEB_VAAR_PCT_BASE` | % indicativo só quando não há VAAR importado |

@@ -128,15 +128,19 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 - **Impacto:** amostra filtrada por IBGE e palavras-chave (`fundeb`, `fnde`, `pnae`, `pnate`, `pdde`, `educa`…); **não** separa automaticamente cada programa.
 - **Limitação:** mensagem «Nenhuma linha encontrada para o IBGE no limite da consulta» — o CKAN devolve lote limitado (500 registros); municípios grandes podem exigir resource ID correto ou import offline.
 
-#### D) Portal da Transparência — despesas federais
+#### D) Portal da Transparência — recursos / convênios
 
-- **Endpoint** | `GET https://api.portaldatransparencia.gov.br/api-de-dados/despesas?codigoMunicipio={ibge}` |
+| | |
+|--|--|
+| **Endpoint** | `GET …/api-de-dados/despesas/recursos-recebidos?codigoIBGE={ibge}&mesAnoInicio=01/{ano}&mesAnoFim=12/{ano}&pagina=1` (+ `convenios?codigoIBGE=`) |
 | **Autenticação** | Header `chave-api-dados: {PORTAL_TRANSPARENCIA_API_KEY}` |
-| **Cadastro** | [portaldatransparencia.gov.br/pagina-api](https://portaldatransparencia.gov.br/pagina-api) (gratuito) |
+| **Cadastro** | [portaldatransparencia.gov.br/api-de-dados/cadastrar-email](https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email) (gratuito; gov.br) |
+| **Swagger** | [api.portaldatransparencia.gov.br/swagger-ui](https://api.portaldatransparencia.gov.br/swagger-ui/index.html) |
 
 - **Necessidade:** cruzar **execução federal** no município com programas educacionais (filtro por palavras-chave em `IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS`).
 - **Impacto:** até `IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS` linhas na UI; sem chave, consulta fica em estado «Não consultado».
-- **Nota:** primeira página da API; não lista todos os programas — uso de apoio à consultoria, não auditoria completa.
+- **Nota:** amostra filtrada por palavras-chave; não lista todos os programas — uso de apoio à consultoria, não auditoria completa.
+- **Oportunidades / roadmap:** inventário completo (~106 endpoints) e IDs FIN-07–10 / HOR-08b–g em **[PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md)**.
 
 #### E) Obrasgov.br — obras de educação (Canteiro)
 
