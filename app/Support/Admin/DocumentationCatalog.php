@@ -47,6 +47,8 @@ final class DocumentationCatalog
             $path = strcasecmp($path, 'README.md') === 0 ? 'README.md' : 'docs/'.$path;
         }
 
+        $path = self::legacyDocAliases()[$path] ?? $path;
+
         $root = realpath(base_path());
         if ($root === false) {
             return null;
@@ -73,6 +75,21 @@ final class DocumentationCatalog
         }
 
         return null;
+    }
+
+    /**
+     * Paths antigos → canónicos (`ROADMAP_*` renomeados).
+     *
+     * @return array<string, string>
+     */
+    public static function legacyDocAliases(): array
+    {
+        return [
+            'docs/ROADMAP_OBRAS_EDUCACAO.md' => 'docs/ROADMAP_CANTEIRO.md',
+            'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md' => 'docs/ROADMAP_EDUCACENSO.md',
+            'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md' => 'docs/ROADMAP_BASES_FINANCEIRAS.md',
+            'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md' => 'docs/ROADMAP_INCLUSAO.md',
+        ];
     }
 
     public static function canUserReadPath(User $user, string $path): bool
@@ -108,7 +125,7 @@ final class DocumentationCatalog
             'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md',
             'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md',
             'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md',
-            'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md',
+            'docs/ROADMAP_BASES_FINANCEIRAS.md',
             'docs/modulos/MODULO_DADOS_PUBLICOS.md',
         ];
     }
@@ -427,9 +444,8 @@ final class DocumentationCatalog
                     ['label' => __('Estado do projeto'), 'path' => 'docs/STATUS_PROJETO.md', 'hint' => __('O que está em produção')],
                     ['label' => __('Histórico de versões'), 'path' => 'docs/HISTORICO_VERSOES.md', 'hint' => __('Tags e commits')],
                     ['label' => __('Backlog de implementações'), 'path' => 'docs/BACKLOG_IMPLEMENTACOES.md'],
-                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Feito · em curso · planeado')],
-                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Obrasgov / SIMEC')],
-                    ['label' => __('Índice de módulos'), 'path' => 'docs/modulos/README.md', 'hint' => __('Consultoria · Horizonte · RX')],
+                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Catálogo ROADMAP_* · por módulo')],
+                    ['label' => __('Índice de módulos'), 'path' => 'docs/modulos/README.md', 'hint' => __('Landing + roadmap')],
                     ['label' => __('Documentação executiva'), 'path' => 'docs/DOCUMENTACAO_EXECUTIVA.md', 'hint' => __('Gestão e secretaria')],
                     ['label' => __('Perfis de usuário'), 'path' => 'docs/PERFIS_UTILIZADOR.md'],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
@@ -472,12 +488,14 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_ANALYTICS.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap Analytics'), 'path' => 'docs/ROADMAP_ANALYTICS.md', 'hint' => __('TEC · GRA · PBI')],
                     ['label' => __('Navegação (5 áreas)'), 'path' => 'docs/ANALYTICS_NAVEGACAO_UI.md', 'hint' => __('Resumo → Finanças')],
                     ['label' => __('Decisão de abas'), 'path' => 'docs/CONSULTORIA_ABAS_DECISAO.md'],
                     ['label' => __('Início dashboard'), 'path' => 'docs/INICIO_DASHBOARD.md'],
                     ['label' => __('Métricas e Pulse'), 'path' => 'docs/METRICAS_QUERIES_ANALYTICS.md'],
                     ['label' => __('Relatório PDF Serventec'), 'path' => 'docs/RELATORIO_PDF_ATM.md'],
-                    ['label' => __('Power BI — estudo'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX · roadmap')],
+                    ['label' => __('Roadmap Power BI'), 'path' => 'docs/ROADMAP_POWERBI.md', 'hint' => __('Fases · PBI-*')],
+                    ['label' => __('Power BI — estudo'), 'path' => 'docs/POWERBI.md', 'hint' => __('ETL · DAX')],
                     ['label' => __('Design system (UI)'), 'path' => 'docs/DESIGN_SYSTEM.md'],
                 ],
             ],
@@ -488,9 +506,10 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_HORIZONTE.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap Horizonte'), 'path' => 'docs/ROADMAP_HORIZONTE.md', 'hint' => __('HOR-* · ondas')],
                     ['label' => __('Documentação técnica'), 'path' => 'docs/HORIZONTE.md', 'hint' => __('Scoring · SICONFI · modal')],
-                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Panorama Horizonte')],
-                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Obrasgov / SIMEC · HOR-19')],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_CANTEIRO.md', 'hint' => __('Obrasgov / SIMEC · HOR-19')],
+                    ['label' => __('Índice de roadmaps'), 'path' => 'docs/ROADMAP_INDICE.md', 'hint' => __('Catálogo geral')],
                 ],
                 'submenus' => [[
                     'title' => __('Operação (admin)'),
@@ -506,11 +525,12 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_CADUNICO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap CadÚnico'), 'path' => 'docs/ROADMAP_CADUNICO.md', 'hint' => __('CUN-*')],
                     ['label' => __('CadÚnico / Cecad'), 'path' => 'docs/CADUNICO_CECAD.md'],
                     ['label' => __('CadÚnico — faixas etárias'), 'path' => 'docs/CADUNICO_FAIXAS_ETARIAS_FUNDEB.md'],
                     ['label' => __('CadÚnico previsão territorial'), 'path' => 'docs/CADUNICO_PREVISAO_TERRITORIAL.md'],
                     ['label' => __('CadÚnico — automação'), 'path' => 'docs/CADUNICO_AUTOMACAO.md'],
-                    ['label' => __('Inclusão e NEE — roadmap'), 'path' => 'docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'],
+                    ['label' => __('Inclusão e NEE — roadmap'), 'path' => 'docs/ROADMAP_INCLUSAO.md'],
                     ['label' => __('Plugins i-Educar'), 'path' => 'docs/PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md'],
                 ],
             ],
@@ -521,6 +541,7 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_PEDAGOGIA_SAEB.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap Pedagogia / SAEB'), 'path' => 'docs/ROADMAP_PEDAGOGIA_SAEB.md', 'hint' => __('GRA-*')],
                     ['label' => __('SAEB / IDEB'), 'path' => 'docs/saeb_pedagogico_referencias.md'],
                     ['label' => __('Gráficos MEC/INEP'), 'path' => 'docs/SUGESTOES_GRAFICOS_INFERENCIAS_MEC_INEP.md'],
                     ['label' => __('Importação SAEB (INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md', 'audience' => self::AUDIENCE_ADMIN],
@@ -533,6 +554,7 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_RX_CENSO.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap RX / Censo'), 'path' => 'docs/ROADMAP_RX_CENSO.md', 'hint' => __('CEN-*')],
                     ['label' => __('Educacenso — simulação etapa 1'), 'path' => 'docs/EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md', 'hint' => __('CEN-01 · TXT × i-Educar')],
                     ['label' => __('Clio (coletas CSV)'), 'path' => 'docs/modulos/MODULO_CLIO.md', 'hint' => __('Módulo irmão — 1ª etapa')],
                 ],
@@ -547,7 +569,7 @@ final class DocumentationCatalog
                     ['label' => __('Roadmap Clio (vivo)'), 'path' => 'docs/ROADMAP_CLIO.md', 'hint' => __('Status · indicadores · melhorias')],
                     ['label' => __('Catálogo erros e relatórios'), 'path' => 'docs/CLIO_CATALOGO_ERROS_E_RELATORIOS.md', 'hint' => __('INF-* · CLIO-* · UI')],
                     ['label' => __('Perfis e acesso'), 'path' => 'docs/PERFIS_UTILIZADOR.md', 'hint' => __('Ver vs mutar · municipal excluído')],
-                    ['label' => __('Roadmap (spec S1–S6)'), 'path' => 'docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md', 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Roadmap Educacenso (spec)'), 'path' => 'docs/ROADMAP_EDUCACENSO.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('TODO implementação'), 'path' => 'docs/CLIO_TODO_IMPLEMENTACAO.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Rastreio até release'), 'path' => 'docs/CLIO_CHANGELOG_DEV.md', 'audience' => self::AUDIENCE_ADMIN],
                     ['label' => __('Comandos Artisan'), 'path' => 'docs/COMANDOS_ARTISAN.md', 'hint' => __('clio:*')],
@@ -563,13 +585,13 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ALL,
                 'items' => [
                     ['label' => __('Visão do módulo'), 'path' => 'docs/modulos/MODULO_FUNDEB.md', 'hint' => __('Porta de entrada')],
+                    ['label' => __('Roadmap FUNDEB'), 'path' => 'docs/ROADMAP_FUNDEB.md', 'hint' => __('FIN-*')],
                     ['label' => __('FUNDEB / VAAF / VAAR'), 'path' => 'docs/FUNDEB_VAAF_E_ONDA1.md'],
                     ['label' => __('Consultas externas'), 'path' => 'docs/CONSULTAS_EXTERNAS.md', 'hint' => __('FNDE · Tesouro · INEP')],
                     ['label' => __('Comparativo vs FNDE/MEC'), 'path' => 'docs/COMPARATIVO_VAAF_SERVLITCYS_VS_FNDE_MEC.md'],
                     ['label' => __('Exportação planilha FUNDEB'), 'path' => 'docs/EXPORTACAO_DADOS_FUNDEB_PLANILHA.md'],
                     ['label' => __('Extrato BB / Open Finance'), 'path' => 'docs/BB_EXTRATO_OPEN_FINANCE.md'],
-                    ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md', 'audience' => self::AUDIENCE_ADMIN],
-                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('Roadmap · Obrasgov'), 'audience' => self::AUDIENCE_ADMIN],
+                    ['label' => __('Roadmap bases financeiras'), 'path' => 'docs/ROADMAP_BASES_FINANCEIRAS.md', 'audience' => self::AUDIENCE_ADMIN],
                 ],
             ],
             [
@@ -579,12 +601,13 @@ final class DocumentationCatalog
                 'audience' => self::AUDIENCE_ADMIN,
                 'items' => [
                     ['label' => __('Visão dados públicos'), 'path' => 'docs/modulos/MODULO_DADOS_PUBLICOS.md', 'hint' => __('Hubs admin')],
+                    ['label' => __('Roadmap Dados públicos'), 'path' => 'docs/ROADMAP_DADOS_PUBLICOS.md', 'hint' => __('INT-* · hubs')],
                     ['label' => __('Importação dados públicos'), 'path' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'],
                     ['label' => __('Importação SAEB (INEP)'), 'path' => 'docs/IMPORTACAO_SAEB_PLANILHAS_INEP.md'],
                     ['label' => __('Catálogo API i-Educar'), 'path' => 'docs/CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md'],
                     ['label' => __('Estudo: agentes e IA'), 'path' => 'docs/ESTUDO_AGENTES_IA_SERVLITCYS.md'],
                     ['label' => __('Estudo: setor público'), 'path' => 'docs/ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md'],
-                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_OBRAS_EDUCACAO.md', 'hint' => __('INT-10 · Obrasgov')],
+                    ['label' => __('Canteiro — obras educação'), 'path' => 'docs/ROADMAP_CANTEIRO.md', 'hint' => __('INT-10 · Obrasgov')],
                 ],
             ],
             [

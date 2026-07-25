@@ -49,6 +49,7 @@ final class HorizonteFortnightlyFeedService
         private readonly HorizonteIbgeMunicipalGeoImportService $municipalGeoImport,
         private readonly HorizonteSiconfiMunicipalSyncService $siconfiSync,
         private readonly HorizonteMunicipalTransparencySyncService $transparencySync,
+        private readonly HorizonteMunicipalObrasSyncService $obrasSync,
     ) {}
 
     /**
@@ -210,6 +211,7 @@ final class HorizonteFortnightlyFeedService
                 'repasses_tesouro' => $this->syncRepassesTesouro($refYear, $options),
                 'siconfi_sync' => $this->syncSiconfi($refYear, $options),
                 'transparency_sync' => $this->syncTransparency($refYear, $options),
+                'obras_sync' => $this->syncObras($options),
                 'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
                 'ibge_catalog' => $this->warmIbgeCatalog($options),
                 'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
@@ -317,7 +319,7 @@ final class HorizonteFortnightlyFeedService
                 'label' => HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey),
             ]));
 
-            if (in_array($phaseKey, ['ibge_catalog', 'ibge_municipal_geo', 'saeb_planilhas', 'sidra_demography', 'educacenso'], true)) {
+            if (in_array($phaseKey, ['ibge_catalog', 'ibge_municipal_geo', 'saeb_planilhas', 'sidra_demography', 'educacenso', 'obras_sync'], true)) {
                 do {
                     $result = $dryRun ? $this->dryRunPhase($phaseKey) : $this->runPhase($phaseKey, $runtimeOptions);
                     $this->emitPhaseDebugLines($runtimeOptions, $result);
@@ -482,6 +484,7 @@ final class HorizonteFortnightlyFeedService
             'skip_repasses' => (bool) ($options['skip_repasses'] ?? false),
             'skip_siconfi' => (bool) ($options['skip_siconfi'] ?? false),
             'skip_transparency' => (bool) ($options['skip_transparency'] ?? false),
+            'skip_obras' => (bool) ($options['skip_obras'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
             'skip_ibge_municipal_geo' => (bool) ($options['skip_ibge_municipal_geo'] ?? false),
@@ -1037,6 +1040,34 @@ final class HorizonteFortnightlyFeedService
                 'success' => false,
                 'partial' => true,
                 'message' => __('Transparência: falha neste passo — :erro', ['erro' => $e->getMessage()]),
+                'imported' => 0,
+            ];
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, message: string, imported?: int, partial?: bool, skipped?: bool}
+     */
+    private function syncObras(array $options = []): array
+    {
+        $this->debugLog($options, __('Canteiro (Obras) — obras de educação FNDE/SIMEC…'));
+        try {
+            $result = $this->obrasSync->syncBatch(array_merge($options, [
+                'continue' => true,
+                'uf' => HorizonteUfScope::normalize($options['uf'] ?? null),
+            ]));
+            $this->debugLog($options, (string) ($result['message'] ?? ''));
+
+            return $result;
+        } catch (\Throwable $e) {
+            Log::warning('horizonte.obras_sync_failed', ['message' => $e->getMessage()]);
+
+            return [
+                'key' => 'obras_sync',
+                'success' => false,
+                'partial' => true,
+                'message' => __('Obras: falha neste passo — :erro', ['erro' => $e->getMessage()]),
                 'imported' => 0,
             ];
         }

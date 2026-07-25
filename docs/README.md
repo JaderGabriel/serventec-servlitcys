@@ -81,7 +81,7 @@ flowchart TD
 | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) | Auditoria MVC, Eloquent, testes e plano de melhoria |
 | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) | Identidade visual e ordem das abas |
 | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) | Evoluções planeadas (único backlog) |
-| [ROADMAP_INDICE.md](ROADMAP_INDICE.md) | Mapa de roadmaps — feito, em curso e planeado |
+| [ROADMAP_INDICE.md](ROADMAP_INDICE.md) | Catálogo de roadmaps construídos (`ROADMAP_*`) · por módulo |
 
 ---
 
@@ -97,10 +97,16 @@ mindmap
     Finanças
       FUNDEB_VAAF_E_ONDA1
       CONSULTAS_EXTERNAS
-      ROADMAP_BASES_CALCULOS
+      ROADMAP_BASES_FINANCEIRAS
+      ROADMAP_FUNDEB
+      ROADMAP_CANTEIRO
     CadÚnico
       CADUNICO_PREVISAO_TERRITORIAL
-      CADUNICO_AUTOMACAO
+      ROADMAP_CADUNICO
+    Roadmaps
+      ROADMAP_INDICE
+      ROADMAP_HORIZONTE
+      ROADMAP_CLIO
     Operação
       IMPLANTACAO_PRODUCAO
       VARIAVEIS_AMBIENTE
@@ -116,7 +122,7 @@ mindmap
 | [DOCUMENTACAO_EXECUTIVA.md](DOCUMENTACAO_EXECUTIVA.md) | Propósito, público, governação |
 | [INICIO_DASHBOARD.md](INICIO_DASHBOARD.md) | Início admin — KPIs, atalhos, mapa mental |
 | [HORIZONTE.md](HORIZONTE.md) | Mapa de oportunidade municipal (6.x) — propensão, calor, feed bimestral, alta pressão |
-| [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) | **Canteiro** — obras educação (Obrasgov/SIMEC): roadmap, filtros, custo |
+| [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) | **Canteiro** — obras educação (Obrasgov/SIMEC): roadmap, filtros, custo |
 | [PERFIS_UTILIZADOR.md](PERFIS_UTILIZADOR.md) | RBAC: admin, user, municipal |
 | [SEGURANCA.md](SEGURANCA.md) | Senhas, sessões, checklist produção |
 
@@ -137,11 +143,11 @@ mindmap
 | [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) | Cadastro e integrações |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência arquivo Educacenso (portal INEP) × i-Educar + painel |
 | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | **Roadmap vivo Clio** — status do módulo, indicadores consolidados, melhorias com impacto |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
+| [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) | Spec **Clio**: multi-arquivo, análise com/sem i-Educar, carga assistida (S1–S6 no código) |
 | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | TODO de implementação do módulo Clio (S1–S6 ✓ · S7–S8) |
 | [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo do que o Clio mostra: INF-*, CLIO-*, relatório da rede, UI |
 | [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) | Rastreio até release do Clio |
-| [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) | Roadmap NEE / AEE |
+| [ROADMAP_INCLUSAO.md](ROADMAP_INCLUSAO.md) | Roadmap NEE / AEE |
 
 ### 3. Financiamento e repasses
 
@@ -186,9 +192,9 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [ESTUDO_AGENTES_IA_SERVLITCYS.md](ESTUDO_AGENTES_IA_SERVLITCYS.md) | Agentes, LLM, RAG e copilot |
 | [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) | Estudo setor público |
 | [CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md](CATALOGO_API_IEDUCAR_CONSULTAS_DIRETAS.md) | Proposta API i-Educar |
-| [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md) | Motor de repasses (futuro) |
+| [ROADMAP_BASES_FINANCEIRAS.md](ROADMAP_BASES_FINANCEIRAS.md) | Motor de repasses (futuro) |
 | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | Clio — status, indicadores e melhorias (vivo) |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Relatórios Educacenso 1ª etapa (campanhas / Modo A–B) |
+| [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) | Relatórios Educacenso 1ª etapa (campanhas / Modo A–B) |
 
 ### 6. Operação e deploy *(admin)*
 

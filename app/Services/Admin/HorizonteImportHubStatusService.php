@@ -340,6 +340,22 @@ final class HorizonteImportHubStatusService
                     : null,
             ],
             [
+                'key' => 'obras_sync',
+                'label' => __('Canteiro — obras educação (Obrasgov)'),
+                'description' => __('Obras FNDE/SIMEC ≠ concluídas via API pública Obrasgov — fase obras_sync / horizonte:sync-obras.'),
+                'source_id' => null,
+                'hub_anchor' => '#horizonte-hub',
+                'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
+                'cli' => 'php artisan horizonte:sync-obras --continue',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=obras_sync --reset',
+                'ok' => \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')
+                    && \App\Models\MunicipalEducationWork::query()->count() >= 10,
+                'metric' => \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')
+                    ? \App\Models\MunicipalEducationWork::query()->count()
+                    : 0,
+                'metric_label' => __('obras'),
+            ],
+            [
                 'key' => 'saeb_planilhas',
                 'label' => __('SAEB — planilhas INEP (nacional)'),
                 'description' => __('Indicadores LP/MAT por município — :n ano(s) por passo (HORIZONTE_FORTNIGHTLY_SAEB_YEARS_PER_STEP). Repita o comando até concluir todos os anos.', [

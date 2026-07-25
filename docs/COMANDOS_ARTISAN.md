@@ -179,6 +179,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--continue`, `--reset`, `--refresh`, `--dry-run`. Fase `siconfi_sync` no feed. **Agendamento semestral** (jan/jul) com lotes `--continue`. |
 | `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
+| `horizonte:sync-obras` | **Canteiro** — obras educação FNDE/SIMEC (API pública Obrasgov). Opções: `--uf=`, `--situacao=`, `--continue`, `--reset`, `--limit-pages=`, `--no-enrich-finance`, `--dry-run`. Fase `obras_sync` no feed. **Agendamento mensal** staged. |
+| `horizonte:canteiro-alerts` | Snapshot mensal de alertas Canteiro **só consultoria activa** (`hasDataSetup`). Opções: `--dry-run`, `--pdf`. Deep-link SIMEC no payload. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
 | `horizonte:warm-map-cache` | Aquece cache JSON do mapa (overview + UFs) — evita 503 na primeira visita. Opções: `--uf=`, `--skip-overview`. Agendado semanalmente (domingo 05:30). |
 | `horizonte:sync-ibge-centroids` | Sincroniza centroides IBGE de todos os municípios (UFs menores primeiro, retomável). Opções: `--reset`, `--ufs-per-step=`, `--uf=`, `--force`, `--dry-run`. |
@@ -186,6 +188,8 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 **Agendamento:** dia **1** às **03:00** nos meses **1, 3, 5, 7, 9, 11** + passos `--continue` a cada `HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL` min.
 
 **SICONFI (semestral):** dia **15** às **04:00** nos meses **1, 7** — início com `--reset --continue` + passos `--continue` a cada `HORIZONTE_SICONFI_SCHEDULE_STEP_INTERVAL` min enquanto a sync nacional estiver activa.
+
+**Canteiro (mensal):** dia **5** às **05:30** — `horizonte:sync-obras --reset` + passos `--continue`; dia **8** às **06:00** — `horizonte:canteiro-alerts` (só consultoria).
 
 ```bash
 # Nacional (recomendado): 1 UF por execução até concluir as 27
@@ -209,8 +213,14 @@ php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
 php artisan horizonte:sync-municipal-alerts --dry-run
 php artisan horizonte:sync-siconfi --limit=8
 php artisan horizonte:sync-transparency --limit=5
+php artisan horizonte:sync-obras --uf=BA
+php artisan horizonte:sync-obras --reset
+php artisan horizonte:sync-obras --continue
+php artisan horizonte:canteiro-alerts --dry-run
+php artisan horizonte:canteiro-alerts --pdf
 php artisan horizonte:fortnightly-feed --phase=siconfi_sync
 php artisan horizonte:fortnightly-feed --phase=transparency_sync
+php artisan horizonte:fortnightly-feed --phase=obras_sync
 php artisan horizonte:warm-map-cache
 php artisan horizonte:sync-ibge-centroids --reset
 php artisan schedule:list | grep horizonte
@@ -341,7 +351,7 @@ php artisan funding:enrich-consultoria-financiamentos --ano=2025 --skip-import
 
 **Pré-requisitos:** `IEDUCAR_FUNDING_TRANSFERS_ENABLED`, `PORTAL_TRANSPARENCIA_API_KEY`, `IEDUCAR_OTHER_FUNDING_PUBLIC_QUERIES=true`.
 
-Ver também: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md), [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md).
+Ver também: [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md), [BB_EXTRATO_OPEN_FINANCE.md](BB_EXTRATO_OPEN_FINANCE.md), [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md).
 
 ---
 

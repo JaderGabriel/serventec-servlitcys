@@ -360,6 +360,54 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->runInBackground();
         }
 
+        if (filter_var(config('horizonte.obras.enabled', true), FILTER_VALIDATE_BOOL)
+            && filter_var(config('horizonte.obras.schedule.enabled', true), FILTER_VALIDATE_BOOL)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $obrasDay = max(1, min(28, (int) config('horizonte.obras.schedule.day', 5)));
+            $obrasTime = trim((string) config('horizonte.obras.schedule.time', '05:30')) ?: '05:30';
+            $obrasOverlap = max(3600, (int) config('horizonte.obras.schedule.overlap_minutes', 43200));
+            $obrasStepInterval = max(5, (int) config('horizonte.obras.schedule.step_interval_minutes', 30));
+            $obrasStaged = filter_var(config('horizonte.obras.schedule.staged', true), FILTER_VALIDATE_BOOL);
+
+            if ($obrasStaged) {
+                $schedule->command('horizonte:sync-obras --reset')
+                    ->monthlyOn($obrasDay, $obrasTime)
+                    ->name('horizonte-sync-obras-start')
+                    ->withoutOverlapping($obrasOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+
+                $schedule->command('horizonte:sync-obras --continue')
+                    ->cron('*/'.$obrasStepInterval.' * * * *')
+                    ->name('horizonte-sync-obras-step')
+                    ->withoutOverlapping(max(5, $obrasStepInterval - 1))
+                    ->when(static fn (): bool => \Illuminate\Support\Facades\Cache::has('horizonte.obras.sync.progress'))
+                    ->timezone($timezone)
+                    ->runInBackground();
+            } else {
+                $schedule->command('horizonte:sync-obras')
+                    ->monthlyOn($obrasDay, $obrasTime)
+                    ->name('horizonte-sync-obras')
+                    ->withoutOverlapping($obrasOverlap)
+                    ->timezone($timezone)
+                    ->runInBackground();
+            }
+        }
+
+        if (filter_var(config('horizonte.obras.enabled', true), FILTER_VALIDATE_BOOL)
+            && filter_var(config('horizonte.obras.alerts.enabled', true), FILTER_VALIDATE_BOOL)) {
+            $timezone = (string) config('app.timezone', 'UTC');
+            $alertsDay = max(1, min(28, (int) config('horizonte.obras.alerts.schedule_day', 8)));
+            $alertsTime = trim((string) config('horizonte.obras.alerts.schedule_time', '06:00')) ?: '06:00';
+
+            $schedule->command('horizonte:canteiro-alerts')
+                ->monthlyOn($alertsDay, $alertsTime)
+                ->name('horizonte-canteiro-alerts')
+                ->withoutOverlapping(120)
+                ->timezone($timezone)
+                ->runInBackground();
+        }
+
         if (filter_var(config('tmp.schedule.enabled', true), FILTER_VALIDATE_BOOL)) {
             $timezone = (string) config('app.timezone', 'UTC');
             $purgeTime = (string) config('tmp.schedule.time', '03:15');

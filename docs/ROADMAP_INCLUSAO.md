@@ -1,9 +1,11 @@
-# Documento executivo — roadmap: inclusão, recursos de prova e qualidade de cadastro
+# Roadmap Inclusão — NEE, recursos de prova e qualidade de cadastro
 
-**Data de referência:** maio de 2026  
+**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24 · **Estado:** MVP parcial; CAD-* pendentes
+
+> **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **CadÚnico:** [ROADMAP_CADUNICO.md](ROADMAP_CADUNICO.md) · **Plugins:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) § D e F · **STATUS:** [STATUS_PROJETO.md](STATUS_PROJETO.md)
+
+**Data de referência original:** maio de 2026  
 **Âmbito:** planeamento de evolução do painel servlitcys (i-Educar municipal) para capturar inconsistências pedagógicas e de Censo, com foco em educação especial e falhas de dados semelhantes às já identificadas em produção.
-
-**Documentos relacionados:** [README.md](README.md) (índice) · [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md) (roteiro ampliado cadastro + integrações) · [STATUS_PROJETO.md](STATUS_PROJETO.md) · [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **D** e **F**) · [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §7–8 e §15.
 
 > **Nota:** grande parte do roadmap abaixo está **concluída** (MVP recurso×NEE, geo, VAAF). Manter o arquivo como histórico e especificação; novos itens vão para o backlog central.
 

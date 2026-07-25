@@ -34,6 +34,7 @@ use App\Support\Horizonte\HorizonteCadunicoEnrichment;
 use App\Support\Horizonte\HorizonteCensoIndicators;
 use App\Support\Horizonte\HorizonteSaebLookupYears;
 use App\Support\Horizonte\HorizonteSaebTrend;
+use App\Support\Horizonte\HorizonteCanteiroAlertsCache;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use App\Support\Pulse\PulseOperationRecorder;
@@ -952,6 +953,7 @@ final class HorizonteMapService
         $pnadByIbge = $this->pnadByIbge($refYear, $ibgePrefix);
         $areaByIbge = $this->areaByIbge($ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
+        $obrasByIbge = $this->obrasAggByIbge($ibgePrefix);
 
         $currentYear = HorizonteFundebRepasseOutlook::currentYear();
         $fundebCurrentByIbge = $currentYear > $refYear
@@ -984,6 +986,9 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($cadunicoByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($obrasByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($demographyByIbge) as $ibge) {
@@ -1051,6 +1056,10 @@ final class HorizonteMapService
 
         $sgeRegistry = $this->sgeRegistry->indexedFromCache();
         $alertsRegistry = $this->municipalAlerts->indexedFromCache();
+        $canteiroAlertsBundle = HorizonteCanteiroAlertsCache::load();
+        $canteiroAlerts = $canteiroAlertsBundle['by_ibge'];
+        $canteiroSimecUrl = $canteiroAlertsBundle['simec_painel_url'];
+        $canteiroAlertsGeneratedAt = $canteiroAlertsBundle['generated_at'];
         $alertsMeta = $this->municipalAlerts->metaFromCache();
 
         $high = (int) config('horizonte.high_opportunity_threshold', 70);
@@ -1071,6 +1080,7 @@ final class HorizonteMapService
             $area = $areaByIbge[$ibge] ?? null;
             $transfer = $transfersByIbge[$ibge] ?? null;
             $fundebRealtime = $fundebRealtimeByIbge[$ibge] ?? null;
+            $obras = $obrasByIbge[$ibge] ?? null;
 
             $saebTrend = HorizonteSaebTrend::analyze(
                 array_values($saeb['lp_series'] ?? []),
@@ -1139,6 +1149,8 @@ final class HorizonteMapService
                 'has_fiscal' => $fiscal !== null,
                 'has_transparency' => $transparency !== null,
                 'has_pnad' => $pnad !== null,
+                'has_obras' => $obras !== null && ($obras['total'] ?? 0) > 0,
+                'infra_works_score' => $obras['infra_works_score'] ?? 0,
                 'consultoria_active' => $consultoriaActive,
                 'in_catalog' => $inCatalog,
             ];
@@ -1183,6 +1195,7 @@ final class HorizonteMapService
                 'learning_trajectory' => $scores['learning_trajectory'],
                 'enrollment_momentum' => $scores['enrollment_momentum'],
                 'inclusion_gap' => $scores['inclusion_gap'],
+                'infra_works' => $scores['infra_works'] ?? ($obras['infra_works_score'] ?? 0),
                 'data_readiness' => $scores['data_readiness'],
                 'heat_intensity' => round($heatIntensity, 3),
                 'consultoria_active' => $consultoriaActive,
@@ -1196,6 +1209,20 @@ final class HorizonteMapService
                 'has_fiscal' => $fiscal !== null,
                 'has_transparency' => $transparency !== null,
                 'has_pnad' => $pnad !== null,
+                'has_obras' => $obras !== null && ($obras['total'] ?? 0) > 0,
+                'obras_paralisadas' => $obras['paralisadas'] ?? 0,
+                'obras_em_execucao' => $obras['em_execucao'] ?? 0,
+                'obras_inacabadas' => $obras['inacabadas'] ?? 0,
+                'obras_canceladas' => $obras['canceladas'] ?? 0,
+                'obras_cadastradas' => $obras['cadastradas'] ?? 0,
+                'obras_total' => $obras['total'] ?? 0,
+                'obras_samples' => $obras['samples'] ?? [],
+                'obras_pins' => $obras['pins'] ?? [],
+                'obras_imported_at' => $obras['imported_at'] ?? null,
+                'infra_works_score' => $obras['infra_works_score'] ?? 0,
+                'canteiro_alert' => $canteiroAlerts[$ibge] ?? null,
+                'canteiro_simec_url' => $canteiroSimecUrl,
+                'canteiro_alerts_generated_at' => $canteiroAlertsGeneratedAt,
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
                 'censo_ano' => $censo['ano'] ?? null,
                 'cadunico_escolar' => $cadunico['escolar'] ?? null,
@@ -1586,6 +1613,125 @@ final class HorizonteMapService
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<string, array{
+     *     paralisadas: int,
+     *     em_execucao: int,
+     *     inacabadas: int,
+     *     canceladas: int,
+     *     cadastradas: int,
+     *     total: int,
+     *     samples: list<array{nome: string, situacao: string, percentual: ?float}>,
+     *     imported_at: ?string,
+     *     infra_works_score: int
+     * }>
+     */
+    private function obrasAggByIbge(?string $ibgePrefix = null): array
+    {
+        if (! filter_var(config('horizonte.obras.enabled', true), FILTER_VALIDATE_BOOL)) {
+            return [];
+        }
+
+        if (! \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')) {
+            return [];
+        }
+
+        $query = \App\Models\MunicipalEducationWork::query()->whereNotNull('ibge_municipio');
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
+        }
+
+        $rows = $query->get([
+            'ibge_municipio',
+            'situacao',
+            'desc_nome',
+            'percentual_execucao_fisica',
+            'valor_pago',
+            'latitude',
+            'longitude',
+            'id_projeto_investimento',
+            'imported_at',
+        ]);
+
+        $agg = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+
+            if (! isset($agg[$ibge])) {
+                $agg[$ibge] = [
+                    'paralisadas' => 0,
+                    'em_execucao' => 0,
+                    'inacabadas' => 0,
+                    'canceladas' => 0,
+                    'cadastradas' => 0,
+                    'total' => 0,
+                    'samples' => [],
+                    'pins' => [],
+                    'imported_at' => null,
+                ];
+            }
+
+            $situacao = trim((string) $row->situacao);
+            $agg[$ibge]['total']++;
+
+            match ($situacao) {
+                'Paralisada' => $agg[$ibge]['paralisadas']++,
+                'Em execução' => $agg[$ibge]['em_execucao']++,
+                'Inacabada' => $agg[$ibge]['inacabadas']++,
+                'Cancelada' => $agg[$ibge]['canceladas']++,
+                'Cadastrada' => $agg[$ibge]['cadastradas']++,
+                default => null,
+            };
+
+            $lat = $row->latitude !== null ? (float) $row->latitude : null;
+            $lng = $row->longitude !== null ? (float) $row->longitude : null;
+
+            if (count($agg[$ibge]['samples']) < 5) {
+                $agg[$ibge]['samples'][] = [
+                    'id' => (string) ($row->id_projeto_investimento ?? ''),
+                    'nome' => mb_substr(trim((string) $row->desc_nome), 0, 80),
+                    'situacao' => $situacao,
+                    'percentual' => $row->percentual_execucao_fisica !== null ? (float) $row->percentual_execucao_fisica : null,
+                    'valor_pago' => $row->valor_pago !== null ? (float) $row->valor_pago : null,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                ];
+            }
+
+            if (
+                $lat !== null && $lng !== null
+                && in_array($situacao, ['Paralisada', 'Em execução', 'Inacabada'], true)
+                && count($agg[$ibge]['pins']) < 40
+            ) {
+                $agg[$ibge]['pins'][] = [
+                    'id' => (string) ($row->id_projeto_investimento ?? ''),
+                    'nome' => mb_substr(trim((string) $row->desc_nome), 0, 60),
+                    'situacao' => $situacao,
+                    'lat' => $lat,
+                    'lng' => $lng,
+                ];
+            }
+
+            $imported = $row->imported_at !== null ? $row->imported_at->toIso8601String() : null;
+            if ($imported !== null && ($agg[$ibge]['imported_at'] === null || $imported > $agg[$ibge]['imported_at'])) {
+                $agg[$ibge]['imported_at'] = $imported;
+            }
+        }
+
+        foreach ($agg as $ibge => $data) {
+            $score = ($data['paralisadas'] * 40)
+                + ($data['inacabadas'] * 30)
+                + ($data['em_execucao'] * 15)
+                + ($data['canceladas'] * 10);
+            $agg[$ibge]['infra_works_score'] = (int) min(100, $score);
+        }
+
+        return $agg;
     }
 
     /**

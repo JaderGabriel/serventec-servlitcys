@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.0.2 · **Última revisão:** 2026-07-24
 
-> **Índice:** [README.md](README.md) · **Módulo:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md)
+> **Índice:** [README.md](README.md) · **Módulo:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md)
 
 Documento de referência do que o **Clio** pode **mostrar** hoje na interface, nas inferências (`INF-*`), nos achados (`CLIO-*`), nos erros de leitura de CSV (`EDU-REL-*`) e nas exportações. Fonte de verdade: código em `app/Services/Clio/` (análise, parse, cruzamento, presenter).
 
@@ -290,6 +290,6 @@ Atualizar este documento quando novos códigos `CLIO-*` / `INF-*` forem adiciona
 |-----------|-----|
 | [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) | Visão do módulo e rotas |
 | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | Status, indicadores consolidados, melhorias com impacto |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec INF-* e BI planejado |
+| [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) | Spec INF-* e BI planejado |
 | [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) | Checklist de implementação |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Conferência TXT pipe × i-Educar (paralelo ao Clio) |

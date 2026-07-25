@@ -30,6 +30,8 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 |----------|------------------------|
 | O que está em produção? | [STATUS_PROJETO.md](STATUS_PROJETO.md) + `config/documentation.php` |
 | Qual a versão e tag? | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
+| Quais roadmaps existem? | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) — catálogo `ROADMAP_{MODULO_OU_ETAPA}.md` |
+| Roadmap de um módulo? | `docs/ROADMAP_{SLUG}.md` (antes das demais docs do módulo no leitor) |
 | Diagramas de arquitetura e fluxos? | [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) |
 | Porquê esta decisão técnica? | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |
 | Qualidade de código / padrões Laravel? | [ANALISE_PADROES_LARAVEL.md](ANALISE_PADROES_LARAVEL.md) |
@@ -40,6 +42,8 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 | Deploy | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) |
 
 **Regra:** um facto técnico vive num sítio; noutros documentos use **link**, não cópia longa.
+
+**Regra de roadmaps:** todo módulo em [modulos/README.md](modulos/README.md) tem `ROADMAP_*.md`; o índice geral é [ROADMAP_INDICE.md](ROADMAP_INDICE.md); no leitor (`DocumentationCatalog`) a ordem por secção de módulo é **landing → roadmap → demais guias**.
 
 ---
 
@@ -110,11 +114,12 @@ Decisão de produto: [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md).
 8. [ ] `php artisan product:release-status TAG --product-version=X.Y.Z`
 9. [ ] `php artisan product:release-publish TAG --product-version=X.Y.Z` — ver [RELEASE_PUBLICACAO.md](RELEASE_PUBLICACAO.md)
 10. [ ] [README.md](README.md) — seção releases e abas rápidas
-11. [ ] [ROADMAP_INDICE.md](ROADMAP_INDICE.md) — panorama feito / em curso / planeado
-12. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
-13. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
-14. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
-15. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
+11. [ ] [ROADMAP_INDICE.md](ROADMAP_INDICE.md) — catálogo de roadmaps + panorama
+12. [ ] Módulo novo → `ROADMAP_{SLUG}.md` + landing + entrada no catálogo (ordem landing → roadmap → resto)
+13. [ ] `DocumentationCatalog` — entradas curadas se o doc for de leitura frequente
+14. [ ] Comando novo → [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) + `ArtisanCommandsCatalog`
+15. [ ] Decisão técnica → [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md)
+16. [ ] Item concluído no backlog → mover para STATUS; remover ou marcar Concluído
 
 ---
 

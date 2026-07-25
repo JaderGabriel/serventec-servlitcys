@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.0.3 · **Última revisão:** 2026-07-24 · **Estado:** S7 concluída (BI + medidores) — próximo S8 (promote i-Educar)
 
-> **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
+> **Roadmap vivo:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Spec:** [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Rastreio release:** [CLIO_CHANGELOG_DEV.md](CLIO_CHANGELOG_DEV.md) · **Backlog IDs:** `CEN-04`…`CEN-16` · **Docs menu:** secção **9 · Clio**
 
 
 Lista do que **deve ser codificado** para o módulo **Clio**. Marcar `- [ ]` → `- [x]` conforme entrega. Ordem = sprints **S1→S8** (§9.7 do roadmap).

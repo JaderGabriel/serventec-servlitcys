@@ -2,9 +2,9 @@
 
 **Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Hygieia
 
-> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
+> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
-Documento **vivo** do módulo Clio: o que está estável, quais indicadores o produto consolida hoje e o que ainda muda números/interpretação. A spec histórica de implementação permanece em [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md); este arquivo é o mapa operacional pós-MVP.
+Documento **vivo** do módulo Clio: o que está estável, quais indicadores o produto consolida hoje e o que ainda muda números/interpretação. A spec histórica de implementação permanece em [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO.md); este arquivo é o mapa operacional pós-MVP.
 
 ```mermaid
 flowchart TD
@@ -202,4 +202,4 @@ Itens que **mudam números, denominadores ou interpretação**. Prioridade relat
 | Sprint S7/S8 | §1.2 + [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) + [BACKLOG…](BACKLOG_IMPLEMENTACOES.md) |
 | Release com bump | Cabeçalho versão + [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 
-*Não duplicar a spec longa de parsers/corpus — apontar para [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md).*
+*Não duplicar a spec longa de parsers/corpus — apontar para [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO.md).*

@@ -71,7 +71,7 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 | ID | Prioridade | Item | Estado | Referência |
 |----|------------|------|--------|------------|
-| CAD-01 | P2 | `nee_sem_recurso_prova` (check opcional) | Pendente | [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md) §6 |
+| CAD-01 | P2 | `nee_sem_recurso_prova` (check opcional) | Pendente | [ROADMAP_INCLUSAO.md](ROADMAP_INCLUSAO.md) §6 |
 | CAD-02 | P3 | Ficha médica × NEE (schema variável) | Pendente | Idem §6.3 C1 |
 | CAD-03 | P3 | Benefícios / PNAE × NEE | Pendente | C2 |
 | CAD-04 | P3 | Sincronização pós-export Educacenso (validação recurso) | Pendente | C4 |
@@ -128,7 +128,7 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-07 | P3 | CadÚnico / SNAS — painéis agregados municipais (sem CPF em massa) | Parcial (lacuna por faixa, cenários, mapa territorial, demanda×oferta) | Onda 2 |
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
-| INT-10 | P2 | Client Obrasgov.br (`api-publica`) — obras educação / Canteiro | Pendente | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · HOR-19 |
+| INT-10 | P2 | Client Obrasgov.br (`api-publica`) — obras educação / Canteiro | Concluído | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) · HOR-19 |
 
 ---
 
@@ -167,9 +167,9 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-13 | P2 | Comparativo antes/depois `compliance_score` (clientes) | Pendente | v3 |
 | HOR-14 | P2 | Versão mão — detecção automática + alternância manual | Concluído | v6.5 |
 | HOR-18 | **P1** | Importação PNAD municipal (SIDRA → `municipal_pnad_snapshots`) | Pendente | Onda 2 · desbloqueia Social no modal |
-| HOR-19 | P2 | **Canteiro** — sync Obrasgov educação (FNDE/SIMEC) + bloco modal Horizonte | Pendente | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) · Onda 1–2 |
-| HOR-20 | P2 | Canteiro — camada mapa + filtros (paralisada / em execução) | Pendente | Depende HOR-19 |
-| HOR-21 | P3 | Canteiro — empenho/% físico/histórico + `infra_works_pressure` | Pendente | Depende HOR-19 |
+| HOR-19 | P2 | **Canteiro** — sync Obrasgov educação (FNDE/SIMEC) + bloco modal Horizonte | Concluído | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) · Onda 1–2 |
+| HOR-20 | P2 | Canteiro — camada mapa + filtros (paralisada / em execução) | Concluído | Depende HOR-19 |
+| HOR-21 | P3 | Canteiro — empenho/% físico/histórico + `infra_works` | Concluído | Depende HOR-19 |
 
 ---
 
@@ -184,7 +184,7 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | PLG-03 | P2 | PNAE/transporte × NEE (se schema i-Educar existir) | Pendente | PLUGINS §5.3, backlog CAD-03 |
 | PLG-04 | P2 | Validação pós-export Educacenso (recurso×NEE) | Pendente | PLUGINS §5.3, CAD-04 |
 | CEN-01 | **P0** | Conferência Educacenso 1ª etapa: arquivo portal INEP × i-Educar + painel analítico | Concluído (4.4.8) | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) |
-| CEN-02 | **P0** | Inventário corpus Drive COLETA 2026 (formatos × município) + fixtures anonimizadas | **Concluído (inventário)** — fixtures código na Onda 1 | [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) §3.2 |
+| CEN-02 | **P0** | Inventário corpus Drive COLETA 2026 (formatos × município) + fixtures anonimizadas | **Concluído (inventário)** — fixtures código na Onda 1 | [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) §3.2 |
 | CEN-03 | **P0** | Modelo de campanha (município, ano, origem, artefactos, perfil A/B) | **Concluído (spec)** — migrations/UI na Onda 1 | Idem §4 |
 | CEN-04 | **P0** | **Clio** — Upload em lote/ZIP associado a campanha | Concluído (S2) | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [CLIO_TODO…](CLIO_TODO_IMPLEMENTACAO.md) · [MODULO_CLIO.md](modulos/MODULO_CLIO.md) |
 | CEN-05 | **P0** | **Clio** — Normalizador/parsers CSV multi-arquivo | Concluído (S3) | Idem |

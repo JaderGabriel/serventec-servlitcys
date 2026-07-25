@@ -90,7 +90,7 @@ Variáveis: `CLIO_*` em [VARIAVEIS_AMBIENTE.md](../VARIAVEIS_AMBIENTE.md) §11a.
 |-----------|----------|
 | [ROADMAP_CLIO.md](../ROADMAP_CLIO.md) | **Roadmap vivo** — status, indicadores consolidados, melhorias com impacto |
 | [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](../CLIO_CATALOGO_ERROS_E_RELATORIOS.md) | Catálogo INF-*, CLIO-*, relatório da rede e UI |
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Spec completa (S1–S6) |
+| [ROADMAP_EDUCACENSO.md](../ROADMAP_EDUCACENSO.md) | Spec completa (S1–S6) |
 | [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | Checklist S1–S8 |
 | [CLIO_CHANGELOG_DEV.md](../CLIO_CHANGELOG_DEV.md) | Rastreio até a release |
 | [PERFIS_UTILIZADOR.md](../PERFIS_UTILIZADOR.md) | Quem vê / quem muta |

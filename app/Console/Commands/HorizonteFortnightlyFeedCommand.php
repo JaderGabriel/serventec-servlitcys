@@ -30,6 +30,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-repasses : Ignorar repasses Tesouro CKAN}
                             {--skip-siconfi : Ignorar indicadores fiscais SICONFI (RREO)}
                             {--skip-transparency : Ignorar Portal da Transparência (convênios/empenhos)}
+                            {--skip-obras : Ignorar Canteiro / obras educação (Obrasgov)}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-ibge-municipal-geo : Ignorar malha municipal IBGE e área territorial}
@@ -164,6 +165,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_repasses' => (bool) $this->option('skip-repasses'),
             'skip_siconfi' => (bool) $this->option('skip-siconfi'),
             'skip_transparency' => (bool) $this->option('skip-transparency'),
+            'skip_obras' => (bool) $this->option('skip-obras'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
             'skip_ibge_municipal_geo' => (bool) $this->option('skip-ibge-municipal-geo'),

@@ -2345,6 +2345,16 @@ html.serv-horizonte-muni-modal-open body {
     background: rgb(23 37 84 / 0.28);
 }
 
+.serv-horizonte-muni-tooltip__enrich-block--canteiro {
+    border-color: rgb(253 186 116 / 0.9);
+    background: rgb(255 251 235 / 0.7);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--canteiro {
+    border-color: rgb(154 52 18 / 0.5);
+    background: rgb(69 26 3 / 0.28);
+}
+
 .serv-horizonte-muni-tooltip__enrich-head {
     display: flex;
     align-items: flex-start;
@@ -2380,6 +2390,14 @@ html.serv-horizonte-muni-modal-open body {
 
 .dark .serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-head {
     border-bottom-color: rgb(30 64 175 / 0.35);
+}
+
+.serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(253 186 116 / 0.7);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-head {
+    border-bottom-color: rgb(154 52 18 / 0.4);
 }
 
 .serv-horizonte-muni-tooltip__enrich-icon-wrap {
@@ -2419,6 +2437,14 @@ html.serv-horizonte-muni-modal-open body {
 
 .dark .serv-horizonte-muni-tooltip__enrich-block--social .serv-horizonte-muni-tooltip__enrich-icon-wrap {
     color: rgb(147 197 253);
+}
+
+.serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(180 83 9);
+}
+
+.dark .serv-horizonte-muni-tooltip__enrich-block--canteiro .serv-horizonte-muni-tooltip__enrich-icon-wrap {
+    color: rgb(251 191 36);
 }
 
 .serv-horizonte-muni-tooltip__enrich-icon {

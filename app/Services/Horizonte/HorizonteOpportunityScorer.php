@@ -95,6 +95,7 @@ final class HorizonteOpportunityScorer
         $fiscal = (int) ($row['fiscal_capacity_score'] ?? 45);
         $momentum = (int) ($row['enrollment_momentum_score'] ?? 35);
         $readiness = $this->dataReadiness($row);
+        $infraWorks = (int) ($row['infra_works_score'] ?? 0);
 
         if (! $row['has_fundeb'] && ! $row['has_censo'] && ! $row['has_saeb'] && ! ($row['has_cadunico'] ?? false)) {
             return $this->packTier(
@@ -124,8 +125,9 @@ final class HorizonteOpportunityScorer
             + ($weights['transfer_dependency'] ?? 0.08) * $transfer
             + ($weights['fiscal_capacity'] ?? 0.10) * (100 - $fiscal)
             + ($weights['enrollment_momentum'] ?? 0.06) * $momentum
-            + ($weights['data_readiness'] ?? 0.08) * $readiness
+            + ($weights['data_readiness'] ?? 0.04) * $readiness
             + ($weights['benefit_scale'] ?? 0.08) * min($scale, $financial)
+            + ($weights['infra_works'] ?? 0.04) * $infraWorks
         );
         $success = max(0, min(100, $success));
 
@@ -152,7 +154,10 @@ final class HorizonteOpportunityScorer
             default => __('Baixa propensão'),
         };
 
-        return $this->packTier($success, $benefit, $financial, $pedagogical, $scale, $social, $transfer, $fiscal, $learning, $momentum, $inclusion, $readiness, $tier, $tierLabel);
+        $packed = $this->packTier($success, $benefit, $financial, $pedagogical, $scale, $social, $transfer, $fiscal, $learning, $momentum, $inclusion, $readiness, $tier, $tierLabel);
+        $packed['infra_works'] = max(0, min(100, $infraWorks));
+
+        return $packed;
     }
 
     /**
@@ -256,7 +261,8 @@ final class HorizonteOpportunityScorer
             + (($row['has_transfers'] ?? false) ? 0.5 : 0.0)
             + (($row['has_fiscal'] ?? false) ? 0.5 : 0.0)
             + (($row['has_transparency'] ?? false) ? 0.25 : 0.0)
-            + (($row['has_pnad'] ?? false) ? 0.25 : 0.0);
+            + (($row['has_pnad'] ?? false) ? 0.25 : 0.0)
+            + (($row['has_obras'] ?? false) ? 0.25 : 0.0);
 
         return (int) round(min(100.0, 100 * $n / 5));
     }
@@ -293,6 +299,7 @@ final class HorizonteOpportunityScorer
             'enrollment_momentum' => max(0, min(100, $momentum)),
             'inclusion_gap' => max(0, min(100, $inclusion)),
             'data_readiness' => max(0, min(100, $readiness)),
+            'infra_works' => 0,
             'tier' => $tier,
             'tier_label' => $tierLabel,
         ];

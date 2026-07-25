@@ -1385,6 +1385,7 @@ const HORIZONTE_ENRICH_ICONS = {
     users: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.193M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/></svg>`,
     building: `<svg class="serv-horizonte-muni-tooltip__enrich-metric-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18h10.5V3.75M6.75 9h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21"/></svg>`,
     social: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>`,
+    canteiro: `<svg class="serv-horizonte-muni-tooltip__enrich-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>`,
 };
 
 function enrichMetricHtml({ label, hint, valueHtml, tone = "neutral", iconHtml = "" }) {
@@ -1877,11 +1878,162 @@ function muniEnrichmentHtml(m) {
         }
     }
 
+    if (m.has_obras || Number(m.obras_total ?? 0) > 0) {
+        const canteiroBlock = muniCanteiroEnrichmentHtml(m);
+        if (canteiroBlock !== "") {
+            blocks.push(canteiroBlock);
+        }
+    }
+
     if (blocks.length === 0) {
         return "";
     }
 
     return `<div class="serv-horizonte-muni-tooltip__enrichment">${blocks.join("")}</div>`;
+}
+
+function canteiroEnrichmentSignal(m) {
+    if (Number(m.obras_paralisadas ?? 0) > 0) {
+        return { tone: "warn", text: "Obra paralisada" };
+    }
+    if (Number(m.obras_inacabadas ?? 0) > 0) {
+        return { tone: "warn", text: "Obra inacabada" };
+    }
+    if (Number(m.obras_em_execucao ?? 0) > 0) {
+        return { tone: "ok", text: "Obra em execução" };
+    }
+    if (Number(m.obras_cadastradas ?? 0) > 0) {
+        return { tone: "neutral", text: "Obra cadastrada" };
+    }
+    return null;
+}
+
+function formatCanteiroCaptureDate(iso) {
+    if (iso == null || String(iso).trim() === "") {
+        return null;
+    }
+    const d = new Date(String(iso));
+    if (Number.isNaN(d.getTime())) {
+        return null;
+    }
+    return d.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+function muniCanteiroEnrichmentHtml(m) {
+    const rows = [];
+    const par = Number(m.obras_paralisadas ?? 0);
+    const exe = Number(m.obras_em_execucao ?? 0);
+    const ina = Number(m.obras_inacabadas ?? 0);
+    const can = Number(m.obras_canceladas ?? 0);
+    const cad = Number(m.obras_cadastradas ?? 0);
+    const total = Number(m.obras_total ?? 0);
+
+    if (total <= 0) {
+        return "";
+    }
+
+    rows.push(
+        enrichMetricHtml({
+            label: "Em execução / paralisadas",
+            hint: "Obras FNDE/SIMEC em curso versus paralisadas (Obrasgov).",
+            valueHtml: `<span>${escapeHtml(String(exe))}</span><span class="serv-horizonte-muni-tooltip__enrich-metric-sep">/</span><span>${escapeHtml(String(par))}</span>`,
+            tone: par > 0 ? "warn" : exe > 0 ? "ok" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.building,
+        }),
+    );
+
+    if (ina > 0 || can > 0 || cad > 0) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Inacabadas · canceladas · cadastradas",
+                hint: "Demais situações ≠ concluída no inventário Canteiro.",
+                valueHtml: escapeHtml(`${ina} · ${can} · ${cad}`),
+                tone: ina > 0 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.scale,
+            }),
+        );
+    }
+
+    if (m.infra_works_score != null || m.infra_works != null) {
+        const score = Number(m.infra_works_score ?? m.infra_works ?? 0);
+        rows.push(
+            enrichMetricHtml({
+                label: "Pressão de infraestrutura",
+                hint: "Score indicativo (paralisadas e inacabadas pesam mais).",
+                valueHtml: escapeHtml(String(score)),
+                tone: score >= 40 ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
+            }),
+        );
+    }
+
+    const samples = Array.isArray(m.obras_samples) ? m.obras_samples : [];
+    samples.slice(0, 3).forEach((s) => {
+        if (!s || typeof s !== "object") {
+            return;
+        }
+        const pct =
+            s.percentual != null && Number.isFinite(Number(s.percentual))
+                ? ` · ${Number(s.percentual).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% físico`
+                : "";
+        const pago =
+            s.valor_pago != null && Number(s.valor_pago) > 0
+                ? ` · pago ${formatCurrencyBrl(s.valor_pago)}`
+                : "";
+        rows.push(
+            enrichMetricHtml({
+                label: String(s.situacao || "Obra"),
+                hint: "Nome e execução física/pago (empenho) quando disponíveis — valores indicativos.",
+                valueHtml: escapeHtml(`${String(s.nome || "—").slice(0, 48)}${pct}${pago}`),
+                tone: String(s.situacao || "").toLowerCase().includes("paralis") ? "warn" : "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.building,
+            }),
+        );
+    });
+
+    const alert = m.canteiro_alert && typeof m.canteiro_alert === "object" ? m.canteiro_alert : null;
+    if (alert && m.consultoria_active) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Alerta consultoria",
+                hint: "Snapshot mensal Canteiro — só municípios com consultoria activa.",
+                valueHtml: escapeHtml(
+                    `P ${alert.paralisadas ?? 0} · E ${alert.em_execucao ?? 0} · I ${alert.inacabadas ?? 0}`,
+                ),
+                tone: Number(alert.paralisadas ?? 0) > 0 ? "warn" : "ok",
+                iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
+            }),
+        );
+    }
+
+    const capture = formatCanteiroCaptureDate(m.obras_imported_at);
+    const simecUrl =
+        typeof m.canteiro_simec_url === "string" && m.canteiro_simec_url.trim() !== ""
+            ? m.canteiro_simec_url.trim()
+            : "https://simec.mec.gov.br/painelObras/";
+
+    return enrichBlockHtml({
+        tone: "canteiro",
+        title: "Canteiro — obras de educação",
+        year: "",
+        lead: "Inventário FNDE/SIMEC via Obrasgov (situação ≠ concluída). Complementa convênios/empenhos da Transparência.",
+        signal: canteiroEnrichmentSignal(m),
+        iconHtml: HORIZONTE_ENRICH_ICONS.canteiro,
+        metricsHtml: rows.join(""),
+        foot: "Fonte: Obrasgov.br (API pública) · SIMEC-FNDE. Valores de empenho/pago são indicativos.",
+        notes: [
+            capture ? `Dados captados em ${capture}.` : "Data de captação indisponível (sincronize horizonte:sync-obras).",
+            "Conceito: obras físicas de educação com recurso federal (creches, escolas, quadras) monitoradas no SIMEC/Obrasgov.",
+            "Regras: MVP só CNPJ FNDE; não usa investimentos_previstos como R$ oficial; IBGE via geometria (confiança alta) ou heurística (baixa).",
+            `Detalhe operacional: ${simecUrl}`,
+        ],
+    });
 }
 
 function muniMetaHtml(m) {
@@ -1894,6 +2046,7 @@ function muniMetaHtml(m) {
         m.has_cadunico ? "CadÚnico" : null,
         m.has_fiscal ? "SICONFI" : null,
         m.has_transparency ? "Transparência" : null,
+        m.has_obras ? "Canteiro" : null,
         m.has_pnad ? "PNAD" : null,
     ].filter(Boolean);
     if (sources.length > 0) {
@@ -3070,6 +3223,10 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         requireCadunico: false,
         onlyMissingSge: false,
         onlyWithAlerts: false,
+        onlyObrasParalisadas: false,
+        onlyObrasEmCurso: false,
+        showObrasLayer: false,
+        obrasLayer: null,
         hideConsultoria: options.defaultViewFilter?.hide_consultoria !== false,
         ufList: Array.isArray(options.ufList) ? options.ufList : [],
         nationalUfRankings: Array.isArray(options.ufRankings) ? options.ufRankings : [],
@@ -3440,6 +3597,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.requireCadunico,
                 this.onlyMissingSge,
                 this.onlyWithAlerts,
+                this.onlyObrasParalisadas,
+                this.onlyObrasEmCurso,
                 this.hideConsultoria,
                 this.searchQuery.trim().toLowerCase(),
                 this.pressureThreshold,
@@ -3510,6 +3669,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     return false;
                 }
                 if (this.onlyWithAlerts && (m.muni_alerts_status ?? "") !== "found") {
+                    return false;
+                }
+                if (this.onlyObrasParalisadas && Number(m.obras_paralisadas ?? 0) <= 0) {
+                    return false;
+                }
+                if (this.onlyObrasEmCurso && Number(m.obras_em_execucao ?? 0) <= 0) {
                     return false;
                 }
                 if (q === "") {
@@ -3629,6 +3794,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 this.requireCadunico ||
                 this.onlyMissingSge ||
                 this.onlyWithAlerts ||
+                this.onlyObrasParalisadas ||
+                this.onlyObrasEmCurso ||
                 this.searchQuery.trim() !== "" ||
                 (this.viewPreset === "all" && this.hideConsultoria) ||
                 !this.hideApproxOnMap
@@ -3650,6 +3817,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             if (this.requireCadunico) count += 1;
             if (this.onlyMissingSge) count += 1;
             if (this.onlyWithAlerts) count += 1;
+            if (this.onlyObrasParalisadas) count += 1;
+            if (this.onlyObrasEmCurso) count += 1;
             if (this.viewPreset === "all" && this.hideConsultoria) count += 1;
             if (!this.hideApproxOnMap) count += 1;
             if (this.searchQuery.trim() !== "") count += 1;
@@ -3736,6 +3905,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             if (this.onlyWithAlerts) {
                 chips.push({ key: "alerts", label: "Com alerta MEC/FNDE", removable: true });
+            }
+            if (this.onlyObrasParalisadas) {
+                chips.push({ key: "obras_paralisadas", label: "Obra paralisada", removable: true });
+            }
+            if (this.onlyObrasEmCurso) {
+                chips.push({ key: "obras_em_curso", label: "Obra em execução", removable: true });
             }
             if (this.viewPreset === "all" && this.hideConsultoria) {
                 chips.push({ key: "hide_consultoria", label: "Sem consultoria", removable: true });
@@ -4907,6 +5082,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.requireCadunico = false;
             this.onlyMissingSge = false;
             this.onlyWithAlerts = false;
+            this.onlyObrasParalisadas = false;
+            this.onlyObrasEmCurso = false;
             this.searchQuery = "";
         },
 
@@ -5035,6 +5212,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 case "alerts":
                     this.onlyWithAlerts = false;
                     break;
+                case "obras_paralisadas":
+                    this.onlyObrasParalisadas = false;
+                    break;
+                case "obras_em_curso":
+                    this.onlyObrasEmCurso = false;
+                    break;
                 case "hide_consultoria":
                     this.hideConsultoria = false;
                     break;
@@ -5066,6 +5249,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                     this.requireCadunico ||
                     this.onlyMissingSge ||
                     this.onlyWithAlerts ||
+                    this.onlyObrasParalisadas ||
+                    this.onlyObrasEmCurso ||
                     this.searchQuery.trim() !== "" ||
                     (this.viewPreset === "all" && this.hideConsultoria) ||
                     !this.hideApproxOnMap)
@@ -5530,6 +5715,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             this.layer = L.layerGroup();
             this.ufLayer = L.layerGroup();
             this.heatLayer = L.layerGroup();
+            this.obrasLayer = L.layerGroup();
             this.clusterGroup = L.markerClusterGroup({
                 chunkedLoading: true,
                 chunkInterval: 100,
@@ -5637,6 +5823,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 "requireCadunico",
                 "onlyMissingSge",
                 "onlyWithAlerts",
+                "onlyObrasParalisadas",
+                "onlyObrasEmCurso",
                 "hideConsultoria",
                 "searchQuery",
                 "pressureThreshold",
@@ -6423,9 +6611,78 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                             ),
                         });
                         this.ensureMapInteractions();
+                        this.refreshObrasLayer();
                         resolve();
                     });
                 });
+            }
+        },
+
+        refreshObrasLayer() {
+            if (!this.map || !this.obrasLayer) {
+                return;
+            }
+
+            this.obrasLayer.clearLayers();
+
+            if (!this.showObrasLayer || this.isOverviewMode || this.isMesoOverviewMode) {
+                if (this.map.hasLayer(this.obrasLayer)) {
+                    this.map.removeLayer(this.obrasLayer);
+                }
+                return;
+            }
+
+            const source = Array.isArray(this.filteredMarkersList)
+                ? this.filteredMarkersList
+                : this.markers;
+            const pinCap = 400;
+            let added = 0;
+
+            for (const m of source) {
+                if (added >= pinCap) {
+                    break;
+                }
+                const pins = Array.isArray(m.obras_pins) ? m.obras_pins : [];
+                for (const pin of pins) {
+                    if (added >= pinCap) {
+                        break;
+                    }
+                    if (!pin || typeof pin !== "object") {
+                        continue;
+                    }
+                    const lat = Number(pin.lat ?? pin.latitude);
+                    const lng = Number(pin.lng ?? pin.longitude);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                        continue;
+                    }
+                    const situacao = String(pin.situacao || "");
+                    const isParalisada = situacao.toLowerCase().includes("paralis");
+                    const isExecucao = situacao.toLowerCase().includes("execu");
+                    if (!isParalisada && !isExecucao) {
+                        continue;
+                    }
+                    const color = isParalisada ? "#b45309" : "#0f766e";
+                    const circle = L.circleMarker([lat, lng], {
+                        radius: 5,
+                        color,
+                        fillColor: color,
+                        fillOpacity: 0.85,
+                        weight: 1,
+                        opacity: 0.95,
+                        pane: "markerPane",
+                    });
+                    const nome = String(pin.nome || pin.name || "Obra").slice(0, 60);
+                    circle.bindTooltip(
+                        `<strong>${escapeHtml(nome)}</strong><br>${escapeHtml(situacao)}`,
+                        { sticky: true, direction: "top", opacity: 0.95 },
+                    );
+                    this.obrasLayer.addLayer(circle);
+                    added += 1;
+                }
+            }
+
+            if (!this.map.hasLayer(this.obrasLayer)) {
+                this.obrasLayer.addTo(this.map);
             }
         },
 
@@ -7690,6 +7947,12 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             if (f.only_with_alerts) {
                 this.onlyWithAlerts = true;
+            }
+            if (f.only_obras_paralisadas) {
+                this.onlyObrasParalisadas = true;
+            }
+            if (f.only_obras_em_curso) {
+                this.onlyObrasEmCurso = true;
             }
             if (f.min_social != null) {
                 this.minSocialDemand = Number(f.min_social);

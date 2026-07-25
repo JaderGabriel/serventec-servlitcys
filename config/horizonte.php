@@ -40,8 +40,9 @@ return [
         'transfer_dependency' => 0.08,
         'fiscal_capacity' => 0.10,
         'enrollment_momentum' => 0.06,
-        'data_readiness' => 0.08,
+        'data_readiness' => 0.04,
         'benefit_scale' => 0.08,
+        'infra_works' => 0.04,
     ],
 
     'siconfi' => [
@@ -84,6 +85,35 @@ return [
     'transparency' => [
         'municipios_per_step' => max(1, min(30, (int) env('HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP', 5))),
         'http_timeout' => max(10, (int) env('HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT', 25)),
+    ],
+
+    'obras' => [
+        'enabled' => filter_var(env('HORIZONTE_OBRAS_ENABLED', true), FILTER_VALIDATE_BOOL),
+        'base_url' => rtrim((string) env('HORIZONTE_OBRAS_BASE_URL', 'https://api-publica.obrasgov.gestao.gov.br/obras'), '/'),
+        'http_timeout' => max(15, (int) env('HORIZONTE_OBRAS_HTTP_TIMEOUT', 45)),
+        'page_size' => max(10, min(100, (int) env('HORIZONTE_OBRAS_PAGE_SIZE', 50))),
+        'cnpj_fnde' => preg_replace('/\D/', '', (string) env('HORIZONTE_OBRAS_CNPJ_FNDE', '00378257000262')) ?: '00378257000262',
+        'situacoes' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'HORIZONTE_OBRAS_SITUACOES',
+            'Cadastrada,Cancelada,Em execução,Inacabada,Paralisada'
+        ))))),
+        'enrich_finance' => filter_var(env('HORIZONTE_OBRAS_ENRICH_FINANCE', true), FILTER_VALIDATE_BOOL),
+        'ufs_per_step' => max(1, min(5, (int) env('HORIZONTE_OBRAS_UFS_PER_STEP', 1))),
+        'schedule' => [
+            'enabled' => filter_var(env('HORIZONTE_OBRAS_SCHEDULE_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'day' => max(1, min(28, (int) env('HORIZONTE_OBRAS_SCHEDULE_DAY', 5))),
+            'time' => env('HORIZONTE_OBRAS_SCHEDULE_TIME', '05:30'),
+            'overlap_minutes' => max(3600, (int) env('HORIZONTE_OBRAS_SCHEDULE_OVERLAP_MINUTES', 43200)),
+            'step_interval_minutes' => max(5, (int) env('HORIZONTE_OBRAS_SCHEDULE_STEP_INTERVAL', 30)),
+            'staged' => filter_var(env('HORIZONTE_OBRAS_SCHEDULE_STAGED', true), FILTER_VALIDATE_BOOL),
+        ],
+        'alerts' => [
+            'enabled' => filter_var(env('HORIZONTE_OBRAS_ALERTS_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'snapshot_path' => env('HORIZONTE_OBRAS_ALERTS_PATH', 'horizonte/canteiro_alerts_snapshot.json'),
+            'schedule_day' => max(1, min(28, (int) env('HORIZONTE_OBRAS_ALERTS_DAY', 8))),
+            'schedule_time' => env('HORIZONTE_OBRAS_ALERTS_TIME', '06:00'),
+            'simec_painel_url' => env('HORIZONTE_OBRAS_SIMEC_URL', 'https://simec.mec.gov.br/painelObras/'),
+        ],
     ],
 
     'sidra' => [

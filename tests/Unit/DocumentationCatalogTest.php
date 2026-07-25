@@ -69,6 +69,75 @@ class DocumentationCatalogTest extends TestCase
         $horizontePaths = array_column($horizonte['items'] ?? [], 'path');
         $this->assertContains('docs/HORIZONTE.md', $horizontePaths);
         $this->assertContains('docs/modulos/MODULO_HORIZONTE.md', $horizontePaths);
+        $this->assertContains('docs/ROADMAP_HORIZONTE.md', $horizontePaths);
+        $this->assertSame('docs/modulos/MODULO_HORIZONTE.md', $horizontePaths[0] ?? null);
+        $this->assertSame('docs/ROADMAP_HORIZONTE.md', $horizontePaths[1] ?? null);
+
+        $entry = collect($sections)->firstWhere('key', 'entry');
+        $this->assertNotNull($entry);
+        $entryPaths = array_column($entry['items'] ?? [], 'path');
+        $this->assertContains('docs/ROADMAP_INDICE.md', $entryPaths);
+        $this->assertNotContains('docs/ROADMAP_CANTEIRO.md', $entryPaths);
+    }
+
+    public function test_legacy_roadmap_aliases_resolve_to_canonical_paths(): void
+    {
+        $this->assertSame(
+            'docs/ROADMAP_CANTEIRO.md',
+            DocumentationCatalog::resolveReadablePath('docs/ROADMAP_OBRAS_EDUCACAO.md'),
+        );
+        $this->assertSame(
+            'docs/ROADMAP_EDUCACENSO.md',
+            DocumentationCatalog::resolveReadablePath('docs/ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md'),
+        );
+        $this->assertSame(
+            'docs/ROADMAP_BASES_FINANCEIRAS.md',
+            DocumentationCatalog::resolveReadablePath('docs/ROADMAP_BASES_CALCULOS_FINANCEIROS.md'),
+        );
+        $this->assertSame(
+            'docs/ROADMAP_INCLUSAO.md',
+            DocumentationCatalog::resolveReadablePath('docs/DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md'),
+        );
+    }
+
+    public function test_module_sections_place_roadmap_after_landing(): void
+    {
+        $expected = [
+            'analytics' => 'docs/ROADMAP_ANALYTICS.md',
+            'horizonte' => 'docs/ROADMAP_HORIZONTE.md',
+            'cadunico' => 'docs/ROADMAP_CADUNICO.md',
+            'pedagogia' => 'docs/ROADMAP_PEDAGOGIA_SAEB.md',
+            'rx' => 'docs/ROADMAP_RX_CENSO.md',
+            'clio' => 'docs/ROADMAP_CLIO.md',
+            'funding' => 'docs/ROADMAP_FUNDEB.md',
+        ];
+
+        $sections = collect(DocumentationCatalog::sections())->keyBy('key');
+
+        foreach ($expected as $key => $roadmapPath) {
+            $section = $sections->get($key);
+            $this->assertNotNull($section, "Missing section {$key}");
+            $paths = array_column($section['items'] ?? [], 'path');
+            $this->assertGreaterThanOrEqual(2, count($paths), "Section {$key} needs landing + roadmap");
+            $this->assertStringContainsString('modulos/MODULO_', (string) $paths[0]);
+            $this->assertSame($roadmapPath, $paths[1]);
+        }
+    }
+
+    public function test_flat_entries_includes_module_roadmaps(): void
+    {
+        $paths = array_column(DocumentationCatalog::flatEntriesForUser(null), 'path');
+
+        foreach ([
+            'docs/ROADMAP_INDICE.md',
+            'docs/ROADMAP_ANALYTICS.md',
+            'docs/ROADMAP_HORIZONTE.md',
+            'docs/ROADMAP_CANTEIRO.md',
+            'docs/ROADMAP_CLIO.md',
+            'docs/ROADMAP_POWERBI.md',
+        ] as $path) {
+            $this->assertContains($path, $paths);
+        }
     }
 
     public function test_flat_entries_includes_powerbi_once(): void

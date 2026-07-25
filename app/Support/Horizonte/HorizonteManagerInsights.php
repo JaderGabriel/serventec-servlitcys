@@ -157,6 +157,8 @@ final class HorizonteManagerInsights
         $readyToPitch = 0;
         $socialDemand = 0;
         $missingSge = 0;
+        $obrasParalisadas = 0;
+        $obrasEmExecucao = 0;
 
         foreach ($markers as $m) {
             if ($m['consultoria_active'] ?? false) {
@@ -168,6 +170,14 @@ final class HorizonteManagerInsights
             if (! ($m['sge_found'] ?? false)) {
                 $missingSge++;
             }
+
+            if (($m['obras_paralisadas'] ?? 0) > 0) {
+                $obrasParalisadas++;
+            }
+            if (($m['obras_em_execucao'] ?? 0) > 0) {
+                $obrasEmExecucao++;
+            }
+
             if (! str_starts_with((string) ($m['tier'] ?? ''), 'prospect_')) {
                 continue;
             }
@@ -231,6 +241,20 @@ final class HorizonteManagerInsights
                 'description' => __('Prospectos fora do catálogo Consultoria — registe o sistema rival no mapa (inteligência, não abre cidade).'),
                 'count' => $missingSge,
                 'filter' => ['tier' => 'prospects', 'only_missing_sge' => true],
+            ],
+            [
+                'key' => 'obras_paralisadas',
+                'label' => __('Obras paralisadas (Canteiro)'),
+                'description' => __('Municípios com obra de educação FNDE/SIMEC paralisada — sinal de travamento na execução física.'),
+                'count' => $obrasParalisadas,
+                'filter' => ['tier' => 'prospects', 'only_obras_paralisadas' => true],
+            ],
+            [
+                'key' => 'obras_em_curso',
+                'label' => __('Infraestrutura em curso'),
+                'description' => __('Municípios com obra de educação em execução — expansão física em andamento.'),
+                'count' => $obrasEmExecucao,
+                'filter' => ['tier' => 'prospects', 'only_obras_em_curso' => true],
             ],
         ];
     }

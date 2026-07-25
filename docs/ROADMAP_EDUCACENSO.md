@@ -415,7 +415,7 @@ IDs de implementação: **CEN-14** (ficha leve + scopes), **CEN-15** (vincular/d
 | **INF-GAP** | Lacunas vs i-Educar | campanha × snapshot | Só Modo B |
 | **INF-DELTA** | Acomp. municipal vs soma das Relacoes | ambos | Divergência de declaração |
 
-Indicadores FUNDEB (VAAF × matrícula): onda posterior — [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md).
+Indicadores FUNDEB (VAAF × matrícula): onda posterior — [ROADMAP_BASES_FINANCEIRAS.md](ROADMAP_BASES_FINANCEIRAS.md).
 
 ---
 

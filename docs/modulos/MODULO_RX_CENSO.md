@@ -24,7 +24,7 @@ Painel **RX** — visão nacional de volume digitado, status Educacenso e trabal
 
 | Documento | Conteúdo |
 |-----------|----------|
-| [ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md](../ROADMAP_EDUCACENSO_RELATORIOS_ETAPA1.md) | Roadmap **Clio** |
+| [ROADMAP_EDUCACENSO.md](../ROADMAP_EDUCACENSO.md) | Roadmap **Clio** |
 | [CLIO_TODO_IMPLEMENTACAO.md](../CLIO_TODO_IMPLEMENTACAO.md) | TODO de código S1–S8 |
 | [MODULO_CLIO.md](MODULO_CLIO.md) | Landing do módulo Clio |
 | [EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md](../EDUCACENSO_SIMULACAO_CARGA_ETAPA1.md) | Spec conferência etapa 1 (CEN-01) |

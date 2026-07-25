@@ -92,6 +92,16 @@ final class HorizonteFortnightlyFeedPhaseCatalog
                 'incremental' => false,
             ],
             [
+                'key' => 'obras_sync',
+                'label' => 'Canteiro (Obras)',
+                'skip_option' => 'skip_obras',
+                'icon' => 'wrench-screwdriver',
+                'tone' => 'orange',
+                'group' => 'infraestrutura',
+                'description' => __('Obras de educação FNDE/SIMEC (Obrasgov) — infraestrutura física em execução, paralisada, inacabada.'),
+                'incremental' => true,
+            ],
+            [
                 'key' => 'saeb_planilhas',
                 'label' => 'SAEB',
                 'skip_option' => 'skip_saeb',
@@ -175,6 +185,10 @@ final class HorizonteFortnightlyFeedPhaseCatalog
             'territorial' => [
                 'label' => __('Territorial'),
                 'description' => __('Catálogo IBGE e malha municipal.'),
+            ],
+            'infraestrutura' => [
+                'label' => __('Infraestrutura'),
+                'description' => __('Obras físicas de educação — construção, reforma, ampliação.'),
             ],
             'operacional' => [
                 'label' => __('Operacional'),

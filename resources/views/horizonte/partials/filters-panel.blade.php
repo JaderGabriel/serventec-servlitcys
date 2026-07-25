@@ -156,6 +156,18 @@
                     {{ __('Só com alerta MEC/FNDE') }}
                 </span>
             </label>
+            <label class="serv-horizonte-toggle-pill serv-horizonte-toggle-pill--amber">
+                <input type="checkbox" x-model="onlyObrasParalisadas" @change="markFiltersCustom()" class="rounded border-gray-300 text-amber-600" :disabled="pageLoading" />
+                <span>{{ __('Só obra paralisada') }}</span>
+            </label>
+            <label class="serv-horizonte-toggle-pill serv-horizonte-toggle-pill--teal">
+                <input type="checkbox" x-model="onlyObrasEmCurso" @change="markFiltersCustom()" class="rounded border-gray-300 text-teal-600" :disabled="pageLoading" />
+                <span>{{ __('Só obra em execução') }}</span>
+            </label>
+            <label class="serv-horizonte-toggle-pill">
+                <input type="checkbox" x-model="showObrasLayer" @change="refreshObrasLayer()" class="rounded border-gray-300 text-slate-600" :disabled="pageLoading" />
+                <span>{{ __('Camada Canteiro (pins)') }}</span>
+            </label>
         </div>
         <p class="serv-horizonte-filters__field-label mt-3 mb-1.5">{{ __('Exigir fontes') }}</p>
         <div class="flex flex-wrap gap-1.5">

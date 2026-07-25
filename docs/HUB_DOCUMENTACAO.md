@@ -132,8 +132,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 | Documento | Caminho |
 |-----------|---------|
 | Estado do projeto | [STATUS_PROJETO.md](STATUS_PROJETO.md) |
-| Roadmaps (feito / em curso) | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) |
-| Canteiro — obras educação | [ROADMAP_OBRAS_EDUCACAO.md](ROADMAP_OBRAS_EDUCACAO.md) |
+| Roadmaps (catálogo `ROADMAP_*`) | [ROADMAP_INDICE.md](ROADMAP_INDICE.md) |
+| Canteiro — obras educação | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) |
 | Backlog (IDs pendentes) | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 | Histórico de versões | [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) |
 | Ponderações técnicas | [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) |

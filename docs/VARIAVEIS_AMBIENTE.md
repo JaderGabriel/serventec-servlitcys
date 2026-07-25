@@ -351,7 +351,30 @@ Rota: `/dashboard/horizonte` · Documentação: [HORIZONTE.md](HORIZONTE.md).
 | `HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT` | `25` | Timeout HTTP Portal da Transparência |
 | `PORTAL_TRANSPARENCIA_API_KEY` | — | Chave API Portal (obrigatória para `horizonte:sync-transparency`) |
 
-Comando: `php artisan horizonte:sync-municipal-alerts` · SICONFI: `php artisan horizonte:sync-siconfi` · Transparência: `php artisan horizonte:sync-transparency` · Malha municipal: `php artisan horizonte:import-municipal-geo --all` · Auditoria série: `php artisan horizonte:verify-educacenso-coverage` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9–§6.11, §9.1d–§9.1e e `php artisan horizonte:fortnightly-feed --help`.
+### Canteiro — obras educação (Obrasgov)
+
+| Variável | Default | Descrição |
+|----------|---------|-----------|
+| `HORIZONTE_OBRAS_ENABLED` | `true` | Activa sync e camada Canteiro |
+| `HORIZONTE_OBRAS_BASE_URL` | `https://api-publica.obrasgov.gestao.gov.br/obras` | Base API pública (não usar API antiga) |
+| `HORIZONTE_OBRAS_HTTP_TIMEOUT` | `45` | Timeout HTTP (segundos) |
+| `HORIZONTE_OBRAS_PAGE_SIZE` | `50` | Tamanho de página na listagem |
+| `HORIZONTE_OBRAS_CNPJ_FNDE` | `00378257000262` | Filtro educação MVP (CNPJ FNDE) |
+| `HORIZONTE_OBRAS_SITUACOES` | `Cadastrada,Cancelada,Em execução,Inacabada,Paralisada` | Situações sincronizadas (≠ Concluída) |
+| `HORIZONTE_OBRAS_ENRICH_FINANCE` | `true` | Empenho + execução física + histórico |
+| `HORIZONTE_OBRAS_UFS_PER_STEP` | `1` | UFs por passo no sync nacional / feed |
+| `HORIZONTE_OBRAS_SCHEDULE_ENABLED` | `true` | Agendamento mensal `horizonte:sync-obras` |
+| `HORIZONTE_OBRAS_SCHEDULE_DAY` | `5` | Dia do mês (1–28) de início |
+| `HORIZONTE_OBRAS_SCHEDULE_TIME` | `05:30` | Hora de início |
+| `HORIZONTE_OBRAS_SCHEDULE_STEP_INTERVAL` | `30` | Minutos entre `--continue` enquanto houver progresso |
+| `HORIZONTE_OBRAS_SCHEDULE_STAGED` | `true` | Ciclo `--reset` + passos `--continue` |
+| `HORIZONTE_OBRAS_ALERTS_ENABLED` | `true` | Snapshot mensal `horizonte:canteiro-alerts` |
+| `HORIZONTE_OBRAS_ALERTS_PATH` | `horizonte/canteiro_alerts_snapshot.json` | Caminho no disk `local` |
+| `HORIZONTE_OBRAS_ALERTS_DAY` | `8` | Dia do mês dos alertas |
+| `HORIZONTE_OBRAS_ALERTS_TIME` | `06:00` | Hora dos alertas |
+| `HORIZONTE_OBRAS_SIMEC_URL` | `https://simec.mec.gov.br/painelObras/` | Deep-link SIMEC no modal / PDF |
+
+Comando: `php artisan horizonte:sync-municipal-alerts` · SICONFI: `php artisan horizonte:sync-siconfi` · Transparência: `php artisan horizonte:sync-transparency` · Canteiro: `php artisan horizonte:sync-obras` · Alertas consultoria: `php artisan horizonte:canteiro-alerts` · Malha municipal: `php artisan horizonte:import-municipal-geo --all` · Auditoria série: `php artisan horizonte:verify-educacenso-coverage` · Ver [HORIZONTE.md](HORIZONTE.md) §6.9–§6.11, §9.1d–§9.1e, [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) e `php artisan horizonte:fortnightly-feed --help`.
 
 ---
 

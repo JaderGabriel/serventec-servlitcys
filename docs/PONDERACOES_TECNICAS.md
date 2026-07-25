@@ -101,7 +101,7 @@ Catálogo das **decisões de desenho**, **limites** e **trade-offs** adoptados n
 | Discrepâncias | `recurso_prova_sem_nee`, `nee_sem_aee`, etc. | Mesmos filtros que matrículas ativas |
 | UI | Rótulos separados «NEE (cadastro)» vs «Recursos de prova (Censo/INEP)» | Evitar confusão com «recursos FUNDEB» |
 
-**Doc histórico:** [DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md](DOCUMENTO_EXECUTIVO_ROADMAP_INCLUSAO_E_QUALIDADE_CADASTRO.md).
+**Doc histórico:** [ROADMAP_INCLUSAO.md](ROADMAP_INCLUSAO.md).
 
 ---
 

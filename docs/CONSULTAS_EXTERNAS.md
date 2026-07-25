@@ -7,7 +7,7 @@
 
 > **Índice:** [README.md](README.md) · **Estudo ampliado (saúde, SUAS, demanda):** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §C · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6.
 
-**Relacionado:** [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md), [ROADMAP_BASES_CALCULOS_FINANCEIROS.md](ROADMAP_BASES_CALCULOS_FINANCEIROS.md)
+**Relacionado:** [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md), [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md), [ROADMAP_BASES_FINANCEIRAS.md](ROADMAP_BASES_FINANCEIRAS.md)
 
 ---
 
@@ -137,6 +137,21 @@ Quatro consultas são executadas em cada carregamento (após cache expirar):
 - **Necessidade:** cruzar **execução federal** no município com programas educacionais (filtro por palavras-chave em `IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS`).
 - **Impacto:** até `IEDUCAR_PORTAL_TRANSPARENCIA_MAX_ROWS` linhas na UI; sem chave, consulta fica em estado «Não consultado».
 - **Nota:** primeira página da API; não lista todos os programas — uso de apoio à consultoria, não auditoria completa.
+
+#### E) Obrasgov.br — obras de educação (Canteiro)
+
+| Item | Detalhe |
+|------|---------|
+| **Base** | `https://api-publica.obrasgov.gestao.gov.br/obras` |
+| **Auth** | Não requerida (dados abertos) |
+| **Filtro educação (MVP)** | CNPJ FNDE `00378257000262` |
+| **Persistência** | `municipal_education_works`, `education_work_finance_snapshots` |
+| **Comandos** | `horizonte:sync-obras` · `horizonte:canteiro-alerts` · fase `obras_sync` |
+| **Doc** | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) |
+
+- **Necessidade:** inventário físico de obras escolares (paralisadas, em execução, inacabadas, etc.) distinto de convênios/empenhos (HOR-08).
+- **Impacto:** bloco **Canteiro** no modal Horizonte, pins no mapa, scoring `infra_works`, alertas mensais só para consultoria activa.
+- **Riscos mitigados:** não usar `investimentos_previstos` como R$ oficial; preferir `/empenho` e `%` físico; IBGE via `/geometria`; API antiga desligada em 31/08/2026.
 
 **Variáveis `.env` (Financiamentos)**
 
@@ -302,7 +317,7 @@ flowchart LR
 | Risco | Mitigação actual |
 |-------|------------------|
 | CKAN FNDE instável ou HTML em vez de JSON | Cache em disco + import admin |
-| Tesouro: lote limitado sem filtro server-side por IBGE | Documentar; futuro: import CSV nacional ([ROADMAP](ROADMAP_BASES_CALCULOS_FINANCEIROS.md)) |
+| Tesouro: lote limitado sem filtro server-side por IBGE | Documentar; futuro: import CSV nacional ([ROADMAP](ROADMAP_BASES_FINANCEIRAS.md)) |
 | Portal Transparência: paginação e rate limit | Cache TTL; amostra na UI |
 | Confundir estimativa com repasse oficial | Avisos em `IEDUCAR_DISC_AVISO_FINANCEIRO` e `IEDUCAR_FUNDEB_AVISO_PREVISAO` |
 | Chaves API em `.env` | Não commitar; ver [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) (produção) ou `.env.example` (dev) |

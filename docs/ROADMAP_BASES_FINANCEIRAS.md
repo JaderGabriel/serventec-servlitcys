@@ -1,9 +1,10 @@
 # Roadmap — bases de dados e cálculos financeiros (futuro)
 
-**Data:** maio de 2026  
-**Foco:** recursos públicos da educação (FUNDEB, VAAR, programas FNDE, repasses União)
+**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24 · **Estado:** planeado
 
-> **Backlog priorizado:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (seção **C. Financiamento** — IDs `FIN-01`…`FIN-06`).  
+> **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **FUNDEB:** [ROADMAP_FUNDEB.md](ROADMAP_FUNDEB.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) § C (`FIN-*`)
+
+**Foco:** recursos públicos da educação (FUNDEB, VAAR, programas FNDE, repasses União). 
 > **Índice:** [README.md](README.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §6.
 
 **Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md), [FUNDEB_VAAF_E_ONDA1.md](FUNDEB_VAAF_E_ONDA1.md)

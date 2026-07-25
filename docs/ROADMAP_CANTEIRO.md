@@ -1,8 +1,8 @@
-# Roadmap — Obras de educação (Obrasgov / SIMEC)
+# Roadmap — Canteiro (obras de educação / Obrasgov · SIMEC)
 
-**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24 · **Estado:** planeado (spike validado)
+**Versão do produto:** 8.2.2 · **Última revisão:** 2026-07-24 · **Estado:** implementado (fases 0–7)
 
-> **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) § J · **Horizonte:** [HORIZONTE.md](HORIZONTE.md) §11 · **Consultas:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)
+> **Índice:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Horizonte:** [ROADMAP_HORIZONTE.md](ROADMAP_HORIZONTE.md) · **Guia técnico:** [HORIZONTE.md](HORIZONTE.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) § J · **Consultas:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md)
 
 Integração de **obras públicas de educação** (em execução, paralisadas, inacabadas, canceladas, cadastradas — excluir ou destacar `Concluída`) no Servlitcys, a partir da API pública **Obrasgov.br** (com SIMEC/FNDE como origem dominante).
 
@@ -238,13 +238,23 @@ Estimativas em **dias-pessoa** (dev pleno familiarizado com Horizonte). Converte
 
 ---
 
-## 10. Critérios de aceite (MVP)
+## 10. Critérios de aceite
+
+### MVP (fases 1–3)
 
 1. Comando importa obras FNDE com `situacao ≠ Concluída` para uma UF e resolve IBGE via geometria quando existir.
 2. Modal municipal mostra bloco **Canteiro** com contagens, até N obras, fonte Obrasgov, data de captação e nota de regras.
 3. Sem chave de API; URLs via `SafeOutboundUrl`.
 4. Documentado em VARIÁVEIS, COMANDOS, HORIZONTE §11 e este roadmap.
-5. Testes unitários do normalizador + 1 feature de autorização do comando admin, se exposto na UI.
+5. Testes unitários do normalizador + sync + alertas.
+
+### Completo (fases 4–7) — **aceite**
+
+6. Camada de pins no mapa (paralisada / em execução) com toggle e filtros de segmento.
+7. Empenho / % físico / histórico no detalhe; scoring `infra_works` no Horizonte.
+8. Fase `obras_sync` no feed + hub abastecimento.
+9. **Fase 7:** `horizonte:canteiro-alerts` mensal **apenas** para cidades com consultoria (`is_active` + `hasDataSetup()`); deep-link SIMEC; PDF opcional (`--pdf`).
+10. Riscos do §8 mitigados na UI/docs (FNDE-only, sem `investimentos_previstos` como R$ oficial, geometria para IBGE, sync por UF).
 
 ---
 
@@ -257,4 +267,98 @@ Estimativas em **dias-pessoa** (dev pleno familiarizado com Horizonte). Converte
 
 ---
 
-*Documento de planeamento — não implica compromisso de sprint até priorização no backlog.*
+## 12. Variáveis de ambiente
+
+```bash
+# Habilitação geral
+HORIZONTE_OBRAS_ENABLED=true
+
+# API Obrasgov
+HORIZONTE_OBRAS_BASE_URL=https://api-publica.obrasgov.gestao.gov.br/obras
+HORIZONTE_OBRAS_HTTP_TIMEOUT=45
+HORIZONTE_OBRAS_PAGE_SIZE=50
+
+# Filtros de sincronização
+HORIZONTE_OBRAS_CNPJ_FNDE=00378257000262
+HORIZONTE_OBRAS_SITUACOES="Cadastrada,Cancelada,Em execução,Inacabada,Paralisada"
+HORIZONTE_OBRAS_ENRICH_FINANCE=true
+HORIZONTE_OBRAS_UFS_PER_STEP=1
+
+# Agendamento (mensal)
+HORIZONTE_OBRAS_SCHEDULE_ENABLED=true
+HORIZONTE_OBRAS_SCHEDULE_DAY=5
+HORIZONTE_OBRAS_SCHEDULE_TIME=05:30
+HORIZONTE_OBRAS_SCHEDULE_OVERLAP_MINUTES=43200
+HORIZONTE_OBRAS_SCHEDULE_STEP_INTERVAL=30
+HORIZONTE_OBRAS_SCHEDULE_STAGED=true
+
+# Alertas Canteiro
+HORIZONTE_OBRAS_ALERTS_ENABLED=true
+HORIZONTE_OBRAS_ALERTS_PATH=horizonte/canteiro_alerts_snapshot.json
+HORIZONTE_OBRAS_ALERTS_DAY=8
+HORIZONTE_OBRAS_ALERTS_TIME=06:00
+HORIZONTE_OBRAS_SIMEC_URL=https://simec.mec.gov.br/painelObras/
+```
+
+---
+
+## 13. Comandos Artisan
+
+### Sincronização de obras
+
+```bash
+# Sincronizar todas as UFs (ciclo completo com --reset + --continue)
+php artisan horizonte:sync-obras --reset
+php artisan horizonte:sync-obras --continue
+
+# Sincronizar uma UF específica
+php artisan horizonte:sync-obras --uf=BA
+
+# Filtrar por situação
+php artisan horizonte:sync-obras --uf=SP --situacao="Paralisada"
+
+# Desabilitar enriquecimento financeiro (execução física + empenhos)
+php artisan horizonte:sync-obras --no-enrich-finance
+
+# Limitar páginas (desenvolvimento)
+php artisan horizonte:sync-obras --uf=RJ --limit-pages=2
+
+# Dry-run (simulação)
+php artisan horizonte:sync-obras --uf=CE --dry-run
+```
+
+### Snapshot de alertas para consultorias
+
+```bash
+# Gerar snapshot de alertas (obras paralisadas/em execução/inacabadas)
+php artisan horizonte:canteiro-alerts
+
+# Dry-run (exibe JSON sem gravar)
+php artisan horizonte:canteiro-alerts --dry-run
+```
+
+**Integração no feed bimestral:** fase `obras_sync` incluída automaticamente no `horizonte:fortnightly-feed`.
+
+---
+
+## 14. Estado de implementação
+
+| ID Backlog | Fase | Estado | Nota |
+|------------|------|--------|------|
+| **HOR-19** | MVP Canteiro — sync + modal + feed | **Implementado** | Sync UF, modal, fase `obras_sync` |
+| **HOR-20** | Camada mapa + filtros | **Implementado** | Pins + toggles «paralisada / em execução» |
+| **HOR-21** | Enriquecimento financeiro + scoring | **Implementado** | Empenhos, % físico, histórico, `infra_works` |
+| **INT-10** | Client Obrasgov + catálogo | **Implementado** | `ObrasgovClient` + `SafeOutboundUrl` |
+| **Fase 7** | Alertas consultoria + PDF | **Implementado** | Mensal; só `hasDataSetup()`; `--pdf` |
+
+**Rotinas:**
+
+| Rotina | Cadência | Escopo |
+|--------|----------|--------|
+| `horizonte:sync-obras` | Mensal (dia 5) staged | Nacional UF a UF |
+| `horizonte:canteiro-alerts` | Mensal (dia 8) | Só municípios com consultoria activa |
+| Fase `obras_sync` | Feed bimestral | 1 UF por passo |
+
+---
+
+*Documento de planeamento e implementação — Canteiro completo (fases 0–7).*
