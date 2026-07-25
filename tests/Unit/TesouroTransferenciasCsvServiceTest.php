@@ -111,4 +111,51 @@ final class TesouroTransferenciasCsvServiceTest extends TestCase
         $this->assertEqualsWithDelta(78000.0, $rows[0]['valor'], 0.01);
         $this->assertSame('3521', $rows[0]['meta']['cod_mun']);
     }
+
+    #[Test]
+    public function resolve_mensal_prefere_indice_vivo_sobre_meta_desactualizado(): void
+    {
+        $fixture = base_path('tests/Fixtures/tesouro-fundeb-snippet.csv');
+        $localDir = storage_path('app/funding/tesouro-csv');
+        if (! is_dir($localDir)) {
+            mkdir($localDir, 0755, true);
+        }
+        $localCopy = $localDir.'/fundeb-merge-test.csv';
+        copy($fixture, $localCopy);
+
+        $resourceId = 'test-fundeb-merge';
+        @unlink(storage_path('app/funding/tesouro-csv/'.$resourceId.'.json'));
+
+        config([
+            'ieducar.other_funding.public_queries.tesouro_ckan.csv_resources' => [
+                'fundeb' => [
+                    'resource_id' => $resourceId,
+                    'programa_id' => 'fundeb',
+                    'name' => 'FUNDEB merge',
+                    'url' => 'https://blocked.example.test/fundeb.csv',
+                    'local_path' => 'funding/tesouro-csv/fundeb-merge-test.csv',
+                ],
+            ],
+        ]);
+
+        Http::fake([
+            'blocked.example.test/*' => Http::response('', 503),
+        ]);
+
+        $service = new TesouroTransferenciasCsvService();
+        $mensal = $service->resolveMensalForSnapshotMeta([
+            'resource_id' => $resourceId,
+            'cod_mun' => '3521',
+            'municipio' => 'Formosa do Rio Preto',
+            'uf' => 'BA',
+            // Meta antigo sem junho — o índice CKAN da fixture tem 12 meses.
+            'mensal' => [1 => 1000.0, 2 => 1000.0, 3 => 1000.0, 4 => 1000.0, 5 => 1000.0],
+        ], 2025, 10);
+
+        $this->assertArrayHasKey(6, $mensal);
+        $this->assertGreaterThan(5, count($mensal));
+
+        @unlink($localCopy);
+        @unlink(storage_path('app/funding/tesouro-csv/'.$resourceId.'.json'));
+    }
 }

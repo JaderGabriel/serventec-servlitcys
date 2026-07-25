@@ -65,10 +65,8 @@ final class MunicipalTransferGranularityEnricher
      */
     private function enrichTesouroMensal(array $meta, int $year): array
     {
-        $mensal = $this->normalizeMensalMap($this->flatMensalFromMeta($meta, $year));
-        if ($mensal === []) {
-            $mensal = $this->tesouroCsv->resolveMensalForSnapshotMeta($meta, $year);
-        }
+        // Sempre reconciliar com o índice CKAN (meta antigo pode omitir meses novos).
+        $mensal = $this->tesouroCsv->resolveMensalForSnapshotMeta($meta, $year);
 
         if ($mensal === []) {
             return $meta;
@@ -79,49 +77,6 @@ final class MunicipalTransferGranularityEnricher
         $meta['repasses'] = $this->repassesFromMensal($mensal, $year);
 
         return $meta;
-    }
-
-    /**
-     * @param  array<string, mixed>  $meta
-     * @return array<int, float>
-     */
-    private function flatMensalFromMeta(array $meta, int $year): array
-    {
-        $mensal = $meta['mensal'] ?? null;
-        if (! is_array($mensal) || $mensal === []) {
-            return [];
-        }
-
-        if (isset($mensal[$year]) || isset($mensal[(string) $year])) {
-            $slice = $mensal[$year] ?? $mensal[(string) $year];
-
-            return is_array($slice) ? $slice : [];
-        }
-
-        $first = reset($mensal);
-
-        return is_array($first) ? [] : $mensal;
-    }
-
-    /**
-     * @param  array<int|string, mixed>  $map
-     * @return array<int, float>
-     */
-    private function normalizeMensalMap(array $map): array
-    {
-        $out = [];
-        foreach ($map as $month => $valor) {
-            if (! is_numeric($valor) || (float) $valor <= 0) {
-                continue;
-            }
-            $m = (int) $month;
-            if ($m >= 1 && $m <= 12) {
-                $out[$m] = (float) $valor;
-            }
-        }
-        ksort($out);
-
-        return $out;
     }
 
     /**

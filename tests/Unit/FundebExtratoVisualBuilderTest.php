@@ -171,9 +171,9 @@ final class FundebExtratoVisualBuilderTest extends TestCase
             'fonte' => 'tesouro_csv',
             'valor' => 500.0,
             'meta' => json_encode([
-                'mensal' => ['6' => 500.0],
+                'mensal' => ['12' => 500.0],
                 'repasses' => [
-                    ['mes' => 6, 'ano' => 2026, 'valor' => 500.0, 'granularity' => 'month'],
+                    ['mes' => 12, 'ano' => 2026, 'valor' => 500.0, 'granularity' => 'month'],
                 ],
             ]),
         ]);
@@ -183,7 +183,7 @@ final class FundebExtratoVisualBuilderTest extends TestCase
             ->first(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit');
 
         $this->assertNotNull($credit);
-        $this->assertSame('06/2026', $credit['date'] ?? null);
+        $this->assertSame('12/2026', $credit['date'] ?? null);
         $this->assertSame('month', $credit['granularity'] ?? null);
         $this->assertSame('competencia_mensal', $credit['date_note'] ?? null);
     }
@@ -213,5 +213,38 @@ final class FundebExtratoVisualBuilderTest extends TestCase
         $this->assertSame('15/03/2025', $credit['date'] ?? null);
         $this->assertSame('day', $credit['granularity'] ?? null);
         $this->assertSame('extrato', $credit['date_note'] ?? null);
+    }
+
+    #[Test]
+    public function sisweb_espelho_nao_fica_preso_em_repasses_antigos_sem_junho(): void
+    {
+        $city = new City(['name' => 'Formosa do Rio Preto', 'uf' => 'BA', 'ibge_municipio' => '2911105']);
+
+        $sisweb = new MunicipalTransferSnapshot([
+            'programa_id' => 'fundeb',
+            'programa_label' => 'FUNDEB',
+            'fonte' => 'sisweb_ckan',
+            'valor' => 600.0,
+            'meta' => json_encode([
+                // Snapshot antigo: lista de repasses sem junho, mas mensal já tem junho.
+                'mensal' => ['5' => 300.0, '6' => 300.0],
+                'repasses' => [
+                    ['mes' => 5, 'ano' => 2026, 'valor' => 300.0, 'granularity' => 'month'],
+                ],
+            ]),
+        ]);
+
+        $result = (new FundebExtratoVisualBuilder)->build([$sisweb], $city, 2026, 0.0);
+        $credits = collect($result['cycles'][0]['lines'] ?? [])
+            ->filter(static fn (array $l): bool => ($l['line_type'] ?? '') === 'credit')
+            ->values()
+            ->all();
+
+        $this->assertCount(2, $credits);
+        $dates = array_map(static fn (array $l): string => (string) ($l['date'] ?? ''), $credits);
+        $this->assertTrue(
+            collect($dates)->contains(static fn (string $d): bool => str_contains($d, '06/2026') || str_contains($d, '/06/2026')),
+            'Esperava crédito de junho; datas: '.implode(', ', $dates),
+        );
     }
 }

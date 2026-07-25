@@ -406,6 +406,31 @@ final class FundebExtratoVisualBuilder
             return $out;
         }
 
+        // CKAN municipal / espelho SISWEB: créditos mensais a partir do índice vivo
+        // (não confiar só em meta.repasses antigo — omitia meses novos como junho).
+        $fonte = (string) $row->fonte;
+        if (in_array($fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
+            $mensal = app(TesouroTransferenciasCsvService::class)
+                ->resolveMensalForSnapshotMeta($meta, $filterYear);
+            if ($mensal !== []) {
+                foreach ($mensal as $month => $valor) {
+                    $month = (int) $month;
+                    if ($month < 1 || $month > 12 || $valor <= 0) {
+                        continue;
+                    }
+                    $out[] = $this->creditFromMonthlyAmount(
+                        $filterYear,
+                        $month,
+                        $valor,
+                        $descBase,
+                        $importReference,
+                    );
+                }
+
+                return $out;
+            }
+        }
+
         foreach ($this->extractRepasseItemsFromMeta($meta, $filterYear, $descBase, $importReference) as $credit) {
             $out[] = $credit;
         }
@@ -414,7 +439,7 @@ final class FundebExtratoVisualBuilder
         }
 
         $mensal = $this->extractMensalFromMeta($meta, $filterYear);
-        if ($mensal === [] && in_array((string) $row->fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
+        if ($mensal === [] && in_array($fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
             $mensal = app(TesouroTransferenciasCsvService::class)->resolveMensalForSnapshotMeta($meta, $filterYear);
         }
         if ($mensal !== []) {

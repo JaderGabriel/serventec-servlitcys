@@ -95,7 +95,10 @@ final class TesouroTransferenciasCsvService
     }
 
     /**
-     * Repasses mensais a partir do meta gravado ou do índice CSV em cache (para extrato Tempo Real).
+     * Repasses mensais a partir do meta gravado e/ou do índice CSV CKAN em cache.
+     *
+     * O índice vivo prevalece: snapshots SISWEB/CKAN antigos sem o mês novo (ex.: junho)
+     * deixavam o extrato desalinhado face ao Tesouro municipal já actualizado.
      *
      * @param  array<string, mixed>  $meta
      * @return array<int, float>
@@ -103,10 +106,25 @@ final class TesouroTransferenciasCsvService
     public function resolveMensalForSnapshotMeta(array $meta, int $year, int $timeout = 15): array
     {
         $fromMeta = $this->normalizeMensalMap($this->mensalSliceFromMeta($meta, $year));
-        if ($fromMeta !== []) {
-            return $fromMeta;
+        $fromIndex = $this->mensalFromLiveIndex($meta, $year, $timeout);
+
+        if ($fromIndex !== []) {
+            // PHP `+` mantém chaves da esquerda: índice CKAN ganha; meta só preenche falhas.
+            $merged = $fromIndex + $fromMeta;
+            ksort($merged);
+
+            return $merged;
         }
 
+        return $fromMeta;
+    }
+
+    /**
+     * @param  array<string, mixed>  $meta
+     * @return array<int, float>
+     */
+    private function mensalFromLiveIndex(array $meta, int $year, int $timeout): array
+    {
         $resourceId = trim((string) ($meta['resource_id'] ?? ''));
         if ($resourceId === '') {
             return [];
