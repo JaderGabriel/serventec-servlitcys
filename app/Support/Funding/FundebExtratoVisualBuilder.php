@@ -54,6 +54,9 @@ final class FundebExtratoVisualBuilder
 
         uksort($byFonte, static fn (string $a, string $b): int => FundebExtratoFontePriority::rank($a) <=> FundebExtratoFontePriority::rank($b));
 
+        // sisweb_ckan é espelho do mesmo CSV municipal STN — não gera 2.ª coluna no extrato.
+        $byFonte = $this->collapseCkanMunicipalMirrorFontes($byFonte);
+
         $cycles = [];
 
         foreach ($byFonte as $fonte => $fonteRows) {
@@ -64,6 +67,26 @@ final class FundebExtratoVisualBuilder
             'cycles' => $cycles,
             'consolidado' => $this->buildConsolidado($cycles, $expectedAnnual, $filterYear),
         ];
+    }
+
+    /**
+     * Une `sisweb_ckan` (espelho) a `tesouro_csv`. Mantém `sisweb_export` / BB como fontes distintas.
+     *
+     * @param  array<string, list<MunicipalTransferSnapshot>>  $byFonte
+     * @return array<string, list<MunicipalTransferSnapshot>>
+     */
+    private function collapseCkanMunicipalMirrorFontes(array $byFonte): array
+    {
+        if (! isset($byFonte['sisweb_ckan'])) {
+            return $byFonte;
+        }
+
+        if (! isset($byFonte['tesouro_csv'])) {
+            $byFonte['tesouro_csv'] = $byFonte['sisweb_ckan'];
+        }
+        unset($byFonte['sisweb_ckan']);
+
+        return $byFonte;
     }
 
     /**
@@ -909,7 +932,7 @@ final class FundebExtratoVisualBuilder
         return match ($fonte) {
             'tesouro_csv' => __('Tesouro CKAN (municipal)'),
             'tesouro_publicacao' => __('Tesouro Transparente — publicação'),
-            'sisweb_ckan' => __('SISWEB — espelho CKAN'),
+            'sisweb_ckan' => __('Tesouro CKAN (municipal)'),
             'sisweb_export' => __('SISWEB — export'),
             'bb_extrato' => __('Extrato BB'),
             'tesouro' => __('Tesouro CKAN (datastore)'),

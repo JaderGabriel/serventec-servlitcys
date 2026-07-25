@@ -75,7 +75,7 @@ final class MunicipalTransferImportServiceTest extends TestCase
             $snapshots,
             $tesouroCsv,
             new TesouroFundebPublicacaoService,
-            new SiswebFundebRepassesService($tesouroCsv),
+            new SiswebFundebRepassesService,
             new BbFundebExtratoService(new BbExtratoCsvFetcher),
             new \App\Support\Funding\MunicipalTransferGranularityEnricher($tesouroCsv),
         );
@@ -140,7 +140,7 @@ final class MunicipalTransferImportServiceTest extends TestCase
             $snapshots,
             $tesouroCsv,
             new TesouroFundebPublicacaoService,
-            new SiswebFundebRepassesService($tesouroCsv),
+            new SiswebFundebRepassesService,
             new BbFundebExtratoService(new BbExtratoCsvFetcher),
             new \App\Support\Funding\MunicipalTransferGranularityEnricher($tesouroCsv),
         );

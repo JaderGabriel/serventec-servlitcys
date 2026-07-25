@@ -82,7 +82,7 @@ final class FundebExtratoVisualBuilderTest extends TestCase
     }
 
     #[Test]
-    public function consolidado_nao_soma_fontes_espelhadas_alinhadas(): void
+    public function consolidado_unifica_espelho_sisweb_com_tesouro_ckan(): void
     {
         $city = new City(['name' => 'Itaparica', 'uf' => 'BA', 'ibge_municipio' => '2916104']);
         $valor = 1_000_000.0;
@@ -103,9 +103,11 @@ final class FundebExtratoVisualBuilderTest extends TestCase
 
         $result = (new FundebExtratoVisualBuilder)->build([$csv, $sisweb], $city, 2026, 2_000_000.0);
 
+        $this->assertCount(1, $result['cycles']);
+        $this->assertSame('tesouro_csv', $result['cycles'][0]['fonte'] ?? null);
         $this->assertSame('R$ 1.000.000,00', $result['consolidado']['total_fmt']);
-        $this->assertTrue($result['consolidado']['sources_aligned'] ?? false);
         $this->assertSame([], $result['consolidado']['divergences'] ?? null);
+        $this->assertFalse($result['consolidado']['sources_aligned'] ?? true);
     }
 
     #[Test]

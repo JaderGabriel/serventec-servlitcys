@@ -251,46 +251,14 @@
         <x-dashboard.consultoria-section
             anchor="realtime-extrato"
             :title="__('Extrato simulado (dados públicos)')"
-            :subtitle="__('Tesouro CKAN e SISWEB lado a lado para comparação; depois a conciliação entre fontes (não substitui o Internet Banking).')"
+            :subtitle="__('Série municipal do Tesouro CKAN; outras fontes (export SISWEB, BB) só aparecem quando forem distintas. A conciliação não substitui o Internet Banking.')"
         >
-            @php
-                $ckanComparisonCycles = [];
-                $otherExtratoCycles = [];
-                foreach ($extratoCycles as $cycle) {
-                    $fonte = (string) ($cycle['fonte'] ?? '');
-                    if (in_array($fonte, ['tesouro_csv', 'sisweb_ckan'], true)) {
-                        $ckanComparisonCycles[$fonte] = $cycle;
-                    } else {
-                        $otherExtratoCycles[] = $cycle;
-                    }
-                }
-                $sideBySideCycles = [];
-                foreach (['tesouro_csv', 'sisweb_ckan'] as $fonteKey) {
-                    if (isset($ckanComparisonCycles[$fonteKey])) {
-                        $sideBySideCycles[] = $ckanComparisonCycles[$fonteKey];
-                    }
-                }
-            @endphp
             <div class="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden shadow-md font-mono text-[11px]">
                 <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
                     <span class="font-sans font-semibold tracking-wide">{{ __('EXTRATO — REPASSES FUNDEB') }}</span>
                     <span class="opacity-80">{{ $d['city_name'] ?? '' }} · {{ $d['year_label'] ?? $d['ano'] ?? '' }}</span>
                 </div>
-                @if ($sideBySideCycles !== [])
-                    <div class="bg-slate-600/90 dark:bg-slate-700 px-4 py-2 font-sans text-[10px] font-semibold uppercase tracking-wide text-white">
-                        {{ __('Comparação municipal — CKAN × SISWEB') }}
-                    </div>
-                    <div @class([
-                        'grid gap-0 lg:gap-4 lg:p-4 lg:bg-slate-100/50 dark:lg:bg-slate-900/40',
-                        'lg:grid-cols-2' => count($sideBySideCycles) >= 2,
-                        'lg:grid-cols-1' => count($sideBySideCycles) === 1,
-                    ])>
-                        @foreach ($sideBySideCycles as $cycle)
-                            @include('dashboard.analytics.partials.finance-realtime-extrato-cycle', ['cycle' => $cycle, 'compact' => true])
-                        @endforeach
-                    </div>
-                @endif
-                @foreach ($otherExtratoCycles as $cycle)
+                @foreach ($extratoCycles as $cycle)
                     @include('dashboard.analytics.partials.finance-realtime-extrato-cycle', ['cycle' => $cycle, 'compact' => false])
                 @endforeach
                     @php

@@ -9,18 +9,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
 /**
- * Repasses FUNDEB via SISWEB (Transferências Constitucionais) ou export configurável.
+ * Repasses FUNDEB via SISWEB (Transferências Constitucionais).
  *
- * O portal APEX é interativo; por omissão usa o espelho CKAN municipal (mesma base STN).
+ * O portal APEX é interativo; só grava fonte distinta quando há
+ * `IEDUCAR_SISWEB_FUNDEB_EXPORT_URL`. O «espelho CKAN» era a mesma série
+ * municipal STN já importada como `tesouro_csv` — deixou de ser duplicado.
  *
  * @see https://sisweb.tesouro.gov.br/apex/f?p=2600:1
  */
 final class SiswebFundebRepassesService
 {
-    public function __construct(
-        private TesouroTransferenciasCsvService $tesouroCsv,
-    ) {}
-
     /**
      * @return array{rows: list<array<string, mixed>>, attempt: array<string, mixed>}
      */
@@ -44,34 +42,18 @@ final class SiswebFundebRepassesService
                 'rows' => [],
                 'attempt' => $this->attempt(
                     'skipped',
-                    __('Configure IEDUCAR_SISWEB_FUNDEB_EXPORT_URL ou active o espelho CKAN (IEDUCAR_SISWEB_USE_CKAN_MIRROR).'),
+                    __('Configure IEDUCAR_SISWEB_FUNDEB_EXPORT_URL para um extrato SISWEB distinto do Tesouro CKAN municipal.'),
                 ),
             ];
         }
 
-        $rows = [];
-        foreach ($this->tesouroCsv->fetchRowsForCityYear($city, $year, $timeout) as $row) {
-            if ((string) ($row['programa_id'] ?? '') !== 'fundeb') {
-                continue;
-            }
-            $row['fonte'] = 'sisweb_ckan';
-            $meta = is_array($row['meta'] ?? null) ? $row['meta'] : [];
-            $meta['sisweb_portal'] = (string) ($cfg['portal_url'] ?? 'https://sisweb.tesouro.gov.br/apex/f?p=2600:1');
-            $meta['mirror'] = 'tesouro_ckan_fundeb';
-            $row['meta'] = $meta;
-            $rows[] = $row;
-        }
-
-        if ($rows === []) {
-            return [
-                'rows' => [],
-                'attempt' => $this->attempt('empty', __('Sem FUNDEB municipal no espelho CKAN para :ano.', ['ano' => $year])),
-            ];
-        }
-
+        // Espelho CKAN = mesma série já importada como tesouro_csv — não duplicar.
         return [
-            'rows' => $rows,
-            'attempt' => $this->attempt('ok', __('FUNDEB municipal via espelho CKAN (SISWEB/REPASSES).'), count($rows)),
+            'rows' => [],
+            'attempt' => $this->attempt(
+                'skipped',
+                __('SISWEB espelho CKAN omitido: a série municipal STN já entra como Tesouro CKAN (tesouro_csv). Para comparar com o portal SISWEB, configure IEDUCAR_SISWEB_FUNDEB_EXPORT_URL.'),
+            ),
         ];
     }
 
@@ -133,7 +115,6 @@ final class SiswebFundebRepassesService
     {
         $lines = preg_split('/\r\n|\r|\n/', $body) ?: [];
         $nameNeedle = Str::ascii(mb_strtolower(trim((string) $city->name)));
-        $yearStr = (string) $year;
 
         foreach ($lines as $line) {
             $norm = Str::ascii(mb_strtolower($line));
