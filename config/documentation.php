@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '9.0.1',
         'release_tag' => '20260725-Tyche',
-        'commit_short' => 'e6450b7',
+        'commit_short' => 'ed93b8e',
         'commit_number' => 645,
         'revision_date' => '2026-07-25',
         'in_production' => true,
