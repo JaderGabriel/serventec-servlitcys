@@ -26,7 +26,7 @@ return [
     'product' => [
         'version' => '9.0.0',
         'release_tag' => '20260724f-Opus',
-        'commit_short' => 'pending',
+        'commit_short' => 'ab5a076',
         'commit_number' => 628,
         'revision_date' => '2026-07-24',
         'in_production' => true,

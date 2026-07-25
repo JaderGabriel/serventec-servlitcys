@@ -16,7 +16,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 |-----------|-------|
 | **Versão semântica** | **9.0.0** |
 | **Tag de deploy** | `20260724f-Opus` |
-| **Commit de referência** | `pending` |
+| **Commit de referência** | `ab5a076` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) |
 | **Marco** | **Opus** — Canteiro + roadmaps `ROADMAP_*` + Portal Transparência |
