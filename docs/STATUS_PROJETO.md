@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **8.2.2** · release `20260724e-Metis` · **Ramo:** `main` · **Última revisão:** 2026-07-24
+**Versão em produção:** **9.0.0** · release `20260724f-Opus` · **Ramo:** `main` · **Última revisão:** 2026-07-24
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **tipo, porte e cobertura d
 
 ---
 
-## Mapa de capacidades (8.2.2)
+## Mapa de capacidades (9.0.0)
 
 ```mermaid
 flowchart TB
@@ -20,6 +20,7 @@ flowchart TB
         CLI[Clio · coletas CSV]
         FIN[Finanças · FUNDEB · Tempo Real]
         HOR[Horizonte · mapa GIS]
+        CAN[Canteiro · obras educação]
     end
 
     subgraph Admin
@@ -31,7 +32,7 @@ flowchart TB
 
     subgraph Dados
         IED[(i-Educar)]
-        PUB[APIs FNDE · IBGE · MDS · Tesouro]
+        PUB[APIs FNDE · IBGE · MDS · Tesouro · Obrasgov]
         LOC[(MySQL app)]
     end
 
@@ -41,6 +42,8 @@ flowchart TB
     RX --> CLI
     HOR --> PUB
     HOR --> LOC
+    CAN --> PUB
+    CAN --> LOC
     Admin --> PUB
     Admin --> LOC
     COMP -.->|paridade| FIN

@@ -1,6 +1,6 @@
 # Documentação central — servlitcys
 
-**Versão do produto:** 8.2.2 · tag `20260724e-Metis` · **Última revisão:** 2026-07-24
+**Versão do produto:** 9.0.0 · tag `20260724f-Opus` · **Última revisão:** 2026-07-24
 
 Ponto de entrada da documentação técnica e funcional. Para **padrão editorial** (tom, cabeçalhos, hierarquia): [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md). Para **diagramas** (arquitetura, deploy, FUNDEB, releases): [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md).
 

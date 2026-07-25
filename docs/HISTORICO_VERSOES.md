@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`8.2.2`** · tag de deploy **`20260724e-Metis`** · ver [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.0`** · tag de deploy **`20260724f-Opus`** · ver [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **8.2.2** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **9.0.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260724e-Metis` |
+| **Tag de deploy (servidor)** | `20260724f-Opus` |
 | **Data de referência** | **24/07/2026** |
-| **Último marco documentado** | **Metis** — cobertura Fase E (Jobs + POSTs admin) — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) |
+| **Último marco documentado** | **Opus** — Canteiro + roadmaps `ROADMAP_*` + Portal Transparência — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `d7aa2ff` (#**613**) |
+| **Commit de release** | `pending` (#**628**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -48,6 +48,7 @@ timeline
     2026-07-02 : 6.3.0 Horizonte — modal refinado, finanças em colunas
     2026-07-02 : 6.5.0 Jord — malha IBGE, Contornos, pílulas geo, Educacenso nacional
     2026-07-09 : 7.0.3 Calliope — leitor documentação modular e publicação tag+GitHub
+    2026-07-24 : 9.0.0 Opus — Canteiro Obrasgov, ROADMAP_*, Portal Transparência
     2026-07-24 : 8.2.2 Metis — cobertura Fase E (Jobs + POSTs admin)
     2026-07-24 : 8.2.1 Eunomia — estabilização A–D (testes, segurança, perf, docs)
     2026-07-24 : 8.2.0 Hygieia — Clio PDF série SVG, reanálise lote, Censo 2025
@@ -70,7 +71,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 8.2.2** | `d7aa2ff` / `20260724e-Metis` → `main` | **613** | 24/07/2026 | **Produção:** Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
+| **▶ 9.0.0** | `pending` / `20260724f-Opus` → `main` | **628** | 24/07/2026 | **Produção:** Canteiro (Obrasgov/SIMEC), roadmaps `ROADMAP_*`, Portal Transparência CGU — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md). |
+| 8.2.2 | `d7aa2ff` / `20260724e-Metis` → `main` | **613** | 24/07/2026 | Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
 | 8.2.1 | `ad7deaf` / `20260724d-Eunomia` → `main` | **608** | 24/07/2026 | Estabilização A–D (CI/testes, SafeOutboundUrl, worker Clio, docs 8.2) — [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md). |
 | 8.2.0 | `696dd173` / `20260724c-Hygieia` → `main` | **568** | 24/07/2026 | Clio — série SVG no PDF gestor, `clio:campaign-reanalyze-all`, Censo 2025, NEE/Excel/Cor-Raça — [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md). |
 | 8.1.0 | `ca0f09a8` / `20260724b-Asclepius` → `main` | **563** | 24/07/2026 | Clio — Diagnóstico Geral, PDF do gestor, tempo escolar, série no card, faixas de CH/turnos — [RELEASE_20260724b_ASCLEPIUS.md](RELEASE_20260724b_ASCLEPIUS.md). |

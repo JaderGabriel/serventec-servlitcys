@@ -1,6 +1,6 @@
 # Entregas escalonadas — julho/2026
 
-> **Versão em produção:** **8.2.2** · tag **`20260724e-Metis`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
+> **Versão em produção:** **9.0.0** · tag **`20260724f-Opus`** · [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
 Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal: [ENTREGAS_ESCALONADAS.md](ENTREGAS_ESCALONADAS.md).
 
@@ -23,6 +23,7 @@ Documentação das alterações no ramo `main` em **julho/2026**. Índice mensal
 | 11 | **8.2.0** | `20260724c-Hygieia` | 24/07 | [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md) | Clio — série SVG PDF gestor; reanálise lote; Censo 2025; NEE/Excel |
 | 12 | **8.2.1** | `20260724d-Eunomia` | 24/07 | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) | Estabilização A–D — testes/CI, segurança, performance, docs 8.2 |
 | 13 | **8.2.2** | `20260724e-Metis` | 24/07 | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) | Fase E — cobertura Jobs + POSTs admin; run-tests.phpunit |
+| 14 | **9.0.0** | `20260724f-Opus` | 24/07 | [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) | Canteiro Obrasgov; roadmaps `ROADMAP_*`; Portal Transparência CGU |
 
 ---
 
