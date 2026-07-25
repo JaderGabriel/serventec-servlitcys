@@ -57,7 +57,7 @@ Prioridade sugerida para secretarias que querem visão financeira integrada.
 | **FUNDEB — complementação e distribuição** | FNDE dados abertos / painéis exportáveis | VAAR, VAAT, complementação por município/ano | Substituir % fixo `IEDUCAR_FUNDEB_VAAR_PCT_BASE` por valor importado |
 | **Transferências Tesouro (dataset completo)** | CKAN Tesouro — CSV nacional | Repasse por IBGE, ano, programa | Série histórica na aba Financiamentos; gráfico por programa |
 | **Portal Transparência — recursos / convênios** | API actual: `despesas/recursos-recebidos` + `convenios` (não existe mais `/transferencias`) — ver [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) | Valores recebidos + convênios função educação | Enrich `funding:enrich-consultoria-financiamentos`; cruzar PNAE/PNATE/PDDE |
-| **Portal — emendas educação** | `emendas` (`ano`, `codigoFuncao=12`) + documentos | Emendas parlamentares no município/ano | Card Financiamentos / ficha Horizonte (FIN-08 / HOR-08c) |
+| **Portal — emendas educação** | `emendas` (`ano`, `codigoFuncao=12`) + documentos | Emendas parlamentares no município/ano | Card Financiamentos (FIN-08) — **só consultoria**, sem Horizonte |
 | **Portal — execução por favorecido** | `despesas/documentos-por-favorecido` (API restrita) | Empenhos/liquidações ao CNPJ do ente | Auditoria fina (FIN-10); cuidar rate limit |
 | **Execução FNDE por programa** | Prestação de contas / SIOPE agregado (quando disponível em aberto) | PNAE, PNATE, PDDE por município | Cards com «repasse vs matrículas elegíveis» |
 

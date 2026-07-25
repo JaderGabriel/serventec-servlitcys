@@ -24,11 +24,11 @@ return [
     */
 
     'product' => [
-        'version' => '9.0.0',
-        'release_tag' => '20260724f-Opus',
-        'commit_short' => 'ab5a076',
-        'commit_number' => 628,
-        'revision_date' => '2026-07-24',
+        'version' => '9.0.1',
+        'release_tag' => '20260725-Tyche',
+        'commit_short' => 'e6450b7',
+        'commit_number' => 645,
+        'revision_date' => '2026-07-25',
         'in_production' => true,
         'production_label' => 'Em produção',
     ],

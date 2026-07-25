@@ -31,7 +31,7 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 |----------|---------------|--------------|-------------|
 | `despesas/recursos-recebidos` | **`codigoFavorecido` (CNPJ)** + mês/ano; keywords/órgão FNDE | Já implementado via CNPJ; evoluir: paginar até esgotar + classificar UG FNDE | FIN-07 |
 | `convenios` | `codigoIBGE`, `funcao=12`, **`dataUltimaLiberacao*`** | Já parcial; evoluir: lista na ficha municipal + alerta «convênio a vencer» | HOR-08b |
-| `emendas` | `ano`, `codigoFuncao` (12=educação), autor | Emendas parlamentares educação; município via `localidadeDoGasto` (sem IBGE) | FIN-08 / HOR-08c |
+| `emendas` | `ano`, `codigoFuncao` (12=educação), autor | Emendas parlamentares educação **só na consultoria** (Financiamentos); município via `localidadeDoGasto` (sem IBGE) | FIN-08 |
 | `emendas/documentos/{codigo}` | `codigoEmenda`, `pagina` | Detalhe orçamental da emenda (empenho/liquidação/pagamento) | FIN-08 |
 | `despesas/por-funcional-programatica` | `ano`, `funcao=12` | Execução orçamental federal por função educação (contexto nacional/UF, não sempre IBGE) | FIN-09 |
 | `despesas/documentos-por-favorecido` | CNPJ prefeitura / UG | Empenhos/liquidações/pagamentos ao ente (API **restrita** — rate menor) | FIN-10 |
@@ -74,7 +74,7 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 1. **Estabilizar P0 actual** — chave em produção + `funding:enrich-consultoria-financiamentos` + sync transparency com endpoints novos (já no client).
 2. **FIN-07** — paginação completa de `recursos-recebidos` + mapa de órgãos FNDE (códigos SIAFI) para reduzir falso-negativo de keywords.
 3. **HOR-08b** — persistir convênios educação na ficha Horizonte (além de contagens).
-4. **FIN-08 / HOR-08c** — emendas função 12 + documentos, amostra por ano de referência.
+4. **FIN-08** — emendas função 12 + documentos na aba Financiamentos (consultoria; sem Horizonte).
 5. **HOR-08d/e** — contratos/licitações por lista curada de órgãos MEC/FNDE (config).
 6. **CUN-04 (opcional)** — série PBF/NBF mensal agregada por IBGE (sem beneficiários).
 
@@ -84,7 +84,7 @@ Ver detalhe e aceitação em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.
 
 | Eixo | IDs | Objectivo |
 |------|-----|-----------|
-| **A · Consultoria Finanças** | FIN-08, HOR-08c | **A1–A4 feitos** — client, persistência, UI Financiamentos → Emendas (empty state + copy indicativo) |
+| **A · Consultoria Finanças** | FIN-08 | **A1–A4 feitos** — client, persistência, UI Financiamentos → Emendas (empty state + copy indicativo). **Sem exposição no Horizonte.** |
 | **B · Horizonte ocorrência** | HOR-08d…g | **B1–B5 feitos** (sync + UI/score + sanções CEIS/CNEP/CEPIM) |
 
 Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs). Testes com `Http::fake` por path. Respeitar rate limit nos loops `--continue`.

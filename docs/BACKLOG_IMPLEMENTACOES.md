@@ -63,7 +63,7 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 | FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Concluído | `inep_censo_municipio_matriculas`, discrepâncias |
 | FIN-06 | P3 | Simulador custo hora secretaria na aba Censo | Pendente | Idem §3.3 |
 | FIN-07 | P1 | Portal: paginar `recursos-recebidos` + mapa órgãos FNDE (SIAFI) | Pendente | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) |
-| FIN-08 | **P1** | **Consultoria · Finanças:** catálogo de **emendas educação** do município (lista + detalhe via documentos) | Pendente | Pacote § abaixo · HOR-08c · `emendas` + `emendas/documentos` |
+| FIN-08 | **P1** | **Consultoria · Finanças:** catálogo de **emendas educação** do município (lista + detalhe via documentos) | Feito | Pacote § abaixo · **só consultoria** · `emendas` + `emendas/documentos` |
 | FIN-09 | P2 | Portal: execução funcional-programática função 12 | Pendente | Idem |
 | FIN-10 | P3 | Portal: `documentos-por-favorecido` (API restrita) | Pendente | Idem · rate limit |
 
@@ -73,7 +73,7 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 
 Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequenos.
 
-#### Eixo A — `FIN-08` / `HOR-08c` · Emendas educação na aba Finanças
+#### Eixo A — `FIN-08` · Emendas educação na aba Finanças (consultoria; **não** no Horizonte)
 
 | # | To-do | Notas / aceitação |
 |---|--------|-------------------|
@@ -81,6 +81,7 @@ Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequeno
 | A2 | Persistência por município/ano (snapshot ou tabela dedicada) + comando/job de enrich (consultoria primeiro) | **Feito** — `municipal_emenda_snapshots` + `funding:enrich-consultoria-emendas` (catálogo anual em cache + match localidade; docs opcionais) |
 | A3 | UI **Finanças → Emendas** (ou secção na aba Financiamentos): catálogo tabular | **Feito** — secção na aba Financiamentos (`other-funding`) com totais, tabela e detalhe/docs |
 | A4 | Copy de produto: «indicativo Portal»; município sem match → empty state claro | **Feito** — empty + hint `funding:enrich-consultoria-emendas`; footnote de não somar |
+| A5 | Ficha/modal Horizonte: contagens + amostra de emendas (`municipal_emenda_snapshots`) | **Feito** — `HorizonteMapService` + bloco Portal da Transparência no modal |
 
 #### Eixo B — `HOR-08d`…`g` · Ocorrência comercial Horizonte (proxy SGE / mercado)
 
@@ -193,7 +194,7 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-07 | P2 | Programas FNDE agregados (PDDE, PNAE, PNATE) por município | Pendente | Onda 1 · v2.2c |
 | HOR-08 | P2 | Portal Transparência — recursos + convênios educação (client actual) | Concluído (7.0.0) — *endpoints 2026-07 actualizados* | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) · v2.2c |
 | HOR-08b | P1 | Ficha: lista/alertas convênios educação | Pendente | Portal `convenios` |
-| HOR-08c | **P1** | Emendas parlamentares educação — ficha Horizonte + **aba Finanças consultoria (FIN-08)** | Pendente | Portal `emendas` · pacote §C |
+| HOR-08c | — | Emendas no modal/ficha Horizonte | **Cancelado** | Emendas ficam **apenas** na consultoria (FIN-08); fora do Horizonte |
 | HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) — proxy mercado | Feito | Sync + score/UI B4 · `horizonte:sync-procurement` |
 | HOR-08e | P2 | Licitações recentes MEC/FNDE — timing comercial | Feito | Sync + `timing_licitacao` / bloco Sistemas · B4 |
 | HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação (lista curada) | Feito | Portal `contratos/cpf-cnpj` + itens · UI/score B4 |

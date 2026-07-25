@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 9.0.0 · **Última revisão:** 2026-07-24
+**Versão do produto:** 9.0.1 · **Última revisão:** 2026-07-25
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **9.0.0**, linha **9.x** (Canteiro + roadmaps canónicos) sobre **8.x** (Clio), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **9.0.1**, linha **9.x** (Canteiro + Portal + roadmaps) sobre **8.x** (Clio), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,11 +14,11 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **9.0.0** |
-| **Tag de deploy** | `20260724f-Opus` |
+| **Versão semântica** | **9.0.1** |
+| **Tag de deploy** | `20260725-Tyche` |
 | **Commit de referência** | `ab5a076` |
 | **Data de referência** | 2026-07-24 |
-| **Release** | [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) |
+| **Release** | [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) |
 | **Marco** | **Opus** — Canteiro + roadmaps `ROADMAP_*` + Portal Transparência |
 
 ---
@@ -173,6 +173,7 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **9.0.1** | Tyche | 25/07 | — | [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) — Emendas FIN-08; HOR-08d…g; Clio PDF |
 | **9.0.0** | Opus | 24/07 f | — | [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) — Canteiro; roadmaps `ROADMAP_*`; Portal Transparência |
 | **8.2.2** | Metis | 24/07 e | — | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) — cobertura Fase E (Jobs + POSTs admin) |
 | **8.2.1** | Eunomia | 24/07 d | — | [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md) — estabilização A–D (testes, segurança, perf, docs) |

@@ -101,7 +101,7 @@ Inventário completo de endpoints e prioridades: **[PORTAL_TRANSPARENCIA_API.md]
 | Sub-ID | Entrega | Endpoint(s) | Prioridade |
 |--------|---------|-------------|------------|
 | **HOR-08b** | Lista/alertas de convênios educação na ficha | `convenios` (`codigoIBGE`, `funcao=12`) | P1 |
-| **HOR-08c** | Emendas parlamentares educação (ano + função 12) | `emendas` (+ `emendas/documentos/{codigo}`) | P1–P2 |
+| **HOR-08c** | ~~Emendas no Horizonte~~ — **cancelado**; emendas só na consultoria (FIN-08) | — | Cancelado |
 | **HOR-08d** | Contratos órgãos MEC/FNDE (lista SIAFI curada) | `contratos` (`codigoOrgao` obrig.) | P2 |
 | **HOR-08e** | Licitações recentes dos mesmos órgãos | `licitacoes` | P2 |
 | **HOR-08f** | Cruzamento CNPJ fornecedores software educação | `contratos/cpf-cnpj`, `itens-contratados` | P2 |

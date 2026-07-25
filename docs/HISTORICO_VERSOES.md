@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.0`** · tag de deploy **`20260724f-Opus`** · ver [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.1`** · tag de deploy **`20260725-Tyche`** · ver [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **9.0.0** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **9.0.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260724f-Opus` |
-| **Data de referência** | **24/07/2026** |
-| **Último marco documentado** | **Opus** — Canteiro + roadmaps `ROADMAP_*` + Portal Transparência — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) |
+| **Tag de deploy (servidor)** | `20260725-Tyche` |
+| **Data de referência** | **25/07/2026** |
+| **Último marco documentado** | **Tyche** — Emendas FIN-08 + ocorrência Horizonte HOR-08d…g + Clio PDF — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `ab5a076` (#**628**) |
+| **Commit de release** | `e6450b7` (#**645**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -71,7 +71,8 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 9.0.0** | `ab5a076` / `20260724f-Opus` → `main` | **628** | 24/07/2026 | **Produção:** Canteiro (Obrasgov/SIMEC), roadmaps `ROADMAP_*`, Portal Transparência CGU — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md). |
+| **▶ 9.0.1** | `e6450b7` / `20260725-Tyche` → `main` | **645** | 25/07/2026 | **Produção:** Emendas FIN-08; procurement/sanções Horizonte HOR-08d…g; Clio PDF temático — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md). |
+| 9.0.0 | `ab5a076` / `20260724f-Opus` → `main` | **628** | 24/07/2026 | Canteiro (Obrasgov/SIMEC), roadmaps `ROADMAP_*`, Portal Transparência CGU — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md). |
 | 8.2.2 | `d7aa2ff` / `20260724e-Metis` → `main` | **613** | 24/07/2026 | Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
 | 8.2.1 | `ad7deaf` / `20260724d-Eunomia` → `main` | **608** | 24/07/2026 | Estabilização A–D (CI/testes, SafeOutboundUrl, worker Clio, docs 8.2) — [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md). |
 | 8.2.0 | `696dd173` / `20260724c-Hygieia` → `main` | **568** | 24/07/2026 | Clio — série SVG no PDF gestor, `clio:campaign-reanalyze-all`, Censo 2025, NEE/Excel/Cor-Raça — [RELEASE_20260724c_HYGIEIA.md](RELEASE_20260724c_HYGIEIA.md). |

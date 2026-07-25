@@ -1,6 +1,6 @@
 # Estado do projeto — servlitcys
 
-**Versão em produção:** **9.0.0** · release `20260724f-Opus` · **Ramo:** `main` · **Última revisão:** 2026-07-25
+**Versão em produção:** **9.0.1** · release `20260725-Tyche` · **Ramo:** `main` · **Última revisão:** 2026-07-25
 
 Histórico de releases: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 
@@ -8,7 +8,7 @@ Referência do que está **implementado** hoje. Para **tipo, porte e cobertura d
 
 ---
 
-## Mapa de capacidades (9.0.0)
+## Mapa de capacidades (9.0.1)
 
 ```mermaid
 flowchart TB

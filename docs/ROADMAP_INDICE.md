@@ -1,6 +1,6 @@
 # Índice de roadmaps — servlitcys
 
-**Versão em produção:** **9.0.0** · **Última revisão:** 2026-07-24
+**Versão em produção:** **9.0.1** · **Última revisão:** 2026-07-25
 
 > **Índice docs:** [README.md](README.md) · **Implementado:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Pendente / IDs:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Módulos:** [modulos/README.md](modulos/README.md)
 
