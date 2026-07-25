@@ -223,7 +223,6 @@ final class ClioBiDashboardComposer
             is_array($dem['by_sexo'] ?? null) ? $dem['by_sexo'] : [],
             __('Matrículas nas Relações'),
             __('Fonte: INF-DEM.'),
-            true,
         );
         if ($sexo !== null) {
             $out['dem_sexo'] = $sexo;

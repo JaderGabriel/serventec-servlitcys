@@ -175,8 +175,9 @@
                                 'title' => __('Demografia'),
                                 'lead' => __('Cor/Raça, sexo e faixa etária agregados (sem PII).'),
                                 'keys' => ['dem_cor', 'dem_sexo', 'dem_idade'],
-                                'wide' => ['dem_idade', 'dem_cor'],
-                                'dense' => ['dem_idade', 'dem_cor'],
+                                /** Cards compactos — poucas categorias; evita wide/dense (altura excessiva). */
+                                'slim' => ['dem_cor', 'dem_sexo', 'dem_idade'],
+                                'grid' => 'profile',
                             ],
                             [
                                 'id' => 'escolas',
@@ -199,6 +200,8 @@
                             $wideKeys = $section['wide'] ?? [];
                             $fullKeys = $section['full'] ?? [];
                             $denseKeys = $section['dense'] ?? [];
+                            $slimKeys = $section['slim'] ?? [];
+                            $gridMod = $section['grid'] ?? null;
                         @endphp
                         @continue($sectionCharts->isEmpty())
 
@@ -211,25 +214,30 @@
                                 </div>
                             </div>
 
-                            <div class="clio-bi-dash__grid">
+                            <div @class([
+                                'clio-bi-dash__grid',
+                                'clio-bi-dash__grid--profile' => $gridMod === 'profile',
+                            ])>
                                 @foreach ($sectionCharts as $key)
                                     @php
                                         $isDense = in_array($key, $denseKeys, true);
+                                        $isSlim = in_array($key, $slimKeys, true);
                                         $isFull = in_array($key, $fullKeys, true);
                                         $isWide = in_array($key, $wideKeys, true);
                                     @endphp
                                     <div @class([
                                         'clio-bi-dash__cell',
                                         'clio-bi-dash__cell--enter',
-                                        'clio-bi-dash__cell--wide' => $isWide && ! $isFull,
-                                        'clio-bi-dash__cell--full' => $isFull,
-                                        'clio-bi-dash__cell--dense' => $isDense,
+                                        'clio-bi-dash__cell--wide' => $isWide && ! $isFull && ! $isSlim,
+                                        'clio-bi-dash__cell--full' => $isFull && ! $isSlim,
+                                        'clio-bi-dash__cell--dense' => $isDense && ! $isSlim,
+                                        'clio-bi-dash__cell--slim' => $isSlim,
                                     ])>
                                         <x-dashboard.chart-panel
                                             :chart="$charts[$key]"
                                             :exportFilename="'clio-insights-'.$key"
                                             :exportMeta="$chartExportContext"
-                                            :compact="! $isDense"
+                                            :compact="$isSlim || ! $isDense"
                                             :chartPanelId="'clio-bi-'.$key"
                                             panelTone="default"
                                         />

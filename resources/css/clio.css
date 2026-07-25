@@ -1050,6 +1050,41 @@
     max-height: none !important;
 }
 
+/* Perfil demográfico: 3 cards lado a lado cedo; altura reduzida */
+@media (min-width: 1024px) {
+    .clio-bi-dash__grid--profile {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.875rem;
+    }
+}
+
+.clio-bi-dash__cell--slim .chart-panel-host {
+    min-height: 0;
+}
+
+.clio-bi-dash__cell--slim .chart-panel-host > div:first-of-type {
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+}
+
+.clio-bi-dash__cell--slim .chart-panel-host > div.relative.isolate {
+    flex: 1 1 auto;
+    min-height: 9.5rem !important;
+    height: 11rem !important;
+    max-height: 12.5rem !important;
+    padding: 0.35rem 0.55rem !important;
+    overflow: hidden !important;
+}
+
+.clio-bi-dash__cell--slim .chart-panel-host canvas.chart-panel-canvas {
+    max-height: 10.5rem !important;
+}
+
+.clio-bi-dash__cell--slim .chart-panel-host > div[x-show="zoomUi"] {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+}
+
 .clio-bi-feed {
     @apply m-0 list-none p-0;
     display: grid;
