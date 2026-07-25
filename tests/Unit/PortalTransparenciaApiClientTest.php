@@ -303,6 +303,33 @@ final class PortalTransparenciaApiClientTest extends TestCase
     }
 
     #[Test]
+    public function ceis_cnep_cepim_consultam_por_cnpj(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/ceis*' => Http::response([
+                ['id' => 1, 'sancionado' => ['nome' => 'Vendor A', 'codigoFormatado' => '12.345.678/0001-99']],
+            ], 200),
+            'api.portaldatransparencia.gov.br/api-de-dados/cnep*' => Http::response([], 200),
+            'api.portaldatransparencia.gov.br/api-de-dados/cepim*' => Http::response([
+                ['id' => 2, 'motivo' => 'Impedida', 'pessoaJuridica' => ['nome' => 'Vendor A']],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $ceis = $client->ceis('12.345.678/0001-99', 'token-teste', 10, 1);
+        $cnep = $client->cnep('12345678000199', 'token-teste', 10, 1);
+        $cepim = $client->cepim('12345678000199', 'token-teste', 10, 1);
+
+        $this->assertCount(1, $ceis);
+        $this->assertSame([], $cnep);
+        $this->assertCount(1, $cepim);
+        Http::assertSent(fn ($request): bool => str_contains($request->url(), '/ceis')
+            && ($request['codigoSancionado'] ?? null) === '12345678000199');
+        Http::assertSent(fn ($request): bool => str_contains($request->url(), '/cepim')
+            && ($request['cnpjSancionado'] ?? null) === '12345678000199');
+    }
+
+    #[Test]
     public function import_complementar_grava_pnae_do_portal_e_omite_fundeb(): void
     {
         Cache::flush();

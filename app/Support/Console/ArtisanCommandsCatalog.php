@@ -753,11 +753,11 @@ final class ArtisanCommandsCatalog
                     [
                         'name' => 'horizonte:sync-procurement',
                         'summary' => __('Contratos e licitações MEC/FNDE (órgão SIAFI) — Portal da Transparência.'),
-                        'signature' => 'horizonte:sync-procurement {--year=} {--orgao=} {--tipos=} {--max-pages=} {--licitacoes-months=} {--skip-orgaos} {--skip-vendors} {--dry-run}',
+                        'signature' => 'horizonte:sync-procurement {--year=} {--orgao=} {--tipos=} {--max-pages=} {--licitacoes-months=} {--skip-orgaos} {--skip-vendors} {--with-sanctions} {--dry-run}',
                         'examples' => [
                             'php artisan horizonte:sync-procurement --year=2025 --dry-run',
                             'php artisan horizonte:sync-procurement --orgao=FNDE --tipos=contratos --skip-vendors',
-                            'php artisan horizonte:sync-procurement --skip-orgaos',
+                            'php artisan horizonte:sync-procurement --skip-orgaos --with-sanctions',
                         ],
                         'env' => [
                             'PORTAL_TRANSPARENCIA_API_KEY',
@@ -767,7 +767,23 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('HOR-08d/e: codigoOrgao obrigatório (não IBGE). Licitações limitadas a 1 mês na API — sync varre mês a mês. CNPJs em SOFTWARE_VENDORS marcam vendor_matched.'),
+                        'details' => __('HOR-08d/e/f: codigoOrgao obrigatório (não IBGE). Licitações limitadas a 1 mês na API — sync varre mês a mês. CNPJs em SOFTWARE_VENDORS marcam vendor_matched. --with-sanctions chama CEIS/CNEP/CEPIM (HOR-08g).'),
+                    ],
+                    [
+                        'name' => 'horizonte:sync-sanctions',
+                        'summary' => __('CEIS/CNEP/CEPIM nos CNPJs curados — due diligence (HOR-08g).'),
+                        'signature' => 'horizonte:sync-sanctions {--max-pages=} {--dry-run}',
+                        'examples' => [
+                            'php artisan horizonte:sync-sanctions --dry-run',
+                            'php artisan horizonte:sync-sanctions',
+                        ],
+                        'env' => [
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS',
+                            'HORIZONTE_PROCUREMENT_SANCTIONS_MAX_PAGES',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('Filtro de risco comercial; não classifica tipo de SGE. Persiste em portal_vendor_sanction_snapshots.'),
                     ],
                     [
                         'name' => 'horizonte:sync-obras',

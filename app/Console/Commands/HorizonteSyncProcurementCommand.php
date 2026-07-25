@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Horizonte\HorizontePortalProcurementSyncService;
+use App\Services\Horizonte\HorizontePortalSanctionsSyncService;
 use App\Support\Horizonte\PortalProcurementConfig;
 use Illuminate\Console\Command;
 
@@ -16,11 +17,15 @@ class HorizonteSyncProcurementCommand extends Command
                             {--licitacoes-months= : Meses a varrer em licitações (1–12)}
                             {--skip-orgaos : Só enrich por CNPJs curados (HOR-08f)}
                             {--skip-vendors : Não consultar /contratos/cpf-cnpj}
+                            {--with-sanctions : Após vendors, consultar CEIS/CNEP/CEPIM (HOR-08g)}
                             {--dry-run : Simular sem gravar}';
 
     protected $description = 'Importa contratos e licitações MEC/FNDE (Portal da Transparência) para o Horizonte';
 
-    public function handle(HorizontePortalProcurementSyncService $sync): int
+    public function handle(
+        HorizontePortalProcurementSyncService $sync,
+        HorizontePortalSanctionsSyncService $sanctions,
+    ): int
     {
         $memory = trim((string) config('horizonte.fortnightly_feed.memory_limit', '512M'));
         if ($memory !== '') {
@@ -125,6 +130,19 @@ class HorizonteSyncProcurementCommand extends Command
 
         if ($vendors === [] && ! $skipVendors) {
             $this->comment(__('HOR-08f: defina HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS para cruzar incumbentes.'));
+        }
+
+        if ((bool) $this->option('with-sanctions')) {
+            $this->newLine();
+            $this->info(__('HOR-08g — due diligence CEIS/CNEP/CEPIM'));
+            $sanctionResult = $sanctions->sync(['dry_run' => $dryRun]);
+            if ($sanctionResult['skipped'] ?? false) {
+                $this->warn((string) ($sanctionResult['message'] ?? ''));
+            } elseif ($dryRun) {
+                $this->comment((string) ($sanctionResult['message'] ?? ''));
+            } else {
+                $this->info((string) ($sanctionResult['message'] ?? ''));
+            }
         }
 
         return self::SUCCESS;

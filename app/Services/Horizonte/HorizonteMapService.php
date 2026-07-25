@@ -12,10 +12,12 @@ use App\Models\MunicipalFiscalSnapshot;
 use App\Models\MunicipalPnadSnapshot;
 use App\Models\MunicipalTransparencySnapshot;
 use App\Models\PortalProcurementSnapshot;
+use App\Models\PortalVendorSanctionSnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\MunicipalAreaSnapshotRepository;
 use App\Repositories\PortalProcurementSnapshotRepository;
+use App\Repositories\PortalVendorSanctionSnapshotRepository;
 use App\Services\Cadunico\CadunicoVulnerabilidadeIndicators;
 use App\Services\Horizonte\HorizonteTesouroTransferSyncService;
 use App\Support\Brazil\BrazilStateCapitals;
@@ -40,6 +42,7 @@ use App\Support\Horizonte\HorizonteCanteiroAlertsCache;
 use App\Support\Horizonte\HorizonteMunicipalAlertsResolver;
 use App\Support\Horizonte\HorizonteMunicipalSgeResolver;
 use App\Support\Horizonte\HorizonteProcurementMarketScorer;
+use App\Support\Horizonte\PortalProcurementConfig;
 use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -60,6 +63,7 @@ final class HorizonteMapService
         private readonly HorizonteMunicipalAlertsSyncService $municipalAlerts,
         private readonly HorizonteMunicipalAlertsResolver $municipalAlertsResolver,
         private readonly PortalProcurementSnapshotRepository $procurementSnapshots,
+        private readonly PortalVendorSanctionSnapshotRepository $sanctionSnapshots,
     ) {}
 
     /**
@@ -960,6 +964,9 @@ final class HorizonteMapService
         $obrasByIbge = $this->obrasAggByIbge($ibgePrefix);
         $procurementByIbge = $this->procurementSnapshots->licitacoesMarketByIbge($refYear, $ibgePrefix);
         $procurementNational = $this->procurementSnapshots->nationalVendorMarketSummary($refYear);
+        $sanctionSummary = $this->sanctionSnapshots->summaryForCnpjs(
+            array_keys(PortalProcurementConfig::softwareVendors()),
+        );
 
         $currentYear = HorizonteFundebRepasseOutlook::currentYear();
         $fundebCurrentByIbge = $currentYear > $refYear
@@ -1349,6 +1356,10 @@ final class HorizonteMapService
                 'procurement_national_vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
                 'procurement_national_itens_software' => (int) ($procurementNational['itens_software'] ?? 0),
                 'procurement_national_top_vendors' => $procurementNational['top_vendors'] ?? [],
+                'procurement_sanctioned_cnpjs' => (int) ($sanctionSummary['sanctioned_cnpjs'] ?? 0),
+                'procurement_sanction_records' => (int) ($sanctionSummary['records'] ?? 0),
+                'procurement_sanction_by_fonte' => $sanctionSummary['by_fonte'] ?? ['ceis' => 0, 'cnep' => 0, 'cepim' => 0],
+                'procurement_sanction_samples' => $sanctionSummary['samples'] ?? [],
                 'pnad_escolaridade_media' => $pnad['escolaridade_media'] ?? null,
                 'pnad_pct_neet' => $pnad['pct_neet_jovem'] ?? null,
                 'pnad_ano' => $pnad['ano'] ?? null,
@@ -2186,6 +2197,7 @@ final class HorizonteMapService
             [MunicipalFiscalSnapshot::class, 'imported_at'],
             [MunicipalTransparencySnapshot::class, 'imported_at'],
             [PortalProcurementSnapshot::class, 'imported_at'],
+            [PortalVendorSanctionSnapshot::class, 'imported_at'],
             [MunicipalPnadSnapshot::class, 'imported_at'],
             [MunicipalAreaSnapshot::class, 'imported_at'],
         ] as [$model, $col]) {

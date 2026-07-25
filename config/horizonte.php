@@ -131,6 +131,8 @@ return [
             'vendor_max_pages' => max(1, min(20, (int) env('HORIZONTE_PROCUREMENT_VENDOR_MAX_PAGES', 3))),
             'itens_max_pages' => max(1, min(5, (int) env('HORIZONTE_PROCUREMENT_ITENS_MAX_PAGES', 2))),
             'itens_per_vendor_contract' => max(0, min(20, (int) env('HORIZONTE_PROCUREMENT_ITENS_PER_CONTRACT', 5))),
+            /** HOR-08g — páginas por base CEIS/CNEP/CEPIM e CNPJ. */
+            'sanctions_max_pages' => max(1, min(5, (int) env('HORIZONTE_PROCUREMENT_SANCTIONS_MAX_PAGES', 2))),
         ],
     ],
 

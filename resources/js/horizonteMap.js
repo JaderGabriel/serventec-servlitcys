@@ -1905,6 +1905,10 @@ function sistemasMercadoEnrichmentSignal(m) {
     const timing = Number(m.timing_licitacao ?? 0);
     const proxy = Number(m.proxy_sge ?? 0);
     const soft = Number(m.procurement_licitacoes_software ?? 0);
+    const sanctioned = Number(m.procurement_sanctioned_cnpjs ?? 0);
+    if (sanctioned > 0) {
+        return { tone: "warn", text: "Sanção CEIS/CNEP" };
+    }
     if (soft > 0 || (m.sge_found && String(m.sge_status ?? "") === "registry")) {
         return { tone: "warn", text: "Incumbente / software" };
     }
@@ -2035,6 +2039,19 @@ function muniSistemasMercadoEnrichmentHtml(m) {
     } else if (nationalVendors > 0) {
         notes.push(
             `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com fornecedores curados — sinal de órgão, não do município.`,
+        );
+    }
+    const sanctioned = Number(m.procurement_sanctioned_cnpjs ?? 0);
+    if (sanctioned > 0) {
+        const by = m.procurement_sanction_by_fonte && typeof m.procurement_sanction_by_fonte === "object"
+            ? m.procurement_sanction_by_fonte
+            : {};
+        const parts = [];
+        if (Number(by.ceis ?? 0) > 0) parts.push(`CEIS ${by.ceis}`);
+        if (Number(by.cnep ?? 0) > 0) parts.push(`CNEP ${by.cnep}`);
+        if (Number(by.cepim ?? 0) > 0) parts.push(`CEPIM ${by.cepim}`);
+        notes.push(
+            `Due diligence: ${sanctioned} CNPJ(s) curado(s) com sanção${parts.length ? ` (${parts.join(" · ")})` : ""} — filtro de risco, não classifica o SGE.`,
         );
     }
     notes.push("Proxy indicativo: não prova qual SGE está instalado na rede municipal.");

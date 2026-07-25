@@ -22,6 +22,9 @@ use Illuminate\Support\Facades\Log;
  * - GET /api-de-dados/contratos/cpf-cnpj (`cpfCnpj` fornecedor)
  * - GET /api-de-dados/contratos/itens-contratados (`id` do contrato)
  * - GET /api-de-dados/licitacoes (`codigoOrgao` + datas; período máx. 1 mês)
+ * - GET /api-de-dados/ceis (`codigoSancionado` CNPJ/CPF)
+ * - GET /api-de-dados/cnep (`codigoSancionado` CNPJ/CPF)
+ * - GET /api-de-dados/cepim (`cnpjSancionado`)
  */
 final class PortalTransparenciaApiClient
 {
@@ -663,6 +666,136 @@ final class PortalTransparenciaApiClient
                 $out[] = $item;
             }
             usleep(80_000);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Cadastro Nacional de Empresas Inidôneas e Suspensas (CEIS).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function ceis(string $codigoSancionado, string $apiKey, int $timeout = 25, int $maxPages = 3): array
+    {
+        return $this->paginatedSancaoList(
+            '/api-de-dados/ceis',
+            'ceis',
+            'codigoSancionado',
+            $codigoSancionado,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Cadastro Nacional de Empresas Punidas (CNEP).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function cnep(string $codigoSancionado, string $apiKey, int $timeout = 25, int $maxPages = 3): array
+    {
+        return $this->paginatedSancaoList(
+            '/api-de-dados/cnep',
+            'cnep',
+            'codigoSancionado',
+            $codigoSancionado,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Entidades Privadas sem Fins Lucrativos Impedidas (CEPIM).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function cepim(string $cnpjSancionado, string $apiKey, int $timeout = 25, int $maxPages = 3): array
+    {
+        return $this->paginatedSancaoList(
+            '/api-de-dados/cepim',
+            'cepim',
+            'cnpjSancionado',
+            $cnpjSancionado,
+            $apiKey,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function paginatedSancaoList(
+        string $path,
+        string $logKey,
+        string $cnpjParam,
+        string $cnpj,
+        string $apiKey,
+        int $timeout,
+        int $maxPages,
+    ): array {
+        $cnpj = preg_replace('/\D/', '', $cnpj) ?: '';
+        $apiKey = trim($apiKey);
+        if (strlen($cnpj) !== 14 || $apiKey === '') {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(10, $maxPages));
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.$path, [
+                        $cnpjParam => $cnpj,
+                        'pagina' => $page,
+                    ]);
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.'.$logKey.'_failed', [
+                    'cnpj' => $cnpj,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.'.$logKey.'_http', [
+                    'cnpj' => $cnpj,
+                    'page' => $page,
+                    'status' => $response->status(),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+            if (isset($items['Erro na API']) || isset($items['message'])) {
+                break;
+            }
+
+            $pageCount = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && ! isset($item['Erro na API'])) {
+                    $out[] = $item;
+                    $pageCount++;
+                }
+            }
+
+            if ($pageCount < 10) {
+                break;
+            }
         }
 
         return $out;

@@ -86,6 +86,10 @@ final class HorizonteMapPresenter
                     'feeds' => __('Licitações com IBGE (timing) e contratos/itens com CNPJs curados — bloco Sistemas/mercado; pesos moderados proxy_sge e timing_licitacao.'),
                 ],
                 [
+                    'label' => __('Sanções CEIS/CNEP/CEPIM'),
+                    'feeds' => __('Due diligence nos CNPJs curados — filtro de risco no bloco Sistemas/mercado (não classifica o produto/SGE).'),
+                ],
+                [
                     'label' => __('IBGE PNAD Contínua'),
                     'feeds' => __('Escolaridade média e NEET jovem — argumento para EJA e expansão de oferta.'),
                 ],

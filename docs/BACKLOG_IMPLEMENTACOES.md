@@ -90,7 +90,7 @@ Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequeno
 | B2 | Sync/persistência `contratos` + `licitacoes` por órgão (janela temporal configurável) | **Feito** — `portal_procurement_snapshots` + `horizonte:sync-procurement` (licitações mês a mês; vendor match se CNPJ curado) |
 | B3 | Lista curada **CNPJs** gestores/concorrentes educação + match em `contratos/cpf-cnpj` / `itens-contratados` | **Feito (sync)** — `HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS` + enrich no sync; `itens_software` via keywords; UI/score em B4 |
 | B4 | Modal/ficha Horizonte: bloco «Sistemas / mercado» (incumbente detectado, editais recentes) | **Feito** — bloco no modal; pesos `proxy_sge` (3%) + `timing_licitacao` (2%); licitações por IBGE + keywords; contratos vendor = contexto nacional |
-| B5 | Due diligence leve `ceis`/`cnep`/`cepim` nos CNPJs cruzados | HOR-08g — filtro de risco, não classificação de produto |
+| B5 | Due diligence leve `ceis`/`cnep`/`cepim` nos CNPJs cruzados | **Feito** — `horizonte:sync-sanctions` (+ `--with-sanctions` no procurement); tabela `portal_vendor_sanction_snapshots`; alerta no bloco Sistemas/mercado |
 
 **Ressalvas (não negociar na implementação):** falso positivo sem lista CNPJ+itens; órgãos errados poluem o mapa; sanções ≠ tipo de sistema; Emendas ≠ repasse FUNDEB (catálogo à parte na consultoria).
 
@@ -197,7 +197,7 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) — proxy mercado | Feito | Sync + score/UI B4 · `horizonte:sync-procurement` |
 | HOR-08e | P2 | Licitações recentes MEC/FNDE — timing comercial | Feito | Sync + `timing_licitacao` / bloco Sistemas · B4 |
 | HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação (lista curada) | Feito | Portal `contratos/cpf-cnpj` + itens · UI/score B4 |
-| HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores (due diligence) | Pendente | Portal `ceis`/`cnep` · pacote §C B5 |
+| HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores (due diligence) | Feito | Portal `ceis`/`cnep`/`cepim` · `horizonte:sync-sanctions` · §C B5 |
 | HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
 | HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Parcial (UI 7.0.0; importação SIDRA pendente — ver HOR-18) | Onda 2 |
 | HOR-11 | P2 | Segmentos comerciais novos (momentum, fiscal, fragmentação rede) | Pendente | v2.2 · depende HOR-01–04 |
