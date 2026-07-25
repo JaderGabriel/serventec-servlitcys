@@ -38,7 +38,7 @@ final class AdminImportHubCatalog
                 'query' => ['hub' => 'repasses'],
                 'fragment' => 'source-repasses_tesouro',
                 'label' => __('Repasses'),
-                'hint' => __('Tempo Real — CKAN, SISWEB, BB'),
+                'hint' => __('Tempo Real — Tesouro CKAN / BB'),
                 'accent' => AdminVisualCatalog::shellAccentForHubKey('repasses'),
                 'icon' => 'banknotes',
             ],

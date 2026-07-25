@@ -36,7 +36,7 @@
         :eyebrow="$isRepassesFocus ? __('Repasses / Tempo Real') : __('Consultoria municipal')"
         :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura por município')"
         :description="$isRepassesFocus
-            ? __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real na consultoria.')
+            ? __('Importação da série municipal do Tesouro CKAN (e BB, se configurado). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real. Export SISWEB só entra como fonte distinta se IEDUCAR_SISWEB_FUNDEB_EXPORT_URL estiver definido.')
             : __('Importe fontes oficiais por município. Cada área abaixo indica o destino na consultoria, ações na fila e comandos Artisan equivalentes. O abastecimento nacional do mapa Horizonte tem hub separado.')"
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"
         :doc-label="__('Documentação de importação')"

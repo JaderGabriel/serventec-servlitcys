@@ -287,7 +287,7 @@ final class ArtisanCommandsCatalog
             [
                 'id' => 'funding_repasses',
                 'title' => __('Repasses / Tempo Real'),
-                'description' => __('Repasses municipais observados (CKAN, SISWEB, BB) — municipal_transfer_snapshots e aba Finanças → Tempo Real.'),
+                'description' => __('Repasses municipais observados (Tesouro CKAN / BB) — municipal_transfer_snapshots e aba Finanças → Tempo Real.'),
                 'admin_route' => 'admin.public-data.index',
                 'admin_route_query' => ['hub' => 'repasses'],
                 'admin_route_fragment' => 'source-repasses_tesouro',

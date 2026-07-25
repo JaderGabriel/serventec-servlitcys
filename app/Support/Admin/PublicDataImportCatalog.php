@@ -302,15 +302,15 @@ final class PublicDataImportCatalog
         return [
             'id' => 'repasses_tesouro',
             'title' => __('Repasses observados — FUNDEB (Tempo Real)'),
-            'summary' => __('Importação municipal com granularidade dia/mês (CKAN, SISWEB, BB). Não grava total da UF na importação normal; use Rebuild para purgar e reimportar snapshots.'),
+            'summary' => __('Importação da série municipal do Tesouro CKAN (meta mensal). Export SISWEB e BB só entram como fontes distintas se configurados. Não grava total da UF na importação normal; use Rebuild para purgar e reimportar snapshots.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'municipal_transfer_snapshots',
             'official_sources' => [
-                'Tesouro Transparente — publicação FUNDEB (planilha)',
-                'SISWEB — Transferências Constitucionais (REPASSES)',
+                'Tesouro Transparente — CKAN municipal (série STN)',
+                'Tesouro Transparente — publicação FUNDEB (planilha UF, opcional)',
+                'SISWEB — export configurável (fonte distinta)',
                 'Banco do Brasil — demonstrativos.apps.bb.com.br/extrato',
-                'CKAN Tesouro Transparente (municipal)',
                 'Portal da Transparência (opcional)',
             ],
             'pdf_sections' => ['programas_universais', 'salario_educacao'],
@@ -328,7 +328,7 @@ final class PublicDataImportCatalog
                     'needs_city' => true,
                     'needs_year' => true,
                     'needs_years_range' => false,
-                    'hint' => __('CKAN/SISWEB/BB com meta.mensal — sem publicação STN por UF.'),
+                    'hint' => __('Série Tesouro CKAN com meta.mensal — sem publicação STN por UF.'),
                 ],
                 [
                     'key' => 'import_transfers_all_cities',

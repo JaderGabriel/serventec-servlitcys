@@ -255,7 +255,7 @@ final class AdminSyncQueueIndexPresenter
                 'id' => 'funding',
                 'domain' => AdminSyncDomain::Funding,
                 'label' => __('Repasses / Tempo Real'),
-                'description' => __('CKAN, SISWEB e BB — aba Finanças → Tempo Real na consultoria.'),
+                'description' => __('Série Tesouro CKAN (e BB, se configurado) — aba Finanças → Tempo Real na consultoria.'),
                 'icon' => 'banknotes',
                 'accent' => 'emerald',
                 'anchor' => 'fila-funding',

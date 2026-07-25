@@ -285,7 +285,7 @@ final class FinanceRealtimeFundebService
             $alerts[] = [
                 'severity' => 'warning',
                 'title' => __('Apenas totais por UF (não por município)'),
-                'detail' => __('A publicação STN (tesouro_publicacao) grava o total da UF — não use para comparar municípios. Execute php artisan funding:rebuild-finance-realtime --ano=:ano --all-cities para repasses municipais (CKAN/SISWEB/BB).', [
+                'detail' => __('A publicação STN (tesouro_publicacao) grava o total da UF — não use para comparar municípios. Execute php artisan funding:rebuild-finance-realtime --ano=:ano --all-cities para importar a série municipal do Tesouro CKAN (e BB, se configurado).', [
                     'ano' => (string) $ano,
                 ]),
             ];
@@ -295,7 +295,7 @@ final class FinanceRealtimeFundebService
             $alerts[] = [
                 'severity' => 'warning',
                 'title' => __('Sem repasses observados na base'),
-                'detail' => __('Importe Tesouro/Portal na administração para comparar com a expectativa FUNDEB.'),
+                'detail' => __('Importe a série municipal do Tesouro (Dados públicos → Repasses) para comparar com a expectativa FUNDEB.'),
             ];
         }
 
@@ -324,7 +324,7 @@ final class FinanceRealtimeFundebService
             [
                 'icon' => '2',
                 'title' => __('O que são «repasses observados»?'),
-                'text' => __('São valores que o governo federal registou como transferidos (CSV municipal do Tesouro e espelho SISWEB), importados em Admin → Dados públicos. No extrato, CKAN e SISWEB aparecem lado a lado; a linha «Conciliação entre fontes» resume se os totais batem.'),
+                'text' => __('São valores que o governo federal registou como transferidos ao município (série municipal do Tesouro CKAN), importados em Admin → Dados públicos. O extrato mostra essa série numa coluna; export SISWEB ou extrato BB só entram se forem fontes distintas. A «Conciliação entre fontes» resume o total de referência e eventuais divergências.'),
             ],
             [
                 'icon' => '3',
@@ -341,7 +341,7 @@ final class FinanceRealtimeFundebService
 
     private function dataSourcesNote(): string
     {
-        $default = __('Extratos analisados: publicação FUNDEB (Tesouro Transparente), REPASSES/SISWEB e extrato BB (export ou Open Finance). Importe via Admin → Dados públicos → Repasses.');
+        $default = __('Fonte municipal: série Tesouro CKAN (STN). Fontes adicionais só se forem distintas — export SISWEB configurado ou extrato BB. Importe via Admin → Dados públicos → Repasses.');
 
         return (string) config('ieducar.finance_realtime.sources_note', $default);
     }

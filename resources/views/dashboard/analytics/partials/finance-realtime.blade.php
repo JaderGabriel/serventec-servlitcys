@@ -251,7 +251,7 @@
         <x-dashboard.consultoria-section
             anchor="realtime-extrato"
             :title="__('Extrato simulado (dados públicos)')"
-            :subtitle="__('Série municipal do Tesouro CKAN; outras fontes (export SISWEB, BB) só aparecem quando forem distintas. A conciliação não substitui o Internet Banking.')"
+            :subtitle="__('Extrato da série municipal do Tesouro CKAN. Export SISWEB ou BB só aparecem se forem fontes distintas. A conciliação não substitui o Internet Banking.')"
         >
             <div class="rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 overflow-hidden shadow-md font-mono text-[11px]">
                 <div class="bg-slate-800 text-white px-4 py-3 flex justify-between items-center">
@@ -281,7 +281,7 @@
                             @endif
                             · {{ $extratoConsolidado['total_fmt'] ?? '—' }}
                             @if ($sourcesAligned)
-                                <span class="block text-[10px] font-normal opacity-90 mt-0.5">{{ __('Fontes alinhadas — valores espelhados não são somados.') }}</span>
+                                <span class="block text-[10px] font-normal opacity-90 mt-0.5">{{ __('Outras fontes coincidem com a referência — não são somadas ao total.') }}</span>
                             @endif
                         </div>
                         @if ($consLines !== [])

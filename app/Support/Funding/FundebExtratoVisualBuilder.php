@@ -339,7 +339,7 @@ final class FundebExtratoVisualBuilder
             $lines[] = $this->lineEntry(
                 'info',
                 '—',
-                __('Demais fontes importadas coincidem com a referência (não são somadas).'),
+                __('Outras fontes importadas coincidem com a referência (não são somadas).'),
                 null,
                 null,
                 $refTotal,
@@ -752,13 +752,13 @@ final class FundebExtratoVisualBuilder
             FundebTransferScope::hasUfAggregatedFundebSnapshots($rows)
             && ! FundebTransferScope::hasMunicipalFundebSnapshots($rows)
         ) {
-            return __('Há importação da publicação STN (total da UF), mas não repasses municipais para :city / :ano. A fila pode mostrar «carga concluída» só com esse total — reexecute Admin → Dados públicos → Repasses até aparecer CKAN/SISWEB (tesouro_csv ou sisweb_ckan) no log da tarefa.', [
+            return __('Há importação da publicação STN (total da UF), mas não repasses municipais para :city / :ano. A fila pode mostrar «carga concluída» só com esse total — reexecute Admin → Dados públicos → Repasses até aparecer a série municipal (tesouro_csv) no log da tarefa.', [
                 'city' => $city->name,
                 'ano' => (string) $ano,
             ]);
         }
 
-        return __('Sem repasses FUNDEB importados para :city / :ano. Use Admin → Dados públicos → Repasses.', [
+        return __('Sem repasses FUNDEB municipais importados para :city / :ano. Use Admin → Dados públicos → Repasses (série Tesouro CKAN).', [
             'city' => $city->name,
             'ano' => (string) $ano,
         ]);

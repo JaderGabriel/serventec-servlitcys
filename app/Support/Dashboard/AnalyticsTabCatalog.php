@@ -122,7 +122,7 @@ final class AnalyticsTabCatalog
             'comparativo' => __('Evolução anual e projeção FUNDEB'),
             'discrepancies' => __('Erros de cadastro com impacto financeiro'),
             'fundeb' => __('VAAF, VAAR e previsão de repasse'),
-            'finance_realtime' => __('Repasses observados × expectativa (Tesouro/BB)'),
+            'finance_realtime' => __('Repasses observados × expectativa (Tesouro CKAN / BB)'),
             'other_funding' => __('PNAE, PNATE, PDDE e fontes públicas'),
             'work_done' => __('Educacenso, ritmo de cadastro e fecho do ano'),
             'overview' => __('Totais de escolas, turmas e matrículas'),

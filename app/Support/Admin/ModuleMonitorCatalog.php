@@ -131,7 +131,7 @@ final class ModuleMonitorCatalog
             [
                 'id' => 'finance_realtime',
                 'label' => __('Repasses / Tempo Real'),
-                'description' => __('CKAN, SISWEB e BB — municipal_transfer_snapshots e aba Finanças → Tempo Real.'),
+                'description' => __('Série Tesouro CKAN / BB — municipal_transfer_snapshots e aba Finanças → Tempo Real.'),
                 'icon' => 'banknotes',
                 'accent' => 'emerald',
                 'group' => 'sincronizacao',

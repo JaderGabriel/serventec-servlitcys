@@ -124,7 +124,7 @@ final class ExternalImportImpact
             ],
             'funding::rebuild_finance_realtime' => [
                 'title' => __('Quando concluir'),
-                'detail' => __('Verifique Finanças → Tempo Real: extrato por repasse mensal STN/SISWEB; totais UF (tesouro_publicacao) não devem voltar para o ano rebuildado.'),
+                'detail' => __('Verifique Finanças → Tempo Real: extrato da série municipal Tesouro CKAN; totais UF (tesouro_publicacao) não devem voltar para o ano rebuildado.'),
             ],
             'funding::index_censo_matriculas' => [
                 'title' => __('Quando concluir'),
