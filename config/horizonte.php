@@ -85,6 +85,49 @@ return [
     'transparency' => [
         'municipios_per_step' => max(1, min(30, (int) env('HORIZONTE_TRANSPARENCY_MUNICIPIOS_PER_STEP', 5))),
         'http_timeout' => max(10, (int) env('HORIZONTE_TRANSPARENCY_HTTP_TIMEOUT', 25)),
+        /**
+         * HOR-08d/e — contratos/licitações exigem codigoOrgao SIAFI (não IBGE).
+         * Lista curada MEC/FNDE; alargar só com validação (UGs estaduais geram ruído).
+         */
+        'procurement' => [
+            'enabled' => filter_var(env('HORIZONTE_PROCUREMENT_ENABLED', true), FILTER_VALIDATE_BOOL),
+            'max_pages_per_org' => max(1, min(30, (int) env('HORIZONTE_PROCUREMENT_MAX_PAGES', 5))),
+            'licitacoes_max_months' => max(1, min(12, (int) env('HORIZONTE_PROCUREMENT_LICITACOES_MONTHS', 12))),
+            'http_timeout' => max(15, (int) env('HORIZONTE_PROCUREMENT_HTTP_TIMEOUT', 30)),
+            /** @var list<array{codigo: string, sigla: string, nome: string}> */
+            'orgaos_siafi' => array_values(array_filter([
+                [
+                    'codigo' => (string) env('HORIZONTE_PROCUREMENT_ORG_FNDE', '26298'),
+                    'sigla' => 'FNDE',
+                    'nome' => 'Fundo Nacional de Desenvolvimento da Educação',
+                ],
+                [
+                    'codigo' => (string) env('HORIZONTE_PROCUREMENT_ORG_MEC', '26000'),
+                    'sigla' => 'MEC',
+                    'nome' => 'Ministério da Educação',
+                ],
+            ], static fn (array $o): bool => trim((string) ($o['codigo'] ?? '')) !== '')),
+            /**
+             * HOR-08f — CNPJs de gestores/concorrentes (14 dígitos=rótulo), separados por vírgula.
+             * Ex.: HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS=12345678000199|Vendor A,98765432000111|Vendor B
+             * O mapa é materializado em App\Support\Horizonte\PortalProcurementConfig::softwareVendors().
+             */
+            'software_vendors_raw' => (string) env('HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS', ''),
+            /**
+             * Keywords nos itens contratados (HOR-08f) — proxy fraco de software/SGE.
+             * Separadas por vírgula; match case-insensitive na descrição do item.
+             */
+            'item_software_keywords' => array_values(array_filter(array_map(
+                'trim',
+                explode(',', (string) env(
+                    'HORIZONTE_PROCUREMENT_ITEM_KEYWORDS',
+                    'software,sistema,licen,plataforma,gestão escolar,gestao escolar,sge,escola',
+                )),
+            ))),
+            'vendor_max_pages' => max(1, min(20, (int) env('HORIZONTE_PROCUREMENT_VENDOR_MAX_PAGES', 3))),
+            'itens_max_pages' => max(1, min(5, (int) env('HORIZONTE_PROCUREMENT_ITENS_MAX_PAGES', 2))),
+            'itens_per_vendor_contract' => max(0, min(20, (int) env('HORIZONTE_PROCUREMENT_ITENS_PER_CONTRACT', 5))),
+        ],
     ],
 
     'obras' => [

@@ -751,6 +751,25 @@ final class ArtisanCommandsCatalog
                         'doc_anchor' => 'horizonte',
                     ],
                     [
+                        'name' => 'horizonte:sync-procurement',
+                        'summary' => __('Contratos e licitações MEC/FNDE (órgão SIAFI) — Portal da Transparência.'),
+                        'signature' => 'horizonte:sync-procurement {--year=} {--orgao=} {--tipos=} {--max-pages=} {--licitacoes-months=} {--skip-orgaos} {--skip-vendors} {--dry-run}',
+                        'examples' => [
+                            'php artisan horizonte:sync-procurement --year=2025 --dry-run',
+                            'php artisan horizonte:sync-procurement --orgao=FNDE --tipos=contratos --skip-vendors',
+                            'php artisan horizonte:sync-procurement --skip-orgaos',
+                        ],
+                        'env' => [
+                            'PORTAL_TRANSPARENCIA_API_KEY',
+                            'HORIZONTE_PROCUREMENT_ENABLED',
+                            'HORIZONTE_PROCUREMENT_ORG_FNDE',
+                            'HORIZONTE_PROCUREMENT_ORG_MEC',
+                            'HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS',
+                        ],
+                        'doc_anchor' => 'horizonte',
+                        'details' => __('HOR-08d/e: codigoOrgao obrigatório (não IBGE). Licitações limitadas a 1 mês na API — sync varre mês a mês. CNPJs em SOFTWARE_VENDORS marcam vendor_matched.'),
+                    ],
+                    [
                         'name' => 'horizonte:sync-obras',
                         'summary' => __('Canteiro — sincroniza obras de educação FNDE/SIMEC via API pública Obrasgov.'),
                         'signature' => 'horizonte:sync-obras {--uf=} {--situacao=} {--continue} {--reset} {--limit-pages=} {--no-enrich-finance} {--dry-run}',

@@ -179,6 +179,7 @@ php artisan public-data:check-official --no-notify   # só verifica e regista ca
 | `horizonte:sync-repasses-tesouro` | Importação dedicada de repasses FUNDEB (CKAN Tesouro) por ano/UF, com suporte a **ano de referência + ano vigente**. Opções: `--year=`, `--with-ref`, `--ref-only`, `--uf=`, `--continue`, `--reset`, `--ufs-per-step=`, `--dry-run`. |
 | `horizonte:sync-siconfi` | Indicadores fiscais municipais via API SICONFI (RREO). Opções: `--uf=`, `--year=`, `--period=`, `--limit=`, `--ibge=*`, `--continue`, `--reset`, `--refresh`, `--dry-run`. Fase `siconfi_sync` no feed. **Agendamento semestral** (jan/jul) com lotes `--continue`. |
 | `horizonte:sync-transparency` | Convénios MEC/FNDE e empenhos educação/tecnologia (Portal da Transparência). Requer `PORTAL_TRANSPARENCIA_API_KEY`. Opções: `--uf=`, `--year=`, `--limit=`, `--ibge=*`, `--dry-run`. |
+| `horizonte:sync-procurement` | **HOR-08d/e/f** — contratos + licitações por órgão SIAFI (FNDE/MEC) e enrich por CNPJs curados (`/contratos/cpf-cnpj` + itens). Tabela `portal_procurement_snapshots`. Opções: `--year=`, `--orgao=`, `--tipos=`, `--max-pages=`, `--licitacoes-months=`, `--skip-orgaos`, `--skip-vendors`, `--dry-run`. |
 | `horizonte:sync-obras` | **Canteiro** — obras educação FNDE/SIMEC (API pública Obrasgov). Opções: `--uf=`, `--situacao=`, `--continue`, `--reset`, `--limit-pages=`, `--no-enrich-finance`, `--dry-run`. Enrich grava % físico, **empenho** (`valor_empenho`/`pago`/`liquidado`), previsto (ignora `0.01`), datas (`dt_inicial_execucao`, histórico, `dt_atualizacao_execucao`). Fase `obras_sync`. **Agendamento mensal** staged. |
 | `horizonte:canteiro-alerts` | Snapshot mensal de alertas Canteiro **só consultoria activa** (`hasDataSetup`). Opções: `--dry-run`, `--pdf`. Deep-link SIMEC no payload. |
 | `horizonte:sync-municipal-alerts` | Importa alertas MEC/FNDE — lista oficial **VAAT inabilitados** (CSV FNDE; PDF fallback) + registo JSON manual. Opções: `--uf=`, `--skip-fnde`, `--dry-run`, `--reset`. Alimenta chip no modal municipal Horizonte. |
@@ -213,6 +214,8 @@ php artisan horizonte:fortnightly-feed --skip-saeb --skip-censo
 php artisan horizonte:sync-municipal-alerts --dry-run
 php artisan horizonte:sync-siconfi --limit=8
 php artisan horizonte:sync-transparency --limit=5
+php artisan horizonte:sync-procurement --year=2025 --dry-run
+php artisan horizonte:sync-procurement --orgao=FNDE --tipos=contratos
 php artisan horizonte:sync-obras --uf=BA
 php artisan horizonte:sync-obras --reset
 php artisan horizonte:sync-obras --continue

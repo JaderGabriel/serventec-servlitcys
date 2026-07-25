@@ -86,9 +86,9 @@ Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequeno
 
 | # | To-do | Notas / aceitação |
 |---|--------|-------------------|
-| B1 | Config: lista curada **órgãos SIAFI** MEC/FNDE (+ UGs educação se validadas) | `codigoOrgao` obrigatório em contratos/licitações — **não** usar só IBGE |
-| B2 | Sync/persistência `contratos` + `licitacoes` por órgão (janela temporal configurável) | HOR-08d / HOR-08e |
-| B3 | Lista curada **CNPJs** gestores/concorrentes educação + match em `contratos/cpf-cnpj` / `itens-contratados` | HOR-08f — proxy incumbente; texto do contrato **não** prova SGE sozinho |
+| B1 | Config: lista curada **órgãos SIAFI** MEC/FNDE (+ UGs educação se validadas) | **Feito** — `config/horizonte.php` → `transparency.procurement` + `PortalProcurementConfig` (FNDE=`26298`, MEC=`26000`) |
+| B2 | Sync/persistência `contratos` + `licitacoes` por órgão (janela temporal configurável) | **Feito** — `portal_procurement_snapshots` + `horizonte:sync-procurement` (licitações mês a mês; vendor match se CNPJ curado) |
+| B3 | Lista curada **CNPJs** gestores/concorrentes educação + match em `contratos/cpf-cnpj` / `itens-contratados` | **Feito (sync)** — `HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS` + enrich no sync; `itens_software` via keywords; UI/score em B4 |
 | B4 | Modal/ficha Horizonte: bloco «Sistemas / mercado» (incumbente detectado, editais recentes) | Score: pesos **moderados** (`proxy_sge`, `timing_licitacao`); não dominar FUNDEB/fiscal/Canteiro |
 | B5 | Due diligence leve `ceis`/`cnep`/`cepim` nos CNPJs cruzados | HOR-08g — filtro de risco, não classificação de produto |
 
@@ -194,9 +194,9 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-08 | P2 | Portal Transparência — recursos + convênios educação (client actual) | Concluído (7.0.0) — *endpoints 2026-07 actualizados* | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) · v2.2c |
 | HOR-08b | P1 | Ficha: lista/alertas convênios educação | Pendente | Portal `convenios` |
 | HOR-08c | **P1** | Emendas parlamentares educação — ficha Horizonte + **aba Finanças consultoria (FIN-08)** | Pendente | Portal `emendas` · pacote §C |
-| HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) — proxy mercado | Pendente | Portal `contratos` · pacote §C B1–B2 |
-| HOR-08e | P2 | Licitações recentes MEC/FNDE — timing comercial | Pendente | Portal `licitacoes` · pacote §C B2 |
-| HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação (lista curada) | Pendente | Portal `contratos/cpf-cnpj` · pacote §C B3–B4 |
+| HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) — proxy mercado | Feito (sync) | Portal `contratos` · `horizonte:sync-procurement` · §C B1–B2 |
+| HOR-08e | P2 | Licitações recentes MEC/FNDE — timing comercial | Feito (sync) | Portal `licitacoes` · idem |
+| HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação (lista curada) | Feito (sync) | Portal `contratos/cpf-cnpj` + itens · UI em B4 |
 | HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores (due diligence) | Pendente | Portal `ceis`/`cnep` · pacote §C B5 |
 | HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
 | HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Parcial (UI 7.0.0; importação SIDRA pendente — ver HOR-18) | Onda 2 |

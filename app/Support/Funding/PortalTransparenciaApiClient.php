@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\Log;
  * - GET /api-de-dados/convenios (`codigoIBGE`, `funcao=12`; ano via última liberação)
  * - GET /api-de-dados/emendas (`ano`, `codigoFuncao=12`; município via `localidadeDoGasto`, sem IBGE)
  * - GET /api-de-dados/emendas/documentos/{codigo}
+ * - GET /api-de-dados/contratos (`codigoOrgao` SIAFI obrigatório + datas)
+ * - GET /api-de-dados/contratos/cpf-cnpj (`cpfCnpj` fornecedor)
+ * - GET /api-de-dados/contratos/itens-contratados (`id` do contrato)
+ * - GET /api-de-dados/licitacoes (`codigoOrgao` + datas; período máx. 1 mês)
  */
 final class PortalTransparenciaApiClient
 {
@@ -434,6 +438,310 @@ final class PortalTransparenciaApiClient
             }
 
             if (count($items) < 10) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Contratos do Poder Executivo Federal por órgão SIAFI (`codigoOrgao` obrigatório).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function contratos(
+        string $codigoOrgao,
+        string $apiKey,
+        string $dataInicial,
+        string $dataFinal,
+        int $timeout = 25,
+        int $maxPages = 5,
+    ): array {
+        return $this->paginatedOrgaoList(
+            '/api-de-dados/contratos',
+            'contratos',
+            $codigoOrgao,
+            $apiKey,
+            $dataInicial,
+            $dataFinal,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Contratos em que o CPF/CNPJ figura como fornecedor (`/contratos/cpf-cnpj`).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function contratosPorCnpj(
+        string $cpfCnpj,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPages = 5,
+    ): array {
+        $cpfCnpj = preg_replace('/\D/', '', $cpfCnpj) ?: '';
+        $apiKey = trim($apiKey);
+        if ($cpfCnpj === '' || $apiKey === '') {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(30, $maxPages));
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.'/api-de-dados/contratos/cpf-cnpj', [
+                        'cpfCnpj' => $cpfCnpj,
+                        'pagina' => $page,
+                    ]);
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.contratos_cnpj_failed', [
+                    'cnpj' => $cpfCnpj,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.contratos_cnpj_http', [
+                    'cnpj' => $cpfCnpj,
+                    'page' => $page,
+                    'status' => $response->status(),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+            if (isset($items['Erro na API']) || isset($items['message'])) {
+                break;
+            }
+
+            $pageCount = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && ! isset($item['Erro na API'])) {
+                    $out[] = $item;
+                    $pageCount++;
+                }
+            }
+
+            if ($pageCount < 10) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Itens contratados de um contrato (`id` do ContratoDTO).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function itensContratados(
+        int|string $contratoId,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPages = 3,
+    ): array {
+        $contratoId = trim((string) $contratoId);
+        $apiKey = trim($apiKey);
+        if ($contratoId === '' || $apiKey === '') {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(10, $maxPages));
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.'/api-de-dados/contratos/itens-contratados', [
+                        'id' => $contratoId,
+                        'pagina' => $page,
+                    ]);
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.itens_contratados_failed', [
+                    'id' => $contratoId,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+            if (isset($items['Erro na API']) || isset($items['message'])) {
+                break;
+            }
+
+            $pageCount = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && ! isset($item['Erro na API'])) {
+                    $out[] = $item;
+                    $pageCount++;
+                }
+            }
+
+            if ($pageCount < 10) {
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Licitações por órgão SIAFI. A API limita o período a **1 mês** — use
+     * {@see licitacoesAno()} para varrer o exercício mês a mês.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function licitacoes(
+        string $codigoOrgao,
+        string $apiKey,
+        string $dataInicial,
+        string $dataFinal,
+        int $timeout = 25,
+        int $maxPages = 5,
+    ): array {
+        return $this->paginatedOrgaoList(
+            '/api-de-dados/licitacoes',
+            'licitacoes',
+            $codigoOrgao,
+            $apiKey,
+            $dataInicial,
+            $dataFinal,
+            $timeout,
+            $maxPages,
+        );
+    }
+
+    /**
+     * Varre até `$maxMonths` meses do ano (a partir de janeiro) para licitações.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function licitacoesAno(
+        string $codigoOrgao,
+        int $year,
+        string $apiKey,
+        int $timeout = 25,
+        int $maxPagesPerMonth = 3,
+        int $maxMonths = 12,
+    ): array {
+        $out = [];
+        $maxMonths = max(1, min(12, $maxMonths));
+        for ($month = 1; $month <= $maxMonths; $month++) {
+            $start = sprintf('01/%02d/%04d', $month, $year);
+            $endDay = (int) date('t', mktime(0, 0, 0, $month, 1, $year));
+            $end = sprintf('%02d/%02d/%04d', $endDay, $month, $year);
+            foreach ($this->licitacoes($codigoOrgao, $apiKey, $start, $end, $timeout, $maxPagesPerMonth) as $item) {
+                $out[] = $item;
+            }
+            usleep(80_000);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function paginatedOrgaoList(
+        string $path,
+        string $logKey,
+        string $codigoOrgao,
+        string $apiKey,
+        string $dataInicial,
+        string $dataFinal,
+        int $timeout,
+        int $maxPages,
+    ): array {
+        $codigoOrgao = preg_replace('/\D/', '', $codigoOrgao) ?: '';
+        $apiKey = trim($apiKey);
+        if ($codigoOrgao === '' || $apiKey === '') {
+            return [];
+        }
+
+        $baseUrl = $this->baseUrl();
+        $headers = $this->headers($apiKey);
+        $out = [];
+        $maxPages = max(1, min(30, $maxPages));
+        $queryBase = [
+            'codigoOrgao' => $codigoOrgao,
+            'dataInicial' => $dataInicial,
+            'dataFinal' => $dataFinal,
+        ];
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withHeaders($headers)
+                    ->get($baseUrl.$path, array_merge($queryBase, ['pagina' => $page]));
+            } catch (\Throwable $e) {
+                Log::debug('portal_transparencia.'.$logKey.'_failed', [
+                    'orgao' => $codigoOrgao,
+                    'page' => $page,
+                    'message' => $e->getMessage(),
+                ]);
+
+                break;
+            }
+
+            if (! $response->successful()) {
+                Log::debug('portal_transparencia.'.$logKey.'_http', [
+                    'orgao' => $codigoOrgao,
+                    'page' => $page,
+                    'status' => $response->status(),
+                    'body' => mb_substr($response->body(), 0, 200),
+                ]);
+
+                break;
+            }
+
+            $items = $response->json();
+            if (! is_array($items) || $items === []) {
+                break;
+            }
+
+            if (isset($items['Erro na API']) || isset($items['message'])) {
+                break;
+            }
+
+            $pageCount = 0;
+            foreach ($items as $item) {
+                if (is_array($item) && ! isset($item['Erro na API'])) {
+                    $out[] = $item;
+                    $pageCount++;
+                }
+            }
+
+            if ($pageCount < 10) {
                 break;
             }
         }

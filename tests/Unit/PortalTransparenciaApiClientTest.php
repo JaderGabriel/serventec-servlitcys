@@ -217,6 +217,92 @@ final class PortalTransparenciaApiClientTest extends TestCase
     }
 
     #[Test]
+    public function contratos_exige_codigo_orgao_e_datas(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/contratos*' => Http::response([
+                [
+                    'id' => 99,
+                    'numero' => '1/2025',
+                    'objeto' => 'Sistema de gestão',
+                    'valorInicialCompra' => 1000.5,
+                    'fornecedor' => [
+                        'cnpjFormatado' => '12.345.678/0001-99',
+                        'nome' => 'Vendor X',
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $rows = $client->contratos('26298', 'token-teste', '01/01/2025', '31/12/2025', 10, 1);
+
+        $this->assertCount(1, $rows);
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api-de-dados/contratos')
+                && ($request['codigoOrgao'] ?? null) === '26298'
+                && ($request['dataInicial'] ?? null) === '01/01/2025'
+                && ($request['dataFinal'] ?? null) === '31/12/2025'
+                && (int) ($request['pagina'] ?? 0) === 1;
+        });
+    }
+
+    #[Test]
+    public function licitacoes_ano_varre_meses(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/licitacoes*' => Http::response([
+                ['id' => 1, 'valor' => 10],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $rows = $client->licitacoesAno('26000', 2025, 'token-teste', 10, 1, 2);
+
+        $this->assertCount(2, $rows);
+        Http::assertSentCount(2);
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api-de-dados/licitacoes')
+                && ($request['codigoOrgao'] ?? null) === '26000'
+                && ($request['dataInicial'] ?? null) === '01/01/2025'
+                && ($request['dataFinal'] ?? null) === '31/01/2025';
+        });
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/api-de-dados/licitacoes')
+                && ($request['dataInicial'] ?? null) === '01/02/2025'
+                && ($request['dataFinal'] ?? null) === '28/02/2025';
+        });
+    }
+
+    #[Test]
+    public function contratos_por_cnpj_e_itens_contratados(): void
+    {
+        Http::fake([
+            'api.portaldatransparencia.gov.br/api-de-dados/contratos/cpf-cnpj*' => Http::response([
+                ['id' => 10, 'numero' => '1'],
+            ], 200),
+            'api.portaldatransparencia.gov.br/api-de-dados/contratos/itens-contratados*' => Http::response([
+                ['numero' => '1', 'descricao' => 'Sistema'],
+            ], 200),
+        ]);
+
+        $client = new PortalTransparenciaApiClient;
+        $contratos = $client->contratosPorCnpj('12.345.678/0001-99', 'token-teste', 10, 1);
+        $itens = $client->itensContratados(10, 'token-teste', 10, 1);
+
+        $this->assertCount(1, $contratos);
+        $this->assertCount(1, $itens);
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/contratos/cpf-cnpj')
+                && ($request['cpfCnpj'] ?? null) === '12345678000199';
+        });
+        Http::assertSent(function ($request): bool {
+            return str_contains($request->url(), '/contratos/itens-contratados')
+                && (string) ($request['id'] ?? '') === '10';
+        });
+    }
+
+    #[Test]
     public function import_complementar_grava_pnae_do_portal_e_omite_fundeb(): void
     {
         Cache::flush();

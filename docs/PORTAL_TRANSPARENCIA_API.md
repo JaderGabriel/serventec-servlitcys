@@ -40,8 +40,8 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 
 | Endpoint | Filtros úteis | Uso proposto | ID sugerido |
 |----------|---------------|--------------|-------------|
-| `contratos` | `codigoOrgao` (obrig.), datas | Contratos MEC/FNDE/UG educação — proxy SGE / incumbente (órgao SIAFI) | HOR-08d |
-| `licitacoes` | `codigoOrgao`, datas | Licitações abertas/recentes do órgão — timing comercial | HOR-08e |
+| `contratos` | `codigoOrgao` (obrig.), datas | Contratos MEC/FNDE/UG educação — proxy SGE / incumbente (órgao SIAFI) | HOR-08d · `horizonte:sync-procurement` |
+| `licitacoes` | `codigoOrgao`, datas (máx. **1 mês**) | Licitações abertas/recentes do órgão — timing comercial | HOR-08e · sync varre mês a mês |
 | `contratos/cpf-cnpj` + `itens-contratados` | CNPJ fornecedor | Cruzar fornecedores de software educação (lista curada) | HOR-08f |
 | `ceis` / `cnep` / `cepim` | CNPJ | Sanções em fornecedores / convenentes (due diligence leve) | HOR-08g |
 
@@ -85,7 +85,7 @@ Ver detalhe e aceitação em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.
 | Eixo | IDs | Objectivo |
 |------|-----|-----------|
 | **A · Consultoria Finanças** | FIN-08, HOR-08c | **A1–A4 feitos** — client, persistência, UI Financiamentos → Emendas (empty state + copy indicativo) |
-| **B · Horizonte ocorrência** | HOR-08d…g | Proxy SGE/concorrentes via contratos·licitações·CNPJ curado·sanções (pesos moderados; sem IBGE-only) |
+| **B · Horizonte ocorrência** | HOR-08d…g | **B1–B3 feitos** (sync órgãos + CNPJ/itens); B4 UI/score · B5 sanções |
 
 Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs). Testes com `Http::fake` por path. Respeitar rate limit nos loops `--continue`.
 
@@ -98,7 +98,11 @@ Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs)
 | `PORTAL_TRANSPARENCIA_API_KEY` | Obrigatória |
 | `IEDUCAR_PORTAL_TRANSPARENCIA_ENABLED` | Liga/desliga |
 | `IEDUCAR_PORTAL_TRANSPARENCIA_KEYWORDS` | Filtro educação (Financiamentos) |
-| `HORIZONTE_TRANSPARENCY_*` | Lotes sync nacional |
+| `HORIZONTE_TRANSPARENCY_*` | Lotes sync nacional municipal |
+| `HORIZONTE_PROCUREMENT_ENABLED` | Liga sync contratos/licitações (órgão) |
+| `HORIZONTE_PROCUREMENT_ORG_FNDE` / `_MEC` | Códigos SIAFI (default 26298 / 26000) |
+| `HORIZONTE_PROCUREMENT_SOFTWARE_VENDORS` | `cnpj\|rótulo,...` — marca `vendor_matched` no sync |
+| `HORIZONTE_PROCUREMENT_MAX_PAGES` / `_LICITACOES_MONTHS` | Paginação / meses de licitação |
 
 Após alterar `.env`: `php artisan config:clear` ou `config:cache`.
 
