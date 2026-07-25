@@ -77,6 +77,15 @@ Autenticação: header `chave-api-dados` (`PORTAL_TRANSPARENCIA_API_KEY`). Rate 
 5. **HOR-08d/e** — contratos/licitações por lista curada de órgãos MEC/FNDE (config).
 6. **CUN-04 (opcional)** — série PBF/NBF mensal agregada por IBGE (sem beneficiários).
 
+### Pacote activo (2026-07-25) — to-do operacional
+
+Ver detalhe e aceitação em [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §C «Pacote 2026-07».
+
+| Eixo | IDs | Objectivo |
+|------|-----|-----------|
+| **A · Consultoria Finanças** | FIN-08, HOR-08c | Catálogo + detalhe de **emendas educação** recebidas / ligadas ao município |
+| **B · Horizonte ocorrência** | HOR-08d…g | Proxy SGE/concorrentes via contratos·licitações·CNPJ curado·sanções (pesos moderados; sem IBGE-only) |
+
 Cliente partilhado: estender `PortalTransparenciaApiClient` (não espalhar URLs). Testes com `Http::fake` por path. Respeitar rate limit nos loops `--continue`.
 
 ---

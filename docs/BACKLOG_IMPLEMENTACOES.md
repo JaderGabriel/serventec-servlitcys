@@ -1,6 +1,6 @@
 # Backlog de implementações — servlitcys
 
-**Versão do produto:** 7.0.3 · **Última revisão:** 2026-07-21
+**Versão do produto:** 9.0.0 · **Última revisão:** 2026-07-25
 
 > **Índice:** [README.md](README.md) · **Estado atual:** [STATUS_PROJETO.md](STATUS_PROJETO.md) · **Mapa de roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md)
 
@@ -63,11 +63,38 @@ Lista **única** de evoluções sugeridas. Estado: **Pendente** | **Em andamento
 | FIN-05 | P2 | Check `matricula_censo_vs_ieducar` (microdados INEP) | Concluído | `inep_censo_municipio_matriculas`, discrepâncias |
 | FIN-06 | P3 | Simulador custo hora secretaria na aba Censo | Pendente | Idem §3.3 |
 | FIN-07 | P1 | Portal: paginar `recursos-recebidos` + mapa órgãos FNDE (SIAFI) | Pendente | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) |
-| FIN-08 | P2 | Portal: emendas educação (`emendas` + documentos) | Pendente | Idem · HOR-08c |
+| FIN-08 | **P1** | **Consultoria · Finanças:** catálogo de **emendas educação** do município (lista + detalhe via documentos) | Pendente | Pacote § abaixo · HOR-08c · `emendas` + `emendas/documentos` |
 | FIN-09 | P2 | Portal: execução funcional-programática função 12 | Pendente | Idem |
 | FIN-10 | P3 | Portal: `documentos-por-favorecido` (API restrita) | Pendente | Idem · rate limit |
 
 *Produção hoje:* consultas públicas activáveis via `.env` — [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · inventário API: [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md).
+
+### Pacote 2026-07 — Emendas (consultoria) + ocorrência Horizonte (P2 Portal)
+
+Dois eixos acordados (2026-07-25). IDs existentes; ordem sugerida de PRs pequenos.
+
+#### Eixo A — `FIN-08` / `HOR-08c` · Emendas educação na aba Finanças
+
+| # | To-do | Notas / aceitação |
+|---|--------|-------------------|
+| A1 | Estender `PortalTransparenciaApiClient` para `emendas` (+ `emendas/documentos/{codigo}` quando útil) | Filtros: `ano`, `codigoFuncao=12`; **sem IBGE directo** — ligar município via localidade/documentos / favorecido |
+| A2 | Persistência por município/ano (snapshot ou tabela dedicada) + comando/job de enrich (consultoria primeiro) | Respeitar rate limit; `Http::fake` nos testes |
+| A3 | UI **Finanças → Emendas** (ou secção na aba Financiamentos): catálogo tabular | Colunas mín.: autor/autoría, ano, valor, função, situação, link Portal; detalhe expansível (documentos, localidade) |
+| A4 | Copy de produto: «indicativo Portal»; município sem match → empty state claro | Não inventar vínculo IBGE se o payload não permitir |
+
+#### Eixo B — `HOR-08d`…`g` · Ocorrência comercial Horizonte (proxy SGE / mercado)
+
+| # | To-do | Notas / aceitação |
+|---|--------|-------------------|
+| B1 | Config: lista curada **órgãos SIAFI** MEC/FNDE (+ UGs educação se validadas) | `codigoOrgao` obrigatório em contratos/licitações — **não** usar só IBGE |
+| B2 | Sync/persistência `contratos` + `licitacoes` por órgão (janela temporal configurável) | HOR-08d / HOR-08e |
+| B3 | Lista curada **CNPJs** gestores/concorrentes educação + match em `contratos/cpf-cnpj` / `itens-contratados` | HOR-08f — proxy incumbente; texto do contrato **não** prova SGE sozinho |
+| B4 | Modal/ficha Horizonte: bloco «Sistemas / mercado» (incumbente detectado, editais recentes) | Score: pesos **moderados** (`proxy_sge`, `timing_licitacao`); não dominar FUNDEB/fiscal/Canteiro |
+| B5 | Due diligence leve `ceis`/`cnep`/`cepim` nos CNPJs cruzados | HOR-08g — filtro de risco, não classificação de produto |
+
+**Ressalvas (não negociar na implementação):** falso positivo sem lista CNPJ+itens; órgãos errados poluem o mapa; sanções ≠ tipo de sistema; Emendas ≠ repasse FUNDEB (catálogo à parte na consultoria).
+
+**Ordem sugerida:** A1→A2→A3 (valor gestor municipal) em paralelo a B1→B2; depois B3→B4; B5 por último.
 
 ---
 
@@ -166,11 +193,11 @@ Roadmap detalhado (mapa, ficha municipal, scoring): [HORIZONTE.md](HORIZONTE.md)
 | HOR-07 | P2 | Programas FNDE agregados (PDDE, PNAE, PNATE) por município | Pendente | Onda 1 · v2.2c |
 | HOR-08 | P2 | Portal Transparência — recursos + convênios educação (client actual) | Concluído (7.0.0) — *endpoints 2026-07 actualizados* | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) · v2.2c |
 | HOR-08b | P1 | Ficha: lista/alertas convênios educação | Pendente | Portal `convenios` |
-| HOR-08c | P2 | Emendas parlamentares educação | Pendente | Portal `emendas` · FIN-08 |
-| HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) | Pendente | Portal `contratos` |
-| HOR-08e | P2 | Licitações recentes MEC/FNDE | Pendente | Portal `licitacoes` |
-| HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação | Pendente | Portal `contratos/cpf-cnpj` |
-| HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores | Pendente | Portal `ceis`/`cnep` |
+| HOR-08c | **P1** | Emendas parlamentares educação — ficha Horizonte + **aba Finanças consultoria (FIN-08)** | Pendente | Portal `emendas` · pacote §C |
+| HOR-08d | P2 | Contratos órgãos MEC/FNDE (lista SIAFI) — proxy mercado | Pendente | Portal `contratos` · pacote §C B1–B2 |
+| HOR-08e | P2 | Licitações recentes MEC/FNDE — timing comercial | Pendente | Portal `licitacoes` · pacote §C B2 |
+| HOR-08f | P2 | Cruzamento CNPJ fornecedores software educação (lista curada) | Pendente | Portal `contratos/cpf-cnpj` · pacote §C B3–B4 |
+| HOR-08g | P3 | Sanções CEIS/CNEP em fornecedores (due diligence) | Pendente | Portal `ceis`/`cnep` · pacote §C B5 |
 | HOR-09 | P3 | CNES — camada proximidade escola–UBS | Pendente | Onda 2 · INT-08 |
 | HOR-10 | P3 | PNAD Contínua — escolaridade e NEET no modal | Parcial (UI 7.0.0; importação SIDRA pendente — ver HOR-18) | Onda 2 |
 | HOR-11 | P2 | Segmentos comerciais novos (momentum, fiscal, fragmentação rede) | Pendente | v2.2 · depende HOR-01–04 |
