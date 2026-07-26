@@ -111,6 +111,14 @@ final class PulseOperationMetricsAggregator
             return __('Horizonte :ctx', ['ctx' => substr($key, strlen('horizonte:'))]);
         }
 
+        if (str_starts_with($key, 'clio:')) {
+            return __('Clio :ctx', ['ctx' => substr($key, strlen('clio:'))]);
+        }
+
+        if (str_starts_with($key, 'cadunico:')) {
+            return __('CadÚnico :ctx', ['ctx' => substr($key, strlen('cadunico:'))]);
+        }
+
         return $key;
     }
 }

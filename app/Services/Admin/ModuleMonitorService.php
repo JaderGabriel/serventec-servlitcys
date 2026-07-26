@@ -10,6 +10,7 @@ use App\Models\City;
 use App\Support\Admin\ModuleMonitorCatalog;
 use App\Support\Admin\ModuleMonitorHorizonteProbe;
 use App\Support\Admin\ModuleMonitorSnapshotCache;
+use App\Support\Admin\ModuleMonitorSystemHealth;
 use App\Support\Pulse\PulseAggregateBridge;
 use App\Support\Pulse\PulseOperationMetricsAggregator;
 use Illuminate\Support\Carbon;
@@ -73,6 +74,13 @@ final class ModuleMonitorService
         });
 
         $moduleSummary = $this->buildModuleSummary($modules);
+        $health = ModuleMonitorSystemHealth::qualify(
+            $moduleSummary,
+            $system,
+            $pulseAvailable,
+            $snapshotFresh,
+            $horizonteKpi,
+        );
 
         return [
             'period' => $period,
@@ -81,7 +89,8 @@ final class ModuleMonitorService
             'pulse_available' => $pulseAvailable,
             'system' => $system,
             'module_summary' => $moduleSummary,
-            'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary, $horizonteKpi),
+            'health' => $health,
+            'kpis' => $this->buildSystemKpis($system, $pulseAvailable, $moduleSummary, $horizonteKpi, $health),
             'modules' => $modules,
             'incidents' => array_slice($incidents, 0, (int) config('module_monitor.incidents_limit', 50)),
             'snapshot_collected_at' => is_array($snapshot) ? ($snapshot['collected_at'] ?? null) : null,
@@ -628,9 +637,20 @@ final class ModuleMonitorService
      * @param  array<string, mixed>|null  $horizonteKpi
      * @return list<array<string, mixed>>
      */
-    private function buildSystemKpis(array $system, bool $pulseAvailable, array $moduleSummary, ?array $horizonteKpi = null): array
+    private function buildSystemKpis(array $system, bool $pulseAvailable, array $moduleSummary, ?array $horizonteKpi = null, ?array $health = null): array
     {
-        $kpis = [
+        $kpis = [];
+
+        if (is_array($health)) {
+            $kpis[] = [
+                'label' => __('Nota do sistema'),
+                'value' => (string) ($health['grade'] ?? '—').' · '.(string) ($health['score'] ?? 0),
+                'tone' => (string) ($health['tone'] ?? 'slate'),
+                'explicacao_resumo' => (string) ($health['summary'] ?? ''),
+            ];
+        }
+
+        $kpis = array_merge($kpis, [
             [
                 'label' => __('Módulos saudáveis'),
                 'value' => (string) $moduleSummary['healthy'].' / '.$moduleSummary['total'],
@@ -647,7 +667,9 @@ final class ModuleMonitorService
                 'tone' => ($system['cities_ready'] ?? 0) >= max(1, (int) ($system['cities_active'] ?? 0)) ? 'emerald' : 'amber',
                 'explicacao_resumo' => __('Com base i-Educar configurada'),
             ],
-            [
+        ]);
+
+        $kpis[] = [
                 'label' => __('Sync / PDF em fila'),
                 'value' => (string) ((int) ($system['sync_pending'] ?? 0) + (int) ($system['pdf_pending'] ?? 0)),
                 'tone' => ((int) ($system['sync_pending'] ?? 0) + (int) ($system['pdf_pending'] ?? 0)) > 0 ? 'violet' : 'slate',
@@ -655,20 +677,19 @@ final class ModuleMonitorService
                     'sync' => (string) ($system['sync_pending'] ?? 0),
                     'pdf' => (string) ($system['pdf_pending'] ?? 0),
                 ]),
-            ],
-            [
+            ];
+        $kpis[] = [
                 'label' => __('Falhas no período'),
                 'value' => (string) ((int) ($system['sync_failures'] ?? 0) + (int) ($system['pdf_failures'] ?? 0) + (int) ($system['failed_jobs_period'] ?? 0)),
                 'tone' => ((int) ($system['sync_failures'] ?? 0) + (int) ($system['pdf_failures'] ?? 0) + (int) ($system['failed_jobs_period'] ?? 0)) > 0 ? 'rose' : 'emerald',
                 'explicacao_resumo' => __('Sync admin, PDF e failed_jobs'),
-            ],
-            [
+            ];
+        $kpis[] = [
                 'label' => __('Jobs pendentes'),
                 'value' => $system['pending_jobs'] !== null ? (string) $system['pending_jobs'] : '—',
                 'tone' => ($system['pending_jobs'] ?? 0) >= 10 ? 'amber' : 'slate',
                 'explicacao_resumo' => (string) ($system['queue_connection'] ?? '—'),
-            ],
-        ];
+            ];
 
         if (! $pulseAvailable) {
             $kpis[] = [

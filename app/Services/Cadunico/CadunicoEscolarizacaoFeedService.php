@@ -5,6 +5,7 @@ namespace App\Services\Cadunico;
 use App\Services\Horizonte\HorizonteFortnightlyFeedService;
 use App\Support\Cadunico\CadunicoEscolarizacaoFeedPhaseCatalog;
 use App\Support\Cadunico\CadunicoEscolarizacaoFeedPipeline;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Support\Facades\Log;
 
 /** Abastecimento bimestral: CadÚnico + Censo para o card Escolarização na consultoria Analytics. */
@@ -20,6 +21,18 @@ final class CadunicoEscolarizacaoFeedService
      * @return array{success: bool, phases: list<array<string, mixed>>, message: string, idle?: bool, phase?: array<string, mixed>|null, pipeline?: array<string, mixed>|null}
      */
     public function runStaged(array $options = []): array
+    {
+        return PulseOperationRecorder::measure(
+            'cadunico:escolarizacao-feed',
+            fn (): array => $this->runStagedInner($options),
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array{success: bool, phases: list<array<string, mixed>>, message: string, idle?: bool, phase?: array<string, mixed>|null, pipeline?: array<string, mixed>|null}
+     */
+    private function runStagedInner(array $options = []): array
     {
         if (! filter_var(config('ieducar.cadunico.escolarizacao_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             return [

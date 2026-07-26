@@ -16,6 +16,7 @@ use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignNeeCensusBuilder;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Parse\CampaignParseService;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -31,6 +32,13 @@ final class ClioBiRefreshService
     ) {}
 
     public function refreshCampaign(ClioCampaign $campaign): void
+    {
+        PulseOperationRecorder::measure('clio:bi:refresh', function () use ($campaign): void {
+            $this->refreshCampaignInner($campaign);
+        });
+    }
+
+    private function refreshCampaignInner(ClioCampaign $campaign): void
     {
         $campaign->load(['city', 'schools.artifacts', 'artifacts', 'inferences', 'findings']);
 

@@ -93,7 +93,30 @@
                         <div class="flex flex-wrap items-center gap-3">
                             <h3 class="font-display text-xl font-semibold text-serv-navy dark:text-white">{{ $systemPillLabel }}</h3>
                             <x-status-pill :status="$systemPillStatus" :label="$systemPillLabel" />
+                            @if (is_array($report['health'] ?? null))
+                                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1
+                                    @if(($report['health']['tone'] ?? '') === 'emerald') bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-800
+                                    @elseif(($report['health']['tone'] ?? '') === 'amber') bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:ring-amber-800
+                                    @elseif(($report['health']['tone'] ?? '') === 'rose') bg-rose-50 text-rose-900 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:ring-rose-800
+                                    @else bg-slate-50 text-slate-800 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 @endif">
+                                    {{ __('Nota') }} {{ $report['health']['grade'] ?? '—' }}
+                                    <span class="font-normal opacity-80">{{ $report['health']['score'] ?? 0 }}/100</span>
+                                </span>
+                            @endif
                         </div>
+                        @if (filled($report['health']['summary'] ?? null))
+                            <p class="text-sm text-slate-700 dark:text-slate-300 max-w-3xl leading-relaxed">{{ $report['health']['summary'] }}</p>
+                        @endif
+                        @if (is_array($report['health']['dimensions'] ?? null) && count($report['health']['dimensions']) > 0)
+                            <div class="flex flex-wrap gap-2 pt-1">
+                                @foreach ($report['health']['dimensions'] as $dim)
+                                    <span class="inline-flex items-center gap-1 rounded-md bg-white/70 dark:bg-slate-900/50 px-2 py-1 text-[11px] text-slate-600 dark:text-slate-300 ring-1 ring-slate-200/80 dark:ring-slate-700" title="{{ $dim['detail'] ?? '' }}">
+                                        <span class="font-semibold text-serv-navy dark:text-slate-100">{{ $dim['label'] ?? '' }}</span>
+                                        {{ $dim['score'] ?? 0 }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
                         @if (filled($system['status_hint'] ?? null))
                             <p class="text-sm text-slate-700 dark:text-slate-300 max-w-3xl leading-relaxed">{{ $system['status_hint'] }}</p>
                         @endif

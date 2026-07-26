@@ -35,12 +35,19 @@ class CadunicoSyncBeneficiosPortalCommand extends Command
             $this->line(__('Programas: :p', ['p' => $programas]));
         }
 
-        $result = $sync->sync(
-            $cityIds,
-            $programas !== '' ? $programas : null,
-            $months,
-            $dryRun,
+        $result = \App\Support\Pulse\PulseOperationRecorder::measure(
+            'cadunico:beneficios-portal',
+            fn (): array => $sync->sync(
+                $cityIds,
+                $programas !== '' ? $programas : null,
+                $months,
+                $dryRun,
+            ),
         );
+
+        if (! ($result['success'] ?? false) && ! ($result['skipped'] ?? false) && ! $dryRun) {
+            \App\Support\Pulse\PulseOperationRecorder::recordFailure('cadunico:beneficios-portal');
+        }
 
         $notifier->beneficiosPortalFinished(array_merge($result, ['dry_run' => $dryRun]));
 

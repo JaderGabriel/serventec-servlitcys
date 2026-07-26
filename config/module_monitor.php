@@ -43,6 +43,8 @@ return [
       'public_data_cache_stale_hours' => max(1, (int) env('MODULE_MONITOR_PUBLIC_DATA_STALE_HOURS', 48)),
       /** Abastecimento bimestral Horizonte — alerta se último feed concluído exceder este prazo (dias). */
       'horizonte_feed_stale_days' => max(14, (int) env('MODULE_MONITOR_HORIZONTE_FEED_STALE_DAYS', 70)),
+      /** Queries lentas (db_slow_scope) em 7d acima deste limiar → degraded. */
+      'db_slow_threshold_7d' => max(10, (int) env('MODULE_MONITOR_DB_SLOW_THRESHOLD_7D', 50)),
   ],
 
   /*

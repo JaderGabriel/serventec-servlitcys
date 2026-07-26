@@ -74,6 +74,15 @@
                 icon="globe-alt"
             />
             <livewire:pulse.horizonte-operations-pulse-card cols="full" rows="1" />
+
+            <x-pulse-dashboard.section
+                :title="__('Consultoria, RX e Clio')"
+                :subtitle="__('Abas Analytics, painel RX / mapas do início e pipeline Clio (`analytics:tab:*`, `rx:*`, `map:*`, `clio:*`).')"
+                accent="violet"
+                icon="chart-bar"
+            />
+            <livewire:pulse.rx-consultoria-pulse-card cols="full" rows="1" />
+            <livewire:pulse.clio-operations-pulse-card cols="full" rows="1" />
         </div>
 
         {{-- Painel: Infraestrutura --}}

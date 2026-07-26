@@ -205,6 +205,7 @@ Histórico completo: [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md).
 | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) | Referência `.env` |
 | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) | Deploy, filas, cron |
 | [COMANDOS_ARTISAN.md](COMANDOS_ARTISAN.md) | CLI (incl. repasses §4.1) |
+| [MONITOR_PULSE_E_SAUDE_MODULOS.md](MONITOR_PULSE_E_SAUDE_MODULOS.md) | Pulse + Module Monitor — medir o sistema *(admin)* |
 | [PERFORMANCE.md](PERFORMANCE.md) | Redis e performance |
 | [ESCALABILIDADE_INFRAESTRUTURA.md](ESCALABILIDADE_INFRAESTRUTURA.md) | Pool de conexões, balanceamento, alto volume |
 | [QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md](QUALIFICACAO_SISTEMA_E_COBERTURA_TESTES.md) | Qualificação do sistema + inventário e metas de testes |

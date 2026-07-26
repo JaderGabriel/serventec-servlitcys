@@ -14,9 +14,18 @@ class ModuleMonitorCatalogTest extends TestCase
 
         $this->assertContains('analytics', $ids);
         $this->assertContains('educacenso', $ids);
+        $this->assertContains('clio', $ids);
         $this->assertContains('geo', $ids);
         $this->assertContains('horizonte', $ids);
         $this->assertContains('queue', $ids);
+    }
+
+    public function test_pulse_key_resolves_clio_module(): void
+    {
+        $this->assertSame(
+            'clio',
+            ModuleMonitorCatalog::moduleIdForPulseKey('clio:campaign:analyze')
+        );
     }
 
     public function test_sync_domain_maps_to_module(): void

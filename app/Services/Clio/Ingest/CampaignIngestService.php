@@ -92,6 +92,18 @@ final class CampaignIngestService
      */
     public function ingestFromPath(ClioCampaign $campaign, string $path, array $driveMetaByRelative = []): array
     {
+        return \App\Support\Pulse\PulseOperationRecorder::measure(
+            'clio:campaign:ingest',
+            fn (): array => $this->ingestFromPathInner($campaign, $path, $driveMetaByRelative),
+        );
+    }
+
+    /**
+     * @param  array<string, array{id?: string}>  $driveMetaByRelative
+     * @return array{stored: int, ignored: int, duplicates: int, expanded: int, artifacts: list<ClioCampaignArtifact>}
+     */
+    private function ingestFromPathInner(ClioCampaign $campaign, string $path, array $driveMetaByRelative = []): array
+    {
         $path = rtrim($path);
         if (! file_exists($path)) {
             throw new \InvalidArgumentException(__('Caminho Clio inexistente: :path', ['path' => $path]));

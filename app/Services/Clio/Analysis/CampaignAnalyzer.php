@@ -10,6 +10,7 @@ use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Bi\ClioBiRefreshService;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Clio\Parse\CsvReader;
+use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -37,6 +38,16 @@ final class CampaignAnalyzer
      * @return array{inferences: int, findings: int, coverage: array<string, mixed>}
      */
     public function analyze(ClioCampaign $campaign, bool $parseFirst = true): array
+    {
+        return PulseOperationRecorder::measure('clio:campaign:analyze', function () use ($campaign, $parseFirst): array {
+            return $this->analyzeCampaign($campaign, $parseFirst);
+        });
+    }
+
+    /**
+     * @return array{inferences: int, findings: int, coverage: array<string, mixed>}
+     */
+    private function analyzeCampaign(ClioCampaign $campaign, bool $parseFirst = true): array
     {
         if ($parseFirst) {
             $this->parseService->parseCampaign($campaign, reparse: false);

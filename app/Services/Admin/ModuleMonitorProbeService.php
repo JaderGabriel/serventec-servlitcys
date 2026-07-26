@@ -8,8 +8,10 @@ use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AdminSyncTask;
 use App\Models\AnalyticsReportExport;
 use App\Models\City;
+use App\Models\Clio\ClioCampaign;
 use App\Support\Admin\ModuleMonitorCatalog;
 use App\Support\Admin\ModuleMonitorHorizonteProbe;
+use App\Support\Admin\ModuleMonitorPulseSignal;
 use App\Support\Admin\ModuleMonitorSnapshotCache;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -152,6 +154,7 @@ final class ModuleMonitorProbeService
 
         return match ($moduleId) {
             'analytics', 'rx', 'educacenso' => $this->probeConsultoriaModule($moduleId, $system),
+            'clio' => $this->probeClioModule(),
             'pdf' => $this->probePdfModule(),
             'public_data' => $this->probePublicDataModule(),
             'horizonte' => $this->probeHorizonteModule(),
@@ -179,16 +182,121 @@ final class ModuleMonitorProbeService
             return $this->probeResult('degraded', __('Municípios activos sem base i-Educar configurada.'));
         }
 
-        $label = match ($moduleId) {
-            'rx' => __('RX disponível'),
-            'educacenso' => __('Conferência Educacenso disponível'),
-            default => __('Consultoria disponível'),
+        $pulsePrefix = match ($moduleId) {
+            'rx' => 'rx:',
+            'educacenso' => 'educacenso:',
+            default => 'analytics:tab:',
         };
+        $hits = ModuleMonitorPulseSignal::operationCount($pulsePrefix, '7d');
+        $errors = ModuleMonitorPulseSignal::errorCount($pulsePrefix, '7d');
+        $slow = ModuleMonitorPulseSignal::slowCount($pulsePrefix, '7d');
+
+        if ($errors > 0) {
+            return $this->probeResult(
+                'degraded',
+                __(':n erro(s) Pulse (7d) em :prefix — rever Operations Diagnostics.', [
+                    'n' => $errors,
+                    'prefix' => rtrim($pulsePrefix, ':'),
+                ]),
+                tags: [__(':n erros', ['n' => $errors]), __(':n prontos', ['n' => $ready])],
+            );
+        }
+
+        $label = match ($moduleId) {
+            'rx' => __('RX'),
+            'educacenso' => __('Educacenso'),
+            default => __('Consultoria'),
+        };
+
+        if ($hits > 0) {
+            $tags = [__(':n hits (7d)', ['n' => $hits]), __(':n prontos', ['n' => $ready])];
+            if ($slow > 0) {
+                $tags[] = __(':n lentas', ['n' => $slow]);
+            }
+
+            return $this->probeResult(
+                $slow > max(5, (int) ($hits * 0.3)) ? 'degraded' : 'operational',
+                __(':label em uso (:hits ops / 7d) — :ready/:active municípios prontos.', [
+                    'label' => $label,
+                    'hits' => $hits,
+                    'ready' => $ready,
+                    'active' => $active,
+                ]),
+                tags: $tags,
+            );
+        }
 
         return $this->probeResult(
             'idle',
-            __(':label — :ready/:active município(s) prontos.', ['label' => $label, 'ready' => $ready, 'active' => $active]),
-            tags: [__(':n prontos', ['n' => $ready])],
+            __(':label disponível — :ready/:active prontos · sem uso Pulse (7d).', [
+                'label' => $label,
+                'ready' => $ready,
+                'active' => $active,
+            ]),
+            tags: [__(':n prontos', ['n' => $ready]), __('0 hits (7d)')],
+        );
+    }
+
+    /**
+     * @return array{signal: string, detail: string, last_success_at: ?string, last_failure_at: ?string, tags: list<string>}
+     */
+    private function probeClioModule(): array
+    {
+        if (! filter_var(config('clio.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $this->probeResult('idle', __('Clio desactivado (CLIO_ENABLED).'));
+        }
+
+        if (! Schema::hasTable('clio_campaigns')) {
+            return $this->probeResult('unknown', __('Tabela clio_campaigns ausente.'));
+        }
+
+        $errors = ModuleMonitorPulseSignal::errorCount('clio:', '7d');
+        $hits = ModuleMonitorPulseSignal::operationCount('clio:', '7d');
+
+        $lastAt = ClioCampaign::query()->orderByDesc('updated_at')->value('updated_at');
+        $campaigns = (int) ClioCampaign::query()->count();
+
+        if ($errors > 0) {
+            return $this->probeResult(
+                'failed',
+                __(':n erro(s) Pulse Clio (7d).', ['n' => $errors]),
+                $lastAt ? Carbon::parse($lastAt)->toIso8601String() : null,
+                null,
+                [__(':n erros', ['n' => $errors])],
+            );
+        }
+
+        if ($campaigns === 0) {
+            return $this->probeResult('idle', __('Sem campanhas Clio registadas.'));
+        }
+
+        $successAt = $lastAt ? Carbon::parse($lastAt) : null;
+        if ($successAt !== null && $successAt->lt(now()->subDays(90))) {
+            return $this->probeResult(
+                'degraded',
+                __('Última actividade Clio há :when (:n campanhas).', [
+                    'when' => $successAt->diffForHumans(),
+                    'n' => $campaigns,
+                ]),
+                $successAt->toIso8601String(),
+                tags: [__(':n campanhas', ['n' => $campaigns])],
+            );
+        }
+
+        if ($hits > 0) {
+            return $this->probeResult(
+                'operational',
+                __('Clio activo — :hits ops (7d), :n campanhas.', ['hits' => $hits, 'n' => $campaigns]),
+                $successAt?->toIso8601String(),
+                tags: [__(':n campanhas', ['n' => $campaigns]), __(':n hits', ['n' => $hits])],
+            );
+        }
+
+        return $this->probeResult(
+            'idle',
+            __('Clio com :n campanha(s) — sem ops Pulse (7d).', ['n' => $campaigns]),
+            $successAt?->toIso8601String(),
+            tags: [__(':n campanhas', ['n' => $campaigns])],
         );
     }
 
@@ -243,6 +351,20 @@ final class ModuleMonitorProbeService
         }
 
         if ($successAt !== null) {
+            $pdfErrors = ModuleMonitorPulseSignal::errorCount('pdf:', '7d');
+            if ($pdfErrors > 0) {
+                return $this->probeResult(
+                    'degraded',
+                    __('Último PDF OK :when · :n erro(s) Pulse (7d).', [
+                        'when' => $successAt->diffForHumans(),
+                        'n' => $pdfErrors,
+                    ]),
+                    $successAt->toIso8601String(),
+                    $failureAt?->toIso8601String(),
+                    [__(':n erros Pulse', ['n' => $pdfErrors])],
+                );
+            }
+
             return $this->probeResult(
                 'operational',
                 __('Último PDF concluído :when.', ['when' => $successAt->diffForHumans()]),
@@ -376,9 +498,26 @@ final class ModuleMonitorProbeService
             return $this->probeResult('degraded', __('Sem bases municipais configuradas para consulta SQL.'));
         }
 
+        $slow = ModuleMonitorPulseSignal::databaseSlowCount('7d');
+        $threshold = max(20, (int) config('module_monitor.probe.db_slow_threshold_7d', 50));
+
+        if ($slow >= $threshold) {
+            return $this->probeResult(
+                'degraded',
+                __(':n queries lentas (7d) — limiar :limit. Ver Pulse Database Diagnostics.', [
+                    'n' => $slow,
+                    'limit' => $threshold,
+                ]),
+                tags: [__(':n slow', ['n' => $slow]), __(':n bases', ['n' => $ready])],
+            );
+        }
+
         return $this->probeResult(
-            'idle',
-            __('Infra SQL municipal disponível para :n município(s).', ['n' => $ready]),
+            $slow > 0 ? 'operational' : 'idle',
+            __('Infra SQL municipal — :n base(s), :slow slow (7d).', [
+                'n' => $ready,
+                'slow' => $slow,
+            ]),
             tags: [__(':n bases', ['n' => $ready])],
         );
     }

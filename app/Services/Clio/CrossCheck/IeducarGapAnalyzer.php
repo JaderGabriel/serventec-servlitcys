@@ -34,6 +34,24 @@ final class IeducarGapAnalyzer
      */
     public function analyze(ClioCampaign $campaign): array
     {
+        return \App\Support\Pulse\PulseOperationRecorder::measure(
+            'clio:campaign:cross-check',
+            fn (): array => $this->analyzeCampaign($campaign),
+        );
+    }
+
+    /**
+     * @return array{
+     *   ok: bool,
+     *   message: ?string,
+     *   only_in_clio: int,
+     *   only_in_ieducar: int,
+     *   matched: int,
+     *   ieducar_matriculas: int
+     * }
+     */
+    private function analyzeCampaign(ClioCampaign $campaign): array
+    {
         $city = $campaign->city;
         if ($city === null || ! $city->hasDataSetup()) {
             return [

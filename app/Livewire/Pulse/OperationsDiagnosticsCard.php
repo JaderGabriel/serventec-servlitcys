@@ -9,7 +9,7 @@ use Laravel\Pulse\Livewire\Card;
 use Livewire\Attributes\Lazy;
 
 /**
- * Etapas pesadas da aplicação: abas Analytics, RX, sync, PDF, mapa, exports.
+ * Etapas pesadas da aplicação: abas Analytics, RX, Clio, CadÚnico, Horizonte, sync, PDF.
  */
 #[Lazy]
 class OperationsDiagnosticsCard extends Card
@@ -42,9 +42,9 @@ class OperationsDiagnosticsCard extends Card
                 'operations' => array_slice($metrics['operations'], 0, 20),
                 'slow_operations' => array_slice($metrics['slow_operations'], 0, 15),
                 'errors' => $metrics['errors'],
-                'by_prefix' => array_slice($prefixRows, 0, 8),
+                'by_prefix' => array_slice($prefixRows, 0, 12),
             ];
-        }, 'ops-diag-v1');
+        }, 'ops-diag-v2');
 
         return View::make('livewire.pulse.operations-diagnostics-card', [
             'payload' => $payload,
@@ -60,18 +60,29 @@ class OperationsDiagnosticsCard extends Card
                 'admin' => __('Início admin'),
                 'rx' => __('Painel RX'),
                 'ieducar' => __('i-Educar'),
+                'clio' => __('Clio'),
+                'cadunico' => __('CadÚnico'),
+                'horizonte' => __('Horizonte'),
                 default => $prefix,
             },
         ]);
     }
 
-    private static function prefixForKey(string $key): string
+    public static function prefixForKey(string $key): string
     {
         if (str_starts_with($key, 'http:route:')) {
             return 'http';
         }
 
-        foreach (['analytics:tab:', 'sync:', 'pdf:', 'map:', 'export:', 'admin:home:', 'rx:', 'ieducar:'] as $prefix) {
+        if (str_starts_with($key, 'analytics:tab:')) {
+            return 'analytics';
+        }
+
+        if (str_starts_with($key, 'admin:home:')) {
+            return 'admin';
+        }
+
+        foreach (['horizonte:', 'cadunico:', 'clio:', 'sync:', 'pdf:', 'map:', 'export:', 'rx:', 'ieducar:'] as $prefix) {
             if (str_starts_with($key, $prefix)) {
                 return rtrim($prefix, ':');
             }
