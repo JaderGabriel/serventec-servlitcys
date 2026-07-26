@@ -663,6 +663,42 @@ html.serv-horizonte-muni-modal-open body {
     min-width: 0;
 }
 
+.serv-horizonte-muni-tooltip__layout-full--sistemas {
+    margin-top: 0.5rem;
+    min-width: 0;
+    width: 100%;
+}
+
+.serv-horizonte-sistemas-panel {
+    width: 100%;
+    max-width: 100%;
+}
+
+.serv-horizonte-sistemas-methodology {
+    margin: 0.45rem 0 0.55rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 0.5rem;
+    border: 1px dashed rgb(148 163 184 / 0.55);
+    background: rgb(248 250 252 / 0.9);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: rgb(51 65 85);
+}
+
+.dark .serv-horizonte-sistemas-methodology {
+    border-color: rgb(71 85 105);
+    background: rgb(15 23 42 / 0.55);
+    color: rgb(203 213 225);
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-sistemas-panel .serv-horizonte-muni-tooltip__enrich-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+}
+
+.serv-horizonte-muni-modal__body .serv-horizonte-sistemas-panel .serv-horizonte-canteiro-table-wrap {
+    margin-top: 0.55rem;
+}
+
 .serv-horizonte-muni-tooltip__finance-row {
     display: flex;
     flex-direction: column;

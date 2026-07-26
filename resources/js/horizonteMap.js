@@ -1889,11 +1889,7 @@ function muniEnrichmentHtml(m) {
         }
     }
 
-    // Último bloco antes das dimensões do score.
-    const sistemasBlock = muniSistemasMercadoEnrichmentHtml(m);
-    if (sistemasBlock !== "") {
-        blocks.push(sistemasBlock);
-    }
+    // Sistemas / mercado fica fora desta grelha — secção full-width antes das dimensões.
 
     if (blocks.length === 0) {
         return "";
@@ -1933,6 +1929,51 @@ function formatCnpjBr(raw) {
     return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
 }
 
+/** Texto de como o incumbente / SGE foi determinado (prioridade do resolver). */
+function sistemasMercadoMethodologyText(m) {
+    const status = String(m.sge_status ?? m.sge?.status ?? "");
+    const detail = String(m.sge?.detail ?? "").trim();
+    const statusLabel = String(m.sge?.status_label ?? "").trim();
+
+    const byStatus = {
+        consultoria_active:
+            "Como chegámos ao incumbente: o município tem consultoria activa no ServLITCYS. Prioridade máxima do resolver — assume-se iEducar (Serventec), sem inferência por licitação.",
+        registry:
+            "Como chegámos ao incumbente: registo SGE externo ou manual no Horizonte (inteligência de concorrência). Tem prioridade sobre sinais de Portal; não activa Consultoria sozinho.",
+        market:
+            "Como chegámos ao incumbente: inferência a partir de licitação/contrato público com IBGE deste município (objeto software ou CNPJ curado). É proxy de mercado — não comprova, sozinho, o SGE instalado na rede.",
+        market_national:
+            "Como chegámos ao incumbente: CNPJ curado com contratos MEC/FNDE a nível de órgão (sem IBGE municipal). Sinal nacional de fornecedor no ecossistema educação — não prova o sistema da secretaria.",
+        not_found:
+            "Como chegámos ao incumbente: nenhuma fonte confirmou SGE (sem consultoria activa, sem registo externo e sem sinal claro em licitações/contratos sincronizados).",
+    };
+
+    const base = byStatus[status] || byStatus.not_found;
+    const parts = [base];
+    if (statusLabel !== "") {
+        parts.push(`Estado: ${statusLabel}.`);
+    }
+    if (detail !== "") {
+        parts.push(detail);
+    }
+    parts.push(
+        "Ordem de prioridade: consultoria activa → registo SGE → amostra Portal com IBGE → contratos nacionais curados.",
+    );
+
+    return parts.join(" ");
+}
+
+function pickSistemasMercadoSample(m) {
+    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples : [];
+    if (samples.length === 0) {
+        return null;
+    }
+    const soft = samples.find(
+        (s) => s && (s.itens_software || s.vendor_matched || s.fornecedor_cnpj || s.vendor_label),
+    );
+    return soft || samples[0] || null;
+}
+
 function muniSistemasMercadoEnrichmentHtml(m) {
     if (!m) {
         return "";
@@ -1950,6 +1991,7 @@ function muniSistemasMercadoEnrichmentHtml(m) {
     const sgeFound = Boolean(m.sge_found);
     const nationalVendors = Number(m.procurement_national_vendor_matched ?? 0);
     const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 5) : [];
+    const sample = pickSistemasMercadoSample(m);
 
     const has =
         isIeducar ||
@@ -1959,7 +2001,8 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         licitacoes > 0 ||
         contratosSoft > 0 ||
         sgeFound ||
-        samples.length > 0;
+        samples.length > 0 ||
+        nationalVendors > 0;
 
     if (!has) {
         return "";
@@ -1970,6 +2013,7 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         m.sge?.system ||
         (isIeducar ? "iEducar" : null) ||
         (sgeFound ? m.sge?.system_label : null) ||
+        (sample?.vendor_label || sample?.fornecedor_nome) ||
         "Não identificado";
     const company =
         m.sge_company ||
@@ -1977,15 +2021,52 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         m.sge_vendor ||
         m.sge?.vendor ||
         (isIeducar ? "Serventec" : null) ||
+        sample?.fornecedor_nome ||
+        sample?.vendor_label ||
         "—";
-    const cnpjRaw = m.sge_cnpj || m.sge?.cnpj || null;
+    const cnpjRaw = m.sge_cnpj || m.sge?.cnpj || sample?.fornecedor_cnpj || null;
     const cnpj = cnpjRaw ? formatCnpjBr(cnpjRaw) : "—";
+
+    let valorLabel = "—";
+    let valorHint = "Sem valor na amostra municipal";
+    if (sample && (sample.valor != null || sample.valor_final != null)) {
+        const base = sample.valor != null ? Number(sample.valor) : null;
+        const finalV = sample.valor_final != null ? Number(sample.valor_final) : null;
+        if (finalV != null && base != null && finalV !== base) {
+            valorLabel = `${formatCurrencyBrl(base)} → ${formatCurrencyBrl(finalV)}`;
+            valorHint = "Valor contratado → valor final (aditivo)";
+        } else if (finalV != null) {
+            valorLabel = formatCurrencyBrl(finalV);
+            valorHint = "Valor final do contrato/edital";
+        } else if (base != null) {
+            valorLabel = formatCurrencyBrl(base);
+            valorHint = "Valor do edital/contrato (amostra)";
+        }
+    } else if (m.procurement_valor_licitacoes != null && Number(m.procurement_valor_licitacoes) > 0) {
+        valorLabel = formatCurrencyBrl(m.procurement_valor_licitacoes);
+        valorHint = "Soma das licitações com IBGE";
+    }
+
+    let vigenciaLabel = "—";
+    let vigenciaHint = "Sem vigência na amostra";
+    if (sample) {
+        const parts = [];
+        if (sample.data_inicio_vigencia) parts.push(String(sample.data_inicio_vigencia));
+        if (sample.data_fim_vigencia) parts.push(String(sample.data_fim_vigencia));
+        if (parts.length > 0) {
+            vigenciaLabel = parts.join(" → ");
+            vigenciaHint = sample.situacao || sample.modalidade || "Vigência do contrato/edital";
+        } else if (sample.data_publicacao || sample.data_assinatura) {
+            vigenciaLabel = String(sample.data_publicacao || sample.data_assinatura);
+            vigenciaHint = sample.data_publicacao ? "Data de publicação" : "Data de assinatura";
+        }
+    }
 
     const metrics = [];
     metrics.push(
         enrichMetricHtml({
             label: "Sistema",
-            hint: isIeducar ? "Consultoria activa" : String(m.sge_status || m.sge?.status_label || "Identificação"),
+            hint: isIeducar ? "Consultoria activa" : String(m.sge?.status_label || m.sge_status || "Identificação"),
             valueHtml: escapeHtml(String(system)),
             tone: isIeducar ? "ok" : sgeFound ? "warn" : "neutral",
             iconHtml: HORIZONTE_ENRICH_ICONS.building,
@@ -2009,45 +2090,32 @@ function muniSistemasMercadoEnrichmentHtml(m) {
             iconHtml: HORIZONTE_ENRICH_ICONS.scale,
         }),
     );
-    if (!isIeducar) {
+    metrics.push(
+        enrichMetricHtml({
+            label: "Valor",
+            hint: valorHint,
+            valueHtml: escapeHtml(valorLabel),
+            tone: valorLabel !== "—" ? "info" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
+        }),
+    );
+    metrics.push(
+        enrichMetricHtml({
+            label: "Vigência",
+            hint: vigenciaHint,
+            valueHtml: escapeHtml(vigenciaLabel),
+            tone: vigenciaLabel !== "—" ? "neutral" : "neutral",
+            iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+        }),
+    );
+    if (!isIeducar && (proxy > 0 || timing > 0)) {
         metrics.push(
             enrichMetricHtml({
-                label: "Proxy SGE",
-                hint: "Peso moderado no score",
-                valueHtml: escapeHtml(String(Math.round(proxy))),
-                tone: proxy >= 40 ? "warn" : "neutral",
+                label: "Proxy / timing",
+                hint: "Pesos moderados no score",
+                valueHtml: escapeHtml(`SGE ${Math.round(proxy)} · Lic. ${Math.round(timing)}`),
+                tone: proxy >= 40 || timing >= 55 ? "warn" : "neutral",
                 iconHtml: HORIZONTE_ENRICH_ICONS.trend,
-            }),
-        );
-        metrics.push(
-            enrichMetricHtml({
-                label: "Timing licitação",
-                hint: "Editais com IBGE",
-                valueHtml: escapeHtml(String(Math.round(timing))),
-                tone: timing >= 55 ? "info" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
-            }),
-        );
-    }
-    if (licitacoes > 0) {
-        metrics.push(
-            enrichMetricHtml({
-                label: "Licitações MEC/FNDE",
-                hint: licitSoft > 0 ? `${licitSoft} c/ objeto software` : "Janela sincronizada",
-                valueHtml: escapeHtml(nf(licitacoes)),
-                tone: licitSoft > 0 ? "warn" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
-            }),
-        );
-    }
-    if (m.procurement_valor_licitacoes != null && Number(m.procurement_valor_licitacoes) > 0) {
-        metrics.push(
-            enrichMetricHtml({
-                label: "Valor editais",
-                hint: "Soma licitações com IBGE",
-                valueHtml: escapeHtml(formatCurrencyBrl(m.procurement_valor_licitacoes)),
-                tone: "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.wallet,
             }),
         );
     }
@@ -2063,24 +2131,29 @@ function muniSistemasMercadoEnrichmentHtml(m) {
                     : "";
                 const companyCell = String(s.fornecedor_nome || s.vendor_label || "—");
                 const cnpjCell = s.fornecedor_cnpj ? formatCnpjBr(s.fornecedor_cnpj) : "—";
-                const valorBase = s.valor_final != null ? s.valor_final : s.valor;
-                const valorCell = valorBase != null ? formatCurrencyBrl(valorBase) : "—";
-                const aditivo =
+                const hasAditivo =
                     s.valor != null &&
                     s.valor_final != null &&
-                    Number(s.valor_final) !== Number(s.valor)
-                        ? ` · adit. ${formatCurrencyBrl(s.valor_final)}`
-                        : "";
+                    Number(s.valor_final) !== Number(s.valor);
+                const valorCell = hasAditivo
+                    ? `${formatCurrencyBrl(s.valor)} → ${formatCurrencyBrl(s.valor_final)}`
+                    : s.valor_final != null
+                      ? formatCurrencyBrl(s.valor_final)
+                      : s.valor != null
+                        ? formatCurrencyBrl(s.valor)
+                        : "—";
                 const vigenciaParts = [];
                 if (s.data_inicio_vigencia) vigenciaParts.push(String(s.data_inicio_vigencia));
                 if (s.data_fim_vigencia) vigenciaParts.push(String(s.data_fim_vigencia));
-                const vigencia = vigenciaParts.length ? vigenciaParts.join(" → ") : "—";
+                const vigencia = vigenciaParts.length
+                    ? vigenciaParts.join(" → ")
+                    : s.data_publicacao || s.data_assinatura || "—";
                 return (
                     `<tr>` +
                     `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(obj)}">${softTag}${escapeHtml(short)}</td>` +
                     `<td>${escapeHtml(companyCell)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(cnpjCell)}</div></td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}${aditivo ? `<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(aditivo.replace(/^ · /, ""))}</div>` : ""}</td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(vigencia)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(String(s.situacao || s.modalidade || s.orgao_sigla || ""))}</div></td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}${hasAditivo ? `<div class="serv-horizonte-canteiro-table__sub">${escapeHtml("com aditivo")}</div>` : ""}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(vigencia))}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(String(s.situacao || s.modalidade || s.orgao_sigla || ""))}</div></td>` +
                     `</tr>`
                 );
             })
@@ -2095,9 +2168,6 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         ? m.procurement_national_top_vendors.slice(0, 3)
         : [];
     const notes = [];
-    if (isIeducar) {
-        notes.push("Consultoria activa: SGE confirmado como iEducar (Serventec) no catálogo ServLITCYS.");
-    }
     if (nationalVendors > 0 && topVendors.length > 0) {
         notes.push(
             `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com CNPJ curado — ${topVendors
@@ -2122,27 +2192,44 @@ function muniSistemasMercadoEnrichmentHtml(m) {
             `Due diligence: ${sanctioned} CNPJ(s) curado(s) com sanção${parts.length ? ` (${parts.join(" · ")})` : ""} — filtro de risco.`,
         );
     }
-    if (!isIeducar) {
-        notes.push("Sinais de Portal/licitação são proxy: não comprovam sozinhos o SGE instalado na rede.");
+    if (licitacoes > 0) {
+        notes.push(
+            `Licitações MEC/FNDE com IBGE: ${nf(licitacoes)}${licitSoft > 0 ? ` (${licitSoft} com objeto software)` : ""}.`,
+        );
     }
 
+    const methodology = sistemasMercadoMethodologyText(m);
     const lead = isIeducar
-        ? "Sistema da consultoria Serventec e contexto de mercado (editais MEC/FNDE)."
-        : "Sistema, empresa e CNPJ a partir de registo SGE, licitações e recursos públicos.";
+        ? "Último bloco antes das dimensões do score — sistema da consultoria e contexto de mercado."
+        : "Último bloco antes das dimensões do score — sistema, empresa, CNPJ, valor e vigência a partir das fontes abaixo.";
 
-    const block = enrichBlockHtml({
-        tone: "market",
-        title: "Sistemas / mercado",
-        year: "",
-        lead,
-        signal: sistemasMercadoEnrichmentSignal(m),
-        iconHtml: HORIZONTE_ENRICH_ICONS.market,
-        metricsHtml: metrics.join(""),
-        foot: "",
-        notes,
-    });
+    const signal = sistemasMercadoEnrichmentSignal(m);
+    const signalHtml =
+        signal && signal.text
+            ? `<span class="serv-horizonte-muni-tooltip__enrich-signal serv-horizonte-muni-tooltip__enrich-signal--${escapeHtml(signal.tone)}">${escapeHtml(signal.text)}</span>`
+            : "";
+    const notesHtml =
+        notes.length > 0
+            ? `<div class="serv-horizonte-muni-tooltip__enrich-notes">${notes
+                  .map((n) => `<p class="serv-horizonte-muni-tooltip__enrich-note">${escapeHtml(n)}</p>`)
+                  .join("")}</div>`
+            : "";
 
-    return samplesHtml !== "" ? `${block}${samplesHtml}` : block;
+    return (
+        `<section class="serv-horizonte-muni-tooltip__enrich-block serv-horizonte-muni-tooltip__enrich-block--market serv-horizonte-sistemas-panel">` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head">` +
+        `<span class="serv-horizonte-muni-tooltip__enrich-icon-wrap" aria-hidden="true">${HORIZONTE_ENRICH_ICONS.market}</span>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-head-text">` +
+        `<h4 class="serv-horizonte-muni-tooltip__enrich-title">${escapeHtml("Sistemas / mercado")}</h4>` +
+        (signalHtml ? `<div class="serv-horizonte-muni-tooltip__enrich-signal-row">${signalHtml}</div>` : "") +
+        `<p class="serv-horizonte-muni-tooltip__enrich-lead">${escapeHtml(lead)}</p>` +
+        `</div></div>` +
+        `<p class="serv-horizonte-sistemas-methodology">${escapeHtml(methodology)}</p>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metrics.join("")}</div>` +
+        samplesHtml +
+        notesHtml +
+        `</section>`
+    );
 }
 
 function canteiroEnrichmentSignal(m) {
@@ -9289,6 +9376,13 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--enrichment">');
             lines.push(muniEnrichmentHtml(m));
             lines.push("</div>");
+
+            const sistemasBlock = muniSistemasMercadoEnrichmentHtml(m);
+            if (sistemasBlock !== "") {
+                lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--sistemas">');
+                lines.push(sistemasBlock);
+                lines.push("</div>");
+            }
 
             lines.push('<div class="serv-horizonte-muni-tooltip__layout-full serv-horizonte-muni-tooltip__layout-full--dims">');
             lines.push(muniDimensionsHtml(m, transferAno, this.methodology));
