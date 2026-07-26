@@ -175,6 +175,7 @@ final class HorizonteImportHubStatusService
                 $siconfiMunicipios,
                 $transparencyMunicipios,
                 $transparencyApiKey,
+                $procurementRows,
                 $alertsMeta,
             ),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
@@ -224,6 +225,7 @@ final class HorizonteImportHubStatusService
         int $siconfiMunicipios,
         int $transparencyMunicipios,
         string $transparencyApiKey,
+        int $procurementRows,
         ?array $alertsMeta,
     ): array {
         $phases = [
