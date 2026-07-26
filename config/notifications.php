@@ -31,6 +31,10 @@ return [
         'sync_failures_threshold' => max(1, (int) env('APP_NOTIFICATIONS_SYNC_FAIL_THRESHOLD', 1)),
         /** PDF em pending/processing há mais de N horas. */
         'pdf_stale_hours' => max(1, (int) env('APP_NOTIFICATIONS_PDF_STALE_HOURS', 2)),
+        /** Admin sync em «processing» há mais de N horas. */
+        'sync_stale_hours' => max(1, (int) env('APP_NOTIFICATIONS_SYNC_STALE_HOURS', 4)),
+        /** Pipeline Horizonte/CadÚnico sem progresso (updated_at) há mais de N horas. */
+        'pipeline_stuck_hours' => max(2, (int) env('APP_NOTIFICATIONS_PIPELINE_STUCK_HOURS', 6)),
         /** Jobs na fila (tabela jobs) acima deste valor. */
         'queue_pending_threshold' => max(10, (int) env('APP_NOTIFICATIONS_QUEUE_PENDING_THRESHOLD', 25)),
         /**
@@ -40,6 +44,16 @@ return [
             'enabled' => filter_var(env('APP_NOTIFICATIONS_OPERATIONAL_SCHEDULE', true), FILTER_VALIDATE_BOOL),
             'interval_minutes' => max(5, min(120, (int) env('APP_NOTIFICATIONS_OPERATIONAL_INTERVAL_MINUTES', 15))),
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Falhas de jobs agendados (onFailure → sino)
+    |--------------------------------------------------------------------------
+    */
+
+    'schedule_failures' => [
+        'enabled' => filter_var(env('APP_NOTIFICATIONS_SCHEDULE_FAILURES', true), FILTER_VALIDATE_BOOL),
     ],
 
     /** Notificar usuário ao abrir painel analítico com erros parciais. */

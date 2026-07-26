@@ -5,7 +5,7 @@
 **Produto:** SERVLITCYS (painel analítico i-Educar municipal)  
 **Âmbito:** educação, tesouro/finanças, saúde, assistência social e fontes transversais (demografia, trabalho, transparência).
 
-> **Índice:** [README.md](README.md) · **Integrações em produção:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · **Hub de carga:** [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §H · **Cadastro/plugins:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md)
+> **Índice:** [README.md](README.md) · **Integrações em produção:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · **Hub de carga:** [IMPORTACAO_DADOS_PUBLICOS.md](IMPORTACAO_DADOS_PUBLICOS.md) · **Orquestração (n8n):** [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) §H · **Cadastro/plugins:** [PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md](PLUGINS_E_REFINO_CADASTRO_IEDUCAR.md)
 
 ---
 

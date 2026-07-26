@@ -161,6 +161,8 @@ Estudo completo: [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO
 | INT-08 | P4 | DATASUS agregado + CNES proximidade escola–UBS | Pendente | Onda 2 |
 | INT-09 | P4 | Articulação e-SUS escola / vacinação (credencial SMS) | Pendente | Onda 3 |
 | INT-10 | P2 | Client Obrasgov.br (`api-publica`) — obras educação / Canteiro | Concluído | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) · HOR-19 |
+| INT-11 | P2 | Webhooks outbound assinados (ops → n8n/Slack) + feature flag | Pendente | [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md) |
+| INT-12 | P3 | `GET /api/ops/health/summary` (digest diário para n8n/BI) | Pendente | Idem §3–7 |
 
 ---
 

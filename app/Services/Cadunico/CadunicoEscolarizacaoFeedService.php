@@ -12,6 +12,7 @@ final class CadunicoEscolarizacaoFeedService
 {
     public function __construct(
         private readonly HorizonteFortnightlyFeedService $horizonteFeed,
+        private readonly \App\Services\Notifications\CadunicoOperationalNotifier $notifier,
     ) {}
 
     /**
@@ -89,6 +90,21 @@ final class CadunicoEscolarizacaoFeedService
             'success' => $phaseResult['success'] ?? false,
         ]);
 
+        if (! $dryRun) {
+            $this->notifier->escolarizacaoPhaseFinished(
+                $phaseResult,
+                $state,
+                $index + 1,
+                count($queue),
+            );
+            if (in_array($state['status'] ?? '', ['completed', 'partial'], true)) {
+                $this->notifier->escolarizacaoCycleFinished(array_merge($state, [
+                    'success' => (bool) ($state['success'] ?? false),
+                    'message' => (string) ($state['message'] ?? ''),
+                ]));
+            }
+        }
+
         return $this->pipelineResponse($state, $phaseResult);
     }
 
@@ -109,13 +125,22 @@ final class CadunicoEscolarizacaoFeedService
             }
         }
 
-        return [
-            'success' => collect($phases)->every(static fn (array $p): bool => (bool) ($p['success'] ?? false)),
+        $success = collect($phases)->every(static fn (array $p): bool => (bool) ($p['success'] ?? false));
+        $payload = [
+            'success' => $success,
             'phases' => $phases,
-            'message' => collect($phases)->every(static fn (array $p): bool => (bool) ($p['success'] ?? false))
+            'message' => $success
                 ? __('Abastecimento escolarização concluído.')
                 : __('Abastecimento escolarização concluído com falhas — reveja os logs.'),
         ];
+
+        if (! ($options['dry_run'] ?? false)) {
+            $this->notifier->escolarizacaoCycleFinished(array_merge($payload, [
+                'run_id' => 'all-'.now()->format('YmdHis'),
+            ]));
+        }
+
+        return $payload;
     }
 
     /**

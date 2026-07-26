@@ -24,6 +24,7 @@ use App\Models\City;
 use App\Models\Clio\ClioCampaign;
 use App\Models\User;
 use App\Authorization\PublicDataHub;
+use App\Contracts\Notifications\OperationalNotificationChannel;
 use App\Policies\PublicDataAdminPolicy;
 use App\Policies\PlatformFeaturePolicy;
 use App\Observers\CityCadunicoSyncObserver;
@@ -36,6 +37,7 @@ use App\Policies\UserPolicy;
 use App\Services\CityDataConnection;
 use App\Services\Ieducar\IeducarCityDataService;
 use App\Services\MailConfigService;
+use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Admin\WeeklyMassSyncCheckpoint;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use App\Support\Performance\AuthRouteRegistry;
@@ -76,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->scoped(AnalyticsFundingContextResolver::class);
+        $this->app->singleton(OperationalNotificationChannel::class, NotificationDispatcher::class);
     }
 
     /**

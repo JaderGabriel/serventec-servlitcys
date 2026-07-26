@@ -40,6 +40,7 @@ Todo documento **mantido activamente** (âncora, guia operacional, release recen
 | Variáveis `.env` | [VARIAVEIS_AMBIENTE.md](VARIAVEIS_AMBIENTE.md) |
 | O que falta fazer? | [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) |
 | Deploy | [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) |
+| Orquestração n8n / webhooks | [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md) |
 
 **Regra:** um facto técnico vive num sítio; noutros documentos use **link**, não cópia longa.
 

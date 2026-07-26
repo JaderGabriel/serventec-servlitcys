@@ -45,4 +45,23 @@ return [
       'horizonte_feed_stale_days' => max(14, (int) env('MODULE_MONITOR_HORIZONTE_FEED_STALE_DAYS', 70)),
   ],
 
+  /*
+  |--------------------------------------------------------------------------
+  | Notificações (sino admin)
+  |--------------------------------------------------------------------------
+  */
+
+  'notify' => [
+      'enabled' => filter_var(env('MODULE_MONITOR_NOTIFY_ENABLED', true), FILTER_VALIDATE_BOOL),
+      /** Sinal «failed» após module-monitor:collect. */
+      'on_critical' => filter_var(env('MODULE_MONITOR_NOTIFY_CRITICAL', true), FILTER_VALIDATE_BOOL),
+      /** Sinal «degraded» (off por default — pode ser ruidoso). */
+      'on_degraded' => filter_var(env('MODULE_MONITOR_NOTIFY_DEGRADED', false), FILTER_VALIDATE_BOOL),
+      /** Snapshot ausente/stale — via notifications:operational-alerts. */
+      'snapshot_stale' => filter_var(env('MODULE_MONITOR_NOTIFY_SNAPSHOT_STALE', true), FILTER_VALIDATE_BOOL),
+      /** Resumo diário de contagens por sinal. */
+      'daily_summary' => filter_var(env('MODULE_MONITOR_NOTIFY_DAILY_SUMMARY', true), FILTER_VALIDATE_BOOL),
+      'daily_summary_time' => env('MODULE_MONITOR_NOTIFY_DAILY_SUMMARY_TIME', '08:00'),
+  ],
+
 ];

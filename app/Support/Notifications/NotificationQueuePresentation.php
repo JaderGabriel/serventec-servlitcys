@@ -94,9 +94,27 @@ final class NotificationQueuePresentation
         return match ($variant) {
             'pdf_stale' => self::buildMeta('pdf', 'document-text', 'rose', __('Relatórios PDF (Diagnóstico)')),
             'sync_failed' => self::buildMeta('system', 'command-line', 'slate', __('Sincronização (sistema)')),
+            'sync_stale' => self::buildMeta('system', 'command-line', 'amber', __('Sincronização presa')),
             'queue_backlog' => self::buildMeta('system', 'queue-list', 'slate', __('Fila de jobs')),
+            'horizonte_stuck' => self::buildMeta('horizonte', 'map', 'indigo', __('Horizonte — pipeline')),
+            'cadunico_stuck' => self::buildMeta('cadastro', 'users', 'fuchsia', __('CadÚnico — Escolarização')),
+            'module_monitor' => self::buildMeta('system', 'cpu-chip', 'violet', __('Monitor de módulos')),
+            'schedule_failed' => self::buildMeta('system', 'clock', 'amber', __('Agendamento')),
             default => self::buildMeta('system', 'queue-list', 'slate', __('Filas de processamento')),
         };
+    }
+
+    public static function forCadunico(?string $actionUrl = null): array
+    {
+        $url = $actionUrl ?? route('admin.sync-queue.index').'#agendamentos';
+
+        return self::build([
+            'queue_domain' => 'cadastro',
+            'queue_icon' => 'users',
+            'queue_accent' => 'fuchsia',
+            'queue_label' => __('CadÚnico'),
+            'action_url' => $url,
+        ]);
     }
 
     /**
@@ -142,6 +160,11 @@ final class NotificationQueuePresentation
         $dedupe = (string) ($data['dedupe_key'] ?? '');
         if (str_starts_with($dedupe, 'horizonte:')) {
             return self::ensurePresentationFields(array_merge($data, self::forHorizonte(
+                filled($data['action_url'] ?? null) ? (string) $data['action_url'] : null,
+            )));
+        }
+        if (str_starts_with($dedupe, 'cadunico:')) {
+            return self::ensurePresentationFields(array_merge($data, self::forCadunico(
                 filled($data['action_url'] ?? null) ? (string) $data['action_url'] : null,
             )));
         }
@@ -251,7 +274,10 @@ final class NotificationQueuePresentation
         return match ((string) $dedupeKey) {
             'ops:pdf_stale' => 'pdf_stale',
             'ops:sync_failed_24h' => 'sync_failed',
+            'ops:sync_stale' => 'sync_stale',
             'ops:queue_backlog' => 'queue_backlog',
+            'ops:horizonte_pipeline_stuck' => 'horizonte_stuck',
+            'ops:cadunico_escolarizacao_pipeline_stuck' => 'cadunico_stuck',
             default => 'generic',
         };
     }

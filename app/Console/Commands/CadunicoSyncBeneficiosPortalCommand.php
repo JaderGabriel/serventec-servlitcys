@@ -12,7 +12,10 @@ use Illuminate\Console\Command;
 #[Description('CUN-04 — importa agregados PBF/NBF/BPC (Portal) por IBGE para o card Escolarização')]
 class CadunicoSyncBeneficiosPortalCommand extends Command
 {
-    public function handle(CadunicoPortalBeneficiosSyncService $sync): int
+    public function handle(
+        CadunicoPortalBeneficiosSyncService $sync,
+        \App\Services\Notifications\CadunicoOperationalNotifier $notifier,
+    ): int
     {
         $cityIds = $this->resolveCityIds();
         if ($cityIds === false) {
@@ -38,6 +41,8 @@ class CadunicoSyncBeneficiosPortalCommand extends Command
             $months,
             $dryRun,
         );
+
+        $notifier->beneficiosPortalFinished(array_merge($result, ['dry_run' => $dryRun]));
 
         if ($result['skipped'] ?? false) {
             $this->warn($result['message']);

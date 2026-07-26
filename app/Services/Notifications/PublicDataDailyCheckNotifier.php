@@ -2,6 +2,7 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\OperationalNotificationChannel;
 use App\Enums\NotificationPriority;
 use App\Services\Admin\PublicDataOfficialAvailabilityService;
 use App\Services\Admin\PublicDataOfficialCheckCache;
@@ -12,7 +13,7 @@ final class PublicDataDailyCheckNotifier
 {
     public function __construct(
         private readonly PublicDataOfficialAvailabilityService $availability,
-        private readonly NotificationDispatcher $dispatcher,
+        private readonly OperationalNotificationChannel $dispatcher,
     ) {}
 
     /**

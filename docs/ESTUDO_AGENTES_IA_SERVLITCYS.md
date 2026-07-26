@@ -5,7 +5,7 @@
 **Produto:** SERVLITCYS (painel analítico i-Educar municipal)  
 **Âmbito:** copilotos de consultoria, automação administrativa, enriquecimento de dados e integrações — **sem substituir** cálculos oficiais FNDE/Simec nem decisões legais do ente.
 
-> **Índice:** [README.md](README.md) · **Segurança/LGPD:** [SEGURANCA.md](SEGURANCA.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Integrações:** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md)
+> **Índice:** [README.md](README.md) · **Segurança/LGPD:** [SEGURANCA.md](SEGURANCA.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) · **Integrações:** [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · **Orquestração (n8n):** [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md)
 
 ---
 

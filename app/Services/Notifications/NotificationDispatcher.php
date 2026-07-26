@@ -2,6 +2,7 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\OperationalNotificationChannel;
 use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Enums\NotificationPriority;
@@ -17,7 +18,7 @@ use App\Support\Notifications\NotificationQueuePresentation;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Collection;
 
-final class NotificationDispatcher
+final class NotificationDispatcher implements OperationalNotificationChannel
 {
     public function isEnabled(): bool
     {

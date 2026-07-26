@@ -394,6 +394,13 @@ Rota: `/admin/monitor-modulos` · Documentação: [COMANDOS_ARTISAN.md](COMANDOS
 | `MODULE_MONITOR_SYNC_STALE_DAYS` | `14` | Limiar «sync antigo» para módulos de fila |
 | `MODULE_MONITOR_SYNC_FAILURE_WINDOW_DAYS` | `7` | Janela de falha recente em sync |
 | `MODULE_MONITOR_PUBLIC_DATA_STALE_HOURS` | `48` | Idade máxima do cache de fontes oficiais |
+| `MODULE_MONITOR_NOTIFY_ENABLED` | `true` | Liga notificações do monitor no sino admin |
+| `MODULE_MONITOR_NOTIFY_CRITICAL` | `true` | Notifica após recolha se houver sinal `failed` |
+| `MODULE_MONITOR_NOTIFY_DEGRADED` | `false` | Notifica sinal `degraded` (pode ser ruidoso) |
+| `MODULE_MONITOR_NOTIFY_SNAPSHOT_STALE` | `true` | Alerta se a recolha estiver desactualizada |
+| `MODULE_MONITOR_NOTIFY_DAILY_SUMMARY` | `true` | Resumo diário de contagens por sinal |
+| `MODULE_MONITOR_NOTIFY_DAILY_SUMMARY_TIME` | `08:00` | Hora local do resumo diário |
+| `APP_NOTIFICATIONS_SCHEDULE_FAILURES` | `true` | `onFailure` de jobs críticos → sino |
 
 ---
 

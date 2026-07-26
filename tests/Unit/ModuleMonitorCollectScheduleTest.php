@@ -26,5 +26,8 @@ final class ModuleMonitorCollectScheduleTest extends TestCase
         $this->assertNotNull($event, 'Expected module-monitor:collect in the schedule.');
         $this->assertSame('*/10 * * * *', $event->expression);
         $this->assertSame('module-monitor-collect', $event->description ?? $event->mutexName());
+
+        $after = new \ReflectionProperty($event, 'afterCallbacks');
+        $this->assertNotEmpty($after->getValue($event), 'Expected onFailure hook for module-monitor-collect.');
     }
 }

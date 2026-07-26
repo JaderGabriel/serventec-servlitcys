@@ -80,6 +80,22 @@ class DocumentationCatalogTest extends TestCase
         $this->assertNotContains('docs/ROADMAP_CANTEIRO.md', $entryPaths);
     }
 
+    public function test_integrations_section_lists_n8n_orchestration_doc(): void
+    {
+        $integrations = collect(DocumentationCatalog::sections())->firstWhere('key', 'integrations');
+        $this->assertNotNull($integrations);
+        $paths = array_column($integrations['items'] ?? [], 'path');
+        $this->assertContains('docs/ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md', $paths);
+        $this->assertContains(
+            'docs/ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md',
+            DocumentationCatalog::adminOnlyPaths(),
+        );
+        $this->assertSame(
+            'docs/ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md',
+            DocumentationCatalog::resolveReadablePath('ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md'),
+        );
+    }
+
     public function test_legacy_roadmap_aliases_resolve_to_canonical_paths(): void
     {
         $this->assertSame(

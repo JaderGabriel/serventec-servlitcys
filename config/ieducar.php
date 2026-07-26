@@ -1498,6 +1498,11 @@ return [
     */
 
     'cadunico' => [
+        /** Notificar admins (sino) em falhas CUN-04 / Escolarização. */
+        'notify_operational' => filter_var(env('IEDUCAR_CADUNICO_NOTIFY_OPERATIONAL', true), FILTER_VALIDATE_BOOL),
+        /** Também notificar sucessos (gera mais ruído). */
+        'notify_success' => filter_var(env('IEDUCAR_CADUNICO_NOTIFY_SUCCESS', false), FILTER_VALIDATE_BOOL),
+
         'enabled' => filter_var(env('IEDUCAR_CADUNICO_ENABLED', true), FILTER_VALIDATE_BOOL),
         'idade_escolar_min' => max(0, (int) env('IEDUCAR_CADUNICO_IDADE_MIN', 4)),
         'idade_escolar_max' => max(4, (int) env('IEDUCAR_CADUNICO_IDADE_MAX', 17)),

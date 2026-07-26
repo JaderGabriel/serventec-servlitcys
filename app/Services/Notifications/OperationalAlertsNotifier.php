@@ -2,6 +2,7 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\OperationalNotificationChannel;
 use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Enums\NotificationPriority;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
 final class OperationalAlertsNotifier
 {
     public function __construct(
-        private readonly NotificationDispatcher $dispatcher,
+        private readonly OperationalNotificationChannel $dispatcher,
     ) {}
 
     /**
@@ -121,5 +122,119 @@ final class OperationalAlertsNotifier
                 ], NotificationQueuePresentation::forOperations('generic')),
             );
         }
+
+        $this->notifyStaleAdminSync($recipients, $cfg, $now);
+        $this->notifyStuckPipeline(
+            $recipients,
+            'ops:horizonte_pipeline_stuck',
+            \App\Support\Horizonte\HorizonteFortnightlyFeedPipeline::get(),
+            max(2, (int) ($cfg['pipeline_stuck_hours'] ?? 6)),
+            __('Horizonte — pipeline parado'),
+            route('admin.sync-queue.index').'#fila-horizonte',
+            'horizonte_stuck',
+        );
+        $this->notifyStuckPipeline(
+            $recipients,
+            'ops:cadunico_escolarizacao_pipeline_stuck',
+            \App\Support\Cadunico\CadunicoEscolarizacaoFeedPipeline::get(),
+            max(2, (int) ($cfg['pipeline_stuck_hours'] ?? 6)),
+            __('CadÚnico — pipeline Escolarização parado'),
+            route('admin.sync-queue.index').'#agendamentos',
+            'cadunico_stuck',
+        );
+
+        app(ModuleMonitorOperationalNotifier::class)->notifyIfSnapshotStale();
+        app(ModuleMonitorOperationalNotifier::class)->notifyDailySummaryIfDue();
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $recipients
+     * @param  array<string, mixed>  $cfg
+     */
+    private function notifyStaleAdminSync($recipients, array $cfg, \Illuminate\Support\Carbon $now): void
+    {
+        $staleHours = max(1, (int) ($cfg['sync_stale_hours'] ?? 4));
+        $stale = AdminSyncTask::query()
+            ->where('status', AdminSyncTaskStatus::Processing->value)
+            ->where(function ($q) use ($now, $staleHours): void {
+                $q->where(function ($inner) use ($now, $staleHours): void {
+                    $inner->whereNotNull('started_at')
+                        ->where('started_at', '<=', $now->copy()->subHours($staleHours));
+                })->orWhere(function ($inner) use ($now, $staleHours): void {
+                    $inner->whereNull('started_at')
+                        ->where('created_at', '<=', $now->copy()->subHours($staleHours));
+                });
+            })
+            ->count();
+
+        if ($stale <= 0) {
+            return;
+        }
+
+        $this->dispatcher->notifyOperational(
+            $recipients,
+            array_merge([
+                'title' => __('Sincronizações presas em processamento'),
+                'body' => __(':count tarefa(s) em «processando» há mais de :h hora(s). Verifique o worker admin-sync.', [
+                    'count' => $stale,
+                    'h' => $staleHours,
+                ]),
+                'icon' => 'warning',
+                'priority' => NotificationPriority::Critical->value,
+                'kind' => NotificationKinds::OPERATIONS,
+                'action_url' => route('admin.sync-queue.index'),
+                'dedupe_key' => 'ops:sync_stale',
+            ], NotificationQueuePresentation::forOperations('sync_stale')),
+        );
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>  $recipients
+     * @param  array<string, mixed>|null  $state
+     */
+    private function notifyStuckPipeline(
+        $recipients,
+        string $dedupeKey,
+        ?array $state,
+        int $stuckHours,
+        string $title,
+        string $actionUrl,
+        string $opsVariant,
+    ): void {
+        if (! is_array($state) || ($state['status'] ?? '') !== 'running') {
+            return;
+        }
+
+        $updatedRaw = $state['updated_at'] ?? $state['started_at'] ?? null;
+        if (! is_string($updatedRaw) || $updatedRaw === '') {
+            return;
+        }
+
+        try {
+            $updated = \Illuminate\Support\Carbon::parse($updatedRaw);
+        } catch (\Throwable) {
+            return;
+        }
+
+        if ($updated->greaterThan(now()->subHours($stuckHours))) {
+            return;
+        }
+
+        $phase = (string) ($state['current_phase'] ?? '—');
+        $this->dispatcher->notifyOperational(
+            $recipients,
+            array_merge([
+                'title' => $title,
+                'body' => __('Sem progresso há :h h (fase :phase). Retome com --continue ou reinicie com --reset.', [
+                    'h' => (string) $stuckHours,
+                    'phase' => $phase,
+                ]),
+                'icon' => 'warning',
+                'priority' => NotificationPriority::Critical->value,
+                'kind' => NotificationKinds::OPERATIONS,
+                'action_url' => $actionUrl,
+                'dedupe_key' => $dedupeKey,
+            ], NotificationQueuePresentation::forOperations($opsVariant)),
+        );
     }
 }

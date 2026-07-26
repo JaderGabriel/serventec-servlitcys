@@ -11,6 +11,7 @@ use App\Http\Middleware\RecordPulseOperations;
 use App\Http\Middleware\SyncDatabaseSessionUser;
 use App\Support\Scheduling\AdminSyncScheduleGate;
 use App\Support\Scheduling\AnalyticsPdfScheduleGate;
+use App\Support\Scheduling\ScheduleFailureHooks;
 use App\Support\Scheduling\ScheduleIntervals;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -166,6 +167,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 ->timezone($timezone);
 
             ScheduleIntervals::everyMinutes($opsAlerts, $opsMinutes);
+            ScheduleFailureHooks::attach($opsAlerts, 'operational-alerts-check');
         }
 
         if (filter_var(config('ieducar.weekly_mass_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
@@ -175,12 +177,14 @@ return Application::configure(basePath: dirname(__DIR__))
             $time = trim((string) config('ieducar.weekly_mass_sync.schedule.time', '02:00')) ?: '02:00';
             $overlap = max(60, (int) config('ieducar.weekly_mass_sync.schedule.overlap_minutes', 10080));
 
-            $schedule->command('weekly-mass-sync:run')
+            $weeklyMass = $schedule->command('weekly-mass-sync:run')
                 ->weeklyOn($day, $time)
                 ->name('weekly-mass-sync-enqueue')
                 ->withoutOverlapping($overlap)
                 ->timezone($timezone)
                 ->runInBackground();
+
+            ScheduleFailureHooks::attach($weeklyMass, 'weekly-mass-sync-enqueue');
         }
 
         if (filter_var(config('ieducar.cadunico.auto_sync.enabled', true), FILTER_VALIDATE_BOOLEAN)
@@ -222,12 +226,13 @@ return Application::configure(basePath: dirname(__DIR__))
             $escStaged = filter_var(config('ieducar.cadunico.escolarizacao_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
 
             if ($escStaged) {
-                $schedule->command('cadunico:escolarizacao-feed --staged --reset')
+                $escStart = $schedule->command('cadunico:escolarizacao-feed --staged --reset')
                     ->cron($escCron)
                     ->name('cadunico-escolarizacao-feed-start')
                     ->withoutOverlapping($escOverlap)
                     ->timezone($timezone)
                     ->runInBackground();
+                ScheduleFailureHooks::attach($escStart, 'cadunico-escolarizacao-feed-start');
 
                 $schedule->command('cadunico:escolarizacao-feed --staged --continue')
                     ->cron('*/'.$escStepInterval.' * * * *')
@@ -237,12 +242,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->timezone($timezone)
                     ->runInBackground();
             } else {
-                $schedule->command('cadunico:escolarizacao-feed --all')
+                $escAll = $schedule->command('cadunico:escolarizacao-feed --all')
                     ->cron($escCron)
                     ->name('cadunico-escolarizacao-feed')
                     ->withoutOverlapping($escOverlap)
                     ->timezone($timezone)
                     ->runInBackground();
+                ScheduleFailureHooks::attach($escAll, 'cadunico-escolarizacao-feed');
             }
         }
 
@@ -250,12 +256,13 @@ return Application::configure(basePath: dirname(__DIR__))
             && filter_var(config('ieducar.cadunico.beneficios_portal.schedule.enabled', true), FILTER_VALIDATE_BOOLEAN)) {
             $timezone = $timezone ?? (string) config('app.timezone', 'UTC');
             $benCron = \App\Support\Cadunico\CadunicoBeneficiosPortalScheduleCadence::cronExpression();
-            $schedule->command('cadunico:sync-beneficios-portal')
+            $beneficios = $schedule->command('cadunico:sync-beneficios-portal')
                 ->cron($benCron)
                 ->name('cadunico-beneficios-portal')
                 ->withoutOverlapping(180)
                 ->timezone($timezone)
                 ->runInBackground();
+            ScheduleFailureHooks::attach($beneficios, 'cadunico-beneficios-portal');
         }
 
         if ((bool) config('public_data_availability.enabled', true)
@@ -263,12 +270,13 @@ return Application::configure(basePath: dirname(__DIR__))
             $timezone = (string) config('app.timezone', 'UTC');
             $dailyTime = trim((string) config('public_data_availability.schedule.time', '07:00')) ?: '07:00';
 
-            $schedule->command('public-data:check-official')
+            $publicDataCheck = $schedule->command('public-data:check-official')
                 ->dailyAt($dailyTime)
                 ->name('public-data-daily-check')
                 ->withoutOverlapping(120)
                 ->timezone($timezone)
                 ->runInBackground();
+            ScheduleFailureHooks::attach($publicDataCheck, 'public-data-daily-check');
         }
 
         if (filter_var(config('module_monitor.enabled', true), FILTER_VALIDATE_BOOLEAN)
@@ -277,13 +285,14 @@ return Application::configure(basePath: dirname(__DIR__))
             $collectMinutes = max(1, min(59, (int) config('module_monitor.schedule.interval_minutes', 10)));
             $overlap = max(1, (int) config('module_monitor.schedule.overlap_minutes', 8));
 
+            // Sem runInBackground: onFailure + notificação pós-recolha no mesmo processo.
             $moduleMonitorCollect = $schedule->command('module-monitor:collect')
                 ->name('module-monitor-collect')
                 ->withoutOverlapping($overlap)
-                ->timezone($timezone)
-                ->runInBackground();
+                ->timezone($timezone);
 
             ScheduleIntervals::everyMinutes($moduleMonitorCollect, $collectMinutes);
+            ScheduleFailureHooks::attach($moduleMonitorCollect, 'module-monitor-collect');
         }
 
         if (filter_var(config('horizonte.fortnightly_feed.enabled', true), FILTER_VALIDATE_BOOLEAN)
@@ -295,12 +304,13 @@ return Application::configure(basePath: dirname(__DIR__))
             $staged = filter_var(config('horizonte.fortnightly_feed.staged', true), FILTER_VALIDATE_BOOLEAN);
 
             if ($staged) {
-                $schedule->command('horizonte:fortnightly-feed --staged --reset')
+                $horizonteStart = $schedule->command('horizonte:fortnightly-feed --staged --reset')
                     ->cron($feedCron)
                     ->name('horizonte-fortnightly-feed-start')
                     ->withoutOverlapping($overlap)
                     ->timezone($timezone)
                     ->runInBackground();
+                ScheduleFailureHooks::attach($horizonteStart, 'horizonte-fortnightly-feed-start');
 
                 $schedule->command('horizonte:fortnightly-feed --staged --continue')
                     ->cron('*/'.$stepInterval.' * * * *')
@@ -310,12 +320,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->timezone($timezone)
                     ->runInBackground();
             } else {
-                $schedule->command('horizonte:fortnightly-feed --all')
+                $horizonteAll = $schedule->command('horizonte:fortnightly-feed --all')
                     ->cron($feedCron)
                     ->name('horizonte-fortnightly-feed')
                     ->withoutOverlapping($overlap)
                     ->timezone($timezone)
                     ->runInBackground();
+                ScheduleFailureHooks::attach($horizonteAll, 'horizonte-fortnightly-feed');
             }
         }
 

@@ -2,8 +2,8 @@
 
 namespace App\Services\Horizonte;
 
+use App\Contracts\Notifications\OperationalNotificationChannel;
 use App\Enums\NotificationPriority;
-use App\Services\Notifications\NotificationDispatcher;
 use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 use App\Support\Notifications\NotificationKinds;
 use App\Support\Notifications\NotificationQueuePresentation;
@@ -11,8 +11,21 @@ use App\Support\Notifications\NotificationQueuePresentation;
 /** Notificações administrativas por fase do abastecimento Horizonte. */
 final class HorizonteFortnightlyFeedNotifier
 {
+    /** Fases cuja falha é Critical (impacto directo no mapa / mercado / financeiro). */
+    private const CRITICAL_FAILURE_PHASES = [
+        'fundeb_receita',
+        'censo_matriculas',
+        'educacenso',
+        'cadunico_sync',
+        'procurement_sync',
+        'obras_sync',
+        'siconfi_sync',
+        'saeb_planilhas',
+        'transparency_sync',
+    ];
+
     public function __construct(
-        private readonly NotificationDispatcher $dispatcher,
+        private readonly OperationalNotificationChannel $dispatcher,
     ) {}
 
     /**
@@ -24,21 +37,26 @@ final class HorizonteFortnightlyFeedNotifier
             return;
         }
 
+        $key = (string) ($phaseResult['key'] ?? '');
+        $success = (bool) ($phaseResult['success'] ?? false);
+        $skipped = (bool) ($phaseResult['skipped'] ?? false);
+
+        if ($success && ! $skipped && ! $this->notifyPhaseSuccess()) {
+            return;
+        }
+
         $recipients = $this->dispatcher->operationalRecipients();
         if ($recipients->isEmpty()) {
             return;
         }
 
-        $key = (string) ($phaseResult['key'] ?? '');
         $label = HorizonteFortnightlyFeedPhaseCatalog::label($key);
-        $success = (bool) ($phaseResult['success'] ?? false);
-        $skipped = (bool) ($phaseResult['skipped'] ?? false);
         $message = trim((string) ($phaseResult['message'] ?? ''));
 
         $title = match (true) {
             $skipped => __('Horizonte — fase ignorada'),
             $success => __('Horizonte — fase concluída'),
-            default => __('Horizonte — fase com aviso'),
+            default => __('Horizonte — fase com falha'),
         };
 
         $body = __(':label (:step/:total). :msg', [
@@ -48,11 +66,15 @@ final class HorizonteFortnightlyFeedNotifier
             'msg' => $message !== '' ? $message : ($success ? __('OK') : __('Rever logs.')),
         ]);
 
+        $critical = ! $success && ! $skipped && in_array($key, self::CRITICAL_FAILURE_PHASES, true);
+
         $this->dispatcher->notifyOperational($recipients, array_merge([
             'title' => $title,
             'body' => $body,
-            'icon' => $success ? 'success' : ($skipped ? 'info' : 'warning'),
-            'priority' => $success ? NotificationPriority::Normal->value : NotificationPriority::High->value,
+            'icon' => $success ? 'success' : ($skipped ? 'info' : 'error'),
+            'priority' => $success || $skipped
+                ? NotificationPriority::Normal->value
+                : ($critical ? NotificationPriority::Critical->value : NotificationPriority::High->value),
             'kind' => NotificationKinds::PUBLIC_DATA,
             'dedupe_key' => 'horizonte:phase:'.$runId.':'.$key,
         ], NotificationQueuePresentation::forHorizonte()));
@@ -67,13 +89,20 @@ final class HorizonteFortnightlyFeedNotifier
             return;
         }
 
+        $success = (bool) ($pipeline['success'] ?? false);
+        if ($success && ! $this->notifyPhaseSuccess()) {
+            // Ciclo OK ainda notifica se notify_cycle_success (default true) — resumo útil.
+            if (! filter_var(config('horizonte.fortnightly_feed.notify_cycle_success', true), FILTER_VALIDATE_BOOLEAN)) {
+                return;
+            }
+        }
+
         $recipients = $this->dispatcher->operationalRecipients();
         if ($recipients->isEmpty()) {
             return;
         }
 
         $runId = (string) ($pipeline['run_id'] ?? '');
-        $success = (bool) ($pipeline['success'] ?? false);
         $total = count(is_array($pipeline['phase_queue'] ?? null) ? $pipeline['phase_queue'] : []);
         $message = trim((string) ($pipeline['message'] ?? ''));
 
@@ -95,5 +124,10 @@ final class HorizonteFortnightlyFeedNotifier
     {
         return $this->dispatcher->isEnabled()
             && filter_var(config('horizonte.fortnightly_feed.notify_phases', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function notifyPhaseSuccess(): bool
+    {
+        return filter_var(config('horizonte.fortnightly_feed.notify_phase_success', false), FILTER_VALIDATE_BOOLEAN);
     }
 }

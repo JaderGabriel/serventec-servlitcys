@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
 
-> **Índice:** [README.md](README.md) · **Deploy:** [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10 · **Clio:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md).
+> **Índice:** [README.md](README.md) · **Deploy:** [IMPLANTACAO_PRODUCAO.md](IMPLANTACAO_PRODUCAO.md) · **Ponderações:** [PONDERACOES_TECNICAS.md](PONDERACOES_TECNICAS.md) §10 · **Clio:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Webhooks / n8n:** [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md).
 
 ## Senhas e segredos
 
@@ -101,6 +101,14 @@ Comandos que executam `shell_exec` (ex.: `unrar`/`7z` em SAEB) usam binários re
 |------------|------|------------|
 | `/relatorio/{publicId}` (+ `/pdf`) | Não (QR do PDF Serventec) | Throttle `60/min`; `publicId` `[A-Za-z0-9_-]{8,64}`; log `analytics.report.public.*` |
 | `/api/saeb/municipio/{ibge}` | Não | Throttle `120/min`; flag `IEDUCAR_SAEB_PUBLIC_API`; **sem token** (conteúdo público pós-import) — reavaliar se houver PII |
+
+### Webhooks outbound (orquestração / n8n)
+
+Desenho e contrato em [ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md](ORQUESTRACAO_EXTERNA_N8N_E_FERRAMENTAS.md) (INT-11). Quando implementados:
+
+- HMAC ou Bearer por ambiente; feature flag off por default.
+- Payload **sem PII** (sem CPF/NIS/credenciais i-Educar).
+- Allowlist de eventos; retries com backoff; dedupe alinhado ao sino (`dedupe_key`).
 
 ## Dependências e vulnerabilidades
 

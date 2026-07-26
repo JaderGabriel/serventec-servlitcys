@@ -310,6 +310,16 @@ final class ScheduledJobsCatalog
     }
 
     /**
+     * Metadados conhecidos de um job agendado (por `->name(...)`).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function metaFor(string $name): ?array
+    {
+        return self::metadataByName()[$name] ?? null;
+    }
+
+    /**
      * Metadados por nome do evento (`->name(...)` em bootstrap/app.php).
      *
      * @return array<string, array<string, mixed>>
@@ -350,7 +360,7 @@ final class ScheduledJobsCatalog
             ],
             'module-monitor-collect' => [
                 'label' => __('Monitor de módulos'),
-                'description' => __('Recolhe saúde por módulo para o Module Monitor.'),
+                'description' => __('Recolhe saúde por módulo e notifica falhas no sino admin.'),
                 'group' => 'infra',
                 'accent' => 'violet',
                 'command' => 'php artisan module-monitor:collect',

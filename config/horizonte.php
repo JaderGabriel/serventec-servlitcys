@@ -246,7 +246,11 @@ return [
 
         /** Executar uma fase por invocação Artisan (recomendado em produção). */
         'staged' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_STAGED', true), FILTER_VALIDATE_BOOL),
-        'notify_phases' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASES', true), FILTER_VALIDATE_BOOL),
+            'notify_phases' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASES', true), FILTER_VALIDATE_BOOL),
+            /** Notificar cada fase bem-sucedida (ruído). Falhas continuam a notificar. */
+            'notify_phase_success' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_PHASE_SUCCESS', false), FILTER_VALIDATE_BOOL),
+            /** Resumo ao concluir o ciclo com sucesso. */
+            'notify_cycle_success' => filter_var(env('HORIZONTE_FORTNIGHTLY_FEED_NOTIFY_CYCLE_SUCCESS', true), FILTER_VALIDATE_BOOL),
         'memory_limit' => env('HORIZONTE_FORTNIGHTLY_FEED_MEMORY_LIMIT', '512M'),
         /** Planilhas SAEB INEP (RAR/XLSX) exigem mais RAM que o resto do feed. */
         'saeb_memory_limit' => env('HORIZONTE_SAEB_MEMORY_LIMIT', '2048M'),
