@@ -37,4 +37,18 @@ final class CadunicoBeneficiosPortalScheduleCadence
 
         return sprintf('%d %d %d %s *', $m, $h, $day, $months);
     }
+
+    public static function summary(): string
+    {
+        $monthsLabel = implode(', ', array_map(
+            static fn (int $m): string => str_pad((string) $m, 2, '0', STR_PAD_LEFT),
+            self::months(),
+        ));
+
+        return __('Bimestral — dia :day às :time (meses :months)', [
+            'day' => (string) self::day(),
+            'time' => self::time(),
+            'months' => $monthsLabel,
+        ]);
+    }
 }

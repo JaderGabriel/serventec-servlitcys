@@ -51,17 +51,18 @@
                         <code class="font-mono text-[11px]">php artisan queue:work {{ $queueDefault }} --queue={{ $syncQueueName }},{{ $pdfQueueName }}</code>
                     </p>
                 </div>
-                @if (config('ieducar.admin_sync.schedule.enabled', true) || config('analytics.pdf_report.schedule.enabled', true) || config('horizonte.fortnightly_feed.schedule.enabled', true))
-                    <div class="border-t border-slate-200/80 dark:border-slate-700 pt-3">
-                        <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
-                        <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
-                        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                            {{ __('Sincronizações automáticas (CadÚnico, geo, FUNDEB, etc.) e o feed Horizonte (bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11) dependem do cron acima.') }}
-                        </p>
-                    </div>
-                @endif
+                <div class="border-t border-slate-200/80 dark:border-slate-700 pt-3">
+                    <p class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ __('Agendador (schedule:run)') }}</p>
+                    <code class="block text-xs text-gray-600 dark:text-gray-400 mt-1">*/{{ config('schedule.runner_interval_minutes', 3) }} * * * * php artisan schedule:run</code>
+                    <p class="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {{ __('Inventário completo dos jobs (Horizonte, CadÚnico CUN-04, SICONFI, obras, Pulse…) na secção abaixo.') }}
+                        <a href="#agendamentos" class="font-medium text-sky-600 dark:text-sky-400 hover:underline">{{ __('Ver agendamentos') }} →</a>
+                    </p>
+                </div>
             </div>
         </x-admin.import-hub.flow-panel>
+
+        @include('admin.sync-queue.partials.scheduled-jobs-panel')
 
         <section class="space-y-3">
             <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Filas por área') }}</h3>
@@ -100,6 +101,7 @@
         @include('admin.sync-queue.partials.pdf-theme-panel')
 
         <x-slot name="shortcuts">
+            <x-admin.import-hub.link-chip tone="slate" href="#agendamentos">{{ __('Agendamentos') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip href="{{ route('admin.public-data.index') }}">{{ __('Hub dados públicos') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.horizonte-import.index') }}">{{ __('Horizonte') }}</x-admin.import-hub.link-chip>
             @if (auth()->user()?->canViewHorizonte())

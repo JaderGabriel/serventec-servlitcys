@@ -14,6 +14,7 @@ use App\Services\Notifications\OperationalAlertsNotifier;
 use App\Support\Admin\AdminSyncQueueIndexPresenter;
 use App\Support\Admin\ImportHubThemeCatalog;
 use App\Support\Admin\ExternalImportImpact;
+use App\Support\Scheduling\ScheduledJobsCatalog;
 use App\Support\SyncQueue\SyncQueueUserScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -85,6 +86,7 @@ class AdminSyncQueueController extends Controller
 
         $horizonteHubData = $horizonteHub->build(false);
         $horizonteThemeCard = AdminSyncQueueIndexPresenter::horizonteThemeCard($horizonteHubData);
+        $scheduledJobs = ScheduledJobsCatalog::build();
 
         $domainEnum = $domain !== '' ? AdminSyncDomain::tryFrom($domain) : null;
         $activeTheme = $domainEnum !== null
@@ -127,6 +129,7 @@ class AdminSyncQueueController extends Controller
             'pdfThemeCard' => AdminSyncQueueIndexPresenter::pdfThemeCard($pdfCounts, $pdfQueueName),
             'horizonteHub' => $horizonteHubData,
             'horizonteThemeCard' => $horizonteThemeCard,
+            'scheduledJobs' => $scheduledJobs,
             'syncQueueName' => $syncQueueName,
             'syncQueueConnection' => config('ieducar.admin_sync.connection') ?? $queueDefault,
             'pdfExports' => $pdfExports,
