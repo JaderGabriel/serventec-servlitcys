@@ -481,6 +481,12 @@ final class HorizontePortalProcurementSyncService
             $itensSoftware = $this->objetoSuggestSoftware($objeto, $itemKeywords);
         }
 
+        $municipio = is_array($item['municipio'] ?? null) ? $item['municipio'] : [];
+        $ufObj = is_array($municipio['uf'] ?? null) ? $municipio['uf'] : [];
+        $ibge = $municipio['codigoIBGE'] ?? $item['codigoIBGE'] ?? null;
+        $municipioNome = $municipio['nomeIBGE'] ?? $municipio['nome'] ?? null;
+        $uf = $ufObj['sigla'] ?? $item['uf'] ?? null;
+
         return [
             'tipo' => PortalProcurementSnapshot::TIPO_CONTRATO,
             'ano' => $year,
@@ -500,9 +506,9 @@ final class HorizontePortalProcurementSyncService
             'data_publicacao' => $item['dataPublicacaoDOU'] ?? null,
             'fornecedor_cnpj' => strlen($cnpj) === 14 ? $cnpj : null,
             'fornecedor_nome' => $nome !== '' ? $nome : null,
-            'ibge_municipio' => null,
-            'municipio_nome' => null,
-            'uf' => null,
+            'ibge_municipio' => $ibge,
+            'municipio_nome' => is_string($municipioNome) && $municipioNome !== '' ? $municipioNome : null,
+            'uf' => is_string($uf) && $uf !== '' ? $uf : null,
             'ug_codigo' => $ug['codigo'] ?? null,
             'ug_nome' => $ug['nome'] ?? null,
             'vendor_matched' => $matched,

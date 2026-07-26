@@ -1902,21 +1902,17 @@ function sistemasMercadoEnrichmentSignal(m) {
     if (String(m.sge_badge ?? m.sge?.badge ?? "") === "ieducar" || m.consultoria_active) {
         return { tone: "ok", text: "iEducar · Serventec" };
     }
+    const status = String(m.sge_status ?? m.sge?.status ?? "");
+    if (status === "market_candidates") {
+        return { tone: "warn", text: "Vários indícios" };
+    }
+    if (status === "registry" || status === "market") {
+        return { tone: "warn", text: "Evidência municipal" };
+    }
     const timing = Number(m.timing_licitacao ?? 0);
-    const proxy = Number(m.proxy_sge ?? 0);
     const soft = Number(m.procurement_licitacoes_software ?? 0);
-    const sanctioned = Number(m.procurement_sanctioned_cnpjs ?? 0);
-    if (sanctioned > 0) {
-        return { tone: "warn", text: "Sanção CEIS/CNEP" };
-    }
-    if (soft > 0 || ["registry", "market", "market_national"].includes(String(m.sge_status ?? ""))) {
-        return { tone: "warn", text: "Incumbente / software" };
-    }
-    if (timing >= 55) {
-        return { tone: "info", text: "Editais recentes" };
-    }
-    if (proxy > 0 || timing > 0 || m.sge_found) {
-        return { tone: "neutral", text: "Sinais de mercado" };
+    if (soft > 0 || timing >= 55) {
+        return { tone: "info", text: "Editais com IBGE" };
     }
     return null;
 }
@@ -1937,15 +1933,15 @@ function sistemasMercadoMethodologyText(m) {
 
     const byStatus = {
         consultoria_active:
-            "Como chegámos ao incumbente: o município tem consultoria activa no ServLITCYS. Prioridade máxima do resolver — assume-se iEducar (Serventec), sem inferência por licitação.",
+            "Como chegámos ao incumbente: o município tem consultoria activa no ServLITCYS. Prioridade máxima — iEducar (Serventec), sem inferência por licitação.",
         registry:
-            "Como chegámos ao incumbente: registo SGE externo ou manual no Horizonte (inteligência de concorrência). Tem prioridade sobre sinais de Portal; não activa Consultoria sozinho.",
+            "Como chegámos ao incumbente: registo SGE externo ou manual no Horizonte. Tem prioridade sobre sinais de Portal; não activa Consultoria sozinho.",
         market:
-            "Como chegámos ao incumbente: inferência a partir de licitação/contrato público com IBGE deste município (objeto software ou CNPJ curado). É proxy de mercado — não comprova, sozinho, o SGE instalado na rede.",
-        market_national:
-            "Como chegámos ao incumbente: CNPJ curado com contratos MEC/FNDE a nível de órgão (sem IBGE municipal). Sinal nacional de fornecedor no ecossistema educação — não prova o sistema da secretaria.",
+            "Como chegámos ao incumbente: evidência municipal sólida (licitação/contrato com IBGE deste município + CNPJ curado ou software identificado). Proxy de mercado — não comprova, sozinho, o SGE instalado.",
+        market_candidates:
+            "Sem incumbente único: há vários fornecedores com evidência municipal neste IBGE. Mostra-se o rol com valores — não se elege uma empresa por amostragem.",
         not_found:
-            "Como chegámos ao incumbente: nenhuma fonte confirmou SGE (sem consultoria activa, sem registo externo e sem sinal claro em licitações/contratos sincronizados).",
+            "Sem evidência municipal sólida de SGE. Contratos nacionais MEC/FNDE (ex.: Totvs a nível de órgão) não atribuem sistema à cidade.",
     };
 
     const base = byStatus[status] || byStatus.not_found;
@@ -1957,21 +1953,22 @@ function sistemasMercadoMethodologyText(m) {
         parts.push(detail);
     }
     parts.push(
-        "Ordem de prioridade: consultoria activa → registo SGE → amostra Portal com IBGE → contratos nacionais curados.",
+        "Prioridade: consultoria activa → registo SGE → evidência Portal com IBGE. Contratos só de órgão federal não contam como SGE municipal.",
     );
 
     return parts.join(" ");
 }
 
-function pickSistemasMercadoSample(m) {
-    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples : [];
-    if (samples.length === 0) {
-        return null;
+function sistemasMercadoCandidates(m) {
+    const fromSge = Array.isArray(m.sge_candidates)
+        ? m.sge_candidates
+        : Array.isArray(m.sge?.candidates)
+          ? m.sge.candidates
+          : [];
+    if (fromSge.length > 0) {
+        return fromSge;
     }
-    const soft = samples.find(
-        (s) => s && (s.itens_software || s.vendor_matched || s.fornecedor_cnpj || s.vendor_label),
-    );
-    return soft || samples[0] || null;
+    return [];
 }
 
 function muniSistemasMercadoEnrichmentHtml(m) {
@@ -1983,37 +1980,33 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         Boolean(m.consultoria_active) ||
         String(m.sge_badge ?? m.sge?.badge ?? "") === "ieducar" ||
         String(m.sge_status ?? "") === "consultoria_active";
+    const status = String(m.sge_status ?? m.sge?.status ?? "");
     const licitacoes = Number(m.procurement_licitacoes ?? 0);
     const licitSoft = Number(m.procurement_licitacoes_software ?? 0);
-    const contratosSoft = Number(m.transparency_contratos_software ?? 0);
-    const proxy = Number(m.proxy_sge ?? 0);
-    const timing = Number(m.timing_licitacao ?? 0);
     const sgeFound = Boolean(m.sge_found);
-    const nationalVendors = Number(m.procurement_national_vendor_matched ?? 0);
-    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 5) : [];
-    const sample = pickSistemasMercadoSample(m);
+    const candidates = sistemasMercadoCandidates(m);
+    const samples = Array.isArray(m.procurement_samples) ? m.procurement_samples.slice(0, 8) : [];
+    const evidence = String(m.sge_evidence_level ?? m.sge?.evidence_level ?? "");
 
-    const has =
+    // Só mostrar bloco com evidência sólida / consultoria / indícios municipais.
+    const hasSolid =
         isIeducar ||
-        m.has_sistemas_mercado ||
-        proxy > 0 ||
-        timing > 0 ||
-        licitacoes > 0 ||
-        contratosSoft > 0 ||
         sgeFound ||
-        samples.length > 0 ||
-        nationalVendors > 0;
+        status === "market_candidates" ||
+        candidates.length > 0 ||
+        (licitacoes > 0 && samples.some((s) => s && (s.vendor_matched || (s.itens_software && (s.fornecedor_cnpj || s.fornecedor_nome)))));
 
-    if (!has) {
+    if (!hasSolid) {
         return "";
     }
 
+    const primary = candidates.length === 1 ? candidates[0] : null;
     const system =
         m.sge_system ||
         m.sge?.system ||
         (isIeducar ? "iEducar" : null) ||
-        (sgeFound ? m.sge?.system_label : null) ||
-        (sample?.vendor_label || sample?.fornecedor_nome) ||
+        primary?.system ||
+        (status === "market_candidates" ? "Vários indícios" : null) ||
         "Não identificado";
     const company =
         m.sge_company ||
@@ -2021,44 +2014,47 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         m.sge_vendor ||
         m.sge?.vendor ||
         (isIeducar ? "Serventec" : null) ||
-        sample?.fornecedor_nome ||
-        sample?.vendor_label ||
-        "—";
-    const cnpjRaw = m.sge_cnpj || m.sge?.cnpj || sample?.fornecedor_cnpj || null;
+        primary?.company ||
+        (status === "market_candidates" ? "Ver rol abaixo" : "—");
+    const cnpjRaw = m.sge_cnpj || m.sge?.cnpj || primary?.cnpj || null;
     const cnpj = cnpjRaw ? formatCnpjBr(cnpjRaw) : "—";
 
     let valorLabel = "—";
-    let valorHint = "Sem valor na amostra municipal";
-    if (sample && (sample.valor != null || sample.valor_final != null)) {
-        const base = sample.valor != null ? Number(sample.valor) : null;
-        const finalV = sample.valor_final != null ? Number(sample.valor_final) : null;
+    let valorHint = "Sem valor municipal agregado";
+    if (primary && (primary.valor != null || primary.valor_final != null)) {
+        const base = primary.valor != null ? Number(primary.valor) : null;
+        const finalV = primary.valor_final != null ? Number(primary.valor_final) : null;
         if (finalV != null && base != null && finalV !== base) {
             valorLabel = `${formatCurrencyBrl(base)} → ${formatCurrencyBrl(finalV)}`;
-            valorHint = "Valor contratado → valor final (aditivo)";
+            valorHint = "Valor → valor final (soma das evidências)";
         } else if (finalV != null) {
             valorLabel = formatCurrencyBrl(finalV);
-            valorHint = "Valor final do contrato/edital";
+            valorHint = "Valor final agregado";
         } else if (base != null) {
             valorLabel = formatCurrencyBrl(base);
-            valorHint = "Valor do edital/contrato (amostra)";
+            valorHint = "Valor agregado das evidências";
         }
-    } else if (m.procurement_valor_licitacoes != null && Number(m.procurement_valor_licitacoes) > 0) {
-        valorLabel = formatCurrencyBrl(m.procurement_valor_licitacoes);
-        valorHint = "Soma das licitações com IBGE";
+    } else if (candidates.length > 1) {
+        const sum = candidates.reduce((acc, c) => acc + Number(c.valor_final ?? c.valor ?? 0), 0);
+        if (sum > 0) {
+            valorLabel = formatCurrencyBrl(sum);
+            valorHint = "Soma dos valores dos candidatos";
+        }
     }
 
     let vigenciaLabel = "—";
-    let vigenciaHint = "Sem vigência na amostra";
-    if (sample) {
+    let vigenciaHint = "Sem vigência na evidência";
+    const vigSrc = primary || candidates[0] || null;
+    if (vigSrc) {
         const parts = [];
-        if (sample.data_inicio_vigencia) parts.push(String(sample.data_inicio_vigencia));
-        if (sample.data_fim_vigencia) parts.push(String(sample.data_fim_vigencia));
+        if (vigSrc.data_inicio_vigencia) parts.push(String(vigSrc.data_inicio_vigencia));
+        if (vigSrc.data_fim_vigencia) parts.push(String(vigSrc.data_fim_vigencia));
         if (parts.length > 0) {
             vigenciaLabel = parts.join(" → ");
-            vigenciaHint = sample.situacao || sample.modalidade || "Vigência do contrato/edital";
-        } else if (sample.data_publicacao || sample.data_assinatura) {
-            vigenciaLabel = String(sample.data_publicacao || sample.data_assinatura);
-            vigenciaHint = sample.data_publicacao ? "Data de publicação" : "Data de assinatura";
+            vigenciaHint = "Vigência da evidência municipal";
+        } else if (vigSrc.data_publicacao) {
+            vigenciaLabel = String(vigSrc.data_publicacao);
+            vigenciaHint = "Data de publicação";
         }
     }
 
@@ -2066,9 +2062,9 @@ function muniSistemasMercadoEnrichmentHtml(m) {
     metrics.push(
         enrichMetricHtml({
             label: "Sistema",
-            hint: isIeducar ? "Consultoria activa" : String(m.sge?.status_label || m.sge_status || "Identificação"),
+            hint: isIeducar ? "Consultoria activa" : String(m.sge?.status_label || status || "Identificação"),
             valueHtml: escapeHtml(String(system)),
-            tone: isIeducar ? "ok" : sgeFound ? "warn" : "neutral",
+            tone: isIeducar ? "ok" : status === "market_candidates" ? "warn" : sgeFound ? "warn" : "neutral",
             iconHtml: HORIZONTE_ENRICH_ICONS.building,
         }),
     );
@@ -2084,9 +2080,9 @@ function muniSistemasMercadoEnrichmentHtml(m) {
     metrics.push(
         enrichMetricHtml({
             label: "CNPJ",
-            hint: cnpjRaw ? "Cadastro do fornecedor" : "Não informado na fonte",
+            hint: cnpjRaw ? "Cadastro do fornecedor" : "Só aparece com evidência municipal",
             valueHtml: escapeHtml(cnpj),
-            tone: "neutral",
+            tone: cnpjRaw ? "info" : "neutral",
             iconHtml: HORIZONTE_ENRICH_ICONS.scale,
         }),
     );
@@ -2108,27 +2104,55 @@ function muniSistemasMercadoEnrichmentHtml(m) {
             iconHtml: HORIZONTE_ENRICH_ICONS.trend,
         }),
     );
-    if (!isIeducar && (proxy > 0 || timing > 0)) {
-        metrics.push(
-            enrichMetricHtml({
-                label: "Proxy / timing",
-                hint: "Pesos moderados no score",
-                valueHtml: escapeHtml(`SGE ${Math.round(proxy)} · Lic. ${Math.round(timing)}`),
-                tone: proxy >= 40 || timing >= 55 ? "warn" : "neutral",
-                iconHtml: HORIZONTE_ENRICH_ICONS.trend,
-            }),
-        );
-    }
 
-    let samplesHtml = "";
-    if (samples.length > 0) {
+    let candidatesHtml = "";
+    if (candidates.length > 0) {
+        const rows = candidates
+            .map((c) => {
+                const companyCell = String(c.company || c.system || "—");
+                const cnpjCell = c.cnpj ? formatCnpjBr(c.cnpj) : "—";
+                const hasAditivo =
+                    c.valor != null && c.valor_final != null && Number(c.valor_final) !== Number(c.valor);
+                const valorCell = hasAditivo
+                    ? `${formatCurrencyBrl(c.valor)} → ${formatCurrencyBrl(c.valor_final)}`
+                    : c.valor_final != null
+                      ? formatCurrencyBrl(c.valor_final)
+                      : c.valor != null
+                        ? formatCurrencyBrl(c.valor)
+                        : "—";
+                const vigParts = [];
+                if (c.data_inicio_vigencia) vigParts.push(String(c.data_inicio_vigencia));
+                if (c.data_fim_vigencia) vigParts.push(String(c.data_fim_vigencia));
+                const vigencia = vigParts.length ? vigParts.join(" → ") : c.data_publicacao || "—";
+                const tags = [];
+                if (c.vendor_matched) tags.push("CNPJ curado");
+                if (c.itens_software) tags.push("software");
+                return (
+                    `<tr>` +
+                    `<td>${escapeHtml(String(c.system || "—"))}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(tags.join(" · ") || `${c.count || 1} evidência(s)`)}</div></td>` +
+                    `<td>${escapeHtml(companyCell)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(cnpjCell)}</div></td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(vigencia))}</td>` +
+                    `</tr>`
+                );
+            })
+            .join("");
+        candidatesHtml =
+            `<p class="serv-horizonte-sistemas-candidates-title">${escapeHtml(
+                candidates.length > 1
+                    ? "Possíveis sistemas (evidência municipal) — sem incumbente único"
+                    : "Evidência municipal",
+            )}</p>` +
+            `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
+            `<thead><tr><th>Sistema</th><th>Empresa / CNPJ</th><th>Valor</th><th>Vigência</th></tr></thead>` +
+            `<tbody>${rows}</tbody></table></div>`;
+    } else if (samples.length > 0 && (sgeFound || licitSoft > 0)) {
         const rows = samples
+            .filter((s) => s && (s.vendor_matched || s.itens_software || s.fornecedor_cnpj || s.fornecedor_nome))
+            .slice(0, 5)
             .map((s) => {
                 const obj = String(s.objeto || "—");
                 const short = obj.length > 56 ? `${obj.slice(0, 56)}…` : obj;
-                const softTag = s.itens_software
-                    ? `<span class="serv-horizonte-canteiro-badge serv-horizonte-canteiro-badge--warn">soft</span> `
-                    : "";
                 const companyCell = String(s.fornecedor_nome || s.vendor_label || "—");
                 const cnpjCell = s.fornecedor_cnpj ? formatCnpjBr(s.fornecedor_cnpj) : "—";
                 const hasAditivo =
@@ -2147,61 +2171,47 @@ function muniSistemasMercadoEnrichmentHtml(m) {
                 if (s.data_fim_vigencia) vigenciaParts.push(String(s.data_fim_vigencia));
                 const vigencia = vigenciaParts.length
                     ? vigenciaParts.join(" → ")
-                    : s.data_publicacao || s.data_assinatura || "—";
+                    : s.data_publicacao || "—";
                 return (
                     `<tr>` +
-                    `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(obj)}">${softTag}${escapeHtml(short)}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__obra" title="${escapeHtml(obj)}">${escapeHtml(short)}</td>` +
                     `<td>${escapeHtml(companyCell)}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(cnpjCell)}</div></td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}${hasAditivo ? `<div class="serv-horizonte-canteiro-table__sub">${escapeHtml("com aditivo")}</div>` : ""}</td>` +
-                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(vigencia))}<div class="serv-horizonte-canteiro-table__sub">${escapeHtml(String(s.situacao || s.modalidade || s.orgao_sigla || ""))}</div></td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(valorCell)}</td>` +
+                    `<td class="serv-horizonte-canteiro-table__num">${escapeHtml(String(vigencia))}</td>` +
                     `</tr>`
                 );
             })
             .join("");
-        samplesHtml =
-            `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
-            `<thead><tr><th>Objeto</th><th>Empresa / CNPJ</th><th>Valor</th><th>Vigência</th></tr></thead>` +
-            `<tbody>${rows}</tbody></table></div>`;
+        if (rows !== "") {
+            candidatesHtml =
+                `<div class="serv-horizonte-canteiro-table-wrap"><table class="serv-horizonte-canteiro-table">` +
+                `<thead><tr><th>Objeto</th><th>Empresa / CNPJ</th><th>Valor</th><th>Vigência</th></tr></thead>` +
+                `<tbody>${rows}</tbody></table></div>`;
+        }
     }
 
-    const topVendors = Array.isArray(m.procurement_national_top_vendors)
-        ? m.procurement_national_top_vendors.slice(0, 3)
-        : [];
     const notes = [];
-    if (nationalVendors > 0 && topVendors.length > 0) {
-        notes.push(
-            `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com CNPJ curado — ${topVendors
-                .map((v) => `${v.label} (${v.count})`)
-                .join(", ")}. Sem IBGE municipal nos contratos.`,
-        );
-    } else if (nationalVendors > 0) {
-        notes.push(
-            `MEC/FNDE (nacional): ${nationalVendors} contrato(s) com fornecedores curados — sinal de órgão, não do município.`,
-        );
-    }
-    const sanctioned = Number(m.procurement_sanctioned_cnpjs ?? 0);
-    if (sanctioned > 0) {
-        const by = m.procurement_sanction_by_fonte && typeof m.procurement_sanction_by_fonte === "object"
-            ? m.procurement_sanction_by_fonte
-            : {};
-        const parts = [];
-        if (Number(by.ceis ?? 0) > 0) parts.push(`CEIS ${by.ceis}`);
-        if (Number(by.cnep ?? 0) > 0) parts.push(`CNEP ${by.cnep}`);
-        if (Number(by.cepim ?? 0) > 0) parts.push(`CEPIM ${by.cepim}`);
-        notes.push(
-            `Due diligence: ${sanctioned} CNPJ(s) curado(s) com sanção${parts.length ? ` (${parts.join(" · ")})` : ""} — filtro de risco.`,
-        );
+    if (evidence === "municipal_ambiguous") {
+        notes.push("Não se atribui um único SGE: use o rol de candidatos com CNPJ e valores para a prospecção.");
     }
     if (licitacoes > 0) {
         notes.push(
             `Licitações MEC/FNDE com IBGE: ${nf(licitacoes)}${licitSoft > 0 ? ` (${licitSoft} com objeto software)` : ""}.`,
         );
     }
+    const nationalVendors = Number(m.procurement_national_vendor_matched ?? 0);
+    if (nationalVendors > 0 && hasSolid) {
+        notes.push(
+            `Contexto nacional (não municipal): ${nationalVendors} contrato(s) MEC/FNDE com CNPJ curado — não define o SGE desta cidade.`,
+        );
+    }
 
     const methodology = sistemasMercadoMethodologyText(m);
     const lead = isIeducar
-        ? "Último bloco antes das dimensões do score — sistema da consultoria e contexto de mercado."
-        : "Último bloco antes das dimensões do score — sistema, empresa, CNPJ, valor e vigência a partir das fontes abaixo.";
+        ? "Último bloco antes das dimensões — sistema da consultoria."
+        : status === "market_candidates"
+          ? "Último bloco antes das dimensões — rol de possíveis sistemas com evidência municipal."
+          : "Último bloco antes das dimensões — só evidência municipal sólida (IBGE).";
 
     const signal = sistemasMercadoEnrichmentSignal(m);
     const signalHtml =
@@ -2226,7 +2236,7 @@ function muniSistemasMercadoEnrichmentHtml(m) {
         `</div></div>` +
         `<p class="serv-horizonte-sistemas-methodology">${escapeHtml(methodology)}</p>` +
         `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metrics.join("")}</div>` +
-        samplesHtml +
+        candidatesHtml +
         notesHtml +
         `</section>`
     );
@@ -9411,7 +9421,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
                 return false;
             }
             const status = String(m.sge_status ?? m.sge?.status ?? "");
-            return ["not_found", "registry", "market", "market_national"].includes(status);
+            return ["not_found", "registry", "market", "market_candidates"].includes(status);
         },
 
         isIeducarServentecSge(m) {

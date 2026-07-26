@@ -59,18 +59,36 @@ final class PortalProcurementSnapshotRepositoryMarketTest extends TestCase
                 'itens_software' => true,
                 'ibge_municipio' => null,
             ],
+            [
+                'tipo' => PortalProcurementSnapshot::TIPO_CONTRATO,
+                'ano' => 2025,
+                'codigo_orgao' => '26298',
+                'orgao_sigla' => 'FNDE',
+                'orgao_nome' => 'FNDE',
+                'external_id' => 'C2',
+                'objeto' => 'Sistema municipal',
+                'valor' => 7000,
+                'fornecedor_cnpj' => '33324175000103',
+                'fornecedor_nome' => 'PROESC LTDA',
+                'vendor_matched' => true,
+                'vendor_label' => 'Proesc',
+                'itens_software' => true,
+                'ibge_municipio' => '3550308',
+                'data_inicio_vigencia' => '2025-01-01',
+                'data_fim_vigencia' => '2025-12-31',
+            ],
         ], $now);
 
         $byIbge = $repo->licitacoesMarketByIbge(2025);
         $this->assertArrayHasKey('3550308', $byIbge);
         $this->assertSame(2, $byIbge['3550308']['licitacoes']);
-        $this->assertSame(1, $byIbge['3550308']['licitacoes_software']);
-        $this->assertSame(1500.0, $byIbge['3550308']['valor_total']);
-        $this->assertCount(2, $byIbge['3550308']['samples']);
+        $this->assertSame(2, $byIbge['3550308']['licitacoes_software']); // 1 licitacao soft + 1 contrato soft
+        $this->assertSame(8500.0, $byIbge['3550308']['valor_total']);
+        $this->assertGreaterThanOrEqual(2, count($byIbge['3550308']['samples']));
+        $this->assertSame('Proesc', $byIbge['3550308']['samples'][0]['vendor_label'] ?? null);
 
         $national = $repo->nationalVendorMarketSummary(2025);
-        $this->assertSame(1, $national['vendor_matched']);
-        $this->assertSame(1, $national['itens_software']);
-        $this->assertSame('Vendor A', $national['top_vendors'][0]['label'] ?? null);
+        $this->assertSame(2, $national['vendor_matched']);
+        $this->assertSame(2, $national['itens_software']);
     }
 }

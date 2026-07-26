@@ -695,9 +695,17 @@ html.serv-horizonte-muni-modal-open body {
     grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
 }
 
-.serv-horizonte-muni-modal__body .serv-horizonte-sistemas-panel .serv-horizonte-canteiro-table-wrap {
-    margin-top: 0.55rem;
+.serv-horizonte-sistemas-candidates-title {
+    margin: 0.55rem 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgb(71 85 105);
 }
+
+.dark .serv-horizonte-sistemas-candidates-title {
+    color: rgb(203 213 225);
+}
+
 
 .serv-horizonte-muni-tooltip__finance-row {
     display: flex;

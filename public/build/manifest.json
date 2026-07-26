@@ -22,8 +22,8 @@
     "file": "assets/clio-BAd0U1fr.js",
     "name": "clio"
   },
-  "_horizonte-BSNX7dUZ.js": {
-    "file": "assets/horizonte-BSNX7dUZ.js",
+  "_horizonte-BcCXlMpU.js": {
+    "file": "assets/horizonte-BcCXlMpU.js",
     "name": "horizonte",
     "imports": [
       "_rolldown-runtime-CtgBeM3P.js",
@@ -59,7 +59,7 @@
     "src": "node_modules/leaflet/dist/images/marker-icon.png"
   },
   "resources/css/app.css": {
-    "file": "assets/app-CImdDX4D.css",
+    "file": "assets/app-CCYcHJng.css",
     "name": "app",
     "names": [
       "app.css"
@@ -68,14 +68,14 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-YH_2AZAU.js",
+    "file": "assets/app-CRIisd86.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
     "imports": [
       "_rolldown-runtime-CtgBeM3P.js",
       "_clio-BAd0U1fr.js",
-      "_horizonte-BSNX7dUZ.js",
+      "_horizonte-BcCXlMpU.js",
       "_analytics-maps-D5tD7Rzh.js",
       "_scroll-to-top-KysRzy3q.js"
     ]

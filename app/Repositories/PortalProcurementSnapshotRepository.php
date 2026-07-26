@@ -153,7 +153,8 @@ class PortalProcurementSnapshotRepository
     }
 
     /**
-     * Licitações com IBGE — sinal municipal de timing / objeto software (HOR-08e/B4).
+     * Mercado municipal por IBGE — licitações e contratos com município preenchido (HOR-08e/B4).
+     * Contratos sem IBGE (só órgão federal) não entram aqui.
      *
      * @return array<string, array{
      *     licitacoes: int,
@@ -187,7 +188,6 @@ class PortalProcurementSnapshotRepository
 
         $years = array_values(array_unique([$year, $year - 1]));
         $query = PortalProcurementSnapshot::query()
-            ->licitacoes()
             ->whereIn('ano', $years)
             ->whereNotNull('ibge_municipio')
             ->where('ibge_municipio', '!=', '');
@@ -197,10 +197,13 @@ class PortalProcurementSnapshotRepository
         }
 
         $rows = $query
+            ->orderByDesc('vendor_matched')
+            ->orderByDesc('itens_software')
             ->orderByDesc('data_publicacao')
             ->orderByDesc('valor')
             ->orderBy('external_id')
             ->get([
+                'tipo',
                 'ibge_municipio',
                 'numero',
                 'objeto',
@@ -235,10 +238,18 @@ class PortalProcurementSnapshotRepository
                     'imported_at' => null,
                 ];
             }
-            $out[$ibge]['licitacoes']++;
-            if ($row->itens_software) {
+
+            $isLicitacao = ($row->tipo ?? '') === PortalProcurementSnapshot::TIPO_LICITACAO;
+            if ($isLicitacao) {
+                $out[$ibge]['licitacoes']++;
+                if ($row->itens_software) {
+                    $out[$ibge]['licitacoes_software']++;
+                }
+            } elseif ($row->itens_software || $row->vendor_matched) {
+                // Contrato municipal com sinal de software conta no proxy de timing.
                 $out[$ibge]['licitacoes_software']++;
             }
+
             if ($row->valor !== null) {
                 $out[$ibge]['valor_total'] += (float) $row->valor;
             }

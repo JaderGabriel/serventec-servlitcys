@@ -962,7 +962,8 @@ final class HorizonteMapService
         $areaByIbge = $this->areaByIbge($ibgePrefix);
         $transfersByIbge = HorizonteTesouroTransferSyncService::aggregateByIbge($refYear, $ibgePrefix);
         $obrasByIbge = $this->obrasAggByIbge($ibgePrefix);
-        $procurementByIbge = $this->procurementSnapshots->licitacoesMarketByIbge($refYear, $ibgePrefix);
+        // Mais amostras por IBGE para o rol de candidatos (sem eleger por amostragem curta).
+        $procurementByIbge = $this->procurementSnapshots->licitacoesMarketByIbge($refYear, $ibgePrefix, 20);
         $procurementNational = $this->procurementSnapshots->nationalVendorMarketSummary($refYear);
         $sanctionSummary = $this->sanctionSnapshots->summaryForCnpjs(
             array_keys(PortalProcurementConfig::softwareVendors()),
@@ -1148,9 +1149,8 @@ final class HorizonteMapService
                 $city !== null ? array_merge($city, ['in_catalog' => true]) : null,
                 $sgeRegistry[$ibge] ?? null,
                 [
+                    // Só evidência com IBGE deste município — nunca top vendors nacionais.
                     'samples' => $procurement['samples'] ?? [],
-                    'top_vendors' => $procurementNational['top_vendors'] ?? [],
-                    'vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
                 ],
             );
 
@@ -1159,18 +1159,21 @@ final class HorizonteMapService
                 'sge_status' => (string) ($sge['status'] ?? ''),
                 'transparency_contratos_software' => $transparency['contratos_software'] ?? null,
                 'licitacoes_software' => $licitacoesSoftware,
-                'national_vendor_matched' => (int) ($procurementNational['vendor_matched'] ?? 0),
+                // Nacional só reforça se já há sinal municipal (scorer).
+                'national_vendor_matched' => $licitacoesCount > 0 || $licitacoesSoftware > 0
+                    ? (int) ($procurementNational['vendor_matched'] ?? 0)
+                    : 0,
             ]);
             $timingLicitacaoScore = HorizonteProcurementMarketScorer::timingLicitacao(
                 $licitacoesCount,
                 $licitacoesSoftware,
             );
+            $sgeStatus = (string) ($sge['status'] ?? '');
             $hasSistemasMercado = $consultoriaActive
-                || $proxySgeScore > 0
-                || $timingLicitacaoScore > 0
-                || $licitacoesCount > 0
-                || ((int) ($transparency['contratos_software'] ?? 0) > 0)
-                || (bool) ($sge['found'] ?? false);
+                || (bool) ($sge['found'] ?? false)
+                || $sgeStatus === 'market_candidates'
+                || ((is_array($sge['candidates'] ?? null) ? count($sge['candidates']) : 0) > 0)
+                || $licitacoesSoftware > 0;
 
             $scoreInput = [
                 'matriculas_censo' => $censo['matriculas_total'] ?? null,
@@ -1384,6 +1387,8 @@ final class HorizonteMapService
                 'sge_company' => $sge['company'] ?? null,
                 'sge_cnpj' => $sge['cnpj'] ?? null,
                 'sge_badge' => $sge['badge'] ?? null,
+                'sge_candidates' => $sge['candidates'] ?? [],
+                'sge_evidence_level' => $sge['evidence_level'] ?? 'none',
                 'muni_alerts' => $muniAlerts,
                 'muni_alerts_status' => $muniAlerts['status'] ?? 'unavailable',
                 'coord_source' => $meta['coord_source'] ?? null,

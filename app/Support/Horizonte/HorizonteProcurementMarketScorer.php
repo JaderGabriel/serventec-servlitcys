@@ -26,8 +26,11 @@ final class HorizonteProcurementMarketScorer
         $sgeStatus = (string) ($signals['sge_status'] ?? '');
         if ($sgeFound && $sgeStatus === 'registry') {
             $score += 65;
-        } elseif ($sgeFound && in_array($sgeStatus, ['market', 'market_national'], true)) {
+        } elseif ($sgeFound && $sgeStatus === 'market') {
             $score += 45;
+        } elseif ($sgeStatus === 'market_candidates') {
+            // Indícios municipais múltiplos — sinal moderado, sem incumbente único.
+            $score += 25;
         } elseif ($sgeFound && in_array($sgeStatus, ['catalog_pending', 'catalog_configured'], true)) {
             $score += 35;
         }

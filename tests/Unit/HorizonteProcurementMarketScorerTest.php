@@ -38,6 +38,26 @@ final class HorizonteProcurementMarketScorerTest extends TestCase
     }
 
     #[Test]
+    public function market_national_status_no_longer_inflates_proxy_alone(): void
+    {
+        $this->assertSame(0, HorizonteProcurementMarketScorer::proxySge([
+            'sge_found' => true,
+            'sge_status' => 'market_national',
+            'national_vendor_matched' => 90,
+        ]));
+    }
+
+    #[Test]
+    public function market_candidates_give_moderate_proxy(): void
+    {
+        $score = HorizonteProcurementMarketScorer::proxySge([
+            'sge_found' => false,
+            'sge_status' => 'market_candidates',
+        ]);
+        $this->assertSame(25, $score);
+    }
+
+    #[Test]
     public function timing_licitacao_scales_with_count(): void
     {
         $this->assertSame(0, HorizonteProcurementMarketScorer::timingLicitacao(0));
