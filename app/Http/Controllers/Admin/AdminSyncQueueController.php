@@ -83,7 +83,7 @@ class AdminSyncQueueController extends Controller
         $syncQueueName = (string) config('ieducar.admin_sync.queue', 'admin-sync');
         $pdfQueueName = (string) config('analytics.pdf_report.queue', 'default');
 
-        $horizonteHubData = $horizonteHub->build();
+        $horizonteHubData = $horizonteHub->build(false);
         $horizonteThemeCard = AdminSyncQueueIndexPresenter::horizonteThemeCard($horizonteHubData);
 
         $domainEnum = $domain !== '' ? AdminSyncDomain::tryFrom($domain) : null;
@@ -122,7 +122,7 @@ class AdminSyncQueueController extends Controller
             'activeThemeSection' => $activeThemeSection,
             'syncThemeCards' => AdminSyncQueueIndexPresenter::syncThemeCards($countsByDomainStatus, $syncQueueName),
             'syncThemeSections' => $domain === ''
-                ? AdminSyncQueueIndexPresenter::syncThemeSections($countsByDomainStatus, $syncQueueName)
+                ? AdminSyncQueueIndexPresenter::syncThemeSections($countsByDomainStatus, $syncQueueName, 8, $user)
                 : [],
             'pdfThemeCard' => AdminSyncQueueIndexPresenter::pdfThemeCard($pdfCounts, $pdfQueueName),
             'horizonteHub' => $horizonteHubData,

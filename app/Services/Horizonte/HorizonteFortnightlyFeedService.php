@@ -576,6 +576,7 @@ final class HorizonteFortnightlyFeedService
     private function storeFeedResult(array $result): void
     {
         \App\Support\Horizonte\HorizonteFortnightlyFeedCache::put($result);
+        \App\Services\Admin\HorizonteImportHubStatusService::forgetCache();
     }
 
     /**

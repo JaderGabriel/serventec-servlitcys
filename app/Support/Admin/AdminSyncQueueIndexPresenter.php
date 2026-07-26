@@ -6,7 +6,9 @@ use App\Enums\AdminSyncDomain;
 use App\Enums\AdminSyncTaskStatus;
 use App\Enums\AnalyticsReportExportStatus;
 use App\Models\AdminSyncTask;
+use App\Models\User;
 use App\Services\AdminSync\AdminSyncTaskExplainer;
+use App\Support\SyncQueue\SyncQueueUserScope;
 use Illuminate\Support\Collection;
 
 /** Metadados e contagens para a página admin/sync-queue. */
@@ -164,6 +166,7 @@ final class AdminSyncQueueIndexPresenter
         Collection $countsByDomainStatus,
         string $syncQueueName,
         int $previewLimit = 8,
+        ?User $user = null,
     ): array {
         $sections = [];
 
@@ -171,7 +174,16 @@ final class AdminSyncQueueIndexPresenter
             /** @var AdminSyncDomain $domain */
             $domain = $def['domain'];
             $domainKey = $domain->value;
-            $total = (int) AdminSyncTask::query()->where('domain', $domainKey)->count();
+
+            $scoped = static function () use ($user) {
+                $query = AdminSyncTask::query();
+
+                return $user !== null
+                    ? SyncQueueUserScope::applyToTasks($query, $user)
+                    : $query;
+            };
+
+            $total = (int) $scoped()->where('domain', $domainKey)->count();
 
             if ($total === 0) {
                 continue;
@@ -192,7 +204,7 @@ final class AdminSyncQueueIndexPresenter
                         + ($counts[AdminSyncTaskStatus::Processing->value] ?? 0),
                     'failed' => $counts[AdminSyncTaskStatus::Failed->value] ?? 0,
                 ]),
-                'tasks' => AdminSyncTask::query()
+                'tasks' => $scoped()
                     ->with(['city:id,name,uf', 'queuedBy:id,name'])
                     ->where('domain', $domainKey)
                     ->orderByDesc('id')

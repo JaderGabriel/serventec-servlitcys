@@ -1,5 +1,6 @@
 @php
     use App\Support\Admin\AdminImportHubCatalog;
+    use App\Support\Horizonte\HorizonteFortnightlyFeedPhaseCatalog;
 
     $hub = is_array($horizonteHub ?? null) ? $horizonteHub : [];
     $card = is_array($horizonteThemeCard ?? null) ? $horizonteThemeCard : [];
@@ -111,16 +112,12 @@
                         @php
                             $phaseOk = (bool) ($phase['success'] ?? false);
                             $phaseKey = (string) ($phase['key'] ?? '');
-                            $phaseLabel = match ($phaseKey) {
-                                'fundeb_receita' => 'FUNDEB',
-                                'censo_matriculas' => 'Censo',
-                                'educacenso' => 'Educacenso',
-                                'saeb_planilhas' => 'SAEB',
-                                'ibge_catalog' => 'IBGE',
-                                'sge_registry' => 'SGE',
-                                'official_check' => __('Verificação'),
-                                default => $phaseKey,
-                            };
+                            $phaseLabel = $phaseKey !== ''
+                                ? HorizonteFortnightlyFeedPhaseCatalog::label($phaseKey)
+                                : '?';
+                            if ($phaseKey === 'data_bundle') {
+                                $phaseLabel = __('Pacote offline');
+                            }
                         @endphp
                         <li class="flex gap-2 items-start rounded-lg border border-slate-200/80 dark:border-slate-700/80 px-3 py-2 bg-white/50 dark:bg-slate-900/30">
                             <span @class([

@@ -12,7 +12,6 @@ use App\Models\MunicipalTransparencySnapshot;
 use App\Models\SaebIndicatorPoint;
 use App\Support\Admin\PublicDataImportCatalog;
 use App\Services\Admin\PublicDataOfficialCheckCache;
-use App\Support\Dashboard\AdminHomeMapCache;
 use App\Support\Horizonte\HorizonteEducacensoImportProgress;
 use App\Support\Horizonte\HorizonteEducacensoYearWindow;
 use App\Support\Horizonte\HorizonteFortnightlyFeedCache;
@@ -41,48 +40,90 @@ final class HorizonteImportHubStatusService
     /**
      * @return array<string, mixed>
      */
-    public function build(): array
+    public function build(bool $detailed = true): array
     {
-        $fundebIbges = FundebMunicipioReference::query()
+        $ttl = max(30, min(600, (int) config('horizonte.import_hub.status_cache_seconds', 300)));
+        $cacheKey = 'horizonte:import_hub_status:v3:'.($detailed ? 'full' : 'lite');
+
+        return \Illuminate\Support\Facades\Cache::remember(
+            $cacheKey,
+            $ttl,
+            fn (): array => $this->buildFresh($detailed),
+        );
+    }
+
+    /**
+     * Invalida o cache do painel (após sync manual / feed).
+     */
+    public static function forgetCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget('horizonte:import_hub_status:v3:full');
+        \Illuminate\Support\Facades\Cache::forget('horizonte:import_hub_status:v3:lite');
+        \Illuminate\Support\Facades\Cache::forget('horizonte:coverage:triad_v1');
+        \Illuminate\Support\Facades\Cache::forget('horizonte:coverage:universe_v1');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildFresh(bool $detailed = true): array
+    {
+        $fundebMunicipios = (int) FundebMunicipioReference::query()
             ->whereNotNull('ibge_municipio')
             ->distinct()
-            ->pluck('ibge_municipio')
-            ->filter()
-            ->map(static fn ($v) => (string) $v)
-            ->all();
-
-        $censoIbges = InepCensoMunicipioMatricula::query()
+            ->count('ibge_municipio');
+        $censoMunicipios = (int) InepCensoMunicipioMatricula::query()
             ->whereNotNull('ibge_municipio')
             ->distinct()
-            ->pluck('ibge_municipio')
-            ->filter()
-            ->map(static fn ($v) => (string) $v)
-            ->all();
-
-        $saebIbges = SaebIndicatorPoint::query()
+            ->count('ibge_municipio');
+        $saebMunicipios = (int) SaebIndicatorPoint::query()
             ->whereNotNull('ibge_municipio')
             ->distinct()
-            ->pluck('ibge_municipio')
-            ->filter()
-            ->map(static fn ($v) => (string) $v)
-            ->all();
+            ->count('ibge_municipio');
 
-        $fundebSet = array_flip($fundebIbges);
-        $censoSet = array_flip($censoIbges);
-        $saebSet = array_flip($saebIbges);
-
-        $universe = array_unique(array_merge($fundebIbges, $censoIbges, $saebIbges));
-        $withFullTriad = 0;
-        foreach ($universe as $ibge) {
-            if (isset($fundebSet[$ibge], $censoSet[$ibge], $saebSet[$ibge])) {
-                $withFullTriad++;
-            }
-        }
+        $coverageTtl = max(300, min(86400, (int) config('horizonte.import_hub.coverage_cache_seconds', 3600)));
+        $withFullTriad = (int) \Illuminate\Support\Facades\Cache::remember(
+            'horizonte:coverage:triad_v1',
+            $coverageTtl,
+            static fn (): int => (int) FundebMunicipioReference::query()
+                ->whereNotNull('ibge_municipio')
+                ->whereIn(
+                    'ibge_municipio',
+                    InepCensoMunicipioMatricula::query()
+                        ->select('ibge_municipio')
+                        ->whereNotNull('ibge_municipio')
+                        ->distinct(),
+                )
+                ->whereIn(
+                    'ibge_municipio',
+                    SaebIndicatorPoint::query()
+                        ->select('ibge_municipio')
+                        ->whereNotNull('ibge_municipio')
+                        ->distinct(),
+                )
+                ->distinct()
+                ->count('ibge_municipio'),
+        );
+        $universeMunicipios = (int) \Illuminate\Support\Facades\Cache::remember(
+            'horizonte:coverage:universe_v1',
+            $coverageTtl,
+            static fn (): int => (int) \Illuminate\Support\Facades\DB::table(
+                \Illuminate\Support\Facades\DB::raw('(
+                    SELECT ibge_municipio FROM fundeb_municipio_references WHERE ibge_municipio IS NOT NULL AND ibge_municipio != \'\'
+                    UNION
+                    SELECT ibge_municipio FROM inep_censo_municipio_matriculas WHERE ibge_municipio IS NOT NULL AND ibge_municipio != \'\'
+                    UNION
+                    SELECT ibge_municipio FROM saeb_indicator_points WHERE ibge_municipio IS NOT NULL AND ibge_municipio != \'\'
+                ) as horizonte_universe'),
+            )->count(),
+        );
 
         $rel = (string) config('ieducar.inep_geocoding.microdados_cadastro_escolas_path', 'inep/microdados_ed_basica_*.csv');
         $microdadosPath = InepMicrodadosCadastroEscolasPath::resolve($rel);
 
-        $ibgeUfsWarmed = $this->countIbgeUfsWarmed();
+        // Preferir o progresso do feed (1 chave) em vez de 27 lookups no catálogo IBGE.
+        $ibgeWarmDone = HorizonteIbgeWarmProgress::doneUfs();
+        $ibgeUfsWarmed = count($ibgeWarmDone);
         $ibgeUfsTotal = count(self::BRAZIL_UFS);
         $ibgeGeoUfsDone = HorizonteIbgeMunicipalGeoImportProgress::doneCount();
         $ibgeGeoUfsTotal = HorizonteIbgeMunicipalGeoImportProgress::totalUfs();
@@ -90,10 +131,10 @@ final class HorizonteImportHubStatusService
             ? (int) MunicipalAreaSnapshot::query()->distinct()->count('ibge_municipio')
             : 0;
         $cadunicoCount = \Illuminate\Support\Facades\Schema::hasTable('cadunico_municipio_snapshots')
-            ? CadunicoMunicipioSnapshot::query()->distinct()->count('ibge_municipio')
+            ? (int) CadunicoMunicipioSnapshot::query()->distinct()->count('ibge_municipio')
             : 0;
         $demographyCount = \Illuminate\Support\Facades\Schema::hasTable('municipal_demography_snapshots')
-            ? MunicipalDemographySnapshot::query()->distinct()->count('ibge_municipio')
+            ? (int) MunicipalDemographySnapshot::query()->distinct()->count('ibge_municipio')
             : 0;
 
         $educacensoWindow = HorizonteEducacensoYearWindow::years();
@@ -124,9 +165,15 @@ final class HorizonteImportHubStatusService
         $procurementRows = \Illuminate\Support\Facades\Schema::hasTable('portal_procurement_snapshots')
             ? (int) \App\Models\PortalProcurementSnapshot::query()->count()
             : 0;
+        $transferMunicipios = \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
+            ? (int) \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio')
+            : 0;
+        $obrasCount = \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')
+            ? (int) \App\Models\MunicipalEducationWork::query()->count()
+            : 0;
         $alertsMeta = HorizonteMunicipalAlertsCache::getMeta();
 
-        return [
+        $payload = [
             'enabled' => (bool) config('horizonte.enabled', true),
             'feed_enabled' => (bool) config('horizonte.fortnightly_feed.enabled', true),
             'schedule_enabled' => (bool) config('horizonte.fortnightly_feed.schedule.enabled', true),
@@ -135,11 +182,11 @@ final class HorizonteImportHubStatusService
             'schedule_months' => HorizonteFortnightlyFeedScheduleCadence::months(),
             'schedule_summary' => HorizonteFortnightlyFeedScheduleCadence::summary(),
             'schedule_cron' => HorizonteFortnightlyFeedScheduleCadence::cronExpression(),
-            'reference_year' => (int) config('horizonte.reference_year', (int) date('Y') - 1),
-                'coverage' => [
-                'fundeb_municipios' => count($fundebIbges),
-                'censo_municipios' => count($censoIbges),
-                'saeb_municipios' => count($saebIbges),
+            'reference_year' => $refYear,
+            'coverage' => [
+                'fundeb_municipios' => $fundebMunicipios,
+                'censo_municipios' => $censoMunicipios,
+                'saeb_municipios' => $saebMunicipios,
                 'cadunico_municipios' => $cadunicoCount,
                 'demography_municipios' => $demographyCount,
                 'educacenso_years_indexed' => $educacensoYearsIndexed,
@@ -147,7 +194,7 @@ final class HorizonteImportHubStatusService
                 'educacenso_window' => $educacensoWindow,
                 'educacenso_steps_done' => HorizonteEducacensoImportProgress::doneStepCount(),
                 'educacenso_steps_total' => HorizonteEducacensoImportProgress::totalSteps($educacensoWindow),
-                'universe_municipios' => count($universe),
+                'universe_municipios' => $universeMunicipios,
                 'with_full_triad' => $withFullTriad,
                 'ibge_ufs_warmed' => $ibgeUfsWarmed,
                 'ibge_ufs_total' => $ibgeUfsTotal,
@@ -160,9 +207,9 @@ final class HorizonteImportHubStatusService
                 'saeb_latest' => SaebIndicatorPoint::query()->max('updated_at'),
             ],
             'phases' => $this->feedPhases(
-                $fundebSet,
-                $censoSet,
-                $saebSet,
+                $fundebMunicipios,
+                $censoMunicipios,
+                $saebMunicipios,
                 $microdadosPath,
                 $ibgeUfsWarmed,
                 $ibgeUfsTotal,
@@ -176,6 +223,8 @@ final class HorizonteImportHubStatusService
                 $transparencyMunicipios,
                 $transparencyApiKey,
                 $procurementRows,
+                $transferMunicipios,
+                $obrasCount,
                 $alertsMeta,
             ),
             'last_feed' => HorizonteFortnightlyFeedCache::get(),
@@ -186,33 +235,33 @@ final class HorizonteImportHubStatusService
             'saeb_years_per_step' => max(1, (int) config('horizonte.fortnightly_feed.saeb_years_per_step', 1)),
             'educacenso_years_per_step' => max(1, (int) config('horizonte.fortnightly_feed.educacenso_years_per_step', 1)),
             'educacenso_steps_per_step' => max(1, (int) config('horizonte.fortnightly_feed.educacenso_steps_per_step', 1)),
-            'ibge_warm_done' => HorizonteIbgeWarmProgress::doneUfs(),
-            'sidra_import_done' => HorizonteSidraImportProgress::doneUfs(),
-            'saeb_import_done' => HorizonteSaebImportProgress::doneYears(),
-            'educacenso_import_done' => HorizonteEducacensoImportProgress::doneYears($educacensoWindow),
+            'ibge_warm_done' => $ibgeWarmDone,
+            'sidra_import_done' => $detailed ? HorizonteSidraImportProgress::doneUfs() : [],
+            'saeb_import_done' => $detailed ? HorizonteSaebImportProgress::doneYears() : [],
+            'educacenso_import_done' => $detailed ? HorizonteEducacensoImportProgress::doneYears($educacensoWindow) : [],
             'educacenso_steps_done' => HorizonteEducacensoImportProgress::doneStepCount(),
             'educacenso_steps_total' => HorizonteEducacensoImportProgress::totalSteps($educacensoWindow),
-            'educacenso_recent_steps' => HorizonteEducacensoImportProgress::recentDoneSteps(15),
+            'educacenso_recent_steps' => $detailed ? HorizonteEducacensoImportProgress::recentDoneSteps(15) : [],
             'municipal_geo_ufs_done' => $ibgeGeoUfsDone,
             'municipal_geo_ufs_total' => $ibgeGeoUfsTotal,
-            'municipal_geo_recent_steps' => HorizonteIbgeMunicipalGeoImportProgress::recentSteps(15),
+            'municipal_geo_recent_steps' => $detailed ? HorizonteIbgeMunicipalGeoImportProgress::recentSteps(15) : [],
             'municipal_area_municipios' => $municipalAreaCount,
             'bundle' => $this->bundleStatus(),
             'map_url' => route('dashboard.horizonte'),
             'doc_url' => route('admin.documentation.show', ['doc' => 'docs/HORIZONTE.md']),
         ];
+
+        return $payload;
     }
 
     /**
-     * @param  array<string, int>  $fundebSet
-     * @param  array<string, int>  $censoSet
-     * @param  array<string, int>  $saebSet
+     * @param  list<int>  $educacensoWindow
      * @return list<array<string, mixed>>
      */
     private function feedPhases(
-        array $fundebSet,
-        array $censoSet,
-        array $saebSet,
+        int $fundebMunicipios,
+        int $censoMunicipios,
+        int $saebMunicipios,
         ?string $microdadosPath,
         int $ibgeUfsWarmed,
         int $ibgeUfsTotal,
@@ -226,6 +275,8 @@ final class HorizonteImportHubStatusService
         int $transparencyMunicipios,
         string $transparencyApiKey,
         int $procurementRows,
+        int $transferMunicipios,
+        int $obrasCount,
         ?array $alertsMeta,
     ): array {
         $phases = [
@@ -237,8 +288,8 @@ final class HorizonteImportHubStatusService
                 'hub_anchor' => '#source-fundeb_fnde',
                 'admin_url' => route('admin.ieducar-compatibility.index'),
                 'cli' => 'php artisan horizonte:fortnightly-feed --staged --reset --skip-censo --skip-educacenso --skip-saeb --skip-ibge --skip-sge --skip-verify',
-                'ok' => count($fundebSet) >= 100,
-                'metric' => count($fundebSet),
+                'ok' => $fundebMunicipios >= 100,
+                'metric' => $fundebMunicipios,
                 'metric_label' => __('municípios'),
             ],
             [
@@ -249,8 +300,8 @@ final class HorizonteImportHubStatusService
                 'hub_anchor' => '#source-censo_inep_matriculas',
                 'admin_url' => route('admin.geo-sync.index'),
                 'cli' => 'php artisan horizonte:fortnightly-feed --phase=censo_matriculas',
-                'ok' => count($censoSet) >= 100,
-                'metric' => count($censoSet),
+                'ok' => $censoMunicipios >= 100,
+                'metric' => $censoMunicipios,
                 'metric_label' => __('municípios'),
                 'needs_microdados' => true,
                 'blocked' => ($microdadosPath === null || ! is_readable((string) $microdadosPath))
@@ -307,11 +358,8 @@ final class HorizonteImportHubStatusService
                 'hub_anchor' => '#source-repasses_tesouro',
                 'admin_url' => route('admin.public-data.index').'#source-repasses_tesouro',
                 'cli' => 'php artisan horizonte:sync-repasses-tesouro --with-ref',
-                'ok' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
-                    && \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio') >= 100,
-                'metric' => \Illuminate\Support\Facades\Schema::hasTable('municipal_transfer_snapshots')
-                    ? \App\Models\MunicipalTransferSnapshot::query()->distinct()->count('ibge_municipio')
-                    : 0,
+                'ok' => $transferMunicipios >= 100,
+                'metric' => $transferMunicipios,
                 'metric_label' => __('municípios'),
             ],
             [
@@ -353,11 +401,11 @@ final class HorizonteImportHubStatusService
                 'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
                 'cli' => 'php artisan horizonte:sync-procurement --year='.$refYear,
                 'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=procurement_sync',
-                'ok' => $transparencyApiKey !== '' && $procurementRows >= 1,
+                'ok' => $procurementRows >= 1,
                 'metric' => $procurementRows,
                 'metric_label' => __('registos'),
                 'blocked' => $transparencyApiKey === ''
-                    ? __('PORTAL_TRANSPARENCIA_API_KEY não configurada no .env')
+                    ? __('PORTAL_TRANSPARENCIA_API_KEY não configurada no .env — novos syncs bloqueados')
                     : null,
             ],
             [
@@ -369,11 +417,8 @@ final class HorizonteImportHubStatusService
                 'admin_url' => route('admin.horizonte-import.index').'#horizonte-hub',
                 'cli' => 'php artisan horizonte:sync-obras --continue',
                 'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=obras_sync --reset',
-                'ok' => \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')
-                    && \App\Models\MunicipalEducationWork::query()->count() >= 10,
-                'metric' => \Illuminate\Support\Facades\Schema::hasTable('municipal_education_works')
-                    ? \App\Models\MunicipalEducationWork::query()->count()
-                    : 0,
+                'ok' => $obrasCount >= 10,
+                'metric' => $obrasCount,
                 'metric_label' => __('obras'),
             ],
             [
@@ -387,8 +432,8 @@ final class HorizonteImportHubStatusService
                 'admin_url' => route('admin.pedagogical-sync.index'),
                 'cli' => 'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas',
                 'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=saeb_planilhas --reset',
-                'ok' => count($saebSet) >= 100,
-                'metric' => count($saebSet),
+                'ok' => $saebMunicipios >= 100,
+                'metric' => $saebMunicipios,
                 'metric_label' => __('municípios'),
             ],
             [
@@ -486,19 +531,6 @@ final class HorizonteImportHubStatusService
         unset($phase);
 
         return $phases;
-    }
-
-    private function countIbgeUfsWarmed(): int
-    {
-        $count = 0;
-        foreach (self::BRAZIL_UFS as $uf) {
-            $cached = AdminHomeMapCache::get('ibge_municipality_catalog_uf:'.$uf);
-            if (is_array($cached) && $cached !== []) {
-                $count++;
-            }
-        }
-
-        return $count;
     }
 
     /**
