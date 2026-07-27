@@ -2,11 +2,14 @@
 
 namespace Tests\Unit\Clio;
 
+use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
+use App\Services\Clio\Export\CampaignActiveCensusMatrixBuilder;
 use App\Services\Clio\Export\CampaignFinalPdfComposer;
 use App\Services\Clio\Export\DiagnosticoGeralComposer;
 use App\Services\Clio\Parse\CampaignParseService;
+use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionMethod;
 use Tests\TestCase;
@@ -138,7 +141,7 @@ final class CampaignFinalPdfComposerTest extends TestCase
         $composer = $this->composer();
         $method = new ReflectionMethod(CampaignFinalPdfComposer::class, 'themeInclusao');
 
-        $campaign = new \App\Models\Clio\ClioCampaign;
+        $campaign = new ClioCampaign;
         $campaign->id = 1;
         $campaign->setRelation('schools', collect());
 
@@ -172,13 +175,130 @@ final class CampaignFinalPdfComposerTest extends TestCase
         );
     }
 
+    #[Test]
+    public function census_exposure_tables_converte_matriz_da_analise(): void
+    {
+        $composer = $this->composer();
+        $method = new ReflectionMethod(CampaignFinalPdfComposer::class, 'censusExposureTables');
+
+        $tables = $method->invoke($composer, [
+            'available' => true,
+            'year' => 2025,
+            'infantil' => [
+                'title' => 'Educação infantil',
+                'columns' => [
+                    ['key' => 'creche_parcial', 'label' => 'Creche Parcial'],
+                ],
+                'rows' => [
+                    'regular' => 'Regular',
+                    'especial' => 'Especial',
+                ],
+                'values' => [
+                    'creche_parcial' => [
+                        'Urbana' => ['regular' => 10, 'especial' => 1],
+                        'Rural' => ['regular' => 2, 'especial' => 0],
+                    ],
+                ],
+            ],
+            'fundamental' => [
+                'title' => 'Educação fundamental',
+                'columns' => [
+                    ['key' => 'ai_parcial', 'label' => 'Fundamental I · Parcial'],
+                ],
+                'rows' => [
+                    'regular' => 'Regular',
+                    'especial' => 'Especial',
+                ],
+                'values' => [
+                    'ai_parcial' => [
+                        'Urbana' => ['regular' => 40, 'especial' => 0],
+                        'Rural' => ['regular' => 5, 'especial' => 0],
+                    ],
+                ],
+            ],
+            'eja' => [
+                'title' => 'EJA presencial fundamental',
+                'columns' => [
+                    ['key' => 'eja', 'label' => 'EJA Presencial Fundamental'],
+                ],
+                'rows' => [
+                    'regular' => 'Regular',
+                    'especial' => 'Especial',
+                ],
+                'values' => [
+                    'eja' => [
+                        'Urbana' => ['regular' => 8, 'especial' => 0],
+                        'Rural' => ['regular' => 1, 'especial' => 0],
+                    ],
+                ],
+            ],
+            'geral' => [
+                'title' => 'Análise geral',
+                'columns' => [
+                    ['key' => 'geral', 'label' => 'GERAL'],
+                    ['key' => 'especial', 'label' => 'Educação Especial'],
+                ],
+                'values' => [
+                    'geral' => 66,
+                    'especial' => 1,
+                ],
+            ],
+        ]);
+
+        $this->assertCount(4, $tables);
+        $this->assertStringContainsString('Exposição das matrículas', (string) ($tables[0]['title'] ?? ''));
+        $this->assertStringContainsString('Educação infantil', (string) ($tables[0]['title'] ?? ''));
+        $this->assertSame(['Matrícula', 'Creche Parcial'], $tables[0]['headers']);
+        $this->assertSame(['Regular', '10 / 2'], $tables[0]['rows'][0]);
+        $this->assertSame(['Especial', '1 / 0'], $tables[0]['rows'][1]);
+        $this->assertStringContainsString('Análise geral', (string) ($tables[3]['title'] ?? ''));
+        $this->assertSame(['66', '1'], $tables[3]['rows'][0]);
+    }
+
+    #[Test]
+    public function matriculas_mantem_fluxo_com_modalidade_e_etapas_apos_exposicao(): void
+    {
+        $composer = $this->composer();
+        $method = new ReflectionMethod(CampaignFinalPdfComposer::class, 'themeMatriculas');
+        $campaign = new ClioCampaign;
+        $campaign->year = 2025;
+        $campaign->setRelation('schools', collect());
+
+        $dashboard = [
+            'highlights' => [],
+            'report' => [
+                'available' => true,
+                'totals' => [
+                    ['label' => 'Curriculares', 'value' => '100'],
+                ],
+                'matricula_modalidade' => [
+                    ['label' => 'Regular', 'count' => 90, 'pct' => 90],
+                ],
+                'matriculas_por_ano' => [
+                    ['label' => '1º Ano', 'count' => 20],
+                ],
+                'quality_notes' => [],
+            ],
+        ];
+
+        $theme = $method->invoke($composer, $campaign, $dashboard, collect());
+
+        $this->assertNotNull($theme);
+        $this->assertSame('matriculas', $theme['key']);
+        $titles = array_map(static fn (array $t): string => (string) ($t['title'] ?? ''), $theme['tables']);
+        $this->assertContains(__('Modalidade (Acompanhamento)'), $titles);
+        $this->assertContains(__('Matrículas por etapa (Relação)'), $titles);
+        $this->assertSame(__('Modalidade (Acompanhamento)'), $titles[0]);
+    }
+
     private function composer(): CampaignFinalPdfComposer
     {
         return new CampaignFinalPdfComposer(
             app(CampaignParseService::class),
             app(CampaignAnalysisPresenter::class),
             app(DiagnosticoGeralComposer::class),
-            app(\App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService::class),
+            app(HorizonteMunicipioEnrollmentSeriesService::class),
+            app(CampaignActiveCensusMatrixBuilder::class),
         );
     }
 }

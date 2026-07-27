@@ -7,6 +7,7 @@ use App\Models\Bi\BiClioSchool;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
+use App\Services\Clio\Analysis\CampaignNeeCensusBuilder;
 use App\Services\Clio\Analysis\EtapaLabelOrder;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
@@ -23,6 +24,7 @@ final class CampaignFinalPdfComposer
         private readonly CampaignAnalysisPresenter $presenter,
         private readonly DiagnosticoGeralComposer $diagnosticoGeral,
         private readonly HorizonteMunicipioEnrollmentSeriesService $enrollmentSeries,
+        private readonly CampaignActiveCensusMatrixBuilder $censusMatrixBuilder,
     ) {}
 
     /**
@@ -58,7 +60,7 @@ final class CampaignFinalPdfComposer
 
         $themes = array_values(array_filter([
             $this->themeSerieHistorica($campaign),
-            $this->themeMatriculas($dashboard, $findings),
+            $this->themeMatriculas($campaign, $dashboard, $findings),
             $this->themeInclusao($campaign, $dashboard, $findings),
             $this->themeDensidade($dashboard, $findings),
             $this->themeDistorcao($dashboard, $findings),
@@ -245,10 +247,13 @@ final class CampaignFinalPdfComposer
      * @param  Collection<int, ClioCampaignFinding>  $findings
      * @return array<string, mixed>|null
      */
-    private function themeMatriculas(array $dashboard, Collection $findings): ?array
+    private function themeMatriculas(ClioCampaign $campaign, array $dashboard, Collection $findings): ?array
     {
         $report = is_array($dashboard['report'] ?? null) ? $dashboard['report'] : [];
-        if (empty($report['available'])) {
+        $matrix = $this->censusMatrixBuilder->build($campaign);
+        $exposureTables = $this->censusExposureTables($matrix);
+
+        if (empty($report['available']) && $exposureTables === []) {
             return null;
         }
 
@@ -263,8 +268,18 @@ final class CampaignFinalPdfComposer
                 'value' => (string) ($tile['value'] ?? '—'),
             ];
         }
+        if ($kpis === [] && ! empty($matrix['available'])) {
+            $geralValues = is_array($matrix['geral']['values'] ?? null) ? $matrix['geral']['values'] : [];
+            $kpis = [
+                ['label' => __('Escolas ativas'), 'value' => $this->fmtInt($matrix['schools_active'] ?? 0)],
+                ['label' => __('GERAL (regular)'), 'value' => $this->fmtInt($geralValues['geral'] ?? 0)],
+                ['label' => __('Educação Especial'), 'value' => $this->fmtInt($geralValues['especial'] ?? 0)],
+                ['label' => __('Ano'), 'value' => (string) ($matrix['year'] ?? $campaign->year)],
+            ];
+        }
 
-        $tables = [];
+        $tables = $exposureTables;
+
         $modalidadeRows = [];
         foreach (is_array($report['matricula_modalidade'] ?? null) ? $report['matricula_modalidade'] : [] as $bar) {
             if (! is_array($bar)) {
@@ -319,11 +334,14 @@ final class CampaignFinalPdfComposer
         }
 
         $notes = is_array($report['quality_notes'] ?? null) ? array_values(array_filter($report['quality_notes'])) : [];
+        $lead = $exposureTables !== []
+            ? __('Começa com a exposição das matrículas nas escolas ativas (etapa × jornada; células urbana / rural), seguida dos totais curriculares, AEE e coerência Acompanhamento × Relações.')
+            : __('Totais curriculares, AEE e atividade complementar, com coerência entre Acompanhamento e Relações.');
 
         return $this->makeTheme(
             key: 'matriculas',
             title: __('Matrículas e etapas'),
-            lead: __('Totais curriculares, AEE e atividade complementar, com coerência entre Acompanhamento e Relações.'),
+            lead: $lead,
             kpis: $kpis,
             diagnosis: array_merge(
                 $this->highlightSummary($dashboard, ['INF-MAT', 'INF-TUR', 'INF-DELTA', 'INF-XCHK']),
@@ -332,6 +350,71 @@ final class CampaignFinalPdfComposer
             tables: $tables,
             findings: $this->findingsFor($findings, ['MAT', 'TUR', 'DELTA', 'XCHK']),
         );
+    }
+
+    /**
+     * Converte a matriz da análise («Exposição das matrículas — escolas ativas»)
+     * em tabelas planas do PDF Final (mesmo formato das demais do tema).
+     *
+     * @param  array<string, mixed>  $matrix
+     * @return list<array{title: string, headers: list<string>, rows: list<list<string>>}>
+     */
+    private function censusExposureTables(array $matrix): array
+    {
+        if (empty($matrix['available'])) {
+            return [];
+        }
+
+        $year = (string) ($matrix['year'] ?? '');
+        $prefix = __('Exposição das matrículas — escolas ativas (:ano)', ['ano' => $year]);
+        $tables = [];
+
+        foreach (['infantil', 'fundamental', 'eja'] as $blockKey) {
+            $block = $matrix[$blockKey] ?? null;
+            if (! is_array($block) || empty($block['columns']) || empty($block['rows'])) {
+                continue;
+            }
+
+            $headers = [__('Matrícula')];
+            foreach ($block['columns'] as $col) {
+                $headers[] = (string) ($col['label'] ?? '');
+            }
+
+            $rows = [];
+            foreach ($block['rows'] as $modKey => $modLabel) {
+                $row = [(string) $modLabel];
+                foreach ($block['columns'] as $col) {
+                    $vals = $block['values'][$col['key']] ?? [];
+                    $u = (int) ($vals['Urbana'][$modKey] ?? 0);
+                    $r = (int) ($vals['Rural'][$modKey] ?? 0);
+                    $row[] = $this->fmtInt($u).' / '.$this->fmtInt($r);
+                }
+                $rows[] = $row;
+            }
+
+            $tables[] = [
+                'title' => $prefix.' — '.(string) ($block['title'] ?? $blockKey),
+                'headers' => $headers,
+                'rows' => $rows,
+            ];
+        }
+
+        $geral = is_array($matrix['geral'] ?? null) ? $matrix['geral'] : [];
+        if (! empty($geral['columns'])) {
+            $headers = [];
+            $row = [];
+            foreach ($geral['columns'] as $col) {
+                $headers[] = (string) ($col['label'] ?? '');
+                $row[] = $this->fmtInt($geral['values'][$col['key']] ?? 0);
+            }
+            $tables[] = [
+                'title' => $prefix.' — '.(string) ($geral['title'] ?? __('Análise geral')),
+                'headers' => $headers,
+                'rows' => [$row],
+            ];
+        }
+
+        return $tables;
     }
 
     /**
@@ -495,7 +578,7 @@ final class CampaignFinalPdfComposer
     private function inclusaoSchoolCaseRowsFromCensus(ClioCampaign $campaign): array
     {
         try {
-            $builder = app(\App\Services\Clio\Analysis\CampaignNeeCensusBuilder::class);
+            $builder = app(CampaignNeeCensusBuilder::class);
         } catch (\Throwable) {
             return [];
         }
