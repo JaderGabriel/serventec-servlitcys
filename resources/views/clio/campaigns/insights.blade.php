@@ -67,12 +67,26 @@
                                 · {{ __('Fonte bi_clio_*') }}
                             </p>
                         </div>
-                        @can('analyze', $campaign)
-                            <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="shrink-0">
-                                @csrf
-                                <button type="submit" class="clio-bi-btn clio-bi-btn--ghost">{{ __('Actualizar dataset') }}</button>
-                            </form>
-                        @endcan
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            @can('export', $campaign)
+                                <a
+                                    href="{{ route('clio.campaigns.export.pdf-mapa-coleta', $campaign) }}"
+                                    class="clio-bi-btn clio-bi-btn--ghost"
+                                    data-serv-loading-on-click
+                                    data-serv-loading-download
+                                    data-serv-loading-title="{{ __('Gerando MAPA de Coleta') }}"
+                                    data-serv-loading-message="{{ __('Montando o inventário quantitativo. Aguarde…') }}"
+                                    title="{{ __('PDF com tabelas quantitativas enxutas') }}"
+                                >{{ __('MAPA de Coleta') }}</a>
+                                @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
+                            @endcan
+                            @can('analyze', $campaign)
+                                <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="shrink-0">
+                                    @csrf
+                                    <button type="submit" class="clio-bi-btn clio-bi-btn--ghost">{{ __('Actualizar dataset') }}</button>
+                                </form>
+                            @endcan
+                        </div>
                     </div>
                 </header>
 

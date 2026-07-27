@@ -32,6 +32,17 @@
     {{ __('PDF Final') }}
 </x-dropdown-link>
 <x-dropdown-link
+    :href="route('clio.campaigns.export.pdf-mapa-coleta', $campaign)"
+    icon="map"
+    :title="__('MAPA de Coleta — tabelas quantitativas enxutas para leitura rápida')"
+    data-serv-loading-on-click
+    data-serv-loading-download
+    data-serv-loading-title="{{ __('Gerando MAPA de Coleta') }}"
+    data-serv-loading-message="{{ __('Montando o inventário quantitativo. Aguarde…') }}"
+>
+    {{ __('MAPA de Coleta') }}
+</x-dropdown-link>
+<x-dropdown-link
     :href="route('clio.campaigns.export.xlsx', $campaign)"
     icon="clipboard-document-list"
     :title="__('Planilha Excel com escolas ativas e demais status')"

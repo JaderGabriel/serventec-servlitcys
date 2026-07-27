@@ -7,6 +7,7 @@ use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Export\CampaignExcelExporter;
 use App\Services\Clio\Export\CampaignFinalPdfExporter;
 use App\Services\Clio\Export\CampaignInsightsPdfExporter;
+use App\Services\Clio\Export\CampaignMapaColetaPdfExporter;
 use App\Services\Clio\Export\CampaignPdfExporter;
 use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Http\Response;
@@ -56,6 +57,16 @@ class CampaignExportController extends Controller
 
         return PulseOperationRecorder::measure(
             'clio:export:pdf-final',
+            fn (): Response => $exporter->download($campaign),
+        );
+    }
+
+    public function pdfMapaColeta(ClioCampaign $campaign, CampaignMapaColetaPdfExporter $exporter): Response
+    {
+        $this->authorize('export', $campaign);
+
+        return PulseOperationRecorder::measure(
+            'clio:export:pdf-mapa-coleta',
             fn (): Response => $exporter->download($campaign),
         );
     }
