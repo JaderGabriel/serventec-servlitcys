@@ -170,7 +170,9 @@
         @endif
 
         @foreach ($theme['tables'] ?? [] as $table)
-            @if (! empty($table['rows']))
+            @if (($table['kind'] ?? '') === \App\Services\Clio\Export\CensusExposurePdfTables::KIND_LEGEND)
+                @include('pdf.clio-campaign.partials.census-exposure-legend', ['table' => $table])
+            @elseif (! empty($table['rows']))
                 <h3 style="font-size: 11px; margin: 10px 0 4px;">{{ $table['title'] ?? __('Indicadores') }}</h3>
                 <table class="data" style="margin-bottom: 8px;">
                     <thead>
@@ -184,7 +186,9 @@
                         @foreach ($table['rows'] as $row)
                             <tr>
                                 @foreach ($row as $cell)
-                                    <td style="font-size: 9.5px;">{{ $cell }}</td>
+                                    <td style="font-size: 9.5px;">
+                                        @include('pdf.clio-campaign.partials.census-exposure-cell', ['cell' => $cell])
+                                    </td>
                                 @endforeach
                             </tr>
                         @endforeach

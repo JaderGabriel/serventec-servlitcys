@@ -93,15 +93,21 @@ final class CampaignMapaColetaComposer
 
         $tables = [];
         foreach ($this->censusExposureTables->format($censusMatrix) as $table) {
+            if (($table['kind'] ?? '') === CensusExposurePdfTables::KIND_LEGEND) {
+                $tables[] = $table;
+
+                continue;
+            }
             $tables[] = [
-                'title' => $table['title'],
-                'headers' => $table['headers'],
+                'kind' => $table['kind'] ?? null,
+                'title' => $table['title'] ?? null,
+                'headers' => $table['headers'] ?? [],
                 'rows' => array_map(static function (array $row): array {
                     return [
                         'cells' => $row,
                         'highlight' => false,
                     ];
-                }, $table['rows']),
+                }, $table['rows'] ?? []),
             ];
         }
 

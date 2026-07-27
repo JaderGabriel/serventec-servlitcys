@@ -73,6 +73,34 @@
     .pdf-footer__serventec { font-size: 6.5pt; font-weight: bold; color: {{ $secondary }}; text-align: right; display: block; }
     .pdf-footer__link { color: {{ $primary }}; text-decoration: none; font-size: 6pt; }
 
+    /* Exposição das matrículas — Urbana / Rural */
+    .exp-urb { color: #0369a1; font-weight: bold; }
+    .exp-rur { color: #c2410c; font-weight: bold; }
+    .exp-sep { color: #94a3b8; font-weight: normal; }
+    .exp-legend {
+        margin: 2px 0 10px;
+        padding: 6px 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        page-break-inside: avoid;
+    }
+    .exp-legend__note { margin: 0 0 4px; font-size: 8pt; color: #475569; }
+    .exp-legend__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .exp-legend__item { width: 50%; vertical-align: top; font-size: 8pt; color: #334155; padding: 2px 4px 0 0; }
+    .exp-legend__swatch {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+    .exp-legend__swatch--urb { background: #0369a1; }
+    .exp-legend__swatch--rur { background: #c2410c; }
+    .exp-legend__sample { margin-right: 3px; }
+    .exp-legend__hint { color: #64748b; font-weight: normal; }
+
     /* Capa profissional */
     .cover-page { page-break-after: always; padding: 0; }
     .cover-pro__band { background: {{ $primary }}; color: #fff; padding: 0; }

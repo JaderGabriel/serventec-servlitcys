@@ -243,14 +243,19 @@ final class CampaignFinalPdfComposerTest extends TestCase
             ],
         ]);
 
-        $this->assertCount(4, $tables);
+        $this->assertCount(5, $tables);
         $this->assertStringContainsString('Exposição das matrículas', (string) ($tables[0]['title'] ?? ''));
         $this->assertStringContainsString('Educação infantil', (string) ($tables[0]['title'] ?? ''));
         $this->assertSame(['Matrícula', 'Creche Parcial'], $tables[0]['headers']);
-        $this->assertSame(['Regular', '10 / 2'], $tables[0]['rows'][0]);
-        $this->assertSame(['Especial', '1 / 0'], $tables[0]['rows'][1]);
-        $this->assertStringContainsString('Análise geral', (string) ($tables[3]['title'] ?? ''));
-        $this->assertSame(['66', '1'], $tables[3]['rows'][0]);
+        $this->assertSame('Regular', $tables[0]['rows'][0][0]);
+        $this->assertSame('10 / 2', $tables[0]['rows'][0][1]['text']);
+        $this->assertSame('urbana', $tables[0]['rows'][0][1]['parts'][0]['tone']);
+        $this->assertSame('rural', $tables[0]['rows'][0][1]['parts'][2]['tone']);
+        $this->assertSame('Especial', $tables[0]['rows'][1][0]);
+        $this->assertSame('1 / 0', $tables[0]['rows'][1][1]['text']);
+        $this->assertSame(CensusExposurePdfTables::KIND_LEGEND, $tables[3]['kind']);
+        $this->assertStringContainsString('Análise geral', (string) ($tables[4]['title'] ?? ''));
+        $this->assertSame(['66', '1'], $tables[4]['rows'][0]);
     }
 
     #[Test]

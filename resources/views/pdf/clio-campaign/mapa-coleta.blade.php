@@ -79,7 +79,9 @@
     <div class="mapa-section">
         <h2>{{ $section['title'] ?? '' }}</h2>
         @foreach ($section['tables'] ?? [] as $table)
-            @if (! empty($table['rows']))
+            @if (($table['kind'] ?? '') === \App\Services\Clio\Export\CensusExposurePdfTables::KIND_LEGEND)
+                @include('pdf.clio-campaign.partials.census-exposure-legend', ['table' => $table])
+            @elseif (! empty($table['rows']))
                 @if (filled($table['title'] ?? null))
                     <h3>{{ $table['title'] }}</h3>
                 @endif
@@ -101,6 +103,7 @@
                                 @foreach ($cells as $cell)
                                     @php
                                         $isRich = is_array($cell);
+                                        $hasParts = $isRich && is_array($cell['parts'] ?? null);
                                         $text = $isRich ? (string) ($cell['text'] ?? '') : (string) $cell;
                                         $tone = $isRich ? (string) ($cell['tone'] ?? '') : '';
                                     @endphp
@@ -108,7 +111,13 @@
                                         'tone-emerald' => $tone === 'emerald',
                                         'tone-amber' => $tone === 'amber',
                                         'tone-rose' => $tone === 'rose',
-                                    ])>{{ $text }}</td>
+                                    ])>
+                                        @if ($hasParts)
+                                            @include('pdf.clio-campaign.partials.census-exposure-cell', ['cell' => $cell])
+                                        @else
+                                            {{ $text }}
+                                        @endif
+                                    </td>
                                 @endforeach
                             </tr>
                         @endforeach

@@ -132,7 +132,11 @@ final class CampaignMapaColetaComposerTest extends TestCase
         ], [], $matrix);
 
         $this->assertStringContainsString('Exposição das matrículas', (string) ($section['tables'][0]['title'] ?? ''));
-        $this->assertSame(['Regular', '10 / 2'], $section['tables'][0]['rows'][0]['cells']);
+        $this->assertSame('Regular', $section['tables'][0]['rows'][0]['cells'][0]);
+        $this->assertSame('10 / 2', $section['tables'][0]['rows'][0]['cells'][1]['text']);
+        $legend = collect($section['tables'])->firstWhere('kind', \App\Services\Clio\Export\CensusExposurePdfTables::KIND_LEGEND);
+        $this->assertIsArray($legend);
+        $this->assertNotEmpty($legend['items'] ?? []);
 
         $qualidade = collect($section['tables'])->firstWhere('title', __('Qualidade da coleta'));
         $this->assertIsArray($qualidade);

@@ -4,13 +4,17 @@ namespace App\Services\Clio\Export;
 
 /**
  * Converte a matriz «Exposição das matrículas — escolas ativas» (análise)
- * em tabelas planas para PDFs (células Urbana / Rural).
+ * em tabelas planas para PDFs (células Urbana / Rural coloridas).
  */
 final class CensusExposurePdfTables
 {
+    public const KIND_EXPOSURE = 'census_exposure';
+
+    public const KIND_LEGEND = 'census_exposure_legend';
+
     /**
      * @param  array<string, mixed>  $matrix
-     * @return list<array{title: string, headers: list<string>, rows: list<list<string>>}>
+     * @return list<array<string, mixed>>
      */
     public function format(array $matrix): array
     {
@@ -40,16 +44,21 @@ final class CensusExposurePdfTables
                     $vals = $block['values'][$col['key']] ?? [];
                     $u = (int) ($vals['Urbana'][$modKey] ?? 0);
                     $r = (int) ($vals['Rural'][$modKey] ?? 0);
-                    $row[] = $this->fmtInt($u).' / '.$this->fmtInt($r);
+                    $row[] = $this->locationCell($u, $r);
                 }
                 $rows[] = $row;
             }
 
             $tables[] = [
+                'kind' => self::KIND_EXPOSURE,
                 'title' => $prefix.' — '.(string) ($block['title'] ?? $blockKey),
                 'headers' => $headers,
                 'rows' => $rows,
             ];
+        }
+
+        if ($tables !== []) {
+            $tables[] = $this->legendTable();
         }
 
         $geral = is_array($matrix['geral'] ?? null) ? $matrix['geral'] : [];
@@ -61,6 +70,7 @@ final class CensusExposurePdfTables
                 $row[] = $this->fmtInt($geral['values'][$col['key']] ?? 0);
             }
             $tables[] = [
+                'kind' => self::KIND_EXPOSURE,
                 'title' => $prefix.' — '.(string) ($geral['title'] ?? __('Análise geral')),
                 'headers' => $headers,
                 'rows' => [$row],
@@ -68,6 +78,50 @@ final class CensusExposurePdfTables
         }
 
         return $tables;
+    }
+
+    /**
+     * @return array{kind: string, title: null, note: string, items: list<array{tone: string, label: string, sample: string, hint: string}>}
+     */
+    public function legendTable(): array
+    {
+        return [
+            'kind' => self::KIND_LEGEND,
+            'title' => null,
+            'note' => __('Em cada célula, o par x / y indica a localização da escola:'),
+            'items' => [
+                [
+                    'tone' => 'urbana',
+                    'label' => __('Urbana'),
+                    'sample' => 'x',
+                    'hint' => __('primeiro número — matrículas em escolas urbanas'),
+                ],
+                [
+                    'tone' => 'rural',
+                    'label' => __('Rural'),
+                    'sample' => 'y',
+                    'hint' => __('segundo número — matrículas em escolas rurais'),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{text: string, parts: list<array{text: string, tone: string|null}>}
+     */
+    private function locationCell(int $u, int $r): array
+    {
+        $uText = $this->fmtInt($u);
+        $rText = $this->fmtInt($r);
+
+        return [
+            'text' => $uText.' / '.$rText,
+            'parts' => [
+                ['text' => $uText, 'tone' => 'urbana'],
+                ['text' => ' / ', 'tone' => 'sep'],
+                ['text' => $rText, 'tone' => 'rural'],
+            ],
+        ];
     }
 
     private function fmtInt(mixed $n): string
