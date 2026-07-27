@@ -23,6 +23,8 @@ final class CampaignMapaColetaComposer
         private readonly CampaignParseService $parser,
         private readonly CampaignAnalysisPresenter $presenter,
         private readonly CampaignSchoolTimeComposer $schoolTime,
+        private readonly CampaignActiveCensusMatrixBuilder $censusMatrixBuilder,
+        private readonly CensusExposurePdfTables $censusExposureTables = new CensusExposurePdfTables,
         private readonly RelationCsvAggregator $aggregator = new RelationCsvAggregator,
         private readonly CsvReader $csv = new CsvReader,
     ) {}
@@ -51,9 +53,10 @@ final class CampaignMapaColetaComposer
             $campaign->findings,
         );
         $schoolTime = $this->schoolTime->compose($campaign);
+        $censusMatrix = $this->censusMatrixBuilder->build($campaign);
 
         $sections = array_values(array_filter([
-            $this->sectionResumo($dashboard, $coverage),
+            $this->sectionResumo($dashboard, $coverage, $censusMatrix),
             $this->sectionEducacaoEspecial($dashboard),
             $this->sectionCorRacaSexo($dashboard),
             $this->sectionEja($dashboard, $schoolTime),
@@ -71,9 +74,10 @@ final class CampaignMapaColetaComposer
     /**
      * @param  array<string, mixed>  $dashboard
      * @param  array<string, mixed>  $coverage
+     * @param  array<string, mixed>  $censusMatrix
      * @return array{key: string, title: string, tables: list<array<string, mixed>>}
      */
-    private function sectionResumo(array $dashboard, array $coverage): array
+    private function sectionResumo(array $dashboard, array $coverage, array $censusMatrix = []): array
     {
         $counters = is_array($dashboard['counters'] ?? null) ? $dashboard['counters'] : [];
         $triade = is_array($dashboard['triade'] ?? null) ? $dashboard['triade'] : [];
@@ -87,7 +91,21 @@ final class CampaignMapaColetaComposer
             ? $triadeComplete.' ('.$this->fmtPct($triadePct).')'
             : $triadeComplete;
 
-        $rows = [
+        $tables = [];
+        foreach ($this->censusExposureTables->format($censusMatrix) as $table) {
+            $tables[] = [
+                'title' => $table['title'],
+                'headers' => $table['headers'],
+                'rows' => array_map(static function (array $row): array {
+                    return [
+                        'cells' => $row,
+                        'highlight' => false,
+                    ];
+                }, $table['rows']),
+            ];
+        }
+
+        $qualidadeRows = [
             [
                 'cells' => [__('Escolas ativas'), $this->fmtInt($counters['schools_active'] ?? $coverage['schools_active'] ?? 0)],
                 'highlight' => false,
@@ -117,24 +135,40 @@ final class CampaignMapaColetaComposer
             if (! is_array($tile)) {
                 continue;
             }
-            $rows[] = [
-                'cells' => [
-                    $this->cleanResumoLabel((string) ($tile['label'] ?? '—')),
-                    (string) ($tile['value'] ?? '—'),
-                ],
+            $label = $this->cleanResumoLabel((string) ($tile['label'] ?? '—'));
+            if ($this->isEnrollmentTotalCoveredByExposure($label)) {
+                continue;
+            }
+            $qualidadeRows[] = [
+                'cells' => [$label, (string) ($tile['value'] ?? '—')],
                 'highlight' => false,
             ];
         }
 
+        $tables[] = [
+            'title' => __('Qualidade da coleta'),
+            'headers' => [__('Indicador'), __('Valor')],
+            'rows' => $qualidadeRows,
+        ];
+
         return [
             'key' => 'resumo',
-            'title' => __('1. Resumo quantitativo geral'),
-            'tables' => [[
-                'title' => null,
-                'headers' => [__('Indicador'), __('Valor')],
-                'rows' => $rows,
-            ]],
+            'title' => __('1. Exposição das matrículas'),
+            'tables' => $tables,
         ];
+    }
+
+    /**
+     * Totais de matrícula já cobertos pela matriz de exposição (análise).
+     */
+    private function isEnrollmentTotalCoveredByExposure(string $label): bool
+    {
+        $lower = mb_strtolower($label);
+
+        return str_contains($lower, 'aluno')
+            || str_contains($lower, 'curricular')
+            || preg_match('/\baee\b/u', $lower) === 1
+            || str_contains($lower, 'complementar');
     }
 
     private function cleanResumoLabel(string $label): string
@@ -290,6 +324,8 @@ final class CampaignMapaColetaComposer
      */
     private function sectionEja(array $dashboard, array $schoolTime): ?array
     {
+        unset($dashboard);
+
         $ejaSeg = null;
         foreach (is_array($schoolTime['segments'] ?? null) ? $schoolTime['segments'] : [] as $seg) {
             if (is_array($seg) && (string) ($seg['key'] ?? '') === 'eja') {
@@ -298,100 +334,73 @@ final class CampaignMapaColetaComposer
             }
         }
 
-        $report = is_array($dashboard['report'] ?? null) ? $dashboard['report'] : [];
-        $etapaBars = is_array($report['matriculas_por_ano'] ?? null) ? $report['matriculas_por_ano'] : [];
-        $ejaEtapaRows = [];
-        foreach ($etapaBars as $bar) {
-            if (! is_array($bar)) {
-                continue;
-            }
-            $label = (string) ($bar['label'] ?? '');
-            if (preg_match('/\beja\b|jovens e adultos/iu', $label) !== 1) {
-                continue;
-            }
-            $ejaEtapaRows[] = [
-                'cells' => [$label, $this->fmtInt($bar['count'] ?? 0)],
-                'highlight' => false,
-            ];
-        }
-
-        if ($ejaSeg === null && $ejaEtapaRows === []) {
+        if ($ejaSeg === null) {
             return null;
         }
 
         $tables = [];
-        if ($ejaSeg !== null) {
-            $tables[] = [
-                'title' => __('Totais EJA'),
-                'headers' => [__('Indicador'), __('Valor')],
-                'rows' => [
-                    ['cells' => [__('Turmas'), $this->fmtInt($ejaSeg['turmas'] ?? 0)], 'highlight' => false],
-                    ['cells' => [__('Alunos'), $this->fmtInt($ejaSeg['alunos'] ?? 0)], 'highlight' => false],
-                    ['cells' => [__('CH média (h/sem.)'), $this->fmtNum($ejaSeg['ch_media_aluno'] ?? null)], 'highlight' => false],
-                ],
-            ];
+        $tables[] = [
+            'title' => __('Totais EJA'),
+            'headers' => [__('Indicador'), __('Valor')],
+            'rows' => [
+                ['cells' => [__('Turmas'), $this->fmtInt($ejaSeg['turmas'] ?? 0)], 'highlight' => false],
+                ['cells' => [__('Alunos'), $this->fmtInt($ejaSeg['alunos'] ?? 0)], 'highlight' => false],
+                ['cells' => [__('CH média (h/sem.)'), $this->fmtNum($ejaSeg['ch_media_aluno'] ?? null)], 'highlight' => false],
+            ],
+        ];
 
-            $lt20Turmas = 0;
-            $lt20Alunos = 0;
-            $gt30Turmas = 0;
-            $gt30Alunos = 0;
-            $chRows = [];
-            foreach (is_array($ejaSeg['ch_options'] ?? null) ? $ejaSeg['ch_options'] : [] as $opt) {
-                if (! is_array($opt)) {
-                    continue;
-                }
-                $hours = (float) ($opt['hours'] ?? 0);
-                $turmas = (int) ($opt['turmas'] ?? 0);
-                $alunos = (int) ($opt['alunos'] ?? 0);
-                $lt20 = $hours < 20.0;
-                $gt30 = $hours > 30.0;
-                if ($lt20) {
-                    $lt20Turmas += $turmas;
-                    $lt20Alunos += $alunos;
-                }
-                if ($gt30) {
-                    $gt30Turmas += $turmas;
-                    $gt30Alunos += $alunos;
-                }
-                $chRows[] = [
-                    'cells' => [
-                        (string) ($opt['label'] ?? $this->fmtNum($hours).' h'),
-                        $this->fmtInt($turmas),
-                        $this->fmtInt($alunos),
-                    ],
-                    'highlight' => $lt20 || $gt30,
-                ];
+        $lt20Turmas = 0;
+        $lt20Alunos = 0;
+        $gt30Turmas = 0;
+        $gt30Alunos = 0;
+        $chRows = [];
+        foreach (is_array($ejaSeg['ch_options'] ?? null) ? $ejaSeg['ch_options'] : [] as $opt) {
+            if (! is_array($opt)) {
+                continue;
             }
-
-            $tables[] = [
-                'title' => __('Destaque de carga horária'),
-                'headers' => [__('Faixa'), __('Turmas'), __('Alunos')],
-                'rows' => [
-                    [
-                        'cells' => [__('< 20 h/semana'), $this->fmtInt($lt20Turmas), $this->fmtInt($lt20Alunos)],
-                        'highlight' => $lt20Turmas > 0,
-                    ],
-                    [
-                        'cells' => [__('> 30 h/semana'), $this->fmtInt($gt30Turmas), $this->fmtInt($gt30Alunos)],
-                        'highlight' => $gt30Turmas > 0,
-                    ],
-                ],
-            ];
-
-            if ($chRows !== []) {
-                $tables[] = [
-                    'title' => __('Turmas EJA por CH'),
-                    'headers' => [__('Carga'), __('Turmas'), __('Alunos')],
-                    'rows' => $chRows,
-                ];
+            $hours = (float) ($opt['hours'] ?? 0);
+            $turmas = (int) ($opt['turmas'] ?? 0);
+            $alunos = (int) ($opt['alunos'] ?? 0);
+            $lt20 = $hours < 20.0;
+            $gt30 = $hours > 30.0;
+            if ($lt20) {
+                $lt20Turmas += $turmas;
+                $lt20Alunos += $alunos;
             }
+            if ($gt30) {
+                $gt30Turmas += $turmas;
+                $gt30Alunos += $alunos;
+            }
+            $chRows[] = [
+                'cells' => [
+                    (string) ($opt['label'] ?? $this->fmtNum($hours).' h'),
+                    $this->fmtInt($turmas),
+                    $this->fmtInt($alunos),
+                ],
+                'highlight' => $lt20 || $gt30,
+            ];
         }
 
-        if ($ejaEtapaRows !== []) {
+        $tables[] = [
+            'title' => __('Destaque de carga horária'),
+            'headers' => [__('Faixa'), __('Turmas'), __('Alunos')],
+            'rows' => [
+                [
+                    'cells' => [__('< 20 h/semana'), $this->fmtInt($lt20Turmas), $this->fmtInt($lt20Alunos)],
+                    'highlight' => $lt20Turmas > 0,
+                ],
+                [
+                    'cells' => [__('> 30 h/semana'), $this->fmtInt($gt30Turmas), $this->fmtInt($gt30Alunos)],
+                    'highlight' => $gt30Turmas > 0,
+                ],
+            ],
+        ];
+
+        if ($chRows !== []) {
             $tables[] = [
-                'title' => __('Matrículas por etapa EJA'),
-                'headers' => [__('Etapa'), __('Alunos')],
-                'rows' => $ejaEtapaRows,
+                'title' => __('Turmas EJA por CH'),
+                'headers' => [__('Carga'), __('Turmas'), __('Alunos')],
+                'rows' => $chRows,
             ];
         }
 

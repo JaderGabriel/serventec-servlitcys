@@ -7,6 +7,7 @@ use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Export\CampaignActiveCensusMatrixBuilder;
 use App\Services\Clio\Export\CampaignFinalPdfComposer;
+use App\Services\Clio\Export\CensusExposurePdfTables;
 use App\Services\Clio\Export\DiagnosticoGeralComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Services\Horizonte\HorizonteMunicipioEnrollmentSeriesService;
@@ -178,10 +179,7 @@ final class CampaignFinalPdfComposerTest extends TestCase
     #[Test]
     public function census_exposure_tables_converte_matriz_da_analise(): void
     {
-        $composer = $this->composer();
-        $method = new ReflectionMethod(CampaignFinalPdfComposer::class, 'censusExposureTables');
-
-        $tables = $method->invoke($composer, [
+        $tables = (new CensusExposurePdfTables)->format([
             'available' => true,
             'year' => 2025,
             'infantil' => [

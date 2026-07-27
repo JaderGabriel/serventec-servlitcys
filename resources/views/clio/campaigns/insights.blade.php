@@ -67,11 +67,11 @@
                                 · {{ __('Fonte bi_clio_*') }}
                             </p>
                         </div>
-                        <div class="clio-bi-hero__actions">
+                        <div class="clio-bi-hero__actions flex flex-row flex-wrap items-center gap-2 shrink-0">
                             @can('export', $campaign)
                                 <a
                                     href="{{ route('clio.campaigns.export.pdf-mapa-coleta', $campaign) }}"
-                                    class="clio-bi-btn clio-bi-btn--ghost"
+                                    class="clio-bi-btn clio-bi-btn--ghost shrink-0"
                                     data-serv-loading-on-click
                                     data-serv-loading-download
                                     data-serv-loading-title="{{ __('Gerando MAPA de Coleta') }}"
@@ -81,7 +81,7 @@
                                 @include('clio.campaigns.partials.downloads-menu', ['campaign' => $campaign])
                             @endcan
                             @can('analyze', $campaign)
-                                <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="shrink-0">
+                                <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="inline-flex shrink-0">
                                     @csrf
                                     <button type="submit" class="clio-bi-btn clio-bi-btn--ghost">{{ __('Atualizar dataset') }}</button>
                                 </form>
