@@ -3,10 +3,15 @@
 namespace App\Services\Clio\Export;
 
 use App\Models\Clio\ClioCampaign;
+use App\Models\Clio\ClioCampaignArtifact;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
 use App\Services\Clio\Analysis\EtapaLabelOrder;
+use App\Services\Clio\Analysis\RelationCsvAggregator;
 use App\Services\Clio\Parse\CampaignParseService;
+use App\Services\Clio\Parse\CsvReader;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * MAPA de Coleta — tabelas quantitativas enxutas (sem textos diagnósticos).
@@ -18,6 +23,8 @@ final class CampaignMapaColetaComposer
         private readonly CampaignParseService $parser,
         private readonly CampaignAnalysisPresenter $presenter,
         private readonly CampaignSchoolTimeComposer $schoolTime,
+        private readonly RelationCsvAggregator $aggregator = new RelationCsvAggregator,
+        private readonly CsvReader $csv = new CsvReader,
     ) {}
 
     /**
@@ -51,7 +58,7 @@ final class CampaignMapaColetaComposer
             $this->sectionCorRacaSexo($dashboard),
             $this->sectionEja($dashboard, $schoolTime),
             $this->sectionTransporte($dashboard),
-            $this->sectionTempoIntegral($dashboard, $schoolTime),
+            $this->sectionTempoIntegral($campaign, $dashboard, $schoolTime),
             $this->sectionDistorcao($dashboard),
         ], static fn (?array $section): bool => $section !== null));
 
@@ -73,29 +80,35 @@ final class CampaignMapaColetaComposer
         $report = is_array($dashboard['report'] ?? null) ? $dashboard['report'] : [];
         $totals = is_array($report['totals'] ?? null) ? $report['totals'] : [];
 
+        $triadePct = $triade['pct'] ?? $coverage['triade_coverage_pct'] ?? null;
+        $triadeTone = $this->triadeTone($triadePct);
+        $triadeComplete = $this->fmtInt($triade['complete'] ?? $coverage['schools_triade_complete'] ?? 0);
+        $triadeValue = is_numeric($triadePct)
+            ? $triadeComplete.' ('.$this->fmtPct($triadePct).')'
+            : $triadeComplete;
+
         $rows = [
             [
-                'cells' => [__('Escolas ativas'), $this->fmtInt($counters['schools_active'] ?? $coverage['schools_active'] ?? 0), ''],
+                'cells' => [__('Escolas ativas'), $this->fmtInt($counters['schools_active'] ?? $coverage['schools_active'] ?? 0)],
                 'highlight' => false,
             ],
             [
                 'cells' => [
                     __('Tríade completa'),
-                    $this->fmtInt($triade['complete'] ?? $coverage['schools_triade_complete'] ?? 0),
-                    $this->fmtPct($triade['pct'] ?? $coverage['triade_coverage_pct'] ?? null),
+                    ['text' => $triadeValue, 'tone' => $triadeTone],
                 ],
                 'highlight' => false,
             ],
             [
-                'cells' => [__('Escolas com erros'), $this->fmtInt($counters['schools_with_errors'] ?? 0), ''],
+                'cells' => [__('Escolas com erros'), $this->fmtInt($counters['schools_with_errors'] ?? 0)],
                 'highlight' => ((int) ($counters['schools_with_errors'] ?? 0)) > 0,
             ],
             [
-                'cells' => [__('Erros na coleta'), $this->fmtInt($counters['errors'] ?? 0), ''],
+                'cells' => [__('Erros na coleta'), $this->fmtInt($counters['errors'] ?? 0)],
                 'highlight' => ((int) ($counters['errors'] ?? 0)) > 0,
             ],
             [
-                'cells' => [__('Avisos na coleta'), $this->fmtInt($counters['warnings'] ?? 0), ''],
+                'cells' => [__('Avisos na coleta'), $this->fmtInt($counters['warnings'] ?? 0)],
                 'highlight' => false,
             ],
         ];
@@ -106,9 +119,8 @@ final class CampaignMapaColetaComposer
             }
             $rows[] = [
                 'cells' => [
-                    (string) ($tile['label'] ?? '—'),
+                    $this->cleanResumoLabel((string) ($tile['label'] ?? '—')),
                     (string) ($tile['value'] ?? '—'),
-                    '',
                 ],
                 'highlight' => false,
             ];
@@ -119,10 +131,33 @@ final class CampaignMapaColetaComposer
             'title' => __('1. Resumo quantitativo geral'),
             'tables' => [[
                 'title' => null,
-                'headers' => [__('Indicador'), __('Valor'), __('%')],
+                'headers' => [__('Indicador'), __('Valor')],
                 'rows' => $rows,
             ]],
         ];
+    }
+
+    private function cleanResumoLabel(string $label): string
+    {
+        $trimmed = trim(preg_replace('/\s*\(Acomp\)\s*/iu', ' ', $label) ?? $label);
+
+        return $trimmed !== '' ? $trimmed : $label;
+    }
+
+    private function triadeTone(mixed $pct): ?string
+    {
+        if (! is_numeric($pct)) {
+            return null;
+        }
+        $value = (float) $pct;
+        if ($value >= 90.0) {
+            return 'emerald';
+        }
+        if ($value >= 80.0) {
+            return 'amber';
+        }
+
+        return 'rose';
     }
 
     /**
@@ -454,7 +489,7 @@ final class CampaignMapaColetaComposer
      * @param  array<string, mixed>  $schoolTime
      * @return array{key: string, title: string, tables: list<array<string, mixed>>}|null
      */
-    private function sectionTempoIntegral(array $dashboard, array $schoolTime): ?array
+    private function sectionTempoIntegral(ClioCampaign $campaign, array $dashboard, array $schoolTime): ?array
     {
         $wanted = ['infantil', 'fundamental_1', 'fundamental_2', 'medio'];
         $segmentRows = [];
@@ -495,7 +530,17 @@ final class CampaignMapaColetaComposer
             ];
         }
 
-        if ($segmentRows === [] && $chRows === []) {
+        $flags = $this->countExtendedFlagsWithoutLegalCh($campaign);
+        $infantilEst = (int) ($jornada['infantil_turma_estendida'] ?? 0);
+        $fundAee = (int) ($jornada['fund_aee_contraturno'] ?? 0);
+        $currAc = (int) ($jornada['curricular_ac'] ?? 0);
+        $hasSinais = $infantilEst > 0
+            || $fundAee > 0
+            || $currAc > 0
+            || ($flags['integral_sem_ch_legal'] ?? 0) > 0
+            || ($flags['curricular_ac_sem_ch_legal'] ?? 0) > 0;
+
+        if ($segmentRows === [] && $chRows === [] && ! $hasSinais) {
             return null;
         }
 
@@ -515,12 +560,40 @@ final class CampaignMapaColetaComposer
             ];
         }
 
-        $extra = [];
-        $infantilEst = (int) ($jornada['infantil_turma_estendida'] ?? 0);
-        $fundAee = (int) ($jornada['fund_aee_contraturno'] ?? 0);
-        if ($infantilEst > 0 || $fundAee > 0) {
-            $extra[] = ['cells' => [__('Infantil turma estendida'), $this->fmtInt($infantilEst)], 'highlight' => $infantilEst > 0];
-            $extra[] = ['cells' => [__('Fund. + AEE contraturno'), $this->fmtInt($fundAee)], 'highlight' => false];
+        if ($hasSinais) {
+            $extra = [];
+            if ($infantilEst > 0) {
+                $extra[] = [
+                    'cells' => [__('Infantil turma estendida'), $this->fmtInt($infantilEst)],
+                    'highlight' => true,
+                ];
+            }
+            if ($fundAee > 0) {
+                $extra[] = [
+                    'cells' => [__('Fund. + AEE contraturno'), $this->fmtInt($fundAee)],
+                    'highlight' => false,
+                ];
+            }
+            if ($currAc > 0) {
+                $extra[] = [
+                    'cells' => [__('Curricular + atividade complementar (pessoas)'), $this->fmtInt($currAc)],
+                    'highlight' => false,
+                ];
+            }
+            $extra[] = [
+                'cells' => [
+                    __('Flag integral / CH ≤ 20 h (turmas)'),
+                    $this->fmtInt($flags['integral_sem_ch_legal'] ?? 0),
+                ],
+                'highlight' => ((int) ($flags['integral_sem_ch_legal'] ?? 0)) > 0,
+            ];
+            $extra[] = [
+                'cells' => [
+                    __('Curricular + AC / CH ≤ 20 h (turmas)'),
+                    $this->fmtInt($flags['curricular_ac_sem_ch_legal'] ?? 0),
+                ],
+                'highlight' => ((int) ($flags['curricular_ac_sem_ch_legal'] ?? 0)) > 0,
+            ];
             $tables[] = [
                 'title' => __('Sinais de jornada estendida'),
                 'headers' => [__('Indicador'), __('Qtd.')],
@@ -533,6 +606,161 @@ final class CampaignMapaColetaComposer
             'title' => __('6. Tempo integral'),
             'tables' => $tables,
         ];
+    }
+
+    /**
+     * Turmas com indicação de tempo integral (turno/flag) ou envolvidas em
+     * curricular+AC, mas sem carga horária semanal superior a 20 h — corrige
+     * leitura de segmento sem lastro de CH legal.
+     *
+     * @return array{integral_sem_ch_legal: int, curricular_ac_sem_ch_legal: int}
+     */
+    private function countExtendedFlagsWithoutLegalCh(ClioCampaign $campaign): array
+    {
+        $disk = (string) config('clio.disk', 'local');
+        $profiles = [];
+        $tipos = [];
+
+        foreach ($campaign->artifacts as $artifact) {
+            if (! $artifact instanceof ClioCampaignArtifact || $artifact->kind !== 'relacao_turma_escola') {
+                continue;
+            }
+            $path = $this->absolutePath($disk, $artifact->storage_path);
+            if ($path === null) {
+                continue;
+            }
+            try {
+                $data = $this->csv->read($path, 1);
+                $agg = $this->aggregator->aggregateTurmas($data['rows'], $this->csv);
+            } catch (Throwable) {
+                continue;
+            }
+            foreach (is_array($agg['turma_profiles'] ?? null) ? $agg['turma_profiles'] : [] as $code => $profile) {
+                if (! is_array($profile)) {
+                    continue;
+                }
+                $profiles[(string) $code] = $profile;
+            }
+            foreach ($data['rows'] as $row) {
+                $code = trim($this->csv->value($row, 'Código da turma'));
+                if ($code === '') {
+                    continue;
+                }
+                $tipos[$code] = trim($this->csv->value($row, 'Tipo de turma'));
+            }
+        }
+
+        $integralLow = [];
+        $currAcTipoLow = [];
+        foreach ($profiles as $code => $profile) {
+            $ch = isset($profile['ch_hours']) && is_numeric($profile['ch_hours'])
+                ? (float) $profile['ch_hours']
+                : null;
+            if ($ch !== null && $ch > 20.0) {
+                continue;
+            }
+            if (! empty($profile['extended'])) {
+                $integralLow[$code] = true;
+            }
+            $tipo = mb_strtolower((string) ($tipos[$code] ?? ''));
+            if (str_contains($tipo, 'curricular') && str_contains($tipo, 'atividade complementar')) {
+                $currAcTipoLow[$code] = true;
+            }
+        }
+
+        $currAcLow = $currAcTipoLow;
+        foreach ($campaign->artifacts as $artifact) {
+            if (! $artifact instanceof ClioCampaignArtifact || $artifact->kind !== 'relacao_aluno_escola') {
+                continue;
+            }
+            $path = $this->absolutePath($disk, $artifact->storage_path);
+            if ($path === null) {
+                continue;
+            }
+            try {
+                $data = $this->csv->read($path, 1);
+                $pattern = $this->aggregator->aggregateEnrollmentDayPatterns(
+                    $data['rows'],
+                    $this->csv,
+                    $profiles,
+                );
+            } catch (Throwable) {
+                continue;
+            }
+
+            // Reconstroi pares curricular+AC a partir das matrículas da escola.
+            $byPerson = [];
+            foreach ($data['rows'] as $row) {
+                $id = trim($this->csv->value($row, 'Identificação única'));
+                if ($id === '') {
+                    $id = trim($this->csv->value($row, 'Código da Matrícula'));
+                }
+                if ($id === '') {
+                    $id = trim($this->csv->value($row, 'Código da matrícula'));
+                }
+                if ($id === '') {
+                    continue;
+                }
+                $turma = trim($this->csv->value($row, 'Código da turma'));
+                if ($turma === '') {
+                    continue;
+                }
+                $byPerson[$id]['turmas'][$turma] = $turma;
+            }
+
+            foreach ($byPerson as $person) {
+                $codes = array_values($person['turmas'] ?? []);
+                $buckets = [];
+                foreach ($codes as $code) {
+                    $bucket = (string) ($profiles[$code]['bucket'] ?? '');
+                    if ($bucket !== '') {
+                        $buckets[$bucket][$code] = true;
+                    }
+                }
+                if (! isset($buckets[RelationCsvAggregator::BUCKET_CURRICULAR], $buckets[RelationCsvAggregator::BUCKET_AC])) {
+                    continue;
+                }
+                foreach (array_keys($buckets[RelationCsvAggregator::BUCKET_CURRICULAR]) as $code) {
+                    $ch = isset($profiles[$code]['ch_hours']) && is_numeric($profiles[$code]['ch_hours'])
+                        ? (float) $profiles[$code]['ch_hours']
+                        : null;
+                    if ($ch !== null && $ch > 20.0) {
+                        continue;
+                    }
+                    $currAcLow[$code] = true;
+                }
+                foreach (array_keys($buckets[RelationCsvAggregator::BUCKET_AC]) as $code) {
+                    $ch = isset($profiles[$code]['ch_hours']) && is_numeric($profiles[$code]['ch_hours'])
+                        ? (float) $profiles[$code]['ch_hours']
+                        : null;
+                    if ($ch !== null && $ch > 20.0) {
+                        continue;
+                    }
+                    $currAcLow[$code] = true;
+                }
+            }
+
+            unset($pattern);
+        }
+
+        return [
+            'integral_sem_ch_legal' => count($integralLow),
+            'curricular_ac_sem_ch_legal' => count($currAcLow),
+        ];
+    }
+
+    private function absolutePath(string $disk, ?string $storagePath): ?string
+    {
+        if ($storagePath === null || $storagePath === '') {
+            return null;
+        }
+        try {
+            $path = Storage::disk($disk)->path($storagePath);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_file($path) && is_readable($path) ? $path : null;
     }
 
     /**

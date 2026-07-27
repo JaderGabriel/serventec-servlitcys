@@ -160,7 +160,7 @@ final class ClioBiDashboardComposer
             if ($isHorizontal) {
                 $options['skipHorizontalBarAutoHeight'] = true;
                 if (! isset($options['minChartHeight'])) {
-                    $options['minChartHeight'] = 260;
+                    $options['minChartHeight'] = 220;
                 }
             }
         }
@@ -268,7 +268,7 @@ final class ClioBiDashboardComposer
             $out['tra_veiculo'] = $traVeic;
         }
 
-        $rebucketed = (new \App\Services\Clio\Analysis\RelationCsvAggregator)->rebucketTurnoCounts(
+        $rebucketed = (new RelationCsvAggregator)->rebucketTurnoCounts(
             is_array($jor['by_turno'] ?? null) ? $jor['by_turno'] : [],
             is_array($jor['by_turno_outros'] ?? null) ? $jor['by_turno_outros'] : [],
         );

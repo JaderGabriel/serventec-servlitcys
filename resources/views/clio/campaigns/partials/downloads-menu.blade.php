@@ -25,7 +25,7 @@
             </x-slot>
         </x-dropdown>
     @else
-        <x-dropdown align="right" width="56" contentClasses="py-1 bg-white dark:bg-gray-800" class="shrink-0">
+        <x-dropdown align="right" width="56" contentClasses="py-1 bg-white dark:bg-gray-800" class="relative z-40 shrink-0">
             <x-slot name="trigger">
                 <button
                     type="button"

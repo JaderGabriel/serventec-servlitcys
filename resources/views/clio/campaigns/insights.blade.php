@@ -48,7 +48,7 @@
                 <div class="clio-bi-empty">
                     <p class="clio-bi-empty__kicker">{{ __('Primeira carga') }}</p>
                     <p class="clio-bi-empty__title">{{ __('Dataset BI ainda não foi gerado') }}</p>
-                    <p class="clio-bi-empty__lead">{{ __('Gere o data mart municipal para activar o painel gerencial e as visualizações.') }}</p>
+                    <p class="clio-bi-empty__lead">{{ __('Gere o data mart municipal para ativar o painel gerencial e as visualizações.') }}</p>
                     @can('analyze', $campaign)
                         <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="mt-4">
                             @csrf
@@ -63,11 +63,11 @@
                             <p class="clio-bi-hero__kicker">{{ __('Painel gerencial · leitura sem PII') }}</p>
                             <h3 class="clio-bi-hero__title">{{ __('Visão executiva da Matrícula inicial') }}</h3>
                             <p class="clio-bi-hero__meta">
-                                {{ __('Actualizado em :d', ['d' => $bi->refreshed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—']) }}
+                                {{ __('Atualizado em :d', ['d' => $bi->refreshed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') ?? '—']) }}
                                 · {{ __('Fonte bi_clio_*') }}
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <div class="clio-bi-hero__actions">
                             @can('export', $campaign)
                                 <a
                                     href="{{ route('clio.campaigns.export.pdf-mapa-coleta', $campaign) }}"
@@ -83,7 +83,7 @@
                             @can('analyze', $campaign)
                                 <form method="post" action="{{ route('clio.campaigns.insights.refresh', $campaign) }}" class="shrink-0">
                                     @csrf
-                                    <button type="submit" class="clio-bi-btn clio-bi-btn--ghost">{{ __('Actualizar dataset') }}</button>
+                                    <button type="submit" class="clio-bi-btn clio-bi-btn--ghost">{{ __('Atualizar dataset') }}</button>
                                 </form>
                             @endcan
                         </div>
@@ -143,7 +143,8 @@
                                 'eyebrow' => __('Cobertura e qualidade'),
                                 'title' => __('Tríade e achados'),
                                 'lead' => __('Completude dos arquivos e apontamentos da análise.'),
-                                'keys' => ['triade', 'findings', 'qualidade', 'triade_parts', 'localizacao'],
+                                /** Sem triade_parts/qualidade — repetiam o KPI e o gráfico de findings. */
+                                'keys' => ['triade', 'findings', 'localizacao'],
                             ],
                             [
                                 'id' => 'matriculas',
@@ -152,15 +153,15 @@
                                 'lead' => __('Acompanhamento, tipos de turma e pirâmide por etapa.'),
                                 'keys' => ['matriculas', 'turmas_tipo', 'etapas'],
                                 'wide' => ['etapas'],
-                                'full' => ['etapas'],
                                 'dense' => ['etapas'],
                             ],
                             [
                                 'id' => 'pedagogico',
                                 'eyebrow' => __('Fluxo escolar'),
                                 'title' => __('Distorção, densidade e docentes'),
-                                'lead' => __('Indicadores de adequação idade-série e organização das turmas.'),
-                                'keys' => ['distorcao_stack', 'densidade', 'docentes', 'distorcao_etapas'],
+                                'lead' => __('Adequação idade-série e organização das turmas.'),
+                                /** distorcao_stack omitido — o KPI já resume %; etapas traz o detalhe. */
+                                'keys' => ['densidade', 'docentes', 'distorcao_etapas'],
                                 'wide' => ['distorcao_etapas'],
                                 'full' => ['distorcao_etapas'],
                                 'dense' => ['distorcao_etapas'],
@@ -176,19 +177,18 @@
                             ],
                             [
                                 'id' => 'transporte',
-                                'eyebrow' => __('Tempo escolar'),
-                                'title' => __('Transporte'),
-                                'lead' => __('Usuários de transporte e tipificação de veículos (escolas ativas).'),
+                                'eyebrow' => __('Acesso'),
+                                'title' => __('Transporte escolar'),
+                                'lead' => __('Usuários e tipificação de veículos (escolas ativas).'),
                                 'keys' => ['tra_local', 'tra_veiculo'],
                             ],
                             [
                                 'id' => 'jornada',
                                 'eyebrow' => __('Tempo escolar'),
-                                'title' => __('Jornada / tempo'),
-                                'lead' => __('Turnos e padrões de carga horária na rede.'),
+                                'title' => __('Jornada / carga horária'),
+                                'lead' => __('Turnos e padrões de CH na rede.'),
                                 'keys' => ['jornada_turno', 'jornada_padroes'],
-                                'wide' => ['jornada_turno', 'jornada_padroes'],
-                                'dense' => ['jornada_turno', 'jornada_padroes'],
+                                'wide' => ['jornada_padroes'],
                             ],
                             [
                                 'id' => 'demografia',
@@ -196,7 +196,6 @@
                                 'title' => __('Demografia'),
                                 'lead' => __('Cor/Raça, sexo e faixa etária agregados (sem PII).'),
                                 'keys' => ['dem_cor', 'dem_sexo', 'dem_idade'],
-                                /** Cards compactos — poucas categorias; evita wide/dense (altura excessiva). */
                                 'slim' => ['dem_cor', 'dem_sexo', 'dem_idade'],
                                 'grid' => 'profile',
                             ],
@@ -206,9 +205,9 @@
                                 'title' => __('Escolas e cruzamentos'),
                                 'lead' => __('Deltas, score de atenção e lacuna Clio × i-Educar.'),
                                 'keys' => ['gap', 'deltas', 'escolas'],
-                                'wide' => ['deltas', 'escolas'],
-                                'full' => ['deltas', 'escolas'],
-                                'dense' => ['deltas', 'escolas'],
+                                'wide' => ['deltas'],
+                                'full' => ['escolas'],
+                                'dense' => ['escolas'],
                             ],
                         ];
                     @endphp

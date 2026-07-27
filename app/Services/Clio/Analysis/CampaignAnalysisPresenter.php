@@ -5,6 +5,7 @@ namespace App\Services\Clio\Analysis;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Models\Clio\ClioCampaignInference;
+use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Support\ClioUserCopy;
 use Illuminate\Support\Collection;
 
@@ -531,9 +532,9 @@ final class CampaignAnalysisPresenter
         }
 
         $modalityBars = [
-            ['label' => __('Curricular (Acomp)'), 'count' => $curricular, 'tone' => 'sky'],
-            ['label' => __('AEE (Acomp)'), 'count' => $aee, 'tone' => 'emerald'],
-            ['label' => __('Ativ. complementar (Acomp)'), 'count' => $ac, 'tone' => 'amber'],
+            ['label' => __('Curricular'), 'count' => $curricular, 'tone' => 'sky'],
+            ['label' => __('AEE'), 'count' => $aee, 'tone' => 'emerald'],
+            ['label' => __('Ativ. complementar'), 'count' => $ac, 'tone' => 'amber'],
         ];
         $modalityMax = max(1, $curricular, $aee, $ac);
 
@@ -561,9 +562,9 @@ final class CampaignAnalysisPresenter
                     'tone' => 'sky',
                 ],
                 [
-                    'label' => __('Curricular (Acomp)'),
+                    'label' => __('Curricular'),
                     'value' => number_format($curricular),
-                    'hint' => __('Total matrículas - Curricular'),
+                    'hint' => __('Total matrículas curriculares'),
                     'tone' => 'emerald',
                 ],
                 [
@@ -617,7 +618,7 @@ final class CampaignAnalysisPresenter
 
     /**
      * @param  array<string, mixed>|null  $coverageRow
-     * @param  Collection<int, \App\Models\Clio\ClioCampaignFinding>  $findings
+     * @param  Collection<int, ClioCampaignFinding>  $findings
      * @return array<string, mixed>
      */
     /**
@@ -626,7 +627,7 @@ final class CampaignAnalysisPresenter
      * @return array<string, mixed>
      */
     public function presentSchool(
-        \App\Models\Clio\ClioCampaignSchool $school,
+        ClioCampaignSchool $school,
         ?array $coverageRow,
         Collection $findings,
         ?Collection $inferences = null,
@@ -855,7 +856,7 @@ final class CampaignAnalysisPresenter
      * @return array<string, mixed>
      */
     private function buildSchoolAnalytics(
-        \App\Models\Clio\ClioCampaignSchool $school,
+        ClioCampaignSchool $school,
         Collection $inferences,
         ?ClioCampaign $campaign = null,
     ): array {
@@ -1155,7 +1156,7 @@ final class CampaignAnalysisPresenter
     /**
      * @return array<string, mixed>
      */
-    private function mergeArtifactAggregates(\App\Models\Clio\ClioCampaignSchool $school, string $kind): array
+    private function mergeArtifactAggregates(ClioCampaignSchool $school, string $kind): array
     {
         $merged = [];
         foreach ($school->artifacts ?? [] as $artifact) {
@@ -2122,7 +2123,7 @@ final class CampaignAnalysisPresenter
         ];
     }
 
-    private function isSchoolBlocked(?\App\Models\Clio\ClioCampaignSchool $school): bool
+    private function isSchoolBlocked(?ClioCampaignSchool $school): bool
     {
         if ($school === null) {
             return false;

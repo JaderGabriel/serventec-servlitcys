@@ -67,11 +67,11 @@ class CampaignInsightsController extends Controller
             ClioCampaign::STATUS_ANALYZED,
             ClioCampaign::STATUS_CROSS_CHECKED,
         ], true)) {
-            return back()->with('error', __('Analise a coleta antes de actualizar o dataset BI.'));
+            return back()->with('error', __('Analise a coleta antes de atualizar o dataset BI.'));
         }
 
         $bi->refreshCampaign($campaign);
 
-        return back()->with('success', __('Dataset BI e insights actualizados.'));
+        return back()->with('success', __('Dataset BI e insights atualizados.'));
     }
 }

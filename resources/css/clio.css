@@ -752,7 +752,8 @@
 
 .clio-bi-hero {
     position: relative;
-    overflow: hidden;
+    z-index: 20;
+    overflow: visible;
     border-radius: 0.75rem;
     border: 1px solid rgb(226 232 240);
     background: rgb(255 255 255);
@@ -768,6 +769,10 @@
 
 .clio-bi-hero__body {
     @apply relative z-[1] flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5;
+}
+
+.clio-bi-hero__actions {
+    @apply relative z-30 flex flex-wrap items-center gap-2 shrink-0;
 }
 
 .clio-bi-hero__kicker {
@@ -1009,33 +1014,33 @@
     min-width: 2rem;
 }
 
-/* Cards padrão: altura confortável para leitura */
+/* Cards padrão: altura confortável para leitura (sem exagerar o scroll) */
 .clio-bi-dash .chart-panel-host > div.relative.isolate {
     flex: 1 1 auto;
-    min-height: 18rem !important;
-    height: 20rem !important;
-    max-height: 22rem !important;
+    min-height: 14.5rem !important;
+    height: 16rem !important;
+    max-height: 17.5rem !important;
     padding: 0.55rem 0.7rem !important;
     overflow: auto !important;
 }
 
 .clio-bi-dash__cell--wide:not(.clio-bi-dash__cell--dense) .chart-panel-host > div.relative.isolate {
-    min-height: 19rem !important;
-    height: 21rem !important;
-    max-height: 23rem !important;
-}
-
-.clio-bi-dash .chart-panel-host canvas.chart-panel-canvas {
+    min-height: 15.5rem !important;
+    height: 17rem !important;
     max-height: 18.5rem !important;
 }
 
+.clio-bi-dash .chart-panel-host canvas.chart-panel-canvas {
+    max-height: 14.5rem !important;
+}
+
 .clio-bi-dash__cell--wide:not(.clio-bi-dash__cell--dense) .chart-panel-host canvas.chart-panel-canvas {
-    max-height: 19.5rem !important;
+    max-height: 15.5rem !important;
 }
 
 /* Cards densos (muitas categorias): crescem com o conteúdo, sem teto baixo */
 .clio-bi-dash__cell--dense .chart-panel-host > div.relative.isolate {
-    min-height: 26rem !important;
+    min-height: 20rem !important;
     height: auto !important;
     max-height: none !important;
     padding: 0.65rem 0.85rem !important;
@@ -1043,7 +1048,7 @@
 
 .clio-bi-dash__cell--dense.clio-bi-dash__cell--full .chart-panel-host > div.relative.isolate,
 .clio-bi-dash__cell--dense.clio-bi-dash__cell--wide .chart-panel-host > div.relative.isolate {
-    min-height: 28rem !important;
+    min-height: 22rem !important;
 }
 
 .clio-bi-dash__cell--dense .chart-panel-host canvas.chart-panel-canvas {

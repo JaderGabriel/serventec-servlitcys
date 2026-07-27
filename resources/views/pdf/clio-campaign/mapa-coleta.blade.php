@@ -25,6 +25,9 @@
         table.data tr.row-hl td { background: #fff7ed; font-weight: 600; color: #9a3412; }
         table.data td { font-size: 9px; }
         table.data th { font-size: 8px; }
+        .tone-emerald { color: #047857; font-weight: 700; }
+        .tone-amber { color: #b45309; font-weight: 700; }
+        .tone-rose { color: #be123c; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -95,7 +98,16 @@
                             @endphp
                             <tr @class(['row-hl' => $hl])>
                                 @foreach ($cells as $cell)
-                                    <td>{{ $cell }}</td>
+                                    @php
+                                        $isRich = is_array($cell);
+                                        $text = $isRich ? (string) ($cell['text'] ?? '') : (string) $cell;
+                                        $tone = $isRich ? (string) ($cell['tone'] ?? '') : '';
+                                    @endphp
+                                    <td @class([
+                                        'tone-emerald' => $tone === 'emerald',
+                                        'tone-amber' => $tone === 'amber',
+                                        'tone-rose' => $tone === 'rose',
+                                    ])>{{ $text }}</td>
                                 @endforeach
                             </tr>
                         @endforeach

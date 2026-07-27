@@ -36,7 +36,36 @@ final class CampaignMapaColetaComposerTest extends TestCase
 
         $this->assertSame('resumo', $section['key']);
         $this->assertStringContainsString('Resumo quantitativo', (string) ($section['title'] ?? ''));
-        $this->assertNotEmpty($section['tables'][0]['rows'] ?? []);
+        $this->assertSame([__('Indicador'), __('Valor')], $section['tables'][0]['headers']);
+        $triade = $section['tables'][0]['rows'][1];
+        $this->assertSame(__('Tríade completa'), $triade['cells'][0]);
+        $this->assertIsArray($triade['cells'][1]);
+        $this->assertSame('10 (83,3%)', $triade['cells'][1]['text']);
+        $this->assertSame('amber', $triade['cells'][1]['tone']);
+    }
+
+    #[Test]
+    public function resumo_remove_acomp_do_label_curricular(): void
+    {
+        $composer = app(CampaignMapaColetaComposer::class);
+        $method = new ReflectionMethod(CampaignMapaColetaComposer::class, 'sectionResumo');
+
+        $section = $method->invoke($composer, [
+            'counters' => [],
+            'triade' => ['complete' => 9, 'pct' => 95.0],
+            'report' => [
+                'totals' => [
+                    ['label' => 'Curricular (Acomp)', 'value' => '1.200'],
+                ],
+            ],
+        ], []);
+
+        $labels = collect($section['tables'][0]['rows'])
+            ->map(static fn (array $row): string => (string) ($row['cells'][0] ?? ''))
+            ->all();
+        $this->assertContains('Curricular', $labels);
+        $this->assertNotContains('Curricular (Acomp)', $labels);
+        $this->assertSame('emerald', $section['tables'][0]['rows'][1]['cells'][1]['tone']);
     }
 
     #[Test]
