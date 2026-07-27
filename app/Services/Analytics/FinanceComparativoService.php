@@ -62,6 +62,8 @@ final class FinanceComparativoService
         $empty = [
             'available' => false,
             'city_name' => (string) ($city->name ?? ''),
+            'uf' => strtoupper(trim((string) ($city->uf ?? ''))),
+            'ibge' => preg_replace('/\D+/', '', (string) ($city->ibge_municipio ?? '')) ?: '',
             'base_year' => $baseYear,
             'prev_year' => $prevYear,
             'next_year' => $nextYear,
@@ -161,6 +163,8 @@ final class FinanceComparativoService
         $report = [
             'available' => true,
             'city_name' => (string) ($city->name ?? ''),
+            'uf' => strtoupper(trim((string) ($city->uf ?? ''))),
+            'ibge' => preg_replace('/\D+/', '', (string) ($city->ibge_municipio ?? '')) ?: '',
             'base_year' => $baseYear,
             'prev_year' => $prevYear,
             'next_year' => $nextYear,

@@ -36,6 +36,7 @@
     $coverage = is_array($coverage ?? null) ? $coverage : [];
 @endphp
 
+@include('pdf.partials.fixed-header')
 <div class="pdf-footer">
     <div class="pdf-footer__accent"></div>
     <div class="pdf-footer__body">

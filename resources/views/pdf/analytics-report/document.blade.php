@@ -36,6 +36,10 @@
     @include('pdf.analytics-report.partials.pdf-styles', ['colors' => $colors])
 </head>
 <body>
+    @include('pdf.partials.fixed-header', [
+        'cover' => $cover,
+        'generated_at' => $generated_at ?? null,
+    ])
     @include('pdf.analytics-report.footer', [
         'brand' => $brand,
         'colors' => $colors,

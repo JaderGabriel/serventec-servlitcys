@@ -53,6 +53,7 @@
     $counters = is_array(($dashboard['counters'] ?? null)) ? $dashboard['counters'] : [];
 @endphp
 
+@include('pdf.partials.fixed-header')
 <div class="pdf-footer">
     <div class="pdf-footer__accent"></div>
     <div class="pdf-footer__body">

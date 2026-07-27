@@ -16,6 +16,7 @@
     $blocos = is_array($informe['blocos'] ?? null) ? $informe['blocos'] : [];
 @endphp
 
+@include('pdf.partials.fixed-header', ['data' => $d])
 <div class="pdf-footer">
     <div class="pdf-footer__accent"></div>
     <div class="pdf-footer__body">

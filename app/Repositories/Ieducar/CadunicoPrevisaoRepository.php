@@ -42,6 +42,8 @@ final class CadunicoPrevisaoRepository
         $empty = [
             'available' => false,
             'city_name' => (string) ($city->name ?? ''),
+            'uf' => strtoupper(trim((string) ($city->uf ?? ''))),
+            'ibge' => preg_replace('/\D+/', '', (string) ($city->ibge_municipio ?? '')) ?: '',
             'year_label' => '',
             'intro' => '',
             'footnote' => __('Indicadores agregados CadÚnico (Cecad). Não utiliza CPF/NIS individuais. Valores FUNDEB são indicativos (base × VAAF).'),

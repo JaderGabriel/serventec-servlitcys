@@ -2,16 +2,53 @@
     $primary = $colors['primary'] ?? '#0f766e';
     $secondary = $colors['secondary'] ?? '#4338ca';
     $primaryLight = $colors['primary_light'] ?? '#ccfbf1';
+    $pdfHeaderH = 34;
+    $pdfMarginTop = 46;
     $pdfFooterH = 76;
     $pdfMarginBottom = 88;
 @endphp
 <style>
-    @page { margin: 52pt 32pt {{ $pdfMarginBottom }}pt 32pt; }
+    @page { margin: {{ $pdfMarginTop }}pt 32pt {{ $pdfMarginBottom }}pt 32pt; }
     body {
         font-family: DejaVu Sans, sans-serif;
         font-size: 10pt;
         color: #0f172a;
         line-height: 1.45;
+    }
+
+    /* Cabeçalho fixo — reserva margem superior para não sobrepor o conteúdo */
+    .pdf-header {
+        position: fixed;
+        top: -{{ $pdfHeaderH }}pt;
+        left: 0;
+        right: 0;
+        height: {{ $pdfHeaderH }}pt;
+        font-size: 6.5pt;
+        color: #475569;
+        z-index: 10;
+    }
+    .pdf-header__body { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 4px 0 3px; }
+    .pdf-header__accent { height: 2px; background: {{ $primary }}; }
+    .pdf-header__table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .pdf-header__cell { vertical-align: top; padding: 0 4px; width: 25%; }
+    .pdf-header__cell--city { width: 34%; }
+    .pdf-header__cell--emit { width: 22%; text-align: right; }
+    .pdf-header__label {
+        display: block;
+        font-size: 5.5pt;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #94a3b8;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+    .pdf-header__value {
+        display: block;
+        font-size: 7pt;
+        font-weight: bold;
+        color: #0f172a;
+        margin-top: 1px;
+        line-height: 1.25;
     }
 
     /* Rodapé fixo — reserva margem inferior para não sobrepor o conteúdo */

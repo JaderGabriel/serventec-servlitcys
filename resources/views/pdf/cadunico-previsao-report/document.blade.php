@@ -21,6 +21,7 @@
     $demandaOferta = is_array($d['demanda_oferta'] ?? null) ? $d['demanda_oferta'] : [];
 @endphp
 
+@include('pdf.partials.fixed-header', ['data' => $d])
 <div class="pdf-footer">
     <div class="pdf-footer__accent"></div>
     <div class="pdf-footer__body">
