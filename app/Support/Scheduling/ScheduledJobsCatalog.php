@@ -7,10 +7,13 @@ use App\Support\Cadunico\CadunicoEscolarizacaoFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteFortnightlyFeedScheduleCadence;
 use App\Support\Horizonte\HorizonteSiconfiScheduleCadence;
 use Carbon\CarbonInterface;
+use Cron\CronExpression;
+use DateTimeZone;
 use Illuminate\Console\Scheduling\CallbackEvent;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
@@ -38,16 +41,17 @@ final class ScheduledJobsCatalog
 
         $ttl = max(15, min(300, (int) config('schedule.catalog_cache_seconds', 60)));
 
-        return \Illuminate\Support\Facades\Cache::remember(
-            'admin:scheduled_jobs_catalog:v1',
+        return Cache::remember(
+            'admin:scheduled_jobs_catalog:v2',
             $ttl,
-            static fn (): array => self::buildFresh(app(Schedule::class)),
+            static fn (): array => self::buildFresh(),
         );
     }
 
     public static function forgetCache(): void
     {
-        \Illuminate\Support\Facades\Cache::forget('admin:scheduled_jobs_catalog:v1');
+        Cache::forget('admin:scheduled_jobs_catalog:v1');
+        Cache::forget('admin:scheduled_jobs_catalog:v2');
     }
 
     /**
@@ -63,7 +67,7 @@ final class ScheduledJobsCatalog
      */
     public static function buildFresh(?Schedule $schedule = null): array
     {
-        $schedule ??= app(Schedule::class);
+        $schedule = ApplicationScheduleBootstrap::ensureRegistered($schedule);
         $timezone = (string) config('app.timezone', 'UTC');
         $runnerMinutes = max(1, min(59, (int) config('schedule.runner_interval_minutes', 3)));
         $metaByName = self::metadataByName();
@@ -246,15 +250,31 @@ final class ScheduledJobsCatalog
     private static function nextRunAt(Event $event, string $timezone): ?CarbonInterface
     {
         try {
-            $next = $event->nextRunDate(Carbon::now($timezone), 0);
-            if ($next instanceof CarbonInterface) {
-                return $next->timezone($timezone);
+            $tz = new DateTimeZone($timezone);
+            $eventTimezone = $event->timezone ?? $timezone;
+
+            if ($event->isRepeatable()) {
+                $previousDue = Carbon::instance(
+                    (new CronExpression($event->getExpression()))
+                        ->getPreviousRunDate(Carbon::now()->setTimezone($eventTimezone), allowCurrentDate: true)
+                        ->setTimezone($tz),
+                );
+                $now = Carbon::now()->setTimezone($eventTimezone);
+                if ($now->copy()->startOfMinute()->eq($previousDue)) {
+                    return $now->endOfSecond()->ceilSeconds((int) $event->repeatSeconds)->timezone($timezone);
+                }
             }
+
+            $next = Carbon::instance(
+                (new CronExpression($event->getExpression()))
+                    ->getNextRunDate(Carbon::now()->setTimezone($eventTimezone))
+                    ->setTimezone($tz),
+            );
+
+            return $next->timezone($timezone);
         } catch (Throwable) {
             return null;
         }
-
-        return null;
     }
 
     private static function humanizeExpression(string $expression): string

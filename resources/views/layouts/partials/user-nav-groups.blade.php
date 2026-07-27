@@ -123,8 +123,8 @@
             'title' => __('Operação'),
             'icon' => 'computer-desktop',
             'tone' => 'slate',
-            'routes' => ['admin.module-monitor.*', 'pulse'],
-            'items' => [
+            'routes' => ['admin.module-monitor.*', 'pulse', 'admin.sync-queue.*', 'sync-queue.*'],
+            'items' => array_values(array_filter([
                 [
                     'show' => true,
                     'href' => route('admin.module-monitor.index'),
@@ -141,7 +141,15 @@
                     'active' => $req->routeIs('pulse'),
                     'title' => __('Monitorização em tempo real — pedidos, SQL e infraestrutura (Laravel Pulse).'),
                 ],
-            ],
+                [
+                    'show' => $user->canViewSyncQueue(),
+                    'href' => route($syncQueueRoutePrefix.'.index'),
+                    'label' => __('Filas de processamento'),
+                    'icon' => 'queue-list',
+                    'active' => $req->routeIs(['admin.sync-queue.*', 'sync-queue.*']),
+                    'title' => __('Sincronizações, exportações PDF e inventário de agendamentos (schedule:run).'),
+                ],
+            ])),
         ],
         [
             'show' => $user->canImportOrConfigure(),
