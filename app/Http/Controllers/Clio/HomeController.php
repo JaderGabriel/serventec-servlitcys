@@ -6,11 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Models\Clio\ClioCampaignFinding;
+use App\Services\Clio\Home\ClioHomeMunicipalityCards;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    public function __construct(
+        private readonly ClioHomeMunicipalityCards $municipalityCards,
+    ) {}
+
     public function __invoke(Request $request): View
     {
         $this->authorize('viewAny', ClioCampaign::class);
@@ -82,9 +88,24 @@ class HomeController extends Controller
             });
         }
 
-        $campaigns = $campaignsQuery
-            ->paginate(24)
-            ->withQueryString();
+        $allCampaigns = $campaignsQuery->get();
+        $municipalityCards = $this->municipalityCards->group($allCampaigns);
+
+        $perPage = 24;
+        $page = max(1, $request->integer('page') ?: 1);
+        $totalMunicipalities = $municipalityCards->count();
+        $pageItems = $municipalityCards->forPage($page, $perPage)->values();
+
+        $paginator = new LengthAwarePaginator(
+            $pageItems,
+            $totalMunicipalities,
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ],
+        );
 
         $yearBase = ClioCampaign::query()->where('year', $filterYear);
 
@@ -121,8 +142,11 @@ class HomeController extends Controller
             ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())
             ->filter(fn ($v) => $v !== null);
 
+        $collectionsCount = $allCampaigns->count();
+
         return view('clio.home', [
-            'campaigns' => $campaigns,
+            'municipalityCards' => $paginator,
+            'collectionsCount' => $collectionsCount,
             'years' => $years,
             'filterYear' => $filterYear,
             'search' => $q,

@@ -101,11 +101,25 @@ function chartOptions() {
 }
 
 /**
- * Slider do card municipal: cobertura da tríade ↔ série histórica (Censo INEP).
+ * Slider do card municipal: cobertura da tríade ↔ série histórica (Censo INEP),
+ * com troca opcional entre coletas do mesmo município.
  *
- * @param {string} seriesUrl
+ * @param {string|object} config
  */
-export default function clioReportCard(seriesUrl) {
+export default function clioReportCard(config) {
+    const opts =
+        typeof config === "string"
+            ? { seriesUrl: config, collections: [], selectedId: null }
+            : config && typeof config === "object"
+              ? config
+              : {};
+
+    const collections = Array.isArray(opts.collections) ? opts.collections : [];
+    const initialId =
+        opts.selectedId ||
+        collections[0]?.id ||
+        null;
+
     return {
         panel: "coverage",
         loading: false,
@@ -114,10 +128,28 @@ export default function clioReportCard(seriesUrl) {
         stageCounters: [],
         latestSummary: null,
         footnote: "",
-        seriesUrl: typeof seriesUrl === "string" ? seriesUrl : "",
+        collections,
+        selectedId: initialId,
+        exportOpen: false,
+        seriesUrl:
+            typeof opts.seriesUrl === "string"
+                ? opts.seriesUrl
+                : collections[0]?.series_url || "",
         _chart: null,
         _abort: null,
         _renderGen: 0,
+
+        get current() {
+            return (
+                this.collections.find((c) => c.id === this.selectedId) ||
+                this.collections[0] ||
+                {}
+            );
+        },
+
+        get hasMultipleCollections() {
+            return this.collections.length > 1;
+        },
 
         get isSeries() {
             return this.panel === "series";
@@ -131,6 +163,26 @@ export default function clioReportCard(seriesUrl) {
             return this.isSeries
                 ? "Voltar à cobertura da tríade"
                 : "Ver série histórica de matrículas (rede municipal)";
+        },
+
+        selectCollection(id) {
+            if (!id || id === this.selectedId) {
+                return;
+            }
+            this.selectedId = id;
+            this.exportOpen = false;
+            const nextUrl = this.current?.series_url;
+            if (typeof nextUrl === "string" && nextUrl !== "" && nextUrl !== this.seriesUrl) {
+                this.seriesUrl = nextUrl;
+                this.loaded = false;
+                this.destroyChart();
+                this.error = null;
+                this.stageCounters = [];
+                this.latestSummary = null;
+                if (this.isSeries) {
+                    this.$nextTick(() => this.ensureSeries());
+                }
+            }
         },
 
         togglePanel() {
