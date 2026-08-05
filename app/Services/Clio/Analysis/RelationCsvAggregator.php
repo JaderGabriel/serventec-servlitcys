@@ -1192,7 +1192,7 @@ final class RelationCsvAggregator
         return 0;
     }
 
-    private function parseCargaHoraria(string $raw): ?float
+    public function parseCargaHoraria(string $raw): ?float
     {
         $raw = trim($raw);
         if ($raw === '') {
@@ -1984,14 +1984,24 @@ final class RelationCsvAggregator
     /**
      * Turma com funcionamento estendido (turno integral ou CH semanal ≥ 35h).
      */
-    private function isExtendedHours(string $turnoRaw, ?float $chHours): bool
+    public function isExtendedHours(string $turnoRaw, ?float $chHours): bool
     {
-        $t = mb_strtolower(trim($turnoRaw));
-        if ($t !== '' && preg_match('/integral|tempo\s*integral|estendid|manh[aã].*tarde|tarde.*manh[aã]/u', $t) === 1) {
-            return true;
-        }
+        return CampaignOperationalRules::isIntegralHours($chHours, $turnoRaw);
+    }
 
-        return $chHours !== null && $chHours >= 35.0;
+    public function isAcEligibleForIntegralProxy(?float $chHours): bool
+    {
+        return CampaignOperationalRules::isAcEligibleForIntegralProxy($chHours);
+    }
+
+    public function isAcBelowFloor(?float $chHours): bool
+    {
+        return CampaignOperationalRules::isAcBelowFloor($chHours);
+    }
+
+    public function isEjaLowHours(?float $chHours): bool
+    {
+        return CampaignOperationalRules::isEjaLowHours($chHours);
     }
 
     private function isInfantilEtapa(string $etapa, string $agregada): bool

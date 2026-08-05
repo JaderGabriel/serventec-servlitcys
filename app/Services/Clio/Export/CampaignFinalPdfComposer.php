@@ -522,7 +522,11 @@ final class CampaignFinalPdfComposer
         $campaign->loadMissing('schools');
         $out = [];
         foreach ($campaign->schools as $school) {
-            if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status ?? null)) {
+            if (! CampaignAnalysisPresenter::isOperationallyEligible(
+                $school->functioning_status ?? null,
+                $school->dependency ?? null,
+                is_array($school->meta ?? null) ? $school->meta : [],
+            )) {
                 continue;
             }
             try {

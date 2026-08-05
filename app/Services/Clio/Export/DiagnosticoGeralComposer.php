@@ -105,7 +105,11 @@ final class DiagnosticoGeralComposer
             if (! $school instanceof ClioCampaignSchool) {
                 continue;
             }
-            if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status)) {
+            if (! CampaignAnalysisPresenter::isOperationallyEligible(
+                $school->functioning_status,
+                $school->dependency,
+                is_array($school->meta) ? $school->meta : [],
+            )) {
                 continue;
             }
 

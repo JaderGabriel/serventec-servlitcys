@@ -124,6 +124,7 @@ final class ClioHomeMunicipalityCards
                 'export_final' => route('clio.campaigns.export.pdf-final', $campaign),
                 'export_mapa' => route('clio.campaigns.export.pdf-mapa-coleta', $campaign),
                 'export_xlsx' => route('clio.campaigns.export.xlsx', $campaign),
+                'export_xlsx_filtros' => route('clio.campaigns.export.xlsx-filtros', $campaign),
                 'analysis_only' => $campaign->isAnalysisOnly(),
                 'files' => $files,
             ];

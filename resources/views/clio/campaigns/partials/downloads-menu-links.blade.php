@@ -53,3 +53,14 @@
 >
     {{ __('Excel da coleta') }}
 </x-dropdown-link>
+<x-dropdown-link
+    :href="route('clio.campaigns.export.xlsx-filtros', $campaign)"
+    icon="queue-list"
+    :title="__('Excel de filtros operacionais — escolas aptas, PNATE, turmas parcial/integral e alertas')"
+    data-serv-loading-on-click
+    data-serv-loading-download
+    data-serv-loading-title="{{ __('Gerando Excel de filtros') }}"
+    data-serv-loading-message="{{ __('Aplicando filtros operacionais e montando o workbook. Aguarde…') }}"
+>
+    {{ __('Excel filtros operacionais') }}
+</x-dropdown-link>

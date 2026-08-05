@@ -2,7 +2,7 @@
 
 **Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24 · **Estado:** S1–S7 em produção; próximo S8 (promote i-Educar) · Hygieia
 
-> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
+> **Índice geral:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md) · **Landing:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Tempo escolar:** [CLIO_TEMPO_ESCOLAR.md](CLIO_TEMPO_ESCOLAR.md) · **Excel filtros operacionais:** [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md) · **Spec fechada (S1–S6):** [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) · **TODO código:** [CLIO_TODO_IMPLEMENTACAO.md](CLIO_TODO_IMPLEMENTACAO.md) · **Catálogo UI/INF-*:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md) · **Backlog:** [BACKLOG_IMPLEMENTACOES.md](BACKLOG_IMPLEMENTACOES.md) (`CEN-*`)
 
 Documento **vivo** do módulo Clio: o que está estável, quais indicadores o produto consolida hoje e o que ainda muda números/interpretação. A spec histórica de implementação permanece em [ROADMAP_EDUCACENSO…](ROADMAP_EDUCACENSO.md); este arquivo é o mapa operacional pós-MVP.
 
@@ -177,7 +177,17 @@ Itens que **mudam números, denominadores ou interpretação**. Prioridade relat
 | **CEN-11…13** | Mapa Relação → i-Educar, dry-run, promote | Não altera fórmulas; após promote, **gap** (`INF-GAP`) e painel analytics i-Educar passam a refletir a carga |
 | — | Auditoria / `--confirm=` | Rastreio de quem promoveu o que |
 
-### 3.5 Baixa / exploração
+### 3.5 Excel de filtros operacionais (`CLI-XLS-*`)
+
+Pacote de regras (Acomp + Relação turma/aluno) e workbook dedicado — **[ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md)**.
+
+| ID | Tema | Estado |
+|----|------|--------|
+| **CLI-XLS-00…01, 03–04, 06–08** | Regras aptas + Excel filtros + PNATE + menu | ✓ |
+| **CLI-XLS-02/05** | Ingest `JornadaEscolar` | Backlog P2 |
+| **CLI-XLS-09** | Refinar MAPA PDF | Parcial / P2 |
+
+### 3.6 Baixa / horizonte
 
 | Tema | Impacto potencial |
 |------|-------------------|
@@ -189,9 +199,10 @@ Itens que **mudam números, denominadores ou interpretação**. Prioridade relat
 
 ## 4. Ordem sugerida (próximos ciclos)
 
-1. **CEN-11…13 (S8)** — promote assistido i-Educar quando a consultoria pedir carga.  
-2. Comparativo Clio × microdados INEP (Horizonte) — benchmark externo.  
-3. 2ª etapa / rendimento — quando o portal exportar.
+1. **CLI-XLS-02/05** — JornadaEscolar se o pacote municipal passar a incluir o ficheiro.  
+2. **CEN-11…13 (S8)** — promote assistido i-Educar quando a consultoria pedir carga.  
+3. Comparativo Clio × microdados INEP (Horizonte) — benchmark externo.  
+4. 2ª etapa / rendimento — quando o portal exportar.
 
 ---
 

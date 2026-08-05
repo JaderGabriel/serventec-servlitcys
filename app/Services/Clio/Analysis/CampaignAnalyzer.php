@@ -1025,7 +1025,11 @@ final class CampaignAnalyzer
                 $locationRaw = (string) $acompLocations[$school->inep_code];
             }
             $location = $this->normalizeSchoolLocation($locationRaw);
-            $inactive = CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
+            $inactive = ! CampaignAnalysisPresenter::isOperationallyEligible(
+                $school->functioning_status,
+                $school->dependency,
+                $meta,
+            );
             $byVeiculoSchool = is_array($schoolAgg['by_veiculo_transporte'] ?? null)
                 ? $schoolAgg['by_veiculo_transporte']
                 : [];

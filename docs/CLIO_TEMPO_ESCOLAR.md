@@ -1,8 +1,8 @@
 # Clio — Tempo escolar (turmas e alunos)
 
-**Versão do produto:** 8.2.0 · **Última revisão:** 2026-07-24
+**Versão do produto:** 8.2.0 · **Última revisão:** 2026-08-05
 
-> **Índice:** [README.md](README.md) · **Módulo:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Roadmap:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Catálogo:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md)
+> **Índice:** [README.md](README.md) · **Módulo:** [modulos/MODULO_CLIO.md](modulos/MODULO_CLIO.md) · **Roadmap:** [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · **Filtros / Excel:** [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md) · **Catálogo:** [CLIO_CATALOGO_ERROS_E_RELATORIOS.md](CLIO_CATALOGO_ERROS_E_RELATORIOS.md)
 
 Documento **operacional** sobre como o Clio mede e apresenta o **tempo escolar semanal** a partir das Relações Educacenso (turmas × alunos), quais cenários existem e que resposta o produto dá em cada um.
 
@@ -136,6 +136,8 @@ Por isso é possível ter **média de horas na rede** (via Turno) e, ao mesmo te
 | Jornada ampliada | 25–34 | `ampliada` |
 | Tempo integral | ≥ 35 | `integral` |
 | Não informado | sem valor legível | `ni` / **N/I** |
+
+Na **matriz de exposição** e no **Excel de filtros**, o binário operacional é só parcial (&lt; 35 h) × integral (≥ 35 h / turno integral) — ver `CampaignOperationalRules` e [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md). Alertas operacionais: EJA com CH &lt; 20 h; AC com CH &lt; 15 h (piso para proxy de complementar).
 
 **N/I não é faixa pedagógica** — significa coluna presente, mas célula vazia, texto ilegível ou valor fora de 0–168 h.
 

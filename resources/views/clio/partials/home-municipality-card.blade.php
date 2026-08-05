@@ -220,6 +220,7 @@
                         <a :href="current.export_final" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('PDF Final') }}</a>
                         <a :href="current.export_mapa" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('MAPA de Coleta') }}</a>
                         <a :href="current.export_xlsx" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('Excel') }}</a>
+                        <a :href="current.export_xlsx_filtros" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('Excel filtros') }}</a>
                     </div>
                 </div>
             </div>

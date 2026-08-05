@@ -403,7 +403,12 @@ class ClioCampaign extends Model
             $triadeComplete = 0;
 
             foreach ($this->schools as $school) {
-                if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status)) {
+                $meta = is_array($school->meta) ? $school->meta : [];
+                if (! CampaignAnalysisPresenter::isOperationallyEligible(
+                    $school->functioning_status,
+                    $school->dependency,
+                    $meta,
+                )) {
                     $other++;
 
                     continue;

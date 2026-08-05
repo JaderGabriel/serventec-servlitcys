@@ -19,7 +19,7 @@ Mapa único dos **roadmaps construídos** (`ROADMAP_*.md`), com ligação por m�
 | [ROADMAP_CADUNICO.md](ROADMAP_CADUNICO.md) | CadÚnico | CUN-01/02 ✓ · CUN-03 pendente | CUN-* |
 | [ROADMAP_PEDAGOGIA_SAEB.md](ROADMAP_PEDAGOGIA_SAEB.md) | Pedagogia / SAEB | GRA-07 em andamento | GRA-* |
 | [ROADMAP_RX_CENSO.md](ROADMAP_RX_CENSO.md) | RX — Censo | Produção · S8 pendente | CEN-* |
-| [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | Clio | S1–S7 ✓ · S8 pendente | CEN-*, CLI-IND-* |
+| [ROADMAP_CLIO.md](ROADMAP_CLIO.md) | Clio | S1–S7 ✓ · S8 pendente · Excel filtros `CLI-XLS-*` | CEN-*, CLI-IND-*, CLI-XLS-* |
 | [ROADMAP_FUNDEB.md](ROADMAP_FUNDEB.md) | Financiamento FUNDEB | Onda 1 ✓ | FIN-* |
 | [ROADMAP_DADOS_PUBLICOS.md](ROADMAP_DADOS_PUBLICOS.md) | Dados públicos (admin) | Hubs + feed em produção | INT-*, INF-* |
 
@@ -29,6 +29,7 @@ Mapa único dos **roadmaps construídos** (`ROADMAP_*.md`), com ligação por m�
 |----------|------|--------|----------------|
 | [ROADMAP_CANTEIRO.md](ROADMAP_CANTEIRO.md) | Canteiro — obras educação | Fases 0–7 concluídas | HOR-19–21, INT-10 |
 | [ROADMAP_EDUCACENSO.md](ROADMAP_EDUCACENSO.md) | Spec Educacenso / Clio S1–S6 | Spec fechada | CEN-04…15 |
+| [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md) | Clio — Excel filtros operacionais | ✓ P0/P1 · P2 Jornada | CLI-XLS-* |
 | [ROADMAP_BASES_FINANCEIRAS.md](ROADMAP_BASES_FINANCEIRAS.md) | Motor bases financeiras | Planeado | FIN-* |
 | [PORTAL_TRANSPARENCIA_API.md](PORTAL_TRANSPARENCIA_API.md) | Portal Transparência — inventário API | Inventário + backlog | FIN-07–10, HOR-08b–g |
 | [ROADMAP_INCLUSAO.md](ROADMAP_INCLUSAO.md) | Inclusão NEE / cadastro | Parcial | CAD-*, PLG-* |

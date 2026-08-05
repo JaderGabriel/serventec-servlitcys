@@ -71,17 +71,54 @@ final class AcompColeta1EtapaParser implements ArtifactParser
                 'meta' => [
                     'blocked' => $this->csv->value($row, 'Escola Bloqueada'),
                     'location' => $this->csv->value($row, 'Localização'),
+                    'private_category' => $this->nullIfEmpty($this->firstHeaderValue($row, [
+                        'Categoria da escola privada',
+                        'Categoria da Escola Privada',
+                    ])),
+                    'partnership_authority' => $this->nullIfEmpty($this->firstHeaderValue($row, [
+                        'Poder público responsável pela parceria ou convênio',
+                        'Poder público responsável pela parceria',
+                        'Poder publico responsavel pela parceria ou convenio',
+                    ])),
                     'total_curricular' => $this->optionalNumeric($row, [
                         'Total matrículas - Curricular',
                     ]),
                     'total_aee' => $this->optionalNumeric($row, [
                         'Total matrículas - AEE',
                         'Total matrículas - Atendimento Educacional Especializado',
+                        'Total matrículas - Atividade Educacional Especializado (AEE)',
+                        'Total matrículas - Atendimento Educacional Especializado (AEE)',
                     ]),
                     'total_ac' => $this->optionalNumeric($row, [
                         'Total matrículas - AC',
                         'Total matrículas - Atividade Complementar',
                         'Total matrículas - Atividade complementar',
+                    ]),
+                    'total_curricular_ac' => $this->optionalNumeric($row, [
+                        'Total matrículas - Curricular com Atividade Complementar',
+                        'Total matrículas - Curricular com atividade complementar',
+                    ]),
+                    'mat_creche' => $this->optionalNumeric($row, [
+                        'Mat. presencial - Creche',
+                        'Matrículas presenciais - Creche',
+                    ]),
+                    'mat_pre_escola' => $this->optionalNumeric($row, [
+                        'Mat. presencial - Pré-escola',
+                        'Mat. presencial - Pre-escola',
+                        'Matrículas presenciais - Pré-escola',
+                    ]),
+                    'mat_fund_iniciais' => $this->optionalNumeric($row, [
+                        'Mat. presencial - Ensino Fundamental - Anos Iniciais',
+                        'Matrículas presenciais - Ensino Fundamental - Anos Iniciais',
+                    ]),
+                    'mat_fund_finais' => $this->optionalNumeric($row, [
+                        'Mat. presencial - Ensino Fundamental - Anos Finais',
+                        'Matrículas presenciais - Ensino Fundamental - Anos Finais',
+                    ]),
+                    'mat_eja' => $this->optionalNumeric($row, [
+                        'Mat. Presencial - EJA: Fundamental e FIC Integrado',
+                        'Mat. presencial - EJA: Fundamental e FIC Integrado',
+                        'Matrículas presenciais - EJA',
                     ]),
                     'matriculas_a_confirmar' => $this->optionalNumeric($row, [
                         'Matrículas a confirmar ou desconsiderar',
@@ -123,9 +160,27 @@ final class AcompColeta1EtapaParser implements ArtifactParser
         );
     }
 
-    private function nullIfEmpty(string $value): ?string
+    private function nullIfEmpty(?string $value): ?string
     {
+        $value = trim((string) $value);
+
         return $value === '' ? null : $value;
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     * @param  list<string>  $headers
+     */
+    private function firstHeaderValue(array $row, array $headers): string
+    {
+        foreach ($headers as $header) {
+            $raw = $this->csv->value($row, $header);
+            if ($raw !== '') {
+                return $raw;
+            }
+        }
+
+        return '';
     }
 
     /**

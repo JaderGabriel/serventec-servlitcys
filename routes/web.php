@@ -117,6 +117,7 @@ Route::middleware(['auth', 'verified', 'profile.complete'])->group(function () {
             Route::post('/coletas/{campaign}/drive/verificar', [CampaignDriveController::class, 'verify'])->name('campaigns.drive.verify');
             Route::post('/coletas/{campaign}/drive/importar', [CampaignDriveController::class, 'import'])->name('campaigns.drive.import');
             Route::get('/coletas/{campaign}/export/xlsx', [CampaignExportController::class, 'xlsx'])->name('campaigns.export.xlsx');
+            Route::get('/coletas/{campaign}/export/xlsx-filtros', [CampaignExportController::class, 'xlsxFiltros'])->name('campaigns.export.xlsx-filtros');
             Route::get('/coletas/{campaign}/export/csv', [CampaignExportController::class, 'csv'])->name('campaigns.export.csv');
             Route::get('/coletas/{campaign}/export/pdf', [CampaignExportController::class, 'pdf'])->name('campaigns.export.pdf');
             Route::get('/coletas/{campaign}/export/pdf-gestor', [CampaignExportController::class, 'pdfGestor'])->name('campaigns.export.pdf-gestor');

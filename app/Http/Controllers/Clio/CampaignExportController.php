@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Clio;
 use App\Http\Controllers\Controller;
 use App\Models\Clio\ClioCampaign;
 use App\Services\Clio\Export\CampaignExcelExporter;
+use App\Services\Clio\Export\CampaignFiltrosOperacionaisExcelExporter;
 use App\Services\Clio\Export\CampaignFinalPdfExporter;
 use App\Services\Clio\Export\CampaignInsightsPdfExporter;
 use App\Services\Clio\Export\CampaignMapaColetaPdfExporter;
@@ -21,6 +22,16 @@ class CampaignExportController extends Controller
 
         return PulseOperationRecorder::measure(
             'clio:export:xlsx',
+            fn (): StreamedResponse => $exporter->download($campaign),
+        );
+    }
+
+    public function xlsxFiltros(ClioCampaign $campaign, CampaignFiltrosOperacionaisExcelExporter $exporter): StreamedResponse
+    {
+        $this->authorize('export', $campaign);
+
+        return PulseOperationRecorder::measure(
+            'clio:export:xlsx-filtros',
             fn (): StreamedResponse => $exporter->download($campaign),
         );
     }

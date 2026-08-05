@@ -37,6 +37,23 @@ final class CampaignAnalysisPresenter
     }
 
     /**
+     * Escopo operacional: em atividade e apta (Municipal ∪ filantrópica com parceria municipal).
+     *
+     * @param  array<string, mixed>|null  $meta
+     */
+    public static function isOperationallyEligible(
+        ?string $functioningStatus,
+        ?string $dependency = null,
+        ?array $meta = null,
+    ): bool {
+        return CampaignOperationalRules::isOperationallyEligible(
+            $functioningStatus,
+            $dependency,
+            $meta,
+        );
+    }
+
+    /**
      * Rótulo curto para o chip (usa o texto do Acomp quando reconhecível).
      */
     public static function inactiveStatusLabel(?string $functioning): string
@@ -96,6 +113,10 @@ final class CampaignAnalysisPresenter
 
             $functioning = $school?->functioning_status ?: __('Não informado');
             $inactive = self::isInactiveFunctioning($school?->functioning_status);
+            $meta = is_array($school?->meta) ? $school->meta : [];
+            $eligible = array_key_exists('eligible', $row)
+                ? (bool) $row['eligible']
+                : self::isOperationallyEligible($school?->functioning_status, $school?->dependency, $meta);
             $statusNote = null;
 
             if ($inactive) {
@@ -104,6 +125,13 @@ final class CampaignAnalysisPresenter
                 $filter = 'inactive';
                 $statusNote = __('Fora de atividade — a falta de arquivos não é pendência de coleta.');
                 $missing = [];
+            } elseif (! $eligible) {
+                $status = __('Fora do escopo');
+                $tone = 'slate';
+                $filter = 'inactive';
+                $statusNote = __('Rede operacional: Municipal ou privada filantrópica com parceria municipal.');
+                $missing = [];
+                $inactive = true; // denominador operacional (escolas aptas)
             } elseif ($schoolErrors > 0) {
                 $status = __('Com erros');
                 $tone = 'rose';
@@ -140,6 +168,7 @@ final class CampaignAnalysisPresenter
                     : null,
                 'blocked' => $this->isSchoolBlocked($school),
                 'inactive' => $inactive,
+                'eligible' => $eligible,
                 'status_note' => $statusNote,
                 'triade' => (bool) ($row['triade'] ?? false),
                 'aluno' => (bool) ($row['aluno'] ?? false),

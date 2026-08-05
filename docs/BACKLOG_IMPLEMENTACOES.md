@@ -241,6 +241,8 @@ Catálogo detalhado (campos, módulos, checklist): [PLUGINS_E_REFINO_CADASTRO_IE
 | CEN-15 | P1 | **Clio** — Vincular/desvincular i-Educar | Concluído (S5) | Idem |
 | CEN-16 | P2 | **Clio** — ETL `bi_clio_*` + refresh | **Concluído (S7)** | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) · [POWERBI.md](POWERBI.md) |
 | CLI-IND-01…10 | P1–P2 | **Clio** — ajustes de indicadores (NEE escola, demografia PDF, densidades, analyze pós-reparse…) | **Concluído (S7)** | [ROADMAP_CLIO.md](ROADMAP_CLIO.md) §3 |
+| CLI-XLS-00…08 | P0–P1 | **Clio** — Excel filtros operacionais + regras escolas aptas / PNATE / alertas | ✓ implementado | [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md) |
+| CLI-XLS-02/05/09 | P2 | **Clio** — ingest JornadaEscolar + refinamentos MAPA | Backlog | [ROADMAP_CLIO_EXCEL_FILTROS.md](ROADMAP_CLIO_EXCEL_FILTROS.md) |
 | PLG-05 | P2 | Ranking aprovação/reprovação por escola (i-Educar) | Pendente | PLUGINS §5.3, GRA-06 |
 | PLG-06 | P2 | Metas PNE/semáforo no quadro SAEB | Em andamento | PLUGINS §5.3, GRA-07 |
 | PLG-07 | P2 | Gráfico repasses históricos × matrícula | Pendente | PLUGINS §5.3 |

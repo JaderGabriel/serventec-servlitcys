@@ -137,7 +137,11 @@ final class ClioBiRefreshService
                     $parts = (int) (! empty($cov['aluno'])) + (int) (! empty($cov['turma'])) + (int) (! empty($cov['profissional']));
                 }
                 $meta = is_array($school->meta) ? $school->meta : [];
-                $active = ! CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
+                $active = CampaignAnalysisPresenter::isOperationallyEligible(
+                    $school->functioning_status,
+                    $school->dependency,
+                    $meta,
+                );
                 $rowsAluno = (int) $school->artifacts->where('kind', 'relacao_aluno_escola')->sum('row_count');
                 $rowsTurma = (int) $school->artifacts->where('kind', 'relacao_turma_escola')->sum('row_count');
                 $rowsProf = (int) $school->artifacts->where('kind', 'relacao_profissional_escola')->sum('row_count');

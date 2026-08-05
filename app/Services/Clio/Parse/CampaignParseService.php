@@ -107,7 +107,7 @@ final class CampaignParseService
 
     /**
      * Cobertura da tríade e inventário para CLI/UI.
-     * Denominador da %: só escolas em atividade (extinta/paralisada/reforma fora).
+     * Denominador da %: escolas aptas (em atividade ∧ Municipal ∪ filantrópica parceira municipal).
      *
      * @return array<string, mixed>
      */
@@ -135,8 +135,14 @@ final class CampaignParseService
             $hasProf = in_array('relacao_profissional_escola', $kinds, true);
             $triade = $hasAluno && $hasTurma && $hasProf;
             $inactive = CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status);
+            $meta = is_array($school->meta) ? $school->meta : [];
+            $eligible = CampaignAnalysisPresenter::isOperationallyEligible(
+                $school->functioning_status,
+                $school->dependency,
+                $meta,
+            );
 
-            if ($inactive) {
+            if (! $eligible) {
                 $otherCount++;
             } else {
                 $activeCount++;
@@ -155,6 +161,7 @@ final class CampaignParseService
                 'profissional' => $hasProf,
                 'triade' => $triade,
                 'inactive' => $inactive,
+                'eligible' => $eligible,
                 'functioning' => $school->functioning_status,
             ];
         }

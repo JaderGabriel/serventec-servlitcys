@@ -45,11 +45,15 @@ final class CampaignActiveCensusMatrixBuilder
         $rowsCounted = 0;
 
         foreach ($campaign->schools as $school) {
-            if (CampaignAnalysisPresenter::isInactiveFunctioning($school->functioning_status)) {
+            $meta = is_array($school->meta) ? $school->meta : [];
+            if (! CampaignAnalysisPresenter::isOperationallyEligible(
+                $school->functioning_status,
+                $school->dependency,
+                $meta,
+            )) {
                 continue;
             }
             $schoolsActive++;
-            $meta = is_array($school->meta) ? $school->meta : [];
             $location = $this->normalizeLocation((string) ($meta['location'] ?? ''));
 
             $turmaArt = $school->artifacts->firstWhere('kind', 'relacao_turma_escola');
