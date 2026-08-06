@@ -18,7 +18,7 @@ final class AdminHomeMetrics
 
     /**
      * @return array{
-     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_this_month: int, users: int, users_active: int},
+     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_ieducar: int, cities_clio_only: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
      *     map_markers: list<array<string, mixed>>,
      *     map_summary: array<string, mixed>,
@@ -32,7 +32,7 @@ final class AdminHomeMetrics
 
     /**
      * @return array{
-     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_this_month: int, users: int, users_active: int},
+     *     stats: array{cities: int, cities_active: int, cities_ready: int, cities_incomplete: int, cities_ieducar: int, cities_clio_only: int, cities_this_month: int, users: int, users_active: int},
      *     ops: array{sync_pending: int, sync_failed_24h: int, pdf_pending: int, pgsql: int, mysql: int},
      *     map_markers: list<array<string, mixed>>,
      *     map_summary: array<string, mixed>,
@@ -44,13 +44,16 @@ final class AdminHomeMetrics
         $now = now();
 
         $activeCities = City::query()->active()->get();
-        $ready = $activeCities->filter(fn (City $c) => $c->hasDataSetup())->count();
+        $withIeducar = $activeCities->filter(fn (City $c) => $c->hasDataSetup())->count();
+        $clioOnly = $activeCities->filter(fn (City $c) => $c->isClioCatalogOnly())->count();
 
         $stats = [
             'cities' => City::count(),
             'cities_active' => $activeCities->count(),
-            'cities_ready' => $ready,
-            'cities_incomplete' => max(0, $activeCities->count() - $ready),
+            'cities_ready' => $withIeducar,
+            'cities_incomplete' => max(0, $activeCities->count() - $withIeducar),
+            'cities_ieducar' => $withIeducar,
+            'cities_clio_only' => $clioOnly,
             'cities_this_month' => City::query()
                 ->whereMonth('created_at', $now->month)
                 ->whereYear('created_at', $now->year)
@@ -77,7 +80,7 @@ final class AdminHomeMetrics
         return [
             'stats' => $stats,
             'ops' => $ops,
-            'system_flow' => $this->systemFlow->diagram($ready, $activeCities->count()),
+            'system_flow' => $this->systemFlow->diagram($withIeducar, $activeCities->count()),
             'map_markers' => $mapMarkers,
             'map_summary' => $this->municipalityMap->summary($mapMarkers),
             'fundeb_portaria' => RxFundebPortariaChart::buildForCities($activeCities, $vigenteYear),

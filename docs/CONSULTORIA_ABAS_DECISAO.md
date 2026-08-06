@@ -1,8 +1,8 @@
 # Consultoria municipal — decisão sobre abas, menus e dados
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
+**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
 
-> **Índice:** [README.md](README.md) · **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md)
+> **Índice:** [README.md](README.md) · **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **UI Desempenho (SAEB/IDEB):** secção «IDEB e SAEB (INEP)» em `performance.blade.php` / `PerformanceSaebSeries`
 
 **Objetivo:** apoiar a equipa (produto, secretaria, TI) na decisão de reorganizar o painel `/dashboard/analytics` — ordem das abas, agrupamento no menu de dois níveis e coerência dos dados exibidos.
 
@@ -44,7 +44,7 @@ Catálogo: `App\Support\Dashboard\AnalyticsTabCatalog::groups()`.
 | Ordem | ID | Rótulo | Dados | Fonte |
 |------:|-----|--------|-------|-------|
 | 1 | `inclusion` | Inclusão | NEE, AEE, recurso prova, impacto FUNDEB NEE | i-Educar + catálogo INEP |
-| 2 | `performance` | Desempenho | Aprovação, evasão, SAEB | i-Educar + SAEB importado |
+| 2 | `performance` | Desempenho | Situação de matrícula (i-Educar) + séries **SAEB e IDEB** (INEP importado) | i-Educar + `saeb_indicator_points` |
 | 3 | `attendance` | Frequência | Faltas por período | i-Educar (`falta_aluno` se existir) |
 
 ### 2.3 Área 3 — Censo e cadastro (`censo`, sky, passo «3»)

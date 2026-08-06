@@ -107,7 +107,7 @@ final class CampaignParseService
 
     /**
      * Cobertura da tríade e inventário para CLI/UI.
-     * Denominador da %: escolas aptas (em atividade ∧ Municipal ∪ filantrópica parceira municipal).
+     * Denominador da %: escolas no arquivo geral aptas (em atividade ∧ Municipal ∪ filantrópica parceira municipal).
      *
      * @return array<string, mixed>
      */

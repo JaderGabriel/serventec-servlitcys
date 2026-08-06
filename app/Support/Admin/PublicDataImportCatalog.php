@@ -130,8 +130,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'fundeb_fnde',
-            'title' => __('FUNDEB — VAAF, VAAT e complementação VAAR'),
-            'summary' => __('CKAN FNDE, cache JSON e CSV «Receita total do Fundeb» (portarias). Alimenta comparativos, projeção na consultoria, PDF e mapa Horizonte (pressão FUNDEB).'),
+            'title' => __('FUNDEB — VAAF, VAAT e VAAR'),
+            'summary' => __('CKAN FNDE e CSV de portarias. Alimenta comparativos na consultoria, PDF e pressão FUNDEB no Horizonte.'),
             'data_class' => 'publicado',
             'domain' => 'fundeb',
             'persistence' => 'fundeb_municipio_references',
@@ -190,8 +190,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'cadunico_cecad',
-            'title' => __('CadÚnico / Cecad — agregados municipais'),
-            'summary' => __('Sincronização automática (API/CKAN → cache → CSV Cecad). Alimenta a aba CadÚnico e a previsão de crianças fora da rede municipal.'),
+            'title' => __('CadÚnico / Cecad'),
+            'summary' => __('Sync automática e snapshots municipais. Alimenta a aba CadÚnico e a previsão de crianças fora da rede.'),
             'data_class' => 'publicado',
             'domain' => 'cadastro',
             'persistence' => 'cadunico_municipio_snapshots',
@@ -256,8 +256,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'censo_inep_matriculas',
-            'title' => __('Censo INEP — matrículas por município'),
-            'summary' => __('Agrega microdados Educacenso (qt_mat_*) em inep_censo_municipio_matriculas. Alimenta consultoria e PDF — não substitui matrículas i-Educar. A série multi-ano do gráfico Horizonte fica no hub Horizonte (Educacenso).'),
+            'title' => __('Censo INEP — matrículas'),
+            'summary' => __('Agrega microdados Educacenso por município. Complementa a consultoria e o PDF — não substitui matrículas do i-Educar.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'inep_censo_municipio_matriculas',
@@ -301,8 +301,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'repasses_tesouro',
-            'title' => __('Repasses observados — FUNDEB (Tempo Real)'),
-            'summary' => __('Importação da série municipal do Tesouro CKAN (meta mensal). Export SISWEB e BB só entram como fontes distintas se configurados. Não grava total da UF na importação normal; use Rebuild para purgar e reimportar snapshots.'),
+            'title' => __('Repasses — Tempo Real'),
+            'summary' => __('Série municipal do Tesouro (CKAN). Rebuild regenera snapshots de Finanças → Tempo Real.'),
             'data_class' => 'publicado',
             'domain' => 'funding',
             'persistence' => 'municipal_transfer_snapshots',
@@ -379,8 +379,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'saeb_inep',
-            'title' => __('SAEB / IDEB (INEP)'),
-            'summary' => __('Microdados, CSV, planilhas SAEB, divulgação IDEB ou JSON por IBGE. Alimenta Desempenho, PDF e mapa Horizonte (SAEB + série IDEB).'),
+            'title' => __('SAEB e IDEB (INEP)'),
+            'summary' => __('Planilhas, microdados e divulgação IDEB. Alimenta Desempenho na consultoria, PDF e o mapa Horizonte.'),
             'data_class' => 'publicado',
             'domain' => 'pedagogical',
             'persistence' => 'saeb_indicator_points',
@@ -410,8 +410,8 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'geo_inep',
-            'title' => __('Georreferenciação INEP'),
-            'summary' => __('Coordenadas INEP, microdados e catálogo IBGE municipal (centroides) — mapa de unidades, divergências geo e posicionamento no Horizonte.'),
+            'title' => __('Georreferenciação'),
+            'summary' => __('Coordenadas INEP e centroides IBGE — mapa de unidades e posicionamento no Horizonte.'),
             'data_class' => 'publicado',
             'domain' => 'geo',
             'persistence' => 'school_unit_geos / inep_school_geos',
@@ -440,7 +440,7 @@ final class PublicDataImportCatalog
         return [
             'id' => 'weekly_mass_sync',
             'title' => __('Rotina semanal completa'),
-            'summary' => __('Executa em sequência: geo, FUNDEB, repasses, indexação Censo e SAEB (checkpoint retomável).'),
+            'summary' => __('Sequência retomável: geo, FUNDEB, repasses, Censo e SAEB.'),
             'data_class' => 'publicado',
             'domain' => 'system',
             'persistence' => __('várias tabelas'),

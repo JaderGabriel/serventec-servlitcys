@@ -69,8 +69,19 @@
                 </span>
                 <p class="serv-home-kpi__label">{{ __('Consultoria') }}</p>
             </div>
-            <p class="serv-home-kpi__value">{{ number_format($active) }}</p>
-            <p class="serv-home-kpi__hint">{{ __('Municípios ativos no painel — FUNDEB, matrículas e discrepâncias') }}</p>
+            @php
+                $ieducarCities = max(0, (int) ($stats['cities_ieducar'] ?? $ready));
+                $clioOnlyCities = max(0, (int) ($stats['cities_clio_only'] ?? $incomplete));
+            @endphp
+            <p class="serv-home-kpi__value">
+                {{ number_format($ieducarCities) }}<span class="serv-home-kpi__suffix">+ {{ number_format($clioOnlyCities) }}</span>
+            </p>
+            <p class="serv-home-kpi__hint">
+                {{ __(':ieducar com base i-Educar · :clio só Clio', [
+                    'ieducar' => number_format($ieducarCities),
+                    'clio' => number_format($clioOnlyCities),
+                ]) }}
+            </p>
         </a>
 
         <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}" class="serv-home-kpi serv-home-kpi--link group @if ($queueTotal > 0 || $syncFailed > 0) serv-home-kpi--amber @endif">

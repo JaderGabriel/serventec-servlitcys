@@ -1,43 +1,39 @@
 @php
-    use App\Support\Admin\AdminImportHubCatalog;
-
     $hub = is_array($horizonteHub ?? null) ? $horizonteHub : [];
     $lastFeed = is_array($hub['last_feed'] ?? null) ? $hub['last_feed'] : null;
+    $hubActive = $hubActive ?? 'hub';
+    $isRepassesFocus = $hubActive === 'repasses';
+    $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm';
+    $fundeb = $snapshot['fundeb'] ?? [];
+    $censo = $snapshot['censo'] ?? [];
+    $transfers = $snapshot['transfers'] ?? [];
+    $saeb = $snapshot['saeb'] ?? [];
+    $cadunico = $snapshot['cadunico'] ?? [];
+    $md = $snapshot['microdados'] ?? [];
+    $syncYears = $snapshot['sync_years'] ?? [];
 @endphp
 
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Dados públicos — consultoria') }}
+            <p class="serv-eyebrow">{{ __('Dados públicos') }}</p>
+            <h2 class="font-display font-semibold text-xl sm:text-2xl text-serv-navy dark:text-gray-100 leading-tight">
+                {{ $isRepassesFocus ? __('Repasses observados') : __('Importação por município') }}
             </h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Fontes oficiais por município (FNDE, INEP, MDS/Cecad, Tesouro) que alimentam a consultoria Analytics, relatório PDF e Finanças → Tempo Real.') }}
+            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
+                {{ __('Fontes oficiais (FNDE, INEP, MDS, Tesouro) que alimentam a consultoria, o PDF e Finanças → Tempo Real.') }}
             </p>
         </div>
     </x-slot>
 
-    @php
-        $selectClass = 'mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm';
-        $fundeb = $snapshot['fundeb'] ?? [];
-        $censo = $snapshot['censo'] ?? [];
-        $transfers = $snapshot['transfers'] ?? [];
-        $saeb = $snapshot['saeb'] ?? [];
-        $cadunico = $snapshot['cadunico'] ?? [];
-        $md = $snapshot['microdados'] ?? [];
-        $syncYears = $snapshot['sync_years'] ?? [];
-        $hubActive = $hubActive ?? 'hub';
-        $isRepassesFocus = $hubActive === 'repasses';
-    @endphp
-
     <x-admin.import-hub.shell
         :active="$hubActive"
         accent="emerald"
-        :eyebrow="$isRepassesFocus ? __('Repasses / Tempo Real') : __('Consultoria municipal')"
-        :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Importação e cobertura por município')"
+        :eyebrow="$isRepassesFocus ? __('Finanças · Tempo Real') : __('Consultoria municipal')"
+        :title="$isRepassesFocus ? __('Repasses FUNDEB observados') : __('Cobertura e importação')"
         :description="$isRepassesFocus
-            ? __('Importação da série municipal do Tesouro CKAN (e BB, se configurado). Use Rebuild para purgar snapshots e alimentar Finanças → Tempo Real. Export SISWEB só entra como fonte distinta se IEDUCAR_SISWEB_FUNDEB_EXPORT_URL estiver definido.')
-            : __('Importe fontes oficiais por município. Cada área abaixo indica o destino na consultoria, ações na fila e comandos Artisan equivalentes. O abastecimento nacional do mapa Horizonte tem hub separado.')"
+            ? __('Importe a série municipal do Tesouro (CKAN). Use Rebuild para regenerar snapshots de Finanças → Tempo Real.')
+            : __('Importe por município. Cada área indica destino na consultoria, ações na fila e comando Artisan equivalente. O mapa Horizonte tem hub próprio.')"
         :doc-href="route('admin.documentation.show', ['doc' => 'docs/IMPORTACAO_DADOS_PUBLICOS.md'])"
         :doc-label="__('Documentação de importação')"
     >
@@ -45,7 +41,7 @@
             <x-admin.import-hub.badge>
                 {{ trans_choice(':n município|:n municípios', $snapshot['cities_total'] ?? 0, ['n' => $snapshot['cities_total'] ?? 0]) }}
             </x-admin.import-hub.badge>
-            <x-admin.import-hub.badge>{{ __('IBGE: :n', ['n' => $snapshot['cities_with_ibge'] ?? 0]) }}</x-admin.import-hub.badge>
+            <x-admin.import-hub.badge>{{ __('Com IBGE: :n', ['n' => $snapshot['cities_with_ibge'] ?? 0]) }}</x-admin.import-hub.badge>
             <x-admin.import-hub.badge>{{ __('Anos FUNDEB: :anos', ['anos' => implode(', ', array_map('strval', $syncYears))]) }}</x-admin.import-hub.badge>
             <a href="{{ route('admin.horizonte-import.index') }}" class="rounded-full bg-sky-100 dark:bg-sky-900 px-3 py-1 font-medium text-sky-800 dark:text-sky-100 ring-1 ring-sky-200 dark:ring-sky-700 hover:bg-sky-200 dark:hover:bg-sky-800 text-xs">
                 {{ __('Hub Horizonte') }} →
@@ -76,11 +72,10 @@
         </x-slot>
 
         @if (! $isRepassesFocus)
-            <x-admin.import-hub.callout variant="info" :title="__('Dois hubs de dados públicos')">
-                <p>{{ __('Este painel cobre a consultoria municipal (Analytics, PDF ATM, Finanças → Tempo Real). O pipeline nacional do mapa Horizonte — feed bimestral, Educacenso ano×UF, malha IBGE — fica em') }}
+            <x-admin.import-hub.callout variant="info" :title="__('Dois hubs distintos')">
+                <p>{{ __('Este painel serve a consultoria municipal (Analytics, PDF, Tempo Real). O abastecimento nacional do mapa fica em') }}
                     <a href="{{ route('admin.horizonte-import.index') }}" class="font-medium text-sky-700 dark:text-sky-300 hover:underline">{{ __('Horizonte — abastecimento') }}</a>.
                 </p>
-                <p class="mt-2">{{ __('Use as abas superiores para telas dedicadas (Geo, SAEB, CadÚnico, VAAF, filas). Cada fonte abaixo lista ações na fila e comandos CLI com opções.') }}</p>
             </x-admin.import-hub.callout>
         @endif
 
@@ -94,7 +89,7 @@
 
         <x-slot name="stats">
             <x-admin.import-hub.stats-grid columns="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                <x-admin.import-hub.stat label="FUNDEB" :value="($fundeb['cities_with_any'] ?? 0).'/'.($snapshot['cities_with_ibge'] ?? 0)" :hint="__('municípios com referência')" tone="amber">
+                <x-admin.import-hub.stat label="FUNDEB" :value="($fundeb['cities_with_any'] ?? 0).'/'.($snapshot['cities_with_ibge'] ?? 0)" :hint="__('com referência VAAF/VAAT')" tone="amber">
                     <x-slot name="footer"><p class="text-[11px] text-gray-500 dark:text-gray-400">{{ $fundeb['diagnostics']['hint'] ?? '' }}</p></x-slot>
                 </x-admin.import-hub.stat>
                 <x-admin.import-hub.stat label="Censo INEP" :value="(string) ($censo['municipios'] ?? 0)" :hint="__('municípios indexados')" tone="emerald">
@@ -104,18 +99,21 @@
                         </p>
                     </x-slot>
                 </x-admin.import-hub.stat>
-                <x-admin.import-hub.stat :label="__('Repasses')" :value="(string) ($transfers['municipios'] ?? 0)" :hint="__('municípios com snapshots')" tone="emerald" />
-                <x-admin.import-hub.stat label="SAEB" :value="(string) ($saeb['points'] ?? 0)" :hint="__('pontos indicadores')" tone="violet" />
-                <x-admin.import-hub.stat :label="__('CadÚnico / Cecad')" :value="(string) ($cadunico['municipios'] ?? 0)" :hint="__('municípios com snapshot')" tone="violet">
+                <x-admin.import-hub.stat :label="__('Repasses')" :value="(string) ($transfers['municipios'] ?? 0)" :hint="__('com snapshots Tempo Real')" tone="emerald" />
+                <x-admin.import-hub.stat label="SAEB / IDEB" :value="(string) ($saeb['points'] ?? 0)" :hint="__('pontos importados')" tone="violet" />
+                <x-admin.import-hub.stat :label="__('CadÚnico')" :value="(string) ($cadunico['municipios'] ?? 0)" :hint="__('com snapshot Cecad')" tone="violet">
                     <x-slot name="footer">
-                        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => 'cadastro']) }}#fila-cadastro" class="text-[11px] font-medium text-violet-700 dark:text-violet-300 hover:underline">{{ __('Fila cadastro') }} →</a>
+                        <a href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index', ['domain' => 'cadastro']) }}#fila-cadastro" class="text-[11px] font-medium text-violet-700 dark:text-violet-300 hover:underline">{{ __('Fila CadÚnico') }} →</a>
                     </x-slot>
                 </x-admin.import-hub.stat>
             </x-admin.import-hub.stats-grid>
         </x-slot>
 
         <section class="space-y-3">
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Áreas temáticas — consultoria') }}</h3>
+            <div>
+                <h3 class="text-sm font-semibold font-display text-serv-navy dark:text-slate-100">{{ __('Áreas temáticas') }}</h3>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Salte para as fontes de cada domínio abaixo.') }}</p>
+            </div>
             @include('admin.partials.import-hub-theme-overview', [
                 'cards' => $themeOverviewCards,
                 'hrefMode' => 'anchor',
@@ -124,7 +122,10 @@
 
         <details class="sync-queue-panel sync-queue-panel--slate">
             <summary class="sync-queue-panel__header cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                <span class="sync-queue-panel__title text-sm">{{ __('Lacunas do PDF ATM → importação') }}</span>
+                <div>
+                    <span class="sync-queue-panel__title text-sm">{{ __('Lacunas do PDF → fonte a importar') }}</span>
+                    <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-normal">{{ __('Códigos de gap do relatório ATM e a fonte sugerida neste hub.') }}</p>
+                </div>
             </summary>
             <div class="sync-queue-panel__body">
                 <div class="overflow-x-auto">
@@ -132,7 +133,7 @@
                         <thead>
                             <tr class="text-slate-500 dark:text-slate-400">
                                 <th class="py-2 pe-4">{{ __('Código') }}</th>
-                                <th class="py-2 pe-4">{{ __('Seção PDF') }}</th>
+                                <th class="py-2 pe-4">{{ __('Secção do PDF') }}</th>
                                 <th class="py-2">{{ __('Fonte sugerida') }}</th>
                             </tr>
                         </thead>
@@ -142,7 +143,7 @@
                                     <td class="py-2 pe-4 font-mono">{{ $row['gap_code'] }}</td>
                                     <td class="py-2 pe-4">{{ $row['section'] }}</td>
                                     <td class="py-2">
-                                        <a href="#source-{{ $row['source_id'] }}" class="text-emerald-600 dark:text-emerald-400 hover:underline">{{ $row['source_id'] }}</a>
+                                        <a href="#source-{{ $row['source_id'] }}" class="text-emerald-700 dark:text-emerald-400 hover:underline font-medium">{{ $row['source_id'] }}</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -153,7 +154,10 @@
         </details>
 
         <section class="space-y-6" id="hub-fontes">
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ __('Fontes por área') }}</h3>
+            <div>
+                <h3 class="text-sm font-semibold font-display text-serv-navy dark:text-slate-100">{{ __('Fontes por área') }}</h3>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ __('Acções enfileiram tarefas; acompanhe o progresso em Filas.') }}</p>
+            </div>
             @foreach ($themeSections as $section)
                 @include('admin.public-data.partials.theme-section', [
                     'section' => $section,
@@ -169,14 +173,13 @@
         </section>
 
         <x-slot name="shortcuts">
-            <p class="mb-2 w-full text-[11px] text-sky-800 dark:text-sky-200">{{ __('Telas dedicadas e filas — também acessíveis pelas abas superiores.') }}</p>
-            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.horizonte-import.index') }}">{{ __('Horizonte — abastecimento') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses / Tempo Real') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.horizonte-import.index') }}">{{ __('Horizonte') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="emerald" href="{{ route('admin.public-data.index', ['hub' => 'repasses']) }}#source-repasses_tesouro">{{ __('Repasses') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="amber" href="{{ route('admin.ieducar-compatibility.index') }}">{{ __('admin_ieducar_compatibility.hub.tab_label') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Sincronização geográfica') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="violet" href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB pedagógico') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="fuchsia" href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico / Cecad') }}</x-admin.import-hub.link-chip>
-            <x-admin.import-hub.link-chip tone="slate" href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}">{{ __('Fila de processamento') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="sky" href="{{ route('admin.geo-sync.index') }}">{{ __('Geo') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="violet" href="{{ route('admin.pedagogical-sync.index') }}">{{ __('SAEB / IDEB') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="fuchsia" href="{{ route('admin.cadunico-sync.index') }}">{{ __('CadÚnico') }}</x-admin.import-hub.link-chip>
+            <x-admin.import-hub.link-chip tone="slate" href="{{ route(($syncQueueRoutePrefix ?? 'admin.sync-queue').'.index') }}">{{ __('Filas') }}</x-admin.import-hub.link-chip>
             <x-admin.import-hub.link-chip tone="slate" href="{{ route('admin.artisan-commands.index') }}">{{ __('Comandos Artisan') }}</x-admin.import-hub.link-chip>
         </x-slot>
     </x-admin.import-hub.shell>

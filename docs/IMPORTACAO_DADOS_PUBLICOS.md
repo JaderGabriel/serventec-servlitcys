@@ -1,10 +1,11 @@
 # Importação de dados públicos (hub admin)
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06
 
 **Rota:** `/admin/dados-publicos` (`admin.public-data.index`)  
-**Menu:** Operação / **Dados públicos** (perfil com `canImportOrConfigure`)  
-**Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) · [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md)
+**Menu:** Dados públicos → **Importação por município** (perfil com `canImportOrConfigure`)  
+**Filas:** `/admin/sync-queue` (`admin.sync-queue.index`) — **Filas de processamento**  
+**Relacionado:** [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) · [ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md](ESTUDO_INTEGRACOES_SETOR_PUBLICO_E_PREVISAO_DEMANDA.md) · [RELATORIO_PDF_ATM.md](RELATORIO_PDF_ATM.md) · [EXPORTACAO_DADOS_FUNDEB_PLANILHA.md](EXPORTACAO_DADOS_FUNDEB_PLANILHA.md) · [IMPORTACAO_SAEB_PLANILHAS_INEP.md](IMPORTACAO_SAEB_PLANILHAS_INEP.md)
 
 ---
 
@@ -18,6 +19,8 @@ Centralizar a **importação de fontes oficiais que não são o i-Educar** (FNDE
 - reutilização dos serviços já existentes (sem duplicar lógica de import).
 
 Dados que **continuam no i-Educar** (matrículas em tempo real, cadastro escolar, export Educacenso) permanecem em **Compatibilidade i-Educar** e nas conexões por município.
+
+O hub **não** substitui o abastecimento nacional do mapa Horizonte (`/admin/horizonte/abastecimento`).
 
 ---
 
@@ -50,9 +53,10 @@ Classificação de dado (planilha Serventec / PDF): **publicado** (portaria/CKAN
 | Rebuild Finanças → Tempo Real | `funding:rebuild-finance-realtime` | Purga `municipal_transfer_snapshots` e reimporta por município/ano (slug `{nome}-{uf}-{ibge}-{ano}`); ver [CONSULTAS_EXTERNAS.md](CONSULTAS_EXTERNAS.md) §3.4 |
 | Rotina semanal | `system::weekly_mass_sync` | `WeeklyMassSyncOrchestrator` |
 
-SAEB e geo: telas dedicadas (`admin.pedagogical-sync`, `admin.geo-sync`) — o hub mostra estado e atalhos.
+SAEB e geo: telas dedicadas (`admin.pedagogical-sync`, `admin.geo-sync`) — o hub mostra estado e atalhos. Inclui **IDEB** (`ideb:import-divulgacao-inep`) na fila pedagógica.
 
 **CLI SAEB planilhas (2.4):** `saeb:import-planilhas-inep` — não depende da UI; ideal para primeira carga municipal antes de microdados.
+**CLI IDEB divulgação:** `php artisan ideb:import-divulgacao-inep --scopes=ai,af,em --min-year=2015` (opção `--no-download` usa ZIPs em `storage/app/ideb/divulgacao`).
 
 ---
 
@@ -118,8 +122,10 @@ Todas as telas admin de importação partilham o componente `x-admin.import-hub.
 | FUNDEB / compatibilidade | `fundeb` | `fundeb` |
 | CadÚnico / Cecad | `cadastro` | `cadastro` |
 | Geo | `geo` | `geo` |
-| SAEB | `pedagogical` | `pedagogical` |
-| Fila | `queue` | — (workers + tarefas) |
+| SAEB / IDEB | `pedagogical` | `pedagogical` |
+| Fila | `queue` | — (workers + tarefas + agendamentos) |
+
+**Cópia UI (2026-08-06):** títulos e hints do hub e da fila alinhados à linguagem operacional («Importação por município», «Estado das filas», «SAEB / IDEB», resumos curtos em `PublicDataImportCatalog`). O diagnóstico CKAN em `/admin/ieducar-compatibility` **não derruba a página** se o FNDE timeout — ver `FundebOpenDataImportService::apiDiagnostics()`.
 
 **Telas legado no mesmo padrão visual** (`x-admin.screen-shell`, `AdminScreenCatalog`):
 

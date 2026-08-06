@@ -37,7 +37,7 @@ Dependência vazia no Acomp: **não restringe** (compatibilidade com fichas inco
 
 ## 2. O que mudou no Clio (denominador operacional)
 
-O escopo «escolas ativas» passou a ser **escolas aptas** (`CampaignOperationalRules::isOperationallyEligible`) em:
+O escopo «escolas ativas» passou a ser **escolas aptas no arquivo geral** (`CampaignOperationalRules::isOperationallyEligible` + `isInArquivoGeral`) em:
 
 - `CampaignParseService::coverage`
 - `CampaignAnalysisPresenter` (lista ativas / fora do escopo)

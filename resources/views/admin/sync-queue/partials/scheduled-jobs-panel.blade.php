@@ -16,9 +16,9 @@
                     <x-ui.icon name="arrow-path" class="h-5 w-5" />
                 </span>
                 <div class="min-w-0">
-                    <h3 class="sync-queue-panel__title">{{ __('Agendamentos (schedule:run)') }}</h3>
+                    <h3 class="sync-queue-panel__title">{{ __('Agendamentos do sistema') }}</h3>
                     <p class="sync-queue-panel__desc">
-                        {{ __('Inventário vivo do Laravel Schedule — reflecte o que está registado em bootstrap/app.php (Pulse, filas, CadÚnico, Horizonte/procurement, SICONFI, obras, limpeza…).') }}
+                        {{ __('Jobs registados no Laravel Schedule (Pulse, CadÚnico, Horizonte, limpeza…). O servidor deve correr schedule:run no intervalo abaixo.') }}
                     </p>
                     <p class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         {{ $runner['command'] ?? 'php artisan schedule:run' }}
@@ -47,7 +47,7 @@
 
     <div class="sync-queue-panel__body space-y-5">
         <x-admin.import-hub.callout variant="info" :title="__('Como ler esta lista')">
-            {{ __('O servidor deve correr schedule:run no intervalo acima. Jobs “condicionais” só disparam quando o filtro passa (ex.: passo do feed Horizonte com pipeline activo). Procurement MEC·FNDE entra na fase procurement_sync do feed bimestral — não tem cron próprio.') }}
+            {{ __('Jobs «condicionais» só disparam quando o filtro passa (ex.: passo do feed Horizonte com pipeline activo). Procurement MEC·FNDE entra na fase do feed bimestral — sem cron próprio.') }}
         </x-admin.import-hub.callout>
 
         @forelse ($groups as $group)

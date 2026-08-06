@@ -57,7 +57,7 @@
                 @if (($card['id'] ?? '') === 'horizonte')
                     <span title="{{ __('Universo mapa') }}">{{ (int) ($card['universe'] ?? 0) }} {{ __('municípios') }}</span>
                     @if (($card['triad'] ?? 0) > 0)
-                        <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--sky">{{ (int) $card['triad'] }} {{ __('triad') }}</span>
+                        <span class="sync-queue-theme-card__pill sync-queue-theme-card__pill--sky">{{ (int) $card['triad'] }} {{ __('tríade completa') }}</span>
                     @endif
                 @elseif (isset($card['total']))
                     <span title="{{ __('Total') }}">{{ (int) $card['total'] }} {{ __('tarefas') }}</span>

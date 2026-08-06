@@ -37,7 +37,8 @@ final class CampaignAnalysisPresenter
     }
 
     /**
-     * Escopo operacional: em atividade e apta (Municipal ∪ filantrópica com parceria municipal).
+     * Escopo operacional: no arquivo geral, em atividade e apta
+     * (Municipal ∪ filantrópica com parceria municipal).
      *
      * @param  array<string, mixed>|null  $meta
      */
@@ -1277,7 +1278,6 @@ final class CampaignAnalysisPresenter
 
         $blocked = 0;
         $confirmar = 0;
-        $withCurricular = 0;
         foreach ($campaign->schools as $school) {
             if ($this->isSchoolBlocked($school)) {
                 $blocked++;
@@ -1285,9 +1285,6 @@ final class CampaignAnalysisPresenter
             $meta = is_array($school->meta) ? $school->meta : [];
             if (is_numeric($meta['matriculas_a_confirmar'] ?? null)) {
                 $confirmar += (int) $meta['matriculas_a_confirmar'];
-            }
-            if (is_numeric($meta['total_curricular'] ?? null)) {
-                $withCurricular++;
             }
         }
 
@@ -1301,7 +1298,11 @@ final class CampaignAnalysisPresenter
             'available' => $hasAcomp,
             'file_name' => $artifact?->original_name,
             'reference_date' => $coverage['reference_date'] ?? null,
-            'schools_in_file' => $withCurricular > 0 ? $withCurricular : $campaign->schools->count(),
+            'schools_in_file' => $campaign->schools
+                ->filter(fn (ClioCampaignSchool $s) => CampaignOperationalRules::isInArquivoGeral(
+                    is_array($s->meta) ? $s->meta : [],
+                ))
+                ->count(),
             'totals' => [
                 [
                     'label' => __('Curricular'),
@@ -1385,8 +1386,12 @@ final class CampaignAnalysisPresenter
         $acompSum = 0;
         $aeeSum = 0;
         $acSum = 0;
+        $inArquivoGeral = 0;
         foreach ($campaign->schools as $school) {
             $meta = is_array($school->meta) ? $school->meta : [];
+            if (CampaignOperationalRules::isInArquivoGeral($meta)) {
+                $inArquivoGeral++;
+            }
             if (is_numeric($meta['total_curricular'] ?? null)) {
                 $acompSum += (int) $meta['total_curricular'];
             }
@@ -1403,8 +1408,8 @@ final class CampaignAnalysisPresenter
             'counters' => [
                 [
                     'label' => __('Escolas no arquivo geral'),
-                    'value' => number_format($campaign->schools->count()),
-                    'hint' => __('Com código INEP no Acomp ou nas Relações'),
+                    'value' => number_format($inArquivoGeral),
+                    'hint' => __('Com código INEP no Relatório de Acompanhamento'),
                     'tone' => 'sky',
                 ],
                 [

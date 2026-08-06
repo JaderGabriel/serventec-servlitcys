@@ -9,6 +9,7 @@
 | **Tag de deploy (servidor)** | `20260806-Erato` |
 | **Data de referência** | **06/08/2026** |
 | **Último marco documentado** | **Erato** — Importador IDEB 2025 (fila pedagógica + fase Horizonte) · Tyche permanece histórico |
+| **Patches em `main` (sem bump)** | 06/08/2026 — Clio contadores (arquivo geral + dedupe); KPI Consultoria i-Educar×Clio; UI Desempenho/Filas/Dados públicos; CKAN timeout seguro |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
 | **Commit de release** |  (#**665**) |
 

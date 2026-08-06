@@ -1,8 +1,8 @@
 # Analytics — navegação e UI de consultoria
 
-**Versão do produto:** 6.5.0 · **Última revisão:** 2026-07-02
+**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06
 
-> **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md)
+> **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) · **Abas:** [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md)
 
 ## Estrutura do painel
 
@@ -38,6 +38,16 @@ flowchart TB
 
 **Aba inicial** (sem `?tab=` válido): `municipality_health` com ano letivo aplicado; `overview` sem ano. Áreas com uma única sub-aba (Resumo, Censo) omitem o menu de nível 2.
 
+### Desempenho — SAEB e IDEB (2026-08-06)
+
+Na aba `performance` (`resources/views/dashboard/analytics/partials/performance.blade.php`):
+
+1. Secção **IDEB e SAEB (INEP)** — cartões de referência + séries importadas (`PerformanceSaebSeries` / `saeb_indicator_points`).
+2. Títulos e KPIs em linguagem de consultoria (sem jargão de JSON/`city_id`).
+3. Gráficos por disciplina/etapa; legenda resultado final × preliminar.
+4. Situação de matrícula i-Educar permanece noutra secção da mesma aba.
+
+Ver também mapa Horizonte (modal municipal) para tendência SAEB / série IDEB.
 ## Lazy-load e preload
 
 - Pedido por aba: `GET /dashboard/analytics/tab?tab=…`

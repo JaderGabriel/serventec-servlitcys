@@ -17,11 +17,11 @@
 <section id="verificacao-oficial" class="scroll-mt-24 space-y-4">
     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-            <h3 class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            <h3 class="text-sm font-semibold font-display text-serv-navy dark:text-slate-100">
                 {{ __('Verificação de fontes oficiais') }}
             </h3>
-            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
-                {{ __('Consulta read-only FNDE, INEP, MDS/Cecad, Tesouro e SAEB — compara com a cobertura local e indica rotinas de importação (não importa automaticamente).') }}
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+                {{ __('Consulta FNDE, INEP, MDS e Tesouro (só leitura), compara com a cobertura local e sugere importações — não importa automaticamente.') }}
             </p>
             @if ($enabled)
                 <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-500">

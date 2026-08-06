@@ -559,4 +559,26 @@ final class FundebOpenDataImportServiceTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertFalse($result['unchanged'] ?? false);
     }
+
+    #[Test]
+    public function api_diagnostics_nao_explode_quando_ckan_timeout(): void
+    {
+        config([
+            'ieducar.fundeb.open_data.json_url' => '',
+            'ieducar.fundeb.open_data.resource_id' => '',
+        ]);
+
+        Http::fake(function () {
+            throw new \Illuminate\Http\Client\ConnectionException(
+                'cURL error 28: Operation timed out after 10000 milliseconds with 0 bytes received'
+            );
+        });
+
+        $service = $this->makeService(new FundebMunicipioReferenceRepository);
+        $diag = $service->apiDiagnostics();
+
+        $this->assertFalse($diag['ckan_reachable']);
+        $this->assertNotNull($diag['probe_error']);
+        $this->assertStringContainsString('CKAN FNDE inacessível', $diag['hint']);
+    }
 }

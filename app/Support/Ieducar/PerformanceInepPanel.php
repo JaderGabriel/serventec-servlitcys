@@ -27,18 +27,18 @@ final class PerformanceInepPanel
         $sections = [
             'ideb' => self::sectionTemplate(
                 'ideb',
-                __('IDEB (Índice de Desenvolvimento da Educação Básica)'),
-                __('O IDEB agrega fluxo (aprovação) e notas médias da avaliação SAEB, divulgado pelo INEP por rede e ano de aplicação. O município compara-se à meta nacional/regional; não é calculado a partir apenas do registro local de situação de matrícula.')
+                __('Índice de Desenvolvimento da Educação Básica'),
+                __('Combina fluxo escolar e desempenho no SAEB. Use para comparar a rede com metas e anos anteriores — não sai só do cadastro de matrículas.')
             ),
             'saeb' => self::sectionTemplate(
                 'saeb',
-                __('SAEB (Sistema de Avaliação da Educação Básica)'),
-                __('O SAEB mede desempenho em Língua Portuguesa e Matemática (escalas próprias e proficientes). Os resultados publicados referem-se à rede e ao ano de avaliação; a base i-Educar não substitui o portal do INEP.')
+                __('Sistema de Avaliação da Educação Básica'),
+                __('Mede aprendizagem em Língua Portuguesa e Matemática. Os valores oficiais vêm da divulgação do INEP; o i-Educar não os substitui.')
             ),
             'pne' => self::sectionTemplate(
                 'pne',
-                __('Metas do Plano Nacional de Educação (PNE)'),
-                __('As metas do PNE (Lei 13.005/2014 e atualizações) incluem universalização, financiamento, educação infantil, ensino médio, entre outras, com indicadores nacionais. O acompanhamento municipal costuma usar relatórios do conselho de educação e do INEP.')
+                __('Plano Nacional de Educação'),
+                __('Metas nacionais de universalização, financiamento e qualidade. O acompanhamento municipal usa relatórios do conselho e do INEP.')
             ),
         ];
 
@@ -150,7 +150,7 @@ final class PerformanceInepPanel
             'title' => $title,
             'intro' => $intro,
             'items' => [],
-            'empty_hint' => __('Sem linhas SQL para este bloco — use a consulta configurada ou consulte o portal do INEP / documentos do PNE.'),
+            'empty_hint' => __('Sem valores locais neste bloco — consulte o portal do INEP ou a série importada abaixo.'),
         ];
     }
 

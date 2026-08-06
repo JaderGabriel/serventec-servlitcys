@@ -265,7 +265,8 @@ final class FundebOpenDataImportService
      *     discovered_resource_id: string,
      *     ckan_reachable: bool,
      *     ckan_base_url: string,
-     *     hint: string
+     *     hint: string,
+     *     probe_error: ?string
      * }
      */
     public function apiDiagnostics(): array
@@ -277,14 +278,22 @@ final class FundebOpenDataImportService
 
         $discovered = '';
         $reachable = false;
-        $response = Http::timeout(min($timeout, 10))
-            ->acceptJson()
-            ->withOptions(['allow_redirects' => true])
-            ->get($base.'/api/3/action/package_search', ['q' => 'fundeb', 'rows' => 1]);
-        $reachable = $response->successful() && ($response->json('success') === true);
-        if ($configuredId === '' && $reachable) {
-            $discovered = $this->discoverResourceId($base, $timeout);
+        $probeError = null;
+
+        try {
+            $response = Http::timeout(min($timeout, 10))
+                ->acceptJson()
+                ->withOptions(['allow_redirects' => true])
+                ->get($base.'/api/3/action/package_search', ['q' => 'fundeb', 'rows' => 1]);
+            $reachable = $response->successful() && ($response->json('success') === true);
+            if ($configuredId === '' && $reachable) {
+                $discovered = $this->discoverResourceId($base, $timeout);
+            }
+        } catch (\Throwable $e) {
+            $reachable = false;
+            $probeError = $e->getMessage();
         }
+
         if ($jsonUrl !== '' && ! $reachable) {
             $reachable = true;
         }
@@ -301,6 +310,9 @@ final class FundebOpenDataImportService
             ]),
             $jsonUrl !== '' && $this->isRemoteJsonUrl($jsonUrl) => __('URL JSON remota (IEDUCAR_FUNDEB_JSON_URL) + cache opcional.'),
             $effectiveId !== '' => __('Fonte: CKAN FNDE (recurso :id).', ['id' => Str::limit($effectiveId, 12)]),
+            ! $reachable && $probeError !== null => __('CKAN FNDE inacessível (:err). Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou URL JSON HTTP no .env.', [
+                'err' => Str::limit($probeError, 80),
+            ]),
             ! $reachable => __('CKAN FNDE inacessível. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID ou URL JSON HTTP no .env.'),
             default => __('Nenhum recurso CKAN encontrado. Defina IEDUCAR_FUNDEB_CKAN_RESOURCE_ID no .env.'),
         };
@@ -314,6 +326,7 @@ final class FundebOpenDataImportService
             'ckan_base_url' => $base,
             'effective_resource_id' => $effectiveId,
             'hint' => $hint,
+            'probe_error' => $probeError,
         ];
     }
 
@@ -1825,13 +1838,17 @@ final class FundebOpenDataImportService
         ];
 
         foreach (array_unique($queries) as $q) {
-            $response = Http::timeout($timeout)
-                ->acceptJson()
-                ->withOptions(['allow_redirects' => true])
-                ->get($base.'/api/3/action/package_search', [
-                    'q' => $q,
-                    'rows' => 8,
-                ]);
+            try {
+                $response = Http::timeout($timeout)
+                    ->acceptJson()
+                    ->withOptions(['allow_redirects' => true])
+                    ->get($base.'/api/3/action/package_search', [
+                        'q' => $q,
+                        'rows' => 8,
+                    ]);
+            } catch (\Throwable) {
+                continue;
+            }
 
             if (! $response->successful()) {
                 continue;

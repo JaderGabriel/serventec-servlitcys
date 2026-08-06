@@ -24,6 +24,15 @@ Documento vivo: actualize a cada sprint/PR relevante. Na release, consolidar em 
 
 ## Changelog de desenvolvimento
 
+### 2026-08-06 — Contadores de escolas (arquivo geral + dedupe)
+
+**Entregue**
+
+- Escopo operacional exige escola no **arquivo geral** (Acomp): `CampaignOperationalRules::isInArquivoGeral` + flag `meta.in_arquivo_geral` no parse
+- KPI anual em `/clio`: INEP **único** entre coletas (`ClioYearSchoolCounters`) — várias coletas do mesmo município não somam a mesma escola
+- Contador «Escolas no arquivo geral» no painel analítico alinhado ao Acomp (não conta só Relação)
+- Dashboard Início: KPI Consultoria separa municípios **com i-Educar** × **só Clio**
+
 ### 2026-07-24 — Hygieia (8.2.0): série SVG, reanálise lote, Censo 2025
 
 **Entregue**

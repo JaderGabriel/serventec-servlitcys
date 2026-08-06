@@ -98,7 +98,7 @@
                         [
                             'label' => __('Erros na rede'),
                             'value' => number_format($yearErrors ?? 0),
-                            'hint' => __('Escolas ativas na coleta: :n', ['n' => number_format($yearSchools ?? 0)]),
+                            'hint' => __('Escolas únicas no arquivo geral: :n', ['n' => number_format($yearSchools ?? 0)]),
                         ],
                     ] as $kpi)
                         <div class="clio-kpi-cell">

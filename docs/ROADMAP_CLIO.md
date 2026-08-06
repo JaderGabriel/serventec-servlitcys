@@ -50,7 +50,7 @@ flowchart TD
 
 | Superfície | Rota / artefacto | Estado |
 |------------|------------------|--------|
-| Home do exercício | `/clio` | Estável — KPIs + pulse de ficheiros |
+| Home do exercício | `/clio` | Estável — KPIs; escolas únicas no arquivo geral (INEP dedupe entre coletas) |
 | Lista / central da coleta | `/clio/coletas`, hub | Estável — inventário geral → tríade por escola (INEP + status) |
 | Upload / Drive | upload · Verificar/Importar | Estável — lotes; retry de parse em falhas |
 | Análise municipal | `/clio/coletas/{uuid}/analise` | Estável — medidores, relatório da rede, matriz, NEE, jornada (faixas CH + Outros), transporte, Diagnóstico Geral |
@@ -86,7 +86,7 @@ Indicadores que o Clio **já calcula e expõe** de forma estável (UI, inferênc
 
 | Indicador | Fonte | Onde aparece | Nota |
 |-----------|-------|--------------|------|
-| **% tríade** | Cobertura aluno+turma+profissional (escolas ativas) | Home, hub, análise, RX, PDF | Denominador = escolas em atividade |
+| % tríade | Cobertura aluno+turma+profissional (**escolas no arquivo geral e aptas**) | Home, hub, análise, RX, PDF | Denominador = `isOperationallyEligible` (Acomp + actividade + aptidão) |
 | **Arquivos ok / falha / pendente** | `parse_status` | Home (pulse), Central (inventário) | Inclui Acomp municipal |
 | **Situação da coleta** | Acomp (`INF-COL`) | Análise | Em andamento / não iniciou / fechada / bloqueada |
 | **Rede escolar** | Acomp (`INF-ESC`) | Análise | Ativas × extintas / dependência |

@@ -59,7 +59,31 @@ final class CampaignOperationalRules
     }
 
     /**
-     * Em atividade e apta (municipal ∪ filantrópica parceira).
+     * Escola presente no Relatório de Acompanhamento (arquivo geral municipal).
+     * Escolas criadas só pela Relação (ZIP) não entram nos contadores operacionais.
+     *
+     * @param  array<string, mixed>|null  $meta
+     */
+    public static function isInArquivoGeral(?array $meta = null): bool
+    {
+        $meta = is_array($meta) ? $meta : [];
+
+        if (! empty($meta['in_arquivo_geral'])) {
+            return true;
+        }
+
+        // Compatibilidade com Acomp já parseado antes da flag explícita.
+        return array_key_exists('location', $meta)
+            || array_key_exists('blocked', $meta)
+            || array_key_exists('total_curricular', $meta)
+            || array_key_exists('total_aee', $meta)
+            || array_key_exists('total_ac', $meta)
+            || array_key_exists('private_category', $meta)
+            || array_key_exists('partnership_authority', $meta);
+    }
+
+    /**
+     * Em atividade, no arquivo geral e apta (municipal ∪ filantrópica parceira).
      *
      * @param  array<string, mixed>|null  $meta
      */
@@ -69,6 +93,10 @@ final class CampaignOperationalRules
         ?array $meta = null,
     ): bool {
         if (CampaignAnalysisPresenter::isInactiveFunctioning($functioningStatus)) {
+            return false;
+        }
+
+        if (! self::isInArquivoGeral($meta)) {
             return false;
         }
 

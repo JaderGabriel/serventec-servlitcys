@@ -72,12 +72,11 @@ final class PerformanceSaebSeries
                 'school_table' => [],
                 'notes' => [
                     __(
-                        'Sem dados SAEB utilizáveis na base (:path). Importe em Admin → Sincronizações → Pedagógicas ou confirme que cada ponto tem «city_ids» com o id interno da cidade.',
-                        ['path' => $bundle['path']]
+                        'Sem séries SAEB/IDEB utilizáveis nesta base. Importe a divulgação oficial em Administração → Sincronizações → Pedagógicas.',
                     ),
                 ],
                 'error' => null,
-                'source_hint' => __('Importação pedagógica (tabela saeb_indicator_points) — ver Sincronizações Pedagógicas.'),
+                'source_hint' => __('Fonte: importação pedagógica — Administração → Sincronizações → Pedagógicas.'),
                 'explicacao_modal' => $explicacaoModal,
             ];
         }
@@ -89,7 +88,7 @@ final class PerformanceSaebSeries
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
-                'notes' => [__('Não há dados SAEB para esta cidade no arquivo importado (cada ponto deve incluir o id desta cidade em «city_ids»).')],
+                'notes' => [__('Não há resultados SAEB/IDEB importados para este município.')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
                 'explicacao_modal' => $explicacaoModal,
@@ -105,7 +104,7 @@ final class PerformanceSaebSeries
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
-                'notes' => [__('Não há resultados SAEB até o ano selecionado no filtro.')],
+                'notes' => [__('Não há resultados SAEB/IDEB até o ano seleccionado no filtro.')],
                 'error' => null,
                 'source_hint' => $footnoteBase,
                 'explicacao_modal' => $explicacaoModal,
@@ -164,13 +163,13 @@ final class PerformanceSaebSeries
             $escolaNomes
         );
 
-        $hint = __('Círculos verdes — resultado final oficial; triângulos laranja tracejados — preliminar.');
+        $hint = __('Nos gráficos: círculos verdes = resultado final; triângulos laranja = preliminar.');
         $yearNote = $filters->hasYearSelected() && ! $filters->isAllSchoolYears()
-            ? __('A série mostra todos os anos disponíveis até :ano (inclusive), conforme o filtro de ano letivo.', ['ano' => (string) $filters->ano_letivo])
-            : __('A série mostra todos os anos disponíveis na fonte.');
+            ? __('Série histórica até :ano (filtro de ano letivo).', ['ano' => (string) $filters->ano_letivo])
+            : __('Série com todos os anos disponíveis na importação.');
         $schoolNote = $filters->escola_id !== null
-            ? __('Filtro de escola ativo: séries por cod_escola :id (i-Educar).', ['id' => (string) $filters->escola_id])
-            : __('Sem filtro de escola: linhas temporais = rede municipal; quadro e gráfico comparativo usam escolas com pontos importados.');
+            ? __('Filtro de escola activo — séries dessa unidade.')
+            : __('Sem filtro de escola — linhas da rede municipal; o quadro lista escolas com dados.');
 
         return [
             'charts' => $charts,
@@ -239,10 +238,10 @@ final class PerformanceSaebSeries
             'rede_ideb_ultimo' => $ideb,
             'rede_gap_lp_menos_mat' => $gap,
             'decisao_nota' => $gap !== null && $gap < 0
-                ? __('Lacuna: Matemática abaixo de Língua Portuguesa no último ponto municipal — priorizar reforço em MAT.')
+                ? __('Matemática abaixo de Língua Portuguesa no último ponto da rede — priorizar reforço em MAT.')
                 : ($gap !== null && $gap > 3
-                    ? __('Lacuna: LP abaixo de MAT no último ponto municipal — reforço em leitura/escrita.')
-                    : __('Comparar séries e escolas no quadro abaixo para priorizar unidades ou etapas.')),
+                    ? __('Língua Portuguesa abaixo de Matemática no último ponto da rede — reforçar leitura e escrita.')
+                    : __('Compare as séries e o quadro de escolas para priorizar unidades ou etapas.')),
         ];
     }
 
@@ -579,7 +578,7 @@ final class PerformanceSaebSeries
     {
         $bits = [];
         if ($relPath === SaebHistoricoDatabase::STORAGE_LABEL) {
-            $bits[] = __('Armazenamento: tabela PostgreSQL (:table).', ['table' => 'saeb_indicator_points']);
+            $bits[] = __('Armazenamento interno (séries oficiais importadas).');
         } else {
             $bits[] = __('Arquivo: :path', ['path' => 'storage/app/public/'.$relPath]);
         }
@@ -657,13 +656,13 @@ final class PerformanceSaebSeries
         $title = self::seriesTitle($disc, $etapa, $scope, $escolaNomes);
         $unit = (string) ($rows[0]['unidade'] ?? '%');
         $yLabel = match (true) {
-            strtolower($disc) === 'ideb' => __('IDEB (N×P)'),
+            strtolower($disc) === 'ideb' => __('Índice IDEB'),
             $unit !== '' && $unit !== '%' => $unit,
-            default => __('Percentagem / escala'),
+            default => __('Escala / %'),
         };
 
         $subtitle = __(
-            'Série histórica até o ano do filtro. O INEP divulga resultados preliminares antes da versão final; use a legenda para distinguir.'
+            'Histórico até o ano do filtro. Distinga resultado final e preliminar na legenda.'
         );
 
         return ChartPayload::lineSaebHistory(

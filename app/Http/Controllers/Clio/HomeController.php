@@ -7,6 +7,7 @@ use App\Models\Clio\ClioCampaign;
 use App\Models\Clio\ClioCampaignArtifact;
 use App\Models\Clio\ClioCampaignFinding;
 use App\Services\Clio\Home\ClioHomeMunicipalityCards;
+use App\Services\Clio\Home\ClioYearSchoolCounters;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
@@ -15,6 +16,7 @@ class HomeController extends Controller
 {
     public function __construct(
         private readonly ClioHomeMunicipalityCards $municipalityCards,
+        private readonly ClioYearSchoolCounters $yearSchoolCounters,
     ) {}
 
     public function __invoke(Request $request): View
@@ -134,9 +136,7 @@ class HomeController extends Controller
             ->withCount('schools')
             ->get();
 
-        $yearSchools = (int) $yearCampaignsForStats->sum(
-            fn (ClioCampaign $c) => (int) ($c->schoolScopeStats()['active'] ?? 0),
-        );
+        $yearSchools = $this->yearSchoolCounters->uniqueActiveSchoolsForYear($filterYear);
 
         $triades = $yearCampaignsForStats
             ->map(fn (ClioCampaign $c) => $c->triadeCoveragePct())

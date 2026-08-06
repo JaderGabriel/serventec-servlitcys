@@ -9,6 +9,23 @@ use Tests\TestCase;
 final class CampaignOperationalRulesTest extends TestCase
 {
     #[Test]
+    public function escola_sem_arquivo_geral_nao_e_elegivel(): void
+    {
+        $this->assertFalse(CampaignOperationalRules::isInArquivoGeral([]));
+        $this->assertFalse(CampaignOperationalRules::isOperationallyEligible(
+            'Em atividade',
+            'Municipal',
+            [],
+        ));
+        $this->assertTrue(CampaignOperationalRules::isInArquivoGeral([
+            'in_arquivo_geral' => true,
+        ]));
+        $this->assertTrue(CampaignOperationalRules::isInArquivoGeral([
+            'location' => 'Urbana',
+        ]));
+    }
+
+    #[Test]
     public function escola_municipal_em_atividade_e_apta(): void
     {
         $this->assertTrue(CampaignOperationalRules::isOperationallyEligible(

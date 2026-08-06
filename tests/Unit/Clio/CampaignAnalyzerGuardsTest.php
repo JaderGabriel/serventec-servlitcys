@@ -36,6 +36,8 @@ final class CampaignAnalyzerGuardsTest extends TestCase
             'inep_code' => '1',
             'name' => 'Ativa',
             'functioning_status' => 'Em Atividade',
+            'dependency' => 'Municipal',
+            'meta' => ['location' => 'Urbana', 'in_arquivo_geral' => true],
         ]);
         $active->setRelation('artifacts', new Collection([
             new \App\Models\Clio\ClioCampaignArtifact(['kind' => 'relacao_aluno_escola']),
@@ -47,6 +49,7 @@ final class CampaignAnalyzerGuardsTest extends TestCase
             'inep_code' => '2',
             'name' => 'Extinta',
             'functioning_status' => 'Extinta',
+            'meta' => ['location' => 'Urbana', 'in_arquivo_geral' => true],
         ]);
         $extinct->setRelation('artifacts', new Collection);
 
@@ -54,16 +57,30 @@ final class CampaignAnalyzerGuardsTest extends TestCase
             'inep_code' => '3',
             'name' => 'Incompleta',
             'functioning_status' => 'Em atividade',
+            'dependency' => 'Municipal',
+            'meta' => ['location' => 'Rural', 'in_arquivo_geral' => true],
         ]);
         $incomplete->setRelation('artifacts', new Collection([
             new \App\Models\Clio\ClioCampaignArtifact(['kind' => 'relacao_aluno_escola']),
         ]));
 
-        $campaign->setRelation('schools', new Collection([$active, $extinct, $incomplete]));
+        $onlyRelacao = new \App\Models\Clio\ClioCampaignSchool([
+            'inep_code' => '4',
+            'name' => 'Só Relação',
+            'functioning_status' => 'Em atividade',
+            'meta' => [],
+        ]);
+        $onlyRelacao->setRelation('artifacts', new Collection([
+            new \App\Models\Clio\ClioCampaignArtifact(['kind' => 'relacao_aluno_escola']),
+            new \App\Models\Clio\ClioCampaignArtifact(['kind' => 'relacao_turma_escola']),
+            new \App\Models\Clio\ClioCampaignArtifact(['kind' => 'relacao_profissional_escola']),
+        ]));
+
+        $campaign->setRelation('schools', new Collection([$active, $extinct, $incomplete, $onlyRelacao]));
 
         $scope = $campaign->schoolScopeStats();
         $this->assertSame(2, $scope['active']);
-        $this->assertSame(1, $scope['other']);
+        $this->assertSame(2, $scope['other']);
         $this->assertSame(1, $scope['triade_complete']);
         $this->assertSame(50.0, $scope['triade_pct']);
         $this->assertSame(50.0, $campaign->triadeCoveragePct());

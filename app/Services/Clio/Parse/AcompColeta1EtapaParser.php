@@ -69,6 +69,7 @@ final class AcompColeta1EtapaParser implements ArtifactParser
                 'collection_form' => $this->nullIfEmpty($this->csv->value($row, 'Forma de Coleta')),
                 'functioning_status' => $this->nullIfEmpty($this->csv->value($row, 'Situação de Funcionamento')),
                 'meta' => [
+                    'in_arquivo_geral' => true,
                     'blocked' => $this->csv->value($row, 'Escola Bloqueada'),
                     'location' => $this->csv->value($row, 'Localização'),
                     'private_category' => $this->nullIfEmpty($this->firstHeaderValue($row, [

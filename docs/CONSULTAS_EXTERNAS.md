@@ -327,7 +327,7 @@ flowchart LR
 
 | Risco | Mitigação actual |
 |-------|------------------|
-| CKAN FNDE instável ou HTML em vez de JSON | Cache em disco + import admin |
+| CKAN FNDE instável ou HTML em vez de JSON | Cache em disco + import admin; `apiDiagnostics()` captura timeout (não gera 500 em `/admin/ieducar-compatibility`) |
 | Tesouro: lote limitado sem filtro server-side por IBGE | Documentar; futuro: import CSV nacional ([ROADMAP](ROADMAP_BASES_FINANCEIRAS.md)) |
 | Portal Transparência: paginação e rate limit | Cache TTL; amostra na UI |
 | Confundir estimativa com repasse oficial | Avisos em `IEDUCAR_DISC_AVISO_FINANCEIRO` e `IEDUCAR_FUNDEB_AVISO_PREVISAO` |
