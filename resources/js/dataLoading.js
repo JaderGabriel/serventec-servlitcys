@@ -362,11 +362,14 @@ function filenameFromContentDisposition(disposition, fallback) {
  * @param {string} pathname
  */
 function isAttachmentExportPath(pathname) {
-    return /\/export\/(pdf|xlsx|csv)(\/|$)/i.test(pathname);
+    // pdf, pdf-gestor, pdf-final, pdf-mapa-coleta, xlsx, xlsx-filtros, csv
+    return /\/export\/(pdf|xlsx|csv)([\/\-]|$)/i.test(pathname);
 }
 
 /**
  * Download via fetch: o browser não navega, então o overlay precisa fechar no finally.
+ * Se o fallback for location.assign num anexo (Content-Disposition), a página pode
+ * não descarregar — agendar fecho do overlay para não ficar preso.
  *
  * @param {HTMLAnchorElement} link
  * @param {string} title
@@ -374,7 +377,19 @@ function isAttachmentExportPath(pathname) {
  */
 async function downloadHrefWithLoading(link, title, message) {
     servDataLoadingStart(title, message);
-    let keepLoadingForNavigation = false;
+    /** @type {ReturnType<typeof setTimeout>|null} */
+    let attachmentNavTimer = null;
+
+    const scheduleFinishAfterAttachmentNav = () => {
+        if (attachmentNavTimer !== null) {
+            window.clearTimeout(attachmentNavTimer);
+        }
+        // Anexo tipicamente não dispara pageshow; fecha o overlay após o browser iniciar o download.
+        attachmentNavTimer = window.setTimeout(() => {
+            servDataLoadingFinish();
+            attachmentNavTimer = null;
+        }, 1800);
+    };
 
     try {
         const response = await fetch(link.href, {
@@ -386,8 +401,21 @@ async function downloadHrefWithLoading(link, title, message) {
         });
 
         const contentType = (response.headers.get("Content-Type") || "").toLowerCase();
-        if (!response.ok || contentType.includes("text/html")) {
-            keepLoadingForNavigation = true;
+        const disposition = response.headers.get("Content-Disposition") || "";
+        const isAttachment = /attachment/i.test(disposition);
+        const looksLikeBinary =
+            isAttachment ||
+            contentType.includes("pdf") ||
+            contentType.includes("sheet") ||
+            contentType.includes("excel") ||
+            contentType.includes("spreadsheet") ||
+            contentType.includes("octet-stream") ||
+            contentType.includes("csv") ||
+            contentType.includes("zip");
+        const looksLikeHtml = contentType.includes("text/html") && !looksLikeBinary;
+
+        if (!response.ok || looksLikeHtml) {
+            scheduleFinishAfterAttachmentNav();
             window.location.assign(link.href);
 
             return;
@@ -395,17 +423,17 @@ async function downloadHrefWithLoading(link, title, message) {
 
         const blob = await response.blob();
         const pathname = linkPathname(link) || "download";
-        const extMatch = /\.(pdf|xlsx|csv)$/i.exec(pathname);
-        const fallback =
-            (extMatch ? `download.${extMatch[1].toLowerCase()}` : null) ||
-            (contentType.includes("pdf")
-                ? "download.pdf"
-                : contentType.includes("sheet") || contentType.includes("excel")
-                  ? "download.xlsx"
-                  : "download.bin");
+        let fallbackExt = "bin";
+        if (/\/export\/xlsx/i.test(pathname) || contentType.includes("sheet") || contentType.includes("excel") || contentType.includes("spreadsheet")) {
+            fallbackExt = "xlsx";
+        } else if (/\/export\/pdf/i.test(pathname) || contentType.includes("pdf")) {
+            fallbackExt = "pdf";
+        } else if (/\/export\/csv/i.test(pathname) || contentType.includes("csv")) {
+            fallbackExt = "csv";
+        }
         const filename = filenameFromContentDisposition(
-            response.headers.get("Content-Disposition"),
-            fallback,
+            disposition,
+            `download.${fallbackExt}`,
         );
 
         const objectUrl = URL.createObjectURL(blob);
@@ -419,10 +447,10 @@ async function downloadHrefWithLoading(link, title, message) {
         window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
     } catch (error) {
         console.error("serv download", error);
-        keepLoadingForNavigation = true;
+        scheduleFinishAfterAttachmentNav();
         window.location.assign(link.href);
     } finally {
-        if (!keepLoadingForNavigation) {
+        if (attachmentNavTimer === null) {
             servDataLoadingFinish();
         }
     }

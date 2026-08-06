@@ -212,15 +212,41 @@
                 <div
                     x-show="exportOpen"
                     x-cloak
-                    class="absolute z-[80] bottom-full mb-2 end-0 w-56 rounded-xl shadow-lg shadow-slate-900/10 dark:shadow-black/30"
+                    class="absolute z-[80] bottom-full mb-2 end-0 w-64 rounded-xl shadow-lg shadow-slate-900/10 dark:shadow-black/30"
                 >
                     <div class="rounded-xl ring-1 ring-slate-200/90 dark:ring-gray-600/90 py-1 bg-white dark:bg-gray-800">
-                        <a :href="current.export_pdf" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('PDF Detalhado') }}</a>
-                        <a :href="current.export_gestor" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('PDF Gerencial') }}</a>
-                        <a :href="current.export_final" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('PDF Final') }}</a>
-                        <a :href="current.export_mapa" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('MAPA de Coleta') }}</a>
-                        <a :href="current.export_xlsx" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('Excel') }}</a>
-                        <a :href="current.export_xlsx_filtros" class="block px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80">{{ __('Excel filtros') }}</a>
+                        <div class="mx-1">
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-blue-900 hover:bg-slate-50 dark:text-blue-200 dark:hover:bg-gray-800/80"
+                                @click.stop="pdfOpen = !pdfOpen"
+                                :aria-expanded="pdfOpen.toString()"
+                            >
+                                <span class="min-w-0 flex-1">{{ __('PDF') }}</span>
+                                <svg class="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform" :class="{ 'rotate-180': pdfOpen }" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <div x-show="pdfOpen" x-cloak class="border-s-2 border-slate-200/90 ms-3.5 mb-0.5 space-y-0.5 ps-1.5 dark:border-gray-600/90">
+                                <a :href="current.export_pdf" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando PDF Detalhado') }}" data-serv-loading-message="{{ __('Montando o relatório detalhado da coleta. Aguarde…') }}">{{ __('Detalhado') }}</a>
+                                <a :href="current.export_gestor" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando PDF Gerencial') }}" data-serv-loading-message="{{ __('Montando o painel gerencial. Aguarde…') }}">{{ __('Gerencial') }}</a>
+                                <a :href="current.export_final" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando PDF Final') }}" data-serv-loading-message="{{ __('Montando o retrato temático do município. Aguarde…') }}">{{ __('Final') }}</a>
+                                <a :href="current.export_mapa" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando MAPA de Coleta') }}" data-serv-loading-message="{{ __('Montando o inventário quantitativo. Aguarde…') }}">{{ __('MAPA de Coleta') }}</a>
+                            </div>
+                        </div>
+                        <div class="mx-1">
+                            <button
+                                type="button"
+                                class="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-sky-900 hover:bg-slate-50 dark:text-sky-200 dark:hover:bg-gray-800/80"
+                                @click.stop="excelOpen = !excelOpen"
+                                :aria-expanded="excelOpen.toString()"
+                            >
+                                <span class="min-w-0 flex-1">{{ __('Excel') }}</span>
+                                <svg class="h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform" :class="{ 'rotate-180': excelOpen }" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+                            </button>
+                            <div x-show="excelOpen" x-cloak class="border-s-2 border-slate-200/90 ms-3.5 mb-0.5 space-y-0.5 ps-1.5 dark:border-gray-600/90">
+                                <a :href="current.export_xlsx" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando Excel') }}" data-serv-loading-message="{{ __('Preparando o arquivo de exportação. Aguarde…') }}">{{ __('Coleta completa') }}</a>
+                                <a :href="current.export_xlsx_filtros" @click="exportOpen = false" class="block rounded-md px-2 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-gray-700/80" data-serv-loading-on-click data-serv-loading-download data-serv-loading-title="{{ __('Gerando Excel de filtros') }}" data-serv-loading-message="{{ __('Aplicando filtros operacionais e montando o workbook. Aguarde…') }}">{{ __('Filtros operacionais') }}</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

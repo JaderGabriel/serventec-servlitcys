@@ -131,6 +131,8 @@ export default function clioReportCard(config) {
         collections,
         selectedId: initialId,
         exportOpen: false,
+        pdfOpen: true,
+        excelOpen: true,
         seriesUrl:
             typeof opts.seriesUrl === "string"
                 ? opts.seriesUrl

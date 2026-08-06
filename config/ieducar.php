@@ -552,6 +552,7 @@ return [
         'planilha_resultados_urls' => [
             2023 => 'https://download.inep.gov.br/saeb/resultados/planilha_de_resultados_2023.rar',
             2021 => 'https://download.inep.gov.br/saeb/resultados/saeb_2021_brasil_estados_municipios.xlsx',
+            // 2025: aguardar planilha oficial no portal INEP (ainda não publicada em download.inep.gov.br).
         ],
         /** Cache de planilhas INEP descarregadas (RAR/XLSX/XLSB). */
         'planilha_cache_path' => trim((string) env('IEDUCAR_SAEB_PLANILHA_CACHE_PATH', 'saeb/planilhas')) ?: 'saeb/planilhas',
