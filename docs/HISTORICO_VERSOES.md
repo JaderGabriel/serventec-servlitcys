@@ -10,7 +10,7 @@
 | **Data de referência** | **06/08/2026** |
 | **Último marco documentado** | **Erato** — Importador IDEB 2025 (fila pedagógica + fase Horizonte) · Tyche permanece histórico |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | *(preenchido no push)* |
+| **Commit de release** |  (#**665**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >

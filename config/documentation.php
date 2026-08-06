@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '9.0.2',
         'release_tag' => '20260806-Erato',
-        'commit_short' => '',
-        'commit_number' => 0,
+        'commit_short' => 'aaad4fde',
+        'commit_number' => 665,
         'revision_date' => '2026-08-06',
         'in_production' => true,
         'production_label' => 'Em produção',
