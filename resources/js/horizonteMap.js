@@ -1415,7 +1415,7 @@ function enrichMetricHtml({ label, hint, valueHtml, tone = "neutral", iconHtml =
     );
 }
 
-function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtml, foot = "", notes = [] }) {
+function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtml, foot = "", notes = [], chartHtml = "" }) {
     const yearTag =
         year !== ""
             ? `<span class="serv-horizonte-muni-tooltip__enrich-ano">${escapeHtml(year)}</span>`
@@ -1436,6 +1436,10 @@ function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtm
                   )
                   .join("")}</div>`
             : "";
+    const chartBlock =
+        typeof chartHtml === "string" && chartHtml.trim() !== ""
+            ? `<div class="serv-horizonte-muni-tooltip__enrich-chart">${chartHtml}</div>`
+            : "";
 
     return (
         `<section class="serv-horizonte-muni-tooltip__enrich-block serv-horizonte-muni-tooltip__enrich-block--${escapeHtml(tone)}">` +
@@ -1446,6 +1450,7 @@ function enrichBlockHtml({ tone, title, year, lead, signal, iconHtml, metricsHtm
         (signalHtml ? `<div class="serv-horizonte-muni-tooltip__enrich-signal-row">${signalHtml}</div>` : "") +
         (lead ? `<p class="serv-horizonte-muni-tooltip__enrich-lead">${escapeHtml(lead)}</p>` : "") +
         `</div></div>` +
+        chartBlock +
         `<div class="serv-horizonte-muni-tooltip__enrich-metrics">${metricsHtml}</div>` +
         (foot ? `<p class="serv-horizonte-muni-tooltip__enrich-foot">${escapeHtml(foot)}</p>` : "") +
         notesHtml +
@@ -1482,7 +1487,7 @@ function pedagogyEnrichmentSignal(m) {
     if (m.saeb_trend === "up" || m.enrollment_trend === "up") {
         return { tone: "ok", text: "Trajetória positiva" };
     }
-    if (m.has_saeb || m.has_censo) {
+    if (m.has_saeb || m.has_ideb || m.has_censo) {
         return { tone: "neutral", text: "Rede estável" };
     }
     return null;
@@ -1613,6 +1618,239 @@ function muniFiscalEnrichmentHtml(m) {
     });
 }
 
+function pedagogySeriesPoints(series) {
+    const items = Array.isArray(series) ? series : [];
+    /** @type {Map<number, number>} */
+    const byYear = new Map();
+    for (const point of items) {
+        const year = Number(point?.year);
+        const value = Number(point?.value);
+        if (!Number.isFinite(year) || year <= 0 || !Number.isFinite(value) || value <= 0) {
+            continue;
+        }
+        if (!byYear.has(year)) {
+            byYear.set(year, value);
+        }
+    }
+    return byYear;
+}
+
+/**
+ * Gráfico SVG com eixos dual: SAEB (LP/MAT, esquerda) + IDEB (direita).
+ * @returns {string}
+ */
+function pedagogySaebIdebChartHtml(m) {
+    if (!m) {
+        return "";
+    }
+
+    const lpByYear = pedagogySeriesPoints(m.saeb_lp_series);
+    const matByYear = pedagogySeriesPoints(m.saeb_mat_series);
+    const idebByYear = pedagogySeriesPoints(m.ideb_series);
+    if (
+        Number.isFinite(Number(m.ideb)) &&
+        Number(m.ideb) > 0 &&
+        idebByYear.size === 0
+    ) {
+        // Sem ano — não entra no eixo X histórico.
+    }
+
+    const yearSet = new Set([
+        ...lpByYear.keys(),
+        ...matByYear.keys(),
+        ...idebByYear.keys(),
+    ]);
+    const years = [...yearSet].sort((a, b) => a - b);
+    if (years.length < 1) {
+        return "";
+    }
+
+    const saebVals = [];
+    for (const y of years) {
+        if (lpByYear.has(y)) {
+            saebVals.push(lpByYear.get(y));
+        }
+        if (matByYear.has(y)) {
+            saebVals.push(matByYear.get(y));
+        }
+    }
+    const idebVals = years
+        .filter((y) => idebByYear.has(y))
+        .map((y) => idebByYear.get(y));
+
+    const hasSaeb = saebVals.length > 0;
+    const hasIdeb = idebVals.length > 0;
+    if (!hasSaeb && !hasIdeb) {
+        return "";
+    }
+
+    const pad = (vals, fallbackMin, fallbackMax) => {
+        if (vals.length === 0) {
+            return { min: fallbackMin, max: fallbackMax };
+        }
+        let min = Math.min(...vals);
+        let max = Math.max(...vals);
+        if (min === max) {
+            min = Math.max(0, min * 0.9);
+            max = max * 1.1 || fallbackMax;
+        }
+        const span = max - min;
+        return {
+            min: Math.max(0, min - span * 0.12),
+            max: max + span * 0.12,
+        };
+    };
+
+    const saebScale = pad(saebVals, 150, 350);
+    const idebScale = pad(idebVals, 0, 10);
+
+    const W = 340;
+    const H = 148;
+    const L = 36;
+    const R = 36;
+    const T = 14;
+    const B = 28;
+    const plotW = W - L - R;
+    const plotH = H - T - B;
+
+    const xAt = (i) =>
+        years.length === 1
+            ? L + plotW / 2
+            : L + (i / (years.length - 1)) * plotW;
+    const ySaeb = (v) =>
+        T + plotH - ((v - saebScale.min) / (saebScale.max - saebScale.min || 1)) * plotH;
+    const yIdeb = (v) =>
+        T + plotH - ((v - idebScale.min) / (idebScale.max - idebScale.min || 1)) * plotH;
+
+    const linePath = (byYear, yFn) => {
+        const pts = [];
+        years.forEach((y, i) => {
+            if (!byYear.has(y)) {
+                return;
+            }
+            pts.push(`${pts.length === 0 ? "M" : "L"}${xAt(i).toFixed(1)},${yFn(byYear.get(y)).toFixed(1)}`);
+        });
+        return pts.join(" ");
+    };
+
+    const dots = (byYear, yFn, color) =>
+        years
+            .map((y, i) => {
+                if (!byYear.has(y)) {
+                    return "";
+                }
+                return `<circle cx="${xAt(i).toFixed(1)}" cy="${yFn(byYear.get(y)).toFixed(1)}" r="3.2" fill="${color}" stroke="#fff" stroke-width="1.2"/>`;
+            })
+            .join("");
+
+    const lpColor = "#059669";
+    const matColor = "#0d9488";
+    const idebColor = "#2563eb";
+
+    const legendItems = [];
+    if (hasSaeb && lpByYear.size > 0) {
+        legendItems.push({ color: lpColor, label: "SAEB LP" });
+    }
+    if (hasSaeb && matByYear.size > 0) {
+        legendItems.push({ color: matColor, label: "SAEB MAT" });
+    }
+    if (hasIdeb) {
+        legendItems.push({ color: idebColor, label: "IDEB" });
+    }
+
+    const legendHtml = legendItems
+        .map(
+            (item) =>
+                `<span class="serv-horizonte-muni-tooltip__enrich-chart-legend-item">` +
+                `<span class="serv-horizonte-muni-tooltip__enrich-chart-swatch" style="background:${item.color}"></span>` +
+                `${escapeHtml(item.label)}</span>`,
+        )
+        .join("");
+
+    const yearLabels = years
+        .map((y, i) => {
+            const show =
+                years.length <= 6 ||
+                i === 0 ||
+                i === years.length - 1 ||
+                i % Math.ceil(years.length / 5) === 0;
+            if (!show) {
+                return "";
+            }
+            return `<text x="${xAt(i).toFixed(1)}" y="${(H - 8).toFixed(1)}" text-anchor="middle" class="serv-horizonte-muni-tooltip__enrich-chart-axis">${y}</text>`;
+        })
+        .join("");
+
+    const leftTicks = hasSaeb
+        ? [saebScale.min, (saebScale.min + saebScale.max) / 2, saebScale.max]
+              .map((v) => {
+                  const y = ySaeb(v);
+                  return (
+                      `<text x="2" y="${(y + 3).toFixed(1)}" class="serv-horizonte-muni-tooltip__enrich-chart-axis serv-horizonte-muni-tooltip__enrich-chart-axis--left">${Math.round(v)}</text>` +
+                      `<line x1="${L}" y1="${y.toFixed(1)}" x2="${W - R}" y2="${y.toFixed(1)}" class="serv-horizonte-muni-tooltip__enrich-chart-grid"/>`
+                  );
+              })
+              .join("")
+        : "";
+
+    const rightTicks = hasIdeb
+        ? [idebScale.min, (idebScale.min + idebScale.max) / 2, idebScale.max]
+              .map((v) => {
+                  const y = yIdeb(v);
+                  return `<text x="${W - 2}" y="${(y + 3).toFixed(1)}" text-anchor="end" class="serv-horizonte-muni-tooltip__enrich-chart-axis serv-horizonte-muni-tooltip__enrich-chart-axis--right">${v.toFixed(1)}</text>`;
+              })
+              .join("")
+        : "";
+
+    const paths = [];
+    if (lpByYear.size > 0) {
+        const d = linePath(lpByYear, ySaeb);
+        if (d) {
+            paths.push(`<path d="${d}" fill="none" stroke="${lpColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>`);
+            paths.push(dots(lpByYear, ySaeb, lpColor));
+        }
+    }
+    if (matByYear.size > 0) {
+        const d = linePath(matByYear, ySaeb);
+        if (d) {
+            paths.push(`<path d="${d}" fill="none" stroke="${matColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 3.5"/>`);
+            paths.push(dots(matByYear, ySaeb, matColor));
+        }
+    }
+    if (idebByYear.size > 0) {
+        const d = linePath(idebByYear, yIdeb);
+        if (d) {
+            paths.push(`<path d="${d}" fill="none" stroke="${idebColor}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`);
+            paths.push(dots(idebByYear, yIdeb, idebColor));
+        }
+    }
+
+    const axisHints = [];
+    if (hasSaeb) {
+        axisHints.push("Esq.: escala SAEB");
+    }
+    if (hasIdeb) {
+        axisHints.push("Dir.: IDEB");
+    }
+
+    return (
+        `<div class="serv-horizonte-muni-tooltip__enrich-chart-head">` +
+        `<p class="serv-horizonte-muni-tooltip__enrich-chart-title">${escapeHtml("Série histórica SAEB e IDEB")}</p>` +
+        `<div class="serv-horizonte-muni-tooltip__enrich-chart-legend">${legendHtml}</div>` +
+        `</div>` +
+        `<svg class="serv-horizonte-muni-tooltip__enrich-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml("Evolução SAEB e IDEB por ano")}">` +
+        `<rect x="${L}" y="${T}" width="${plotW}" height="${plotH}" class="serv-horizonte-muni-tooltip__enrich-chart-plot"/>` +
+        leftTicks +
+        rightTicks +
+        paths.join("") +
+        yearLabels +
+        `</svg>` +
+        (axisHints.length
+            ? `<p class="serv-horizonte-muni-tooltip__enrich-chart-hint">${escapeHtml(axisHints.join(" · "))}</p>`
+            : "")
+    );
+}
+
 function muniPedagogyEnrichmentHtml(m) {
     const rows = [];
 
@@ -1639,6 +1877,25 @@ function muniPedagogyEnrichmentHtml(m) {
                         : ""),
                 tone: trendTone,
                 iconHtml: HORIZONTE_ENRICH_ICONS.trend,
+            }),
+        );
+    }
+    if (
+        Number.isFinite(Number(m.ideb)) &&
+        Number(m.ideb) > 0
+    ) {
+        rows.push(
+            enrichMetricHtml({
+                label: "Último IDEB",
+                hint: "Índice oficial mais recente na série importada.",
+                valueHtml: escapeHtml(
+                    Number(m.ideb).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                    }),
+                ),
+                tone: "neutral",
+                iconHtml: HORIZONTE_ENRICH_ICONS.education,
             }),
         );
     }
@@ -1712,7 +1969,8 @@ function muniPedagogyEnrichmentHtml(m) {
         );
     }
 
-    if (rows.length === 0) {
+    const chartHtml = pedagogySaebIdebChartHtml(m);
+    if (rows.length === 0 && chartHtml === "") {
         return "";
     }
 
@@ -1722,11 +1980,12 @@ function muniPedagogyEnrichmentHtml(m) {
         tone: "pedagogy",
         title: "Pedagogia e escala",
         year: "",
-        lead: "Aprendizagem e escala da rede (SAEB e Educacenso).",
+        lead: "Aprendizagem e escala da rede — SAEB, IDEB e Educacenso no mesmo olhar.",
         signal,
         iconHtml: HORIZONTE_ENRICH_ICONS.pedagogy,
+        chartHtml,
         metricsHtml: rows.join(""),
-        foot: "Combine tendência SAEB e matrículas na proposta.",
+        foot: "IDEB e SAEB partilham o eixo dos anos; escalas à esquerda (SAEB) e à direita (IDEB).",
     });
 }
 
@@ -8692,7 +8951,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return [...byYear.values()]
                 .filter((row) => row.lp !== null || row.mat !== null)
                 .sort((a, b) => b.year - a.year)
-                .slice(0, 4);
+                .slice(0, 6);
         },
 
         modalHeaderSaebTrendLabel(m) {
@@ -8740,7 +8999,7 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             }
             return rows
                 .sort((a, b) => b.year - a.year)
-                .slice(0, 5);
+                .slice(0, 6);
         },
 
         modalHeaderHasIdeb(m) {
@@ -8790,9 +9049,8 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
         },
 
         modalHeaderSaebYearToneClass(index) {
-            return index === 0
-                ? "serv-horizonte-muni-modal__fact--saeb-year-latest"
-                : "serv-horizonte-muni-modal__fact--saeb-year-previous";
+            const tone = Math.max(0, Number(index) || 0) % 6;
+            return `serv-horizonte-muni-modal__fact--saeb-year-tone-${tone}`;
         },
 
         shouldShowEnrollmentSeries(m) {

@@ -1,10 +1,10 @@
 # Hub de documentação — servlitcys
 
-**Versão do produto:** 9.0.1 · **Última revisão:** 2026-07-25
+**Versão do produto:** 9.0.3 · **Última revisão:** 2026-08-06
 
 > **Índice:** [README.md](README.md) · **Fluxos:** [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_E_FLUXOS.md) · **Versões:** [HISTORICO_VERSOES.md](HISTORICO_VERSOES.md) · **Roadmaps:** [ROADMAP_INDICE.md](ROADMAP_INDICE.md)
 
-Mapa visual da documentação em produção: versão atual **9.0.1**, linha **9.x** (Canteiro + Portal + roadmaps) sobre **8.x** (Clio), navegação da consultoria e convenção de tags.
+Mapa visual da documentação em produção: versão atual **9.0.3**, linha **9.x** (Canteiro + Portal + roadmaps + IDEB/SAEB) sobre **8.x** (Clio), navegação da consultoria e convenção de tags.
 
 Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](../canvases/documentacao-hub.canvas.tsx) (gráficos e seções expansíveis).
 
@@ -14,7 +14,7 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 
 | Indicador | Valor |
 |-----------|-------|
-| **Versão semântica** | **9.0.1** |
+| **Versão semântica** | **9.0.3** |
 | **Tag de deploy** | `20260725-Tyche` |
 | **Commit de referência** | `ab5a076` |
 | **Data de referência** | 2026-07-24 |
@@ -175,6 +175,8 @@ Guia: [ANALYTICS_NAVEGACAO_UI.md](ANALYTICS_NAVEGACAO_UI.md).
 
 | Versão | Codename | Data | # | Nota |
 |--------|----------|------|---|------|
+| **9.0.3** | Polyhymnia | 06/08 a | — | [RELEASE_20260806a_POLYHYMNIA.md](RELEASE_20260806a_POLYHYMNIA.md) — Desempenho SAEB/IDEB; Horizonte pedagogia |
+| **9.0.2** | Erato | 06/08 | — | Importador IDEB 2025 (fila pedagógica + Horizonte) |
 | **9.0.1** | Tyche | 25/07 | — | [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) — Emendas FIN-08; HOR-08d…g; Clio PDF |
 | **9.0.0** | Opus | 24/07 f | — | [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md) — Canteiro; roadmaps `ROADMAP_*`; Portal Transparência |
 | **8.2.2** | Metis | 24/07 e | — | [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md) — cobertura Fase E (Jobs + POSTs admin) |

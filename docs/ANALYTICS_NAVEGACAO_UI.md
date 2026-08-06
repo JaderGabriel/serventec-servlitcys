@@ -1,6 +1,6 @@
 # Analytics — navegação e UI de consultoria
 
-**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06
+**Versão do produto:** 9.0.3 · **Última revisão:** 2026-08-06
 
 > **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **Índice:** [README.md](README.md) · **Padrão:** [PADRAO_DOCUMENTACAO.md](PADRAO_DOCUMENTACAO.md) · **Abas:** [CONSULTORIA_ABAS_DECISAO.md](CONSULTORIA_ABAS_DECISAO.md)
 

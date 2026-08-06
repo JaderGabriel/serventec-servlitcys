@@ -2,7 +2,7 @@
 
 Plataforma web Laravel para **dados educacionais por município**: painéis, análise, **Horizonte** (mapa de oportunidade), **Clio** (coletas Educacenso 1ª etapa) e ligação a bases **i-Educar** por cidade (MySQL ou PostgreSQL conforme a cidade).
 
-**Versão em produção (`main`):** **9.0.1** · tag **`20260725-Tyche`** · [release](docs/RELEASE_20260725_TYCHE.md) · [histórico](docs/HISTORICO_VERSOES.md)
+**Versão em produção (`main`):** **9.0.3** · tag **`20260806a-Polyhymnia`** · [release](docs/RELEASE_20260806a_POLYHYMNIA.md) · [histórico](docs/HISTORICO_VERSOES.md)
 
 ---
 
@@ -304,7 +304,9 @@ Detalhe: [docs/PERFIS_UTILIZADOR.md](docs/PERFIS_UTILIZADOR.md).
 
 | Versão | Tag | Data | Destaque |
 |--------|-----|------|----------|
-| **▶ 9.0.1** | `20260725-Tyche` | 25/07 | Emendas FIN-08, HOR-08d…g procurement/sanções, Clio PDF — [RELEASE](docs/RELEASE_20260725_TYCHE.md) |
+| **▶ 9.0.3** | `20260806a-Polyhymnia` | 06/08 | SAEB/IDEB Desempenho separados; Horizonte pedagogia — [RELEASE](docs/RELEASE_20260806a_POLYHYMNIA.md) |
+| 9.0.2 | `20260806-Erato` | 06/08 | Importador IDEB 2025 (fila + Horizonte) |
+| 9.0.1 | `20260725-Tyche` | 25/07 | Emendas FIN-08, HOR-08d…g procurement/sanções, Clio PDF — [RELEASE](docs/RELEASE_20260725_TYCHE.md) |
 | 9.0.0 | `20260724f-Opus` | 24/07 | Canteiro Obrasgov, roadmaps `ROADMAP_*`, Portal Transparência — [RELEASE](docs/RELEASE_20260724f_OPUS.md) |
 | 8.2.2 | `20260724e-Metis` | 24/07 | Cobertura Fase E (Jobs + POSTs admin) — [RELEASE](docs/RELEASE_20260724e_METIS.md) |
 | 8.2.1 | `20260724d-Eunomia` | 24/07 | Estabilização A–D (testes, segurança, perf, docs) — [RELEASE](docs/RELEASE_20260724d_EUNOMIA.md) |

@@ -1,6 +1,6 @@
 # Consultoria municipal — decisão sobre abas, menus e dados
 
-**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
+**Versão do produto:** 9.0.3 · **Última revisão:** 2026-08-06 · **Decisão:** **Cenário C implementado** (área Resumo + Diagnóstico como entrada).
 
 > **Índice:** [README.md](README.md) · **Release:** [RELEASE_20260605_ATHENA.md](RELEASE_20260605_ATHENA.md) · **UI Desempenho (SAEB/IDEB):** secção «IDEB e SAEB (INEP)» em `performance.blade.php` / `PerformanceSaebSeries`
 

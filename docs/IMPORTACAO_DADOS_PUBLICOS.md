@@ -1,6 +1,6 @@
 # Importação de dados públicos (hub admin)
 
-**Versão do produto:** 9.0.2 · **Última revisão:** 2026-08-06
+**Versão do produto:** 9.0.3 · **Última revisão:** 2026-08-06
 
 **Rota:** `/admin/dados-publicos` (`admin.public-data.index`)  
 **Menu:** Dados públicos → **Importação por município** (perfil com `canImportOrConfigure`)  

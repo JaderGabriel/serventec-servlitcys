@@ -18,6 +18,7 @@ final class PerformanceSaebSeries
     /**
      * @return array{
      *   charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>,
+     *   ideb_charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>,
      *   extra_charts: list<array{type: string, title: string, labels: list<string>, datasets: list<array<string, mixed>>, options?: array<string, mixed>, subtitle?: string, footnote?: string}>,
      *   summary: ?array<string, mixed>,
      *   school_table: list<array<string, mixed>>,
@@ -31,6 +32,7 @@ final class PerformanceSaebSeries
     {
         $empty = [
             'charts' => [],
+            'ideb_charts' => [],
             'extra_charts' => [],
             'summary' => null,
             'school_table' => [],
@@ -49,6 +51,7 @@ final class PerformanceSaebSeries
         } catch (\Throwable $e) {
             return [
                 'charts' => [],
+                'ideb_charts' => [],
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
@@ -67,6 +70,7 @@ final class PerformanceSaebSeries
         if ($points === []) {
             return [
                 'charts' => [],
+                'ideb_charts' => [],
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
@@ -85,6 +89,7 @@ final class PerformanceSaebSeries
         if ($points === []) {
             return [
                 'charts' => [],
+                'ideb_charts' => [],
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
@@ -101,6 +106,7 @@ final class PerformanceSaebSeries
         if ($pointsYear === []) {
             return [
                 'charts' => [],
+                'ideb_charts' => [],
                 'extra_charts' => [],
                 'summary' => null,
                 'school_table' => [],
@@ -119,6 +125,7 @@ final class PerformanceSaebSeries
 
             return [
                 'charts' => [],
+                'ideb_charts' => [],
                 'extra_charts' => [],
                 'summary' => self::buildSummaryBlock($fileMeta, $pointsYear, $maxYear, $city),
                 'school_table' => self::buildSchoolTableRows($pointsYear, $maxYear, self::resolveEscolaNames($db, $city, $pointsYear)),
@@ -141,11 +148,17 @@ final class PerformanceSaebSeries
         }
 
         $charts = [];
+        $idebCharts = [];
         ksort($grouped);
 
         foreach ($grouped as $seriesKey => $rows) {
             $chart = self::chartForSeries($seriesKey, $rows, $maxYear, $footnoteBase, $escolaNomes);
-            if ($chart !== null) {
+            if ($chart === null) {
+                continue;
+            }
+            if (self::isIdebSeriesKey($seriesKey)) {
+                $idebCharts[] = $chart;
+            } else {
                 $charts[] = $chart;
             }
         }
@@ -173,6 +186,7 @@ final class PerformanceSaebSeries
 
         return [
             'charts' => $charts,
+            'ideb_charts' => $idebCharts,
             'extra_charts' => $extraCharts,
             'summary' => self::buildSummaryBlock($fileMeta, $pointsYear, $maxYear, $city),
             'school_table' => $schoolTable,
@@ -181,6 +195,11 @@ final class PerformanceSaebSeries
             'source_hint' => $footnoteBase,
             'explicacao_modal' => $explicacaoModal,
         ];
+    }
+
+    private static function isIdebSeriesKey(string $seriesKey): bool
+    {
+        return str_starts_with(strtolower($seriesKey), 'ideb|');
     }
 
     /**

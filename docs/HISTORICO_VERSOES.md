@@ -1,17 +1,17 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.2`** · tag de deploy **`20260806-Erato`** · IDEB municipal (fila + Horizonte)
+> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.3`** · tag de deploy **`20260806a-Polyhymnia`** · SAEB/IDEB Desempenho + Horizonte pedagogia
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **9.0.2** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **9.0.3** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260806-Erato` |
+| **Tag de deploy (servidor)** | `20260806a-Polyhymnia` |
 | **Data de referência** | **06/08/2026** |
-| **Último marco documentado** | **Erato** — Importador IDEB 2025 (fila pedagógica + fase Horizonte) · Tyche permanece histórico |
-| **Patches em `main` (sem bump)** | 06/08/2026 — Clio contadores (arquivo geral + dedupe); KPI Consultoria i-Educar×Clio; UI Desempenho/Filas/Dados públicos; CKAN timeout seguro |
+| **Último marco documentado** | **Polyhymnia** — Desempenho SAEB/IDEB separados; Horizonte cores por ano + gráfico pedagógico · Erato permanece histórico |
+| **Patches em `main` (sem bump)** | — |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** |  (#**665**) |
+| **Commit de release** | `pending` (#**—**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -72,7 +72,9 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 9.0.1** | `ed93b8e` / `20260725-Tyche` → `main` | **645** | 25/07/2026 | **Produção:** Emendas FIN-08; procurement/sanções Horizonte HOR-08d…g; Clio PDF temático — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md). |
+| **▶ 9.0.3** | `pending` / `20260806a-Polyhymnia` → `main` | **—** | 06/08/2026 | **Produção:** Desempenho SAEB/IDEB separados; Horizonte tons por ano + gráfico Pedagogia — [RELEASE_20260806a_POLYHYMNIA.md](RELEASE_20260806a_POLYHYMNIA.md). |
+| 9.0.2 | `aaad4fde` / `20260806-Erato` → `main` | **665** | 06/08/2026 | Importador IDEB 2025 (fila pedagógica + fase Horizonte); patches Clio/CKAN — selo Erato. |
+| 9.0.1 | `ed93b8e` / `20260725-Tyche` → `main` | **645** | 25/07/2026 | Emendas FIN-08; procurement/sanções Horizonte HOR-08d…g; Clio PDF temático — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md). |
 | 9.0.0 | `ab5a076` / `20260724f-Opus` → `main` | **628** | 24/07/2026 | Canteiro (Obrasgov/SIMEC), roadmaps `ROADMAP_*`, Portal Transparência CGU — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md). |
 | 8.2.2 | `d7aa2ff` / `20260724e-Metis` → `main` | **613** | 24/07/2026 | Fase E — testes Jobs + POSTs admin críticos — [RELEASE_20260724e_METIS.md](RELEASE_20260724e_METIS.md). |
 | 8.2.1 | `ad7deaf` / `20260724d-Eunomia` → `main` | **608** | 24/07/2026 | Estabilização A–D (CI/testes, SafeOutboundUrl, worker Clio, docs 8.2) — [RELEASE_20260724d_EUNOMIA.md](RELEASE_20260724d_EUNOMIA.md). |

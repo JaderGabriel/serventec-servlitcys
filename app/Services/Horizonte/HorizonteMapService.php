@@ -1329,8 +1329,8 @@ final class HorizonteMapService
                 'fundeb_realtime_portaria_note' => $fundebRealtime['portaria_adjustments_note'] ?? null,
                 'saeb_lp' => $saeb['lp'] ?? null,
                 'saeb_mat' => $saeb['mat'] ?? null,
-                'saeb_lp_series' => array_values($saebTrend['lp_series'] ?? ($saeb['lp_series'] ?? [])),
-                'saeb_mat_series' => array_values($saebTrend['mat_series'] ?? ($saeb['mat_series'] ?? [])),
+                'saeb_lp_series' => array_values($saeb['lp_series'] ?? []),
+                'saeb_mat_series' => array_values($saeb['mat_series'] ?? []),
                 'saeb_trend' => $saebTrend['trend'] ?? 'unknown',
                 'saeb_trend_label' => $saebTrend['trend_label'] ?? '',
                 'saeb_delta_lp' => $saebTrend['delta_lp'] ?? null,
@@ -1657,7 +1657,7 @@ final class HorizonteMapService
                     continue 2;
                 }
             }
-            if (count($bucket) < 4) {
+            if (count($bucket) < 8) {
                 $bucket[] = ['year' => $year, 'value' => $value];
             }
         }
@@ -1676,7 +1676,7 @@ final class HorizonteMapService
     }
 
     /**
-     * Série IDEB municipal (disciplina=ideb) — até 5 anos mais recentes ≤ refYear.
+     * Série IDEB municipal (disciplina=ideb) — até 8 anos mais recentes ≤ refYear.
      *
      * @return array<string, array{value: ?float, series: list<array{year: int, value: float, etapa: ?string}>}>
      */
@@ -1713,7 +1713,7 @@ final class HorizonteMapService
                     continue 2;
                 }
             }
-            if (count($series[$ibge]) >= 5) {
+            if (count($series[$ibge]) >= 8) {
                 continue;
             }
             $series[$ibge][] = [
