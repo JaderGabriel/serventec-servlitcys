@@ -212,6 +212,7 @@ final class PerformanceSaebSeries
 
         $lp = self::latestMunicipalDisciplineValue($pointsYear, $maxYear, 'lp');
         $mat = self::latestMunicipalDisciplineValue($pointsYear, $maxYear, 'mat');
+        $ideb = self::latestMunicipalDisciplineValue($pointsYear, $maxYear, 'ideb');
         $gap = ($lp !== null && $mat !== null) ? round($lp - $mat, 2) : null;
 
         $years = [];
@@ -235,6 +236,7 @@ final class PerformanceSaebSeries
             'ano_max' => $yMax,
             'rede_lp_ultimo' => $lp,
             'rede_mat_ultimo' => $mat,
+            'rede_ideb_ultimo' => $ideb,
             'rede_gap_lp_menos_mat' => $gap,
             'decisao_nota' => $gap !== null && $gap < 0
                 ? __('Lacuna: Matemática abaixo de Língua Portuguesa no último ponto municipal — priorizar reforço em MAT.')
@@ -654,7 +656,11 @@ final class PerformanceSaebSeries
         [$disc, $etapa, $scope] = self::parseSeriesKey($seriesKey);
         $title = self::seriesTitle($disc, $etapa, $scope, $escolaNomes);
         $unit = (string) ($rows[0]['unidade'] ?? '%');
-        $yLabel = $unit !== '' && $unit !== '%' ? $unit : __('Percentagem / escala');
+        $yLabel = match (true) {
+            strtolower($disc) === 'ideb' => __('IDEB (N×P)'),
+            $unit !== '' && $unit !== '%' => $unit,
+            default => __('Percentagem / escala'),
+        };
 
         $subtitle = __(
             'Série histórica até o ano do filtro. O INEP divulga resultados preliminares antes da versão final; use a legenda para distinguir.'
@@ -693,6 +699,7 @@ final class PerformanceSaebSeries
         $d = match (strtolower($disc)) {
             'mat', 'matematica', 'matemática' => __('Matemática'),
             'lp', 'lingua', 'portugues', 'português' => __('Língua Portuguesa'),
+            'ideb' => __('IDEB'),
             default => strtoupper($disc),
         };
         $e = match (strtolower($etapa)) {
@@ -704,7 +711,9 @@ final class PerformanceSaebSeries
             default => $etapa,
         };
 
-        $base = __('SAEB — :disc (:etapa)', ['disc' => $d, 'etapa' => $e]);
+        $base = strtolower($disc) === 'ideb'
+            ? __('IDEB — :etapa', ['etapa' => $e])
+            : __('SAEB — :disc (:etapa)', ['disc' => $d, 'etapa' => $e]);
 
         if ($scope === 'municipal') {
             return $base;
@@ -731,17 +740,24 @@ final class PerformanceSaebSeries
     private static function filterPointsForCity(array $points, City $city): array
     {
         $cid = (int) $city->id;
+        $cityIbge = preg_replace('/\D/', '', (string) ($city->ibge_municipio ?? '')) ?? '';
         $out = [];
         foreach ($points as $p) {
             $ids = $p['city_ids'] ?? null;
-            if (! is_array($ids) || $ids === []) {
-                continue;
+            if (is_array($ids) && $ids !== []) {
+                foreach ($ids as $id) {
+                    if ((int) $id === $cid) {
+                        $out[] = $p;
+                        continue 2;
+                    }
+                }
             }
-            $ids = array_map(static fn ($x) => (int) $x, $ids);
-            if (! in_array($cid, $ids, true)) {
-                continue;
+            if (strlen($cityIbge) === 7) {
+                $pIbge = preg_replace('/\D/', '', (string) ($p['municipio_ibge'] ?? '')) ?? '';
+                if ($pIbge === $cityIbge) {
+                    $out[] = $p;
+                }
             }
-            $out[] = $p;
         }
 
         return $out;

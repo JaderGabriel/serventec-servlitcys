@@ -1,16 +1,16 @@
 # Histórico de versões (resumo)
 
-> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.1`** · tag de deploy **`20260725-Tyche`** · ver [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md)
+> **▶ EM PRODUÇÃO (`main`):** versão **`9.0.2`** · tag de deploy **`20260806-Erato`** · IDEB municipal (fila + Horizonte)
 
 | Indicador | Valor atual |
 |-----------|----------------|
-| **Versão semântica em produção** | **9.0.1** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
+| **Versão semântica em produção** | **9.0.2** (`MAJOR.VERSÃO.MINOR` — ver [convenção](#convenção-de-releases-a-partir-de-236)) |
 | **Ramo** | `main` |
-| **Tag de deploy (servidor)** | `20260725-Tyche` |
-| **Data de referência** | **25/07/2026** |
-| **Último marco documentado** | **Tyche** — Emendas FIN-08 + ocorrência Horizonte HOR-08d…g + Clio PDF — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) |
+| **Tag de deploy (servidor)** | `20260806-Erato` |
+| **Data de referência** | **06/08/2026** |
+| **Último marco documentado** | **Erato** — Importador IDEB 2025 (fila pedagógica + fase Horizonte) · Tyche permanece histórico |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `ed93b8e` (#**645**) |
+| **Commit de release** | *(preenchido no push)* |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >

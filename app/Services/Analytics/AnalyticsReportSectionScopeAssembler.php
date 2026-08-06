@@ -105,7 +105,7 @@ final class AnalyticsReportSectionScopeAssembler
 
         match ($id) {
             'indicadores_educacionais' => $this->scopeIndicadores($city, $filters, $overview, $comparatives, $kpis, $tables, $gaps, $notes),
-            'rede_municipal' => $this->scopeRedeMunicipal($enrollment, $network, $overview, $attendance, $kpis, $tables, $gaps, $notes),
+            'rede_municipal' => $this->scopeRedeMunicipal($enrollment, $network, $overview, $attendance, $performance, $kpis, $tables, $gaps, $notes),
             'redes_publicas' => $this->scopeRedesPublicas($city, $filters, $overview, $kpis, $tables, $gaps, $notes),
             'fundeb' => $this->scopeFundeb($fundeb, $health, $kpis, $tables, $gaps, $notes),
             'finance_realtime' => $this->scopeFinanceRealtime($financeRealtime, $kpis, $tables, $gaps, $notes),
@@ -213,6 +213,7 @@ final class AnalyticsReportSectionScopeAssembler
         array $network,
         array $overview,
         array $attendance,
+        array $performance,
         array &$kpis,
         array &$tables,
         array &$gaps,
@@ -285,7 +286,20 @@ final class AnalyticsReportSectionScopeAssembler
             $notes[] = (string) $attendance['message'];
         }
 
-        $this->gap($gaps, 'rede_municipal', 'ideb_series_missing', __('Série histórica IDEB por etapa (gráficos ATM) não importada — configure SAEB/IDEB municipal ou use o Portal IDEB no painel web.'));
+        $saebSeries = is_array($performance['saeb_series'] ?? null) ? $performance['saeb_series'] : [];
+        $hasIdeb = ($saebSeries['summary']['rede_ideb_ultimo'] ?? null) !== null;
+        if (! $hasIdeb) {
+            foreach (is_array($saebSeries['charts'] ?? null) ? $saebSeries['charts'] : [] as $chart) {
+                $title = mb_strtolower((string) ($chart['title'] ?? ''));
+                if (str_contains($title, 'ideb')) {
+                    $hasIdeb = true;
+                    break;
+                }
+            }
+        }
+        if (! $hasIdeb) {
+            $this->gap($gaps, 'rede_municipal', 'ideb_series_missing', __('Série histórica IDEB por etapa (gráficos ATM) não importada — execute php artisan ideb:import-divulgacao-inep ou use o Portal IDEB no painel web.'));
+        }
         $this->gap($gaps, 'rede_municipal', 'infra_censo_missing', __('Percentual de escolas com infraestrutura (água, energia, laboratório) exige microdados Censo por escola — não agregado neste relatório.'));
     }
 

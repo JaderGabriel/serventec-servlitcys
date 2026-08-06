@@ -8,6 +8,7 @@ use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Services\Cadunico\CadunicoAutoSyncService;
 use App\Services\Fundeb\FundebFndeReceitaCsvService;
 use App\Services\Ibge\IbgeSidraMunicipalDemographyService;
+use App\Services\Inep\IdebDivulgacaoInepImportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebPlanilhaInepImportService;
 use App\Support\Brazil\IbgeMunicipalityCatalog;
@@ -38,6 +39,7 @@ final class HorizonteFortnightlyFeedService
         private readonly FundebMunicipioReferenceRepository $fundebReferences,
         private readonly InepCensoMunicipioMatriculasIndexer $censoIndexer,
         private readonly SaebPlanilhaInepImportService $saebPlanilhas,
+        private readonly IdebDivulgacaoInepImportService $idebDivulgacao,
         private readonly IbgeMunicipalityCatalog $ibgeCatalog,
         private readonly HorizonteMunicipalSgeRegistryService $sgeRegistry,
         private readonly HorizonteMunicipalAlertsSyncService $municipalAlerts,
@@ -215,6 +217,7 @@ final class HorizonteFortnightlyFeedService
                 'procurement_sync' => $this->syncProcurement($refYear, $options),
                 'obras_sync' => $this->syncObras($options),
                 'saeb_planilhas' => $this->importSaebPlanilhasNacional($options),
+                'ideb_divulgacao' => $this->importIdebDivulgacaoNacional($options),
                 'ibge_catalog' => $this->warmIbgeCatalog($options),
                 'ibge_municipal_geo' => $this->importIbgeMunicipalGeo($options),
                 'sge_registry' => $this->syncSgeRegistry($options),
@@ -489,6 +492,7 @@ final class HorizonteFortnightlyFeedService
             'skip_procurement' => (bool) ($options['skip_procurement'] ?? false),
             'skip_obras' => (bool) ($options['skip_obras'] ?? false),
             'skip_saeb' => (bool) ($options['skip_saeb'] ?? false),
+            'skip_ideb' => (bool) ($options['skip_ideb'] ?? false),
             'skip_ibge' => (bool) ($options['skip_ibge'] ?? false),
             'skip_ibge_municipal_geo' => (bool) ($options['skip_ibge_municipal_geo'] ?? false),
             'skip_sge' => (bool) ($options['skip_sge'] ?? false),
@@ -556,6 +560,7 @@ final class HorizonteFortnightlyFeedService
     {
         $memoryKey = match ($phaseKey) {
             'saeb_planilhas' => 'horizonte.fortnightly_feed.saeb_memory_limit',
+            'ideb_divulgacao' => 'horizonte.fortnightly_feed.saeb_memory_limit',
             'educacenso' => 'horizonte.fortnightly_feed.educacenso_memory_limit',
             default => 'horizonte.fortnightly_feed.memory_limit',
         };
@@ -927,6 +932,33 @@ final class HorizonteFortnightlyFeedService
                 'remaining' => HorizonteSaebImportProgress::remainingYears($allYears),
                 'last_failed' => HorizonteSaebImportProgress::lastFailedYear(),
             ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $options
+     * @return array<string, mixed>
+     */
+    private function importIdebDivulgacaoNacional(array $options): array
+    {
+        $saebMemory = trim((string) config('horizonte.fortnightly_feed.saeb_memory_limit', '2048M'));
+        if ($saebMemory !== '') {
+            @ini_set('memory_limit', $saebMemory);
+        }
+
+        $result = $this->idebDivulgacao->import(
+            ['ai', 'af', 'em'],
+            true,
+            true,
+            null,
+            false,
+        );
+
+        return [
+            'success' => (bool) ($result['ok'] ?? false),
+            'message' => (string) ($result['message'] ?? ''),
+            'avisos' => $result['avisos'] ?? [],
+            'details' => $result['detalhes'] ?? [],
         ];
     }
 

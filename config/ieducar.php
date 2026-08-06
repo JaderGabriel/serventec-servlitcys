@@ -552,7 +552,8 @@ return [
         'planilha_resultados_urls' => [
             2023 => 'https://download.inep.gov.br/saeb/resultados/planilha_de_resultados_2023.rar',
             2021 => 'https://download.inep.gov.br/saeb/resultados/saeb_2021_brasil_estados_municipios.xlsx',
-            // 2025: aguardar planilha oficial no portal INEP (ainda não publicada em download.inep.gov.br).
+            // 2025: planilha SAEB municipal dedicada ainda não listada em /saeb/resultados;
+            // notas SAEB 2025 (LP/MAT) vêm nos ZIPs de divulgação do IDEB — ver ideb.divulgacao_municipios_urls.
         ],
         /** Cache de planilhas INEP descarregadas (RAR/XLSX/XLSB). */
         'planilha_cache_path' => trim((string) env('IEDUCAR_SAEB_PLANILHA_CACHE_PATH', 'saeb/planilhas')) ?: 'saeb/planilhas',
@@ -583,6 +584,53 @@ return [
         'microdados_column_map' => [],
         /** URL opcional de CSV (dados.gov.br, CKAN) quando não se usa o ZIP INEP. */
         'microdados_opendata_csv_url' => trim((string) env('IEDUCAR_SAEB_OPENDATA_CSV_URL', '')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | IDEB — divulgação municipal INEP (ZIP com XLSX/ODS)
+    |--------------------------------------------------------------------------
+    |
+    | Fonte: https://www.gov.br/inep/.../ideb/resultados (aba 2005|2025).
+    | Comando: php artisan ideb:import-divulgacao-inep
+    | Grava disciplina «ideb» (e opcionalmente lp/mat das colunas Nota SAEB) em saeb_indicator_points.
+    |
+    */
+
+    'ideb' => [
+        'enabled' => filter_var(env('IEDUCAR_IDEB_SERIES_ENABLED', true), FILTER_VALIDATE_BOOL),
+        /**
+         * ZIPs municipais por etapa (AI/AF/EM). Ano da divulgação no nome do ficheiro.
+         *
+         * @var array<string, array{url: string, etapa: string, year: int}>
+         */
+        'divulgacao_municipios_urls' => [
+            'ai' => [
+                'url' => 'https://download.inep.gov.br/ideb/resultados/divulgacao_anos_iniciais_municipios_2025.zip',
+                'etapa' => 'efi',
+                'year' => 2025,
+            ],
+            'af' => [
+                'url' => 'https://download.inep.gov.br/ideb/resultados/divulgacao_anos_finais_municipios_2025.zip',
+                'etapa' => 'efaf',
+                'year' => 2025,
+            ],
+            'em' => [
+                'url' => 'https://download.inep.gov.br/ideb/resultados/divulgacao_ensino_medio_municipios_2025.zip',
+                'etapa' => 'em',
+                'year' => 2025,
+            ],
+        ],
+        'cache_path' => trim((string) env('IEDUCAR_IDEB_CACHE_PATH', 'ideb/divulgacao')) ?: 'ideb/divulgacao',
+        /** Rede preferida na planilha (Municipal / Pública / Estadual / Federal / Privada). */
+        'prefer_rede' => trim((string) env('IEDUCAR_IDEB_PREFER_REDE', 'Municipal')) ?: 'Municipal',
+        /**
+         * Ano mínimo da série histórica (IDEB bianual). Default 2015 ⇒ ≥5 ciclos até 2025.
+         */
+        'min_year' => max(2005, min(2100, (int) env('IEDUCAR_IDEB_MIN_YEAR', 2015))),
+        /** Também importar VL_NOTA_PORTUGUES/MATEMATICA_* (escala SAEB) dos mesmos XLSX. */
+        'import_saeb_notas' => filter_var(env('IEDUCAR_IDEB_IMPORT_SAEB', true), FILTER_VALIDATE_BOOL),
+        'download_timeout_seconds' => (int) env('IEDUCAR_IDEB_DOWNLOAD_TIMEOUT', 900),
     ],
 
     /*

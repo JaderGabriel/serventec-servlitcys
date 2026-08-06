@@ -80,6 +80,7 @@
             <x-admin.import-hub.stat label="Censo" :value="number_format((int) ($coverage['censo_municipios'] ?? 0))" :hint="__('municípios indexados')" tone="emerald" />
             <x-admin.import-hub.stat :label="__('Educacenso')" :value="((int) ($coverage['educacenso_years_indexed'] ?? 0)).'/'.((int) ($coverage['educacenso_years_total'] ?? 5))" :hint="__('anos da série (gráfico)')" tone="emerald" />
             <x-admin.import-hub.stat label="SAEB" :value="number_format((int) ($coverage['saeb_municipios'] ?? 0))" :hint="__('com indicadores')" tone="violet" />
+            <x-admin.import-hub.stat label="IDEB" :value="number_format((int) ($coverage['ideb_municipios'] ?? 0))" :hint="__('com série IDEB')" tone="fuchsia" />
             <x-admin.import-hub.stat :label="__('Triad completa')" :value="number_format((int) ($coverage['with_full_triad'] ?? 0))" :hint="__('FUNDEB+Censo+SAEB')" tone="sky" />
             <x-admin.import-hub.stat :label="__('Universo mapa')" :value="number_format((int) ($coverage['universe_municipios'] ?? 0))" :hint="__('IBGE em qualquer fonte')" tone="slate" />
             <x-admin.import-hub.stat label="IBGE" :value="((int) ($coverage['ibge_ufs_warmed'] ?? 0)).'/'.((int) ($coverage['ibge_ufs_total'] ?? 27))" :hint="__('UFs aquecidas')" tone="sky" />

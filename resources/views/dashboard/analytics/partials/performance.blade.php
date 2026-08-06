@@ -216,7 +216,7 @@
                 @endif
                 @php $saebSummary = is_array($saebSeries['summary'] ?? null) ? $saebSeries['summary'] : null; @endphp
                 @if ($saebSummary !== null && $saebSummary !== [])
-                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                         <div class="rounded-lg border border-emerald-200/80 bg-white/90 dark:bg-emerald-950/30 dark:border-emerald-800 px-3 py-2.5">
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Recorte municipal (JSON)') }}</p>
                             <p class="mt-1 text-xs text-emerald-950 dark:text-emerald-100">
@@ -240,10 +240,20 @@
                             <p class="text-[10px] font-semibold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">{{ __('Último ano municipal (LP / MAT)') }}</p>
                             <p class="mt-1 text-xs tabular-nums text-emerald-950 dark:text-emerald-100">
                                 @if (($saebSummary['rede_lp_ultimo'] ?? null) !== null && ($saebSummary['rede_mat_ultimo'] ?? null) !== null)
-                                    LP {{ number_format((float) $saebSummary['rede_lp_ultimo'], 1, ',', '.') }}% · MAT {{ number_format((float) $saebSummary['rede_mat_ultimo'], 1, ',', '.') }}%
+                                    LP {{ number_format((float) $saebSummary['rede_lp_ultimo'], 1, ',', '.') }} · MAT {{ number_format((float) $saebSummary['rede_mat_ultimo'], 1, ',', '.') }}
                                     @if (($saebSummary['rede_gap_lp_menos_mat'] ?? null) !== null)
                                         <span class="block mt-0.5 text-[11px] text-emerald-800/85 dark:text-emerald-200/85">{{ __('Diferença LP−MAT: :g', ['g' => number_format((float) $saebSummary['rede_gap_lp_menos_mat'], 1, ',', '.')]) }}</span>
                                     @endif
+                                @else
+                                    —
+                                @endif
+                            </p>
+                        </div>
+                        <div class="rounded-lg border border-sky-200/80 bg-white/90 dark:bg-sky-950/30 dark:border-sky-800 px-3 py-2.5">
+                            <p class="text-[10px] font-semibold uppercase tracking-wide text-sky-800 dark:text-sky-200">{{ __('Último IDEB municipal') }}</p>
+                            <p class="mt-1 text-xs tabular-nums text-sky-950 dark:text-sky-100">
+                                @if (($saebSummary['rede_ideb_ultimo'] ?? null) !== null)
+                                    {{ number_format((float) $saebSummary['rede_ideb_ultimo'], 1, ',', '.') }}
                                 @else
                                     —
                                 @endif

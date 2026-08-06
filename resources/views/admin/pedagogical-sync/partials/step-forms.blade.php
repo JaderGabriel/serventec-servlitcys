@@ -145,4 +145,49 @@
             </div>
         </x-admin.import-hub.action-card>
     @endif
+
+    @if ($idebEnabled ?? true)
+        <x-admin.import-hub.action-card
+            method="post"
+            action="{{ route('admin.pedagogical-sync.run') }}"
+            class="lg:col-span-2"
+            variant="accent"
+            :step="__('Passo 5')"
+            :tags="[__('IDEB'), __('Pesado')]"
+            :title="__('IDEB — divulgação municipal INEP')"
+            :hint="__('ZIPs oficiais (AI/AF/EM): série histórica IDEB (≥5 anos) e notas SAEB embutidas. Upsert sem apagar SAEB existente. CLI: ideb:import-divulgacao-inep.')"
+            :submit-label="__('Enfileirar IDEB')"
+        >
+            @csrf
+            <input type="hidden" name="action" value="import_ideb_divulgacao" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <x-input-label for="ideb_scopes" :value="__('Pacotes (ai,af,em)')" />
+                    <input id="ideb_scopes" name="ideb_scopes" type="text" value="{{ old('ideb_scopes', 'ai,af,em') }}" class="{{ $selectClass }}" />
+                    <p class="mt-1 text-[11px] text-gray-500 dark:text-gray-400">{{ __('ai=anos iniciais, af=anos finais, em=ensino médio') }}</p>
+                </div>
+                <div>
+                    <x-input-label for="ideb_min_year" :value="__('Ano mínimo da série')" />
+                    <input id="ideb_min_year" name="ideb_min_year" type="number" min="2005" max="2100" value="{{ old('ideb_min_year', $idebMinYear ?? 2015) }}" class="{{ $selectClass }}" />
+                </div>
+                <div class="sm:col-span-2 flex flex-wrap gap-4">
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="hidden" name="ideb_no_download" value="0" />
+                        <input type="checkbox" name="ideb_no_download" value="1" class="rounded border-gray-300 dark:border-gray-600" />
+                        <span>{{ __('Usar ZIPs já em cache (sem download)') }}</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="hidden" name="ideb_no_saeb" value="0" />
+                        <input type="checkbox" name="ideb_no_saeb" value="1" class="rounded border-gray-300 dark:border-gray-600" />
+                        <span>{{ __('Não importar notas SAEB embutidas') }}</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="hidden" name="ideb_only_catalog" value="0" />
+                        <input type="checkbox" name="ideb_only_catalog" value="1" class="rounded border-gray-300 dark:border-gray-600" />
+                        <span>{{ __('Só municípios do catálogo analítico') }}</span>
+                    </label>
+                </div>
+            </div>
+        </x-admin.import-hub.action-card>
+    @endif
 </div>

@@ -65,13 +65,15 @@ class PedagogicalSyncController extends Controller
             'microdadosZipTemplate' => $microdadosZipTemplate,
             'microdadosZipExample' => $microdadosZipExample,
             'opendataCsvUrl' => $opendataCsvUrl,
+            'idebEnabled' => filter_var(config('ieducar.ideb.enabled', true), FILTER_VALIDATE_BOOLEAN),
+            'idebMinYear' => (int) config('ieducar.ideb.min_year', 2015),
         ]);
     }
 
     public function run(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:import_official,import_urls,import_csv,import_microdados',
+            'action' => 'required|string|in:import_official,import_urls,import_csv,import_microdados,import_ideb_divulgacao',
             'csv_file' => 'exclude_unless:action,import_csv|required|file|max:15360',
             'csv_merge' => 'sometimes|boolean',
             'csv_resolve_inep' => 'sometimes|boolean',
@@ -80,6 +82,11 @@ class PedagogicalSyncController extends Controller
             'md_merge' => 'sometimes|boolean',
             'md_resolve_inep' => 'sometimes|boolean',
             'md_keep_cache' => 'sometimes|boolean',
+            'ideb_scopes' => 'exclude_unless:action,import_ideb_divulgacao|nullable|string|max:32',
+            'ideb_min_year' => 'exclude_unless:action,import_ideb_divulgacao|nullable|integer|min:2005|max:2100',
+            'ideb_no_download' => 'exclude_unless:action,import_ideb_divulgacao|sometimes|boolean',
+            'ideb_no_saeb' => 'exclude_unless:action,import_ideb_divulgacao|sometimes|boolean',
+            'ideb_only_catalog' => 'exclude_unless:action,import_ideb_divulgacao|sometimes|boolean',
             'use_custom_official_url' => 'exclude_unless:action,import_official|sometimes|boolean',
             'official_url_override' => 'exclude_unless:action,import_official|nullable|string|max:2048',
             'official_year' => 'exclude_unless:action,import_official|nullable|integer|min:2000|max:2100',
@@ -93,6 +100,7 @@ class PedagogicalSyncController extends Controller
             'import_urls' => __('SAEB — importação por URLs configuradas'),
             'import_csv' => __('SAEB — importação CSV'),
             'import_microdados' => __('SAEB — microdados INEP'),
+            'import_ideb_divulgacao' => __('IDEB — divulgação municipal INEP'),
             default => $action,
         };
 
@@ -176,6 +184,17 @@ class PedagogicalSyncController extends Controller
             $payload['md_merge'] = $request->boolean('md_merge', true);
             $payload['md_resolve_inep'] = $request->boolean('md_resolve_inep', true);
             $payload['md_keep_cache'] = $request->boolean('md_keep_cache', false);
+        }
+
+        if ($action === 'import_ideb_divulgacao') {
+            $scopes = trim((string) ($validated['ideb_scopes'] ?? 'ai,af,em'));
+            $payload['ideb_scopes'] = $scopes !== '' ? $scopes : 'ai,af,em';
+            if (isset($validated['ideb_min_year']) && is_numeric($validated['ideb_min_year'])) {
+                $payload['ideb_min_year'] = (int) $validated['ideb_min_year'];
+            }
+            $payload['ideb_no_download'] = $request->boolean('ideb_no_download', false);
+            $payload['ideb_no_saeb'] = $request->boolean('ideb_no_saeb', false);
+            $payload['ideb_only_catalog'] = $request->boolean('ideb_only_catalog', false);
         }
 
         $task = $this->syncQueue->dispatch(

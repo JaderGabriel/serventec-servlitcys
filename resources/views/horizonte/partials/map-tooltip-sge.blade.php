@@ -57,6 +57,20 @@
                                     ></span>
                                 </template>
                             </div>
+                            <div
+                                class="serv-horizonte-muni-modal__saeb serv-horizonte-muni-modal__ideb"
+                                x-show="modalHeaderHasIdeb(active)"
+                                x-cloak
+                            >
+                                <span class="serv-horizonte-muni-modal__saeb-tag">IDEB</span>
+                                <template x-for="(row, idx) in modalHeaderIdebByYear(active)" :key="'ideb-' + row.year + '-' + idx">
+                                    <span
+                                        class="serv-horizonte-muni-modal__fact serv-horizonte-muni-modal__fact--saeb-year"
+                                        :class="modalHeaderSaebYearToneClass(idx)"
+                                        x-text="modalHeaderIdebYearLabel(row)"
+                                    ></span>
+                                </template>
+                            </div>
                         </div>
                         <div class="serv-horizonte-muni-modal__geo" x-show="hasModalHeaderGeoInfo(active)" x-cloak>
                             <div

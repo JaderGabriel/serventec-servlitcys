@@ -74,15 +74,17 @@ final class ExternalImportImpact
                 ],
             ],
             'pedagogical' => [
-                'title' => __('Para que serve a importação SAEB'),
-                'intro' => __('Preenche indicadores de desempenho (pontos SAEB) por município, escola e série. Na primeira carga use microdados INEP ou CSV — o passo HTTP por IBGE só funciona depois de já existirem pontos ou com URL externa.'),
+                'title' => __('Para que serve a importação SAEB / IDEB'),
+                'intro' => __('Preenche indicadores de desempenho (pontos SAEB e IDEB) por município. Na primeira carga use microdados INEP, CSV ou divulgação IDEB — o passo HTTP por IBGE só funciona depois de já existirem pontos ou com URL externa.'),
                 'improves' => [
                     __('Gráficos e séries na aba Desempenho (SAEB/IDEB)'),
                     __('Comparativos municipais e contexto de rede na consultoria'),
+                    __('Mapa Horizonte (déficit pedagógico e série IDEB no modal)'),
                     __('Cruzamento com cadastro i-Educar (INEP → cod_escola)'),
                 ],
                 'consumers' => [
                     ['label' => __('Consultoria → Desempenho'), 'hint' => __('tab=performance')],
+                    ['label' => __('Horizonte → modal municipal'), 'hint' => __('IDEB + SAEB')],
                 ],
             ],
             default => [
@@ -114,9 +116,9 @@ final class ExternalImportImpact
                 'title' => __('Resultado esperado'),
                 'detail' => __('Log na fila com fontes INEP testadas — não altera dados. Use para diagnosticar rede ou .env antes de repetir passos 1–4.'),
             ],
-            'pedagogical::import_official', 'pedagogical::import_urls', 'pedagogical::import_csv', 'pedagogical::import_microdados' => [
+            'pedagogical::import_official', 'pedagogical::import_urls', 'pedagogical::import_csv', 'pedagogical::import_microdados', 'pedagogical::import_ideb_divulgacao' => [
                 'title' => __('Quando concluir'),
-                'detail' => __('Verifique o contador de pontos nesta página e abra Desempenho na consultoria do município.'),
+                'detail' => __('Verifique o contador de pontos nesta página e abra Desempenho / Horizonte — séries SAEB e IDEB devem aparecer.'),
             ],
             'funding::import_transfers_city_year' => [
                 'title' => __('Quando concluir'),
@@ -155,9 +157,9 @@ final class ExternalImportImpact
                 __('3. Passo 3 (microdados) se faltar cadastro INEP'),
             ],
             'pedagogical' => [
-                __('1. Primeira carga: passo 4 (microdados) ou 2 (CSV)'),
-                __('2. Passo 3 (HTTP/IBGE) para atualizações posteriores'),
-                __('3. Confirme pontos > 0 antes de abrir Desempenho'),
+                __('1. Primeira carga: passo 4 (microdados), 2 (CSV) ou 5 (IDEB)'),
+                __('2. Passo 3 (HTTP/IBGE) para atualizações posteriores de SAEB'),
+                __('3. Confirme pontos > 0 (e IDEB) antes de abrir Desempenho / Horizonte'),
             ],
             'funding' => [
                 __('1. Garanta microdados INEP no storage (pipeline geo)'),

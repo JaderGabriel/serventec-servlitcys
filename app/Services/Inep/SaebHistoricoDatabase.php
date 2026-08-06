@@ -57,39 +57,11 @@ final class SaebHistoricoDatabase
                 }
                 $seen[$dedupe] = true;
 
-                $ibge = $this->ibgeFromRaw($raw);
-                $cityId = $this->firstCityId($raw);
-                $norm = SaebPointsNormalizer::normalizeDecodedPayload([
-                    'pontos' => [$raw],
-                    'city_ids' => $cityIdsGlobal,
-                ]);
-                $n = $norm[0] ?? null;
-
-                $escolaIds = is_array($n) ? ($n['escola_ids'] ?? null) : null;
-                $cityIdsCol = is_array($n) ? ($n['city_ids'] ?? null) : null;
-
-                $batch[] = [
-                    'dedupe_key' => $dedupe,
-                    'raw_point' => json_encode($raw, JSON_UNESCAPED_UNICODE),
-                    'city_id' => $cityId > 0 ? $cityId : null,
-                    'ibge_municipio' => $ibge !== '' ? $ibge : '0000000',
-                    'ano' => (int) ($raw['ano'] ?? $raw['year'] ?? 0),
-                    'disciplina' => isset($raw['disciplina']) ? substr((string) $raw['disciplina'], 0, 64) : null,
-                    'etapa' => isset($raw['etapa']) ? substr((string) $raw['etapa'], 0, 64) : null,
-                    'valor' => is_array($n) && isset($n['value']) && is_numeric($n['value'])
-                        ? $n['value']
-                        : (isset($raw['valor']) && is_numeric($raw['valor']) ? $raw['valor'] : (isset($raw['value']) && is_numeric($raw['value']) ? $raw['value'] : null)),
-                    'series_key' => is_array($n) ? ($n['series_key'] ?? null) : null,
-                    'is_final' => (int) (is_array($n) ? (bool) ($n['is_final'] ?? true) : true),
-                    'status' => isset($raw['status']) ? substr((string) $raw['status'], 0, 32) : null,
-                    'escola_id' => is_array($n) ? ($n['escola_id'] ?? null) : null,
-                    'escola_ids' => $escolaIds !== null ? json_encode($escolaIds, JSON_UNESCAPED_UNICODE) : null,
-                    'city_ids' => $cityIdsCol !== null ? json_encode($cityIdsCol, JSON_UNESCAPED_UNICODE) : null,
-                    'fonte' => 'import',
-                    'payload' => null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ];
+                $row = $this->rowFromRawPonto($raw, $cityIdsGlobal, $now);
+                if ($row === null) {
+                    continue;
+                }
+                $batch[] = $row;
 
                 if (count($batch) >= 500) {
                     SaebIndicatorPoint::query()->insert($batch);
@@ -101,6 +73,147 @@ final class SaebHistoricoDatabase
                 SaebIndicatorPoint::query()->insert($batch);
             }
         });
+    }
+
+    /**
+     * Upsert incremental por dedupe_key (não apaga pontos existentes de outras fontes).
+     *
+     * @param  list<array<string, mixed>>  $pontos
+     */
+    public function upsertRawPontos(array $pontos): int
+    {
+        $now = now();
+        $upserted = 0;
+        $batch = [];
+        $seen = [];
+
+        foreach ($pontos as $raw) {
+            if (! is_array($raw)) {
+                continue;
+            }
+            $dedupe = SaebPointsDedupe::ensureKey($raw);
+            if (isset($seen[$dedupe])) {
+                continue;
+            }
+            $seen[$dedupe] = true;
+
+            $row = $this->rowFromRawPonto($raw, null, $now);
+            if ($row === null) {
+                continue;
+            }
+            $batch[] = $row;
+
+            if (count($batch) >= 500) {
+                $upserted += $this->flushUpsertBatch($batch);
+                $batch = [];
+            }
+        }
+
+        if ($batch !== []) {
+            $upserted += $this->flushUpsertBatch($batch);
+        }
+
+        return $upserted;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $batch
+     */
+    private function flushUpsertBatch(array $batch): int
+    {
+        if ($batch === []) {
+            return 0;
+        }
+
+        SaebIndicatorPoint::query()->upsert(
+            $batch,
+            ['dedupe_key'],
+            [
+                'raw_point',
+                'city_id',
+                'ibge_municipio',
+                'ano',
+                'disciplina',
+                'etapa',
+                'valor',
+                'series_key',
+                'is_final',
+                'status',
+                'escola_id',
+                'escola_ids',
+                'city_ids',
+                'fonte',
+                'payload',
+                'updated_at',
+            ]
+        );
+
+        return count($batch);
+    }
+
+    /**
+     * @param  array<string, mixed>  $raw
+     * @param  list<int>|null  $cityIdsGlobal
+     * @return array<string, mixed>|null
+     */
+    private function rowFromRawPonto(array $raw, ?array $cityIdsGlobal, mixed $now): ?array
+    {
+        $dedupe = SaebPointsDedupe::ensureKey($raw);
+        $ibge = $this->ibgeFromRaw($raw);
+        $cityId = $this->firstCityId($raw);
+        $norm = SaebPointsNormalizer::normalizeDecodedPayload([
+            'pontos' => [$raw],
+            'city_ids' => $cityIdsGlobal,
+        ]);
+        $n = $norm[0] ?? null;
+
+        // Pontos só por IBGE (cobertura nacional) não passam no normalizer sem city_ids —
+        // ainda assim gravamos a linha para o Horizonte / API por município.
+        $escolaIds = is_array($n) ? ($n['escola_ids'] ?? null) : null;
+        $cityIdsCol = is_array($n) ? ($n['city_ids'] ?? null) : null;
+        if ($cityIdsCol === null && isset($raw['city_ids']) && is_array($raw['city_ids'])) {
+            $cityIdsCol = array_values(array_unique(array_map(static fn ($x) => (int) $x, $raw['city_ids'])));
+        }
+
+        $ano = (int) ($raw['ano'] ?? $raw['year'] ?? 0);
+        if ($ano <= 0) {
+            return null;
+        }
+
+        $valor = is_array($n) && isset($n['value']) && is_numeric($n['value'])
+            ? $n['value']
+            : (isset($raw['valor']) && is_numeric($raw['valor']) ? $raw['valor'] : (isset($raw['value']) && is_numeric($raw['value']) ? $raw['value'] : null));
+        if ($valor === null) {
+            return null;
+        }
+
+        $disc = isset($raw['disciplina']) ? substr((string) $raw['disciplina'], 0, 64) : null;
+        $etapa = isset($raw['etapa']) ? substr((string) $raw['etapa'], 0, 64) : null;
+        $seriesKey = is_array($n) ? ($n['series_key'] ?? null) : null;
+        if ($seriesKey === null && $disc !== null && $etapa !== null) {
+            $seriesKey = strtolower($disc).'|'.strtolower($etapa).'|municipal';
+        }
+
+        return [
+            'dedupe_key' => $dedupe,
+            'raw_point' => json_encode($raw, JSON_UNESCAPED_UNICODE),
+            'city_id' => $cityId > 0 ? $cityId : null,
+            'ibge_municipio' => $ibge !== '' ? $ibge : '0000000',
+            'ano' => $ano,
+            'disciplina' => $disc,
+            'etapa' => $etapa,
+            'valor' => $valor,
+            'series_key' => $seriesKey,
+            'is_final' => (int) (is_array($n) ? (bool) ($n['is_final'] ?? true) : true),
+            'status' => isset($raw['status']) ? substr((string) $raw['status'], 0, 32) : null,
+            'escola_id' => is_array($n) ? ($n['escola_id'] ?? null) : null,
+            'escola_ids' => $escolaIds !== null ? json_encode($escolaIds, JSON_UNESCAPED_UNICODE) : null,
+            'city_ids' => $cityIdsCol !== null ? json_encode($cityIdsCol, JSON_UNESCAPED_UNICODE) : null,
+            'fonte' => isset($raw['fonte_ideb']) ? substr((string) $raw['fonte_ideb'], 0, 32) : 'import',
+            'payload' => null,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ];
     }
 
     /**

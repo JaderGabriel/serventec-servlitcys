@@ -25,6 +25,7 @@ final class AdminSyncTaskExplainer
             'pedagogical::import_urls' => __('Tenta cada URL em IEDUCAR_SAEB_IMPORT_URLS até obter JSON com chave «pontos».'),
             'pedagogical::import_csv' => __('Importa arquivo CSV tabular (IBGE, ano, disciplina, valor) para saeb_indicator_points.'),
             'pedagogical::import_microdados' => __('Descarrega ZIP/CSV INEP, filtra pelos municípios cadastrados e normaliza para a base SAEB.'),
+            'pedagogical::import_ideb_divulgacao' => __('Descarrega ZIPs de divulgação IDEB (municípios AI/AF/EM), importa série histórica IDEB e notas SAEB embutidas via upsert.'),
             'cadastro::import_city_year' => __('CadÚnico/Cecad: tenta API ou CKAN, depois cache JSON e por fim CSV em storage para o município e ano.'),
             'cadastro::import_storage_year' => __('Importa todas as linhas de CSV Cecad em storage para o ano indicado (arquivo nacional ou vários municipais).'),
             'cadastro::import_csv' => __('Importa CSV Cecad enviado pelo admin (upload) para cadunico_municipio_snapshots.'),
@@ -79,6 +80,14 @@ final class AdminSyncTaskExplainer
 
         if (isset($payload['md_year'])) {
             $hints[] = __('Ano microdados: :y', ['y' => (string) $payload['md_year']]);
+        }
+
+        if (isset($payload['ideb_scopes'])) {
+            $hints[] = __('IDEB scopes: :s', ['s' => (string) $payload['ideb_scopes']]);
+        }
+
+        if (isset($payload['ideb_min_year'])) {
+            $hints[] = __('IDEB min-year: :y', ['y' => (string) $payload['ideb_min_year']]);
         }
 
         if (! empty($payload['artisan_command'])) {

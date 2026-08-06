@@ -147,7 +147,7 @@ final class AdminSyncTaskCitiesResolver
             'fundeb::import_bulk_year' => true,
             'geo::ieducar', 'geo::microdados', 'geo::official', 'geo::pipeline' => true,
             'geo::probe' => false,
-            'pedagogical::import_official', 'pedagogical::import_urls', 'pedagogical::import_csv', 'pedagogical::import_microdados' => true,
+            'pedagogical::import_official', 'pedagogical::import_urls', 'pedagogical::import_csv', 'pedagogical::import_microdados', 'pedagogical::import_ideb_divulgacao' => true,
             'system::weekly_mass_sync' => true,
             default => false,
         };

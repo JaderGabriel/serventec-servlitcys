@@ -15,6 +15,7 @@ use App\Services\Fundeb\FundebOpenDataImportService;
 use App\Services\Funding\FinanceRealtimeTransferRebuildService;
 use App\Services\Funding\MunicipalTransferImportService;
 use App\Services\Ieducar\InclusionNeeExportService;
+use App\Services\Inep\IdebDivulgacaoInepImportService;
 use App\Services\Inep\InepCensoMunicipioMatriculasIndexer;
 use App\Services\Inep\SaebCsvPedagogicalImportService;
 use App\Services\Inep\SaebMicrodadosOpenDataImportService;
@@ -36,6 +37,7 @@ final class AdminSyncTaskRunner
         private SaebOfficialMunicipalImportService $saebOfficial,
         private SaebCsvPedagogicalImportService $saebCsv,
         private SaebMicrodadosOpenDataImportService $saebMicrodados,
+        private IdebDivulgacaoInepImportService $idebDivulgacao,
         private CityDataConnection $cityData,
         private MunicipalTransferImportService $transferImport,
         private FinanceRealtimeTransferRebuildService $financeRealtimeRebuild,
@@ -73,6 +75,7 @@ final class AdminSyncTaskRunner
                 'pedagogical::import_urls' => $this->runPedagogicalUrls($task, $progress),
                 'pedagogical::import_csv' => $this->runPedagogicalCsv($task, $progress),
                 'pedagogical::import_microdados' => $this->runPedagogicalMicrodados($task, $progress),
+                'pedagogical::import_ideb_divulgacao' => $this->runPedagogicalIdebDivulgacao($task, $progress),
                 'cadastro::import_city_year' => $this->runCadastroImportCity($task, $progress),
                 'cadastro::import_storage_year' => $this->runCadastroImportStorageYear($task, $progress),
                 'cadastro::import_csv' => $this->runCadastroImportCsv($task, $progress),
@@ -562,6 +565,62 @@ final class AdminSyncTaskRunner
 
         $progress->step(2, 4, __('Processamento de microdados terminado.'));
         $this->logPedagogicalDetails($progress, $result);
+
+        return $this->pedagogicalResult($result, $task);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runPedagogicalIdebDivulgacao(AdminSyncTask $task, AdminSyncTaskProgress $progress): array
+    {
+        $payload = $task->payload ?? [];
+        $scopesRaw = trim((string) ($payload['ideb_scopes'] ?? 'ai,af,em'));
+        $scopes = array_values(array_filter(array_map(
+            static fn (string $s): string => strtolower(trim($s)),
+            $scopesRaw !== '' ? explode(',', $scopesRaw) : ['ai', 'af', 'em']
+        )));
+        $minYear = isset($payload['ideb_min_year']) && is_numeric($payload['ideb_min_year'])
+            ? max(2005, min(2100, (int) $payload['ideb_min_year']))
+            : null;
+        $download = ! (bool) ($payload['ideb_no_download'] ?? false);
+        $importSaeb = ! (bool) ($payload['ideb_no_saeb'] ?? false);
+        $onlyCatalog = (bool) ($payload['ideb_only_catalog'] ?? false);
+
+        $progress->step(1, 3, __('A importar divulgação IDEB municipal (INEP)…'));
+        $progress->detail(__('Scopes: :s | min-year: :y | SAEB embutido: :saeb', [
+            's' => implode(',', $scopes) ?: 'ai,af,em',
+            'y' => (string) ($minYear ?? config('ieducar.ideb.min_year', 2015)),
+            'saeb' => $importSaeb ? __('sim') : __('não'),
+        ]));
+
+        $saebMemory = trim((string) config('horizonte.fortnightly_feed.saeb_memory_limit', '2048M'));
+        if ($saebMemory !== '') {
+            @ini_set('memory_limit', $saebMemory);
+        }
+
+        $result = $this->idebDivulgacao->import($scopes, $download, $importSaeb, $minYear, $onlyCatalog);
+
+        $progress->step(2, 3, __('Divulgação IDEB processada.'));
+        $this->logPedagogicalDetails($progress, $result);
+        if (isset($result['detalhes']['per_scope']) && is_array($result['detalhes']['per_scope'])) {
+            foreach ($result['detalhes']['per_scope'] as $scope => $stats) {
+                if (! is_array($stats)) {
+                    continue;
+                }
+                if (! empty($stats['error'])) {
+                    $progress->warn((string) $scope.': '.$stats['error']);
+
+                    continue;
+                }
+                $progress->detail(__(':s (:e) — :n ponto(s), :m município(s)', [
+                    's' => (string) $scope,
+                    'e' => (string) ($stats['etapa'] ?? ''),
+                    'n' => (string) ($stats['rows'] ?? 0),
+                    'm' => (string) ($stats['municipios'] ?? 0),
+                ]));
+            }
+        }
 
         return $this->pedagogicalResult($result, $task);
     }

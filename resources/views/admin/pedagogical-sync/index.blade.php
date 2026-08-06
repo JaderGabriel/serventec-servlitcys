@@ -7,10 +7,10 @@
     <x-slot name="header">
         <div class="flex flex-col gap-1">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Sincronização pedagógica (SAEB)') }}
+                {{ __('Sincronização pedagógica (SAEB / IDEB)') }}
             </h2>
             <p class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                {{ __('Importações SAEB em fila — acompanhe o progresso em Fila de sincronização.') }}
+                {{ __('Importações SAEB e IDEB em fila — acompanhe o progresso em Fila de sincronização.') }}
             </p>
         </div>
     </x-slot>
@@ -19,8 +19,8 @@
         active="pedagogical"
         accent="violet"
         :eyebrow="__('Sincronização pedagógica')"
-        :title="__('SAEB / indicadores INEP')"
-        :description="__('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página). Primeira carga: microdados ou CSV antes do passo HTTP por IBGE.')"
+        :title="__('SAEB / IDEB (INEP)')"
+        :description="__('Cada importação abaixo cria uma tarefa na fila (não bloqueia esta página). SAEB: microdados/CSV/IBGE. IDEB: ZIPs de divulgação municipal (série histórica + SAEB embutido).')"
         impact-domain="pedagogical"
         queue-banner-compact
     >

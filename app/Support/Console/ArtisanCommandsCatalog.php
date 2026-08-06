@@ -181,10 +181,22 @@ final class ArtisanCommandsCatalog
             ],
             [
                 'id' => 'pedagogical',
-                'title' => __('Pedagógicas (SAEB)'),
-                'description' => __('Importação de indicadores SAEB por município. Interface: Sincronização pedagógica.'),
+                'title' => __('Pedagógicas (SAEB / IDEB)'),
+                'description' => __('Importação de indicadores SAEB e IDEB por município. Interface: Sincronização pedagógica.'),
                 'admin_route' => 'admin.pedagogical-sync.index',
                 'commands' => [
+                    [
+                        'name' => 'ideb:import-divulgacao-inep',
+                        'summary' => __('ZIPs oficiais IDEB (municípios AI/AF/EM) — série histórica + SAEB embutido via upsert.'),
+                        'signature' => 'ideb:import-divulgacao-inep {--scopes=} {--min-year=} {--no-download} {--no-saeb} {--only-catalog}',
+                        'examples' => [
+                            'php artisan ideb:import-divulgacao-inep --scopes=ai,af,em --min-year=2015',
+                            'php artisan ideb:import-divulgacao-inep --scopes=af --no-download',
+                        ],
+                        'env' => ['IEDUCAR_IDEB_*'],
+                        'doc_anchor' => 'pedagogicas',
+                        'details' => __('Também enfileirável em Sincronização pedagógica (passo 5) e fase Horizonte ideb_divulgacao.'),
+                    ],
                     [
                         'name' => 'saeb:import-planilhas-inep',
                         'summary' => __('Planilhas oficiais INEP (aba Municípios) — download RAR/XLSX, conversão e import SAEB.'),
@@ -628,7 +640,7 @@ final class ArtisanCommandsCatalog
                             'HORIZONTE_EDUCACENSO_YEARS_PER_STEP',
                         ],
                         'doc_anchor' => 'horizonte',
-                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, siconfi_sync, transparency_sync, procurement_sync, obras_sync, saeb_planilhas, ibge_catalog, ibge_municipal_geo, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IBGE, SIDRA e SICONFI aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
+                        'details' => __('Modo --staged recomendado em produção (1 fase por invocação). Fases: fundeb_receita, censo_matriculas, educacenso, cadunico_sync, sidra_demography, repasses_tesouro, siconfi_sync, transparency_sync, procurement_sync, obras_sync, saeb_planilhas, ideb_divulgacao, ibge_catalog, ibge_municipal_geo, sge_registry, municipal_alerts, official_check. Educacenso, SAEB, IDEB, IBGE, SIDRA e SICONFI aceitam --phase isolado (repetir até concluir; --reset recomeça). Repasses importam referência + ano vigente.'),
                         'schedule' => __('Bimestral — dia 1 nos meses 1, 3, 5, 7, 9, 11 + passos --continue a cada HORIZONTE_FORTNIGHTLY_FEED_STEP_INTERVAL min.'),
                     ],
                     [

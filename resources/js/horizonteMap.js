@@ -8716,6 +8716,56 @@ export default function createHorizonteMap(markers = [], colors = {}, options = 
             return this.modalHeaderSaebByYear(m).length > 0;
         },
 
+        modalHeaderIdebByYear(m) {
+            if (!m) {
+                return [];
+            }
+            const series = Array.isArray(m.ideb_series) ? m.ideb_series : [];
+            const rows = [];
+            if (series.length > 0) {
+                for (const point of series) {
+                    const value = Number(point?.value);
+                    if (!Number.isFinite(value) || value <= 0) {
+                        continue;
+                    }
+                    const year = Number(point?.year);
+                    rows.push({
+                        year: Number.isFinite(year) && year > 0 ? year : 0,
+                        value,
+                        etapa: point?.etapa ?? null,
+                    });
+                }
+            } else if (Number.isFinite(Number(m.ideb)) && Number(m.ideb) > 0) {
+                rows.push({ year: 0, value: Number(m.ideb), etapa: null });
+            }
+            return rows
+                .sort((a, b) => b.year - a.year)
+                .slice(0, 5);
+        },
+
+        modalHeaderHasIdeb(m) {
+            return this.modalHeaderIdebByYear(m).length > 0;
+        },
+
+        modalHeaderIdebYearLabel(row) {
+            if (!row) {
+                return "";
+            }
+            const parts = [];
+            if (row.year > 0) {
+                parts.push(String(row.year));
+            }
+            if (Number.isFinite(Number(row.value))) {
+                parts.push(
+                    Number(row.value).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 1,
+                        maximumFractionDigits: 1,
+                    }),
+                );
+            }
+            return parts.join(" · ");
+        },
+
         modalHeaderSaebYearLabel(row) {
             if (!row) {
                 return "";

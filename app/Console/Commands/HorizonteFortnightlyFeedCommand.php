@@ -33,6 +33,7 @@ class HorizonteFortnightlyFeedCommand extends Command
                             {--skip-procurement : Ignorar contratos/licitações MEC·FNDE (procurement)}
                             {--skip-obras : Ignorar Canteiro / obras educação (Obrasgov)}
                             {--skip-saeb : Ignorar planilhas SAEB INEP}
+                            {--skip-ideb : Ignorar divulgação IDEB municipal INEP}
                             {--skip-ibge : Ignorar aquecimento catálogo IBGE}
                             {--skip-ibge-municipal-geo : Ignorar malha municipal IBGE e área territorial}
                             {--skip-sge : Ignorar registo de sistemas de gestão educacional (SGE)}
@@ -169,6 +170,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'skip_procurement' => (bool) $this->option('skip-procurement'),
             'skip_obras' => (bool) $this->option('skip-obras'),
             'skip_saeb' => (bool) $this->option('skip-saeb'),
+            'skip_ideb' => (bool) $this->option('skip-ideb'),
             'skip_ibge' => (bool) $this->option('skip-ibge'),
             'skip_ibge_municipal_geo' => (bool) $this->option('skip-ibge-municipal-geo'),
             'skip_sge' => (bool) $this->option('skip-sge'),
@@ -263,6 +265,7 @@ class HorizonteFortnightlyFeedCommand extends Command
             'censo_matriculas' => 'Censo',
             'educacenso' => 'Educacenso',
             'saeb_planilhas' => 'SAEB',
+            'ideb_divulgacao' => 'IDEB',
             'ibge_catalog' => 'IBGE',
             'ibge_municipal_geo' => 'IBGE malha',
             'sge_registry' => 'SGE',

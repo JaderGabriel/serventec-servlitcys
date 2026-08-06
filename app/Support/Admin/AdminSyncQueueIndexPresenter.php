@@ -286,7 +286,7 @@ final class AdminSyncQueueIndexPresenter
                 'id' => 'pedagogical',
                 'domain' => AdminSyncDomain::Pedagogical,
                 'label' => AdminSyncDomain::Pedagogical->label(),
-                'description' => __('Indicadores SAEB (API, CSV, microdados INEP).'),
+                'description' => __('Indicadores SAEB e IDEB (API, CSV, microdados, divulgação IDEB).'),
                 'icon' => 'academic-cap',
                 'accent' => 'violet',
                 'anchor' => 'fila-pedagogical',

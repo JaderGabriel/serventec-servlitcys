@@ -21,6 +21,7 @@ final class HorizonteFortnightlyFeedNotifier
         'obras_sync',
         'siconfi_sync',
         'saeb_planilhas',
+        'ideb_divulgacao',
         'transparency_sync',
     ];
 

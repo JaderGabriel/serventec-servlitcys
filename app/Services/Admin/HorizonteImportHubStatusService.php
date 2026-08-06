@@ -80,6 +80,11 @@ final class HorizonteImportHubStatusService
             ->whereNotNull('ibge_municipio')
             ->distinct()
             ->count('ibge_municipio');
+        $idebMunicipios = (int) SaebIndicatorPoint::query()
+            ->where('disciplina', 'ideb')
+            ->whereNotNull('ibge_municipio')
+            ->distinct()
+            ->count('ibge_municipio');
 
         $coverageTtl = max(300, min(86400, (int) config('horizonte.import_hub.coverage_cache_seconds', 3600)));
         $withFullTriad = (int) \Illuminate\Support\Facades\Cache::remember(
@@ -187,6 +192,7 @@ final class HorizonteImportHubStatusService
                 'fundeb_municipios' => $fundebMunicipios,
                 'censo_municipios' => $censoMunicipios,
                 'saeb_municipios' => $saebMunicipios,
+                'ideb_municipios' => $idebMunicipios,
                 'cadunico_municipios' => $cadunicoCount,
                 'demography_municipios' => $demographyCount,
                 'educacenso_years_indexed' => $educacensoYearsIndexed,
@@ -210,6 +216,7 @@ final class HorizonteImportHubStatusService
                 $fundebMunicipios,
                 $censoMunicipios,
                 $saebMunicipios,
+                $idebMunicipios,
                 $microdadosPath,
                 $ibgeUfsWarmed,
                 $ibgeUfsTotal,
@@ -262,6 +269,7 @@ final class HorizonteImportHubStatusService
         int $fundebMunicipios,
         int $censoMunicipios,
         int $saebMunicipios,
+        int $idebMunicipios,
         ?string $microdadosPath,
         int $ibgeUfsWarmed,
         int $ibgeUfsTotal,
@@ -435,6 +443,19 @@ final class HorizonteImportHubStatusService
                 'ok' => $saebMunicipios >= 100,
                 'metric' => $saebMunicipios,
                 'metric_label' => __('municípios'),
+            ],
+            [
+                'key' => 'ideb_divulgacao',
+                'label' => __('IDEB — divulgação municipal INEP'),
+                'description' => __('ZIPs oficiais AI/AF/EM — série IDEB (≥5 anos) e notas SAEB embutidas. Também em Admin → SAEB (passo 5) ou ideb:import-divulgacao-inep.'),
+                'source_id' => 'saeb_inep',
+                'hub_anchor' => '#source-saeb_inep',
+                'admin_url' => route('admin.pedagogical-sync.index'),
+                'cli' => 'php artisan horizonte:fortnightly-feed --phase=ideb_divulgacao',
+                'cli_reset' => 'php artisan horizonte:fortnightly-feed --phase=ideb_divulgacao',
+                'ok' => $idebMunicipios >= 100,
+                'metric' => $idebMunicipios,
+                'metric_label' => __('municípios IDEB'),
             ],
             [
                 'key' => 'ibge_catalog',

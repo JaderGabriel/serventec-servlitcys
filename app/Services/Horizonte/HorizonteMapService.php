@@ -954,6 +954,7 @@ final class HorizonteMapService
         $censoByIbge = $this->censoSummaryFromRows($censoRowsByIbge);
         $censoSeriesByIbge = $this->censoSeriesByIbge($refYear, $ibgePrefix);
         $saebByIbge = $this->saebByIbge($refYear, $ibgePrefix);
+        $idebByIbge = $this->idebByIbge($refYear, $ibgePrefix);
         $cadunicoByIbge = $this->cadunicoByIbge($refYear, $ibgePrefix);
         $demographyByIbge = $this->demographyByIbge($refYear, $ibgePrefix);
         $fiscalByIbge = $this->fiscalByIbge($refYear, $ibgePrefix);
@@ -997,6 +998,9 @@ final class HorizonteMapService
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($saebByIbge) as $ibge) {
+            $ibgeSet[$ibge] = true;
+        }
+        foreach (array_keys($idebByIbge) as $ibge) {
             $ibgeSet[$ibge] = true;
         }
         foreach (array_keys($cadunicoByIbge) as $ibge) {
@@ -1089,6 +1093,7 @@ final class HorizonteMapService
             $censo = $censoByIbge[$ibge] ?? null;
             $censoRow = $censoRowsByIbge[$ibge] ?? null;
             $saeb = $saebByIbge[$ibge] ?? null;
+            $ideb = $idebByIbge[$ibge] ?? null;
             $cadunico = $cadunicoByIbge[$ibge] ?? null;
             $demography = $demographyByIbge[$ibge] ?? null;
             $fiscal = $fiscalByIbge[$ibge] ?? null;
@@ -1330,6 +1335,9 @@ final class HorizonteMapService
                 'saeb_trend_label' => $saebTrend['trend_label'] ?? '',
                 'saeb_delta_lp' => $saebTrend['delta_lp'] ?? null,
                 'saeb_delta_mat' => $saebTrend['delta_mat'] ?? null,
+                'ideb' => $ideb['value'] ?? null,
+                'ideb_series' => array_values($ideb['series'] ?? []),
+                'has_ideb' => $ideb !== null,
                 'enrollment_trend' => $enrollmentMomentum['trend'] ?? 'unknown',
                 'enrollment_trend_label' => $enrollmentMomentum['trend_label'] ?? '',
                 'enrollment_delta_pct' => $enrollmentMomentum['delta_pct'] ?? null,
@@ -1661,6 +1669,65 @@ final class HorizonteMapService
                 'mat' => $data['mat'][0]['value'] ?? null,
                 'lp_series' => $data['lp'],
                 'mat_series' => $data['mat'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Série IDEB municipal (disciplina=ideb) — até 5 anos mais recentes ≤ refYear.
+     *
+     * @return array<string, array{value: ?float, series: list<array{year: int, value: float, etapa: ?string}>}>
+     */
+    private function idebByIbge(int $refYear, ?string $ibgePrefix = null): array
+    {
+        if (! \Illuminate\Support\Facades\Schema::hasTable('saeb_indicator_points')) {
+            return [];
+        }
+
+        $minYear = max(2005, $refYear - 12);
+        $query = SaebIndicatorPoint::query()
+            ->where('disciplina', 'ideb')
+            ->whereBetween('ano', [$minYear, $refYear])
+            ->whereNotNull('ibge_municipio')
+            ->orderByDesc('ano');
+        if ($ibgePrefix !== null && $ibgePrefix !== '') {
+            $query->where('ibge_municipio', 'like', $ibgePrefix.'%');
+        }
+        $rows = $query->get(['ibge_municipio', 'ano', 'etapa', 'valor']);
+
+        /** @var array<string, list<array{year: int, value: float, etapa: ?string}>> $series */
+        $series = [];
+        foreach ($rows as $row) {
+            $ibge = FundebMunicipioReferenceRepository::normalizeIbge($row->ibge_municipio);
+            if ($ibge === null) {
+                continue;
+            }
+            if (! isset($series[$ibge])) {
+                $series[$ibge] = [];
+            }
+            $year = (int) $row->ano;
+            foreach ($series[$ibge] as $entry) {
+                if ($entry['year'] === $year) {
+                    continue 2;
+                }
+            }
+            if (count($series[$ibge]) >= 5) {
+                continue;
+            }
+            $series[$ibge][] = [
+                'year' => $year,
+                'value' => (float) $row->valor,
+                'etapa' => $row->etapa !== null ? (string) $row->etapa : null,
+            ];
+        }
+
+        $out = [];
+        foreach ($series as $ibge => $points) {
+            $out[$ibge] = [
+                'value' => $points[0]['value'] ?? null,
+                'series' => $points,
             ];
         }
 

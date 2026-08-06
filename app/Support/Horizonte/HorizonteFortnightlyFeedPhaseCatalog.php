@@ -118,7 +118,17 @@ final class HorizonteFortnightlyFeedPhaseCatalog
                 'icon' => 'signal',
                 'tone' => 'violet',
                 'group' => 'educacional',
-                'description' => __('Planilhas oficiais INEP — IDEB e desempenho por município.'),
+                'description' => __('Planilhas oficiais INEP SAEB — desempenho por município.'),
+                'incremental' => true,
+            ],
+            [
+                'key' => 'ideb_divulgacao',
+                'label' => 'IDEB',
+                'skip_option' => 'skip_ideb',
+                'icon' => 'chart-bar',
+                'tone' => 'fuchsia',
+                'group' => 'educacional',
+                'description' => __('Divulgação IDEB municipal (ZIPs INEP) — série histórica e notas SAEB embutidas.'),
                 'incremental' => true,
             ],
             [

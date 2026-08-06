@@ -86,10 +86,14 @@ final class SaebPointsNormalizer
                 }
             }
             $effectiveCityIds = $pointCityIds ?? $rootCityIds;
-            if ($effectiveCityIds === null || $effectiveCityIds === []) {
+            $ibge = preg_replace('/\D/', '', (string) ($p['municipio_ibge'] ?? '')) ?? '';
+            if (($effectiveCityIds === null || $effectiveCityIds === []) && strlen($ibge) !== 7) {
                 continue;
             }
-            $row['city_ids'] = $effectiveCityIds;
+            $row['city_ids'] = $effectiveCityIds ?? [];
+            if (strlen($ibge) === 7) {
+                $row['municipio_ibge'] = $ibge;
+            }
             $out[] = $row;
         }
 

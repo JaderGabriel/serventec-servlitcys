@@ -379,21 +379,23 @@ final class PublicDataImportCatalog
     {
         return [
             'id' => 'saeb_inep',
-            'title' => __('SAEB / desempenho (INEP)'),
-            'summary' => __('Microdados, CSV, planilhas INEP ou JSON por IBGE. Alimenta Desempenho, PDF e mapa Horizonte (déficit pedagógico SAEB).'),
+            'title' => __('SAEB / IDEB (INEP)'),
+            'summary' => __('Microdados, CSV, planilhas SAEB, divulgação IDEB ou JSON por IBGE. Alimenta Desempenho, PDF e mapa Horizonte (SAEB + série IDEB).'),
             'data_class' => 'publicado',
             'domain' => 'pedagogical',
             'persistence' => 'saeb_indicator_points',
             'official_sources' => [
                 'INEP microdados SAEB',
+                'INEP divulgação IDEB (ZIPs municipais)',
                 'Portal IDEB (referência)',
             ],
             'pdf_sections' => ['desempenho_aprendizagem', 'rede_municipal'],
             'pdf_gaps' => ['saeb_missing', 'ideb_series_missing'],
             'admin_route' => 'admin.pedagogical-sync.index',
             'actions' => [],
-            'cli' => ['saeb:sync-microdados', 'saeb:import-official', 'saeb:import-csv'],
+            'cli' => ['ideb:import-divulgacao-inep', 'saeb:sync-microdados', 'saeb:import-official', 'saeb:import-csv'],
             'cli_examples' => [
+                ['summary' => __('IDEB divulgação municipal'), 'command' => 'php artisan ideb:import-divulgacao-inep --scopes=ai,af,em --min-year=2015'],
                 ['summary' => __('Microdados SAEB'), 'command' => 'php artisan saeb:sync-microdados'],
                 ['summary' => __('Planilhas oficiais INEP'), 'command' => 'php artisan saeb:import-official'],
                 ['summary' => __('CSV local'), 'command' => 'php artisan saeb:import-csv storage/app/saeb.csv'],
