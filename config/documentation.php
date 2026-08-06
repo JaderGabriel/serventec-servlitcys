@@ -26,8 +26,8 @@ return [
     'product' => [
         'version' => '9.0.3',
         'release_tag' => '20260806a-Polyhymnia',
-        'commit_short' => 'pending',
-        'commit_number' => 0,
+        'commit_short' => 'd3790c46',
+        'commit_number' => 668,
         'revision_date' => '2026-08-06',
         'in_production' => true,
         'production_label' => 'Em produção',

@@ -11,7 +11,7 @@
 | **Último marco documentado** | **Polyhymnia** — Desempenho SAEB/IDEB separados; Horizonte cores por ano + gráfico pedagógico · Erato permanece histórico |
 | **Patches em `main` (sem bump)** | — |
 | **UI admin** | `/admin/documentacao` mostra o selo **«Em produção»** com esta versão (`config/documentation.php`) |
-| **Commit de release** | `pending` (#**—**) |
+| **Commit de release** | `d3790c46` (#**668**) |
 
 > **Como ler:** cada linha da tabela abaixo é **histórico**. A linha marcada com **▶** ou a seção «Em produção» indica o que está em `main` hoje. O **#N** é a posição do commit na história linear do ramo `main`.
 >
@@ -72,7 +72,7 @@ Diagramas de deploy e convenção de tag: [ARQUITETURA_E_FLUXOS.md](ARQUITETURA_
 
 | Versão | Commit | # | Data (ref.) | Resumo |
 |--------|--------|---|-------------|--------|
-| **▶ 9.0.3** | `pending` / `20260806a-Polyhymnia` → `main` | **—** | 06/08/2026 | **Produção:** Desempenho SAEB/IDEB separados; Horizonte tons por ano + gráfico Pedagogia — [RELEASE_20260806a_POLYHYMNIA.md](RELEASE_20260806a_POLYHYMNIA.md). |
+| **▶ 9.0.3** | `d3790c46` / `20260806a-Polyhymnia` → `main` | **668** | 06/08/2026 | **Produção:** Desempenho SAEB/IDEB separados; Horizonte tons por ano + gráfico Pedagogia — [RELEASE_20260806a_POLYHYMNIA.md](RELEASE_20260806a_POLYHYMNIA.md). |
 | 9.0.2 | `aaad4fde` / `20260806-Erato` → `main` | **665** | 06/08/2026 | Importador IDEB 2025 (fila pedagógica + fase Horizonte); patches Clio/CKAN — selo Erato. |
 | 9.0.1 | `ed93b8e` / `20260725-Tyche` → `main` | **645** | 25/07/2026 | Emendas FIN-08; procurement/sanções Horizonte HOR-08d…g; Clio PDF temático — [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md). |
 | 9.0.0 | `ab5a076` / `20260724f-Opus` → `main` | **628** | 24/07/2026 | Canteiro (Obrasgov/SIMEC), roadmaps `ROADMAP_*`, Portal Transparência CGU — [RELEASE_20260724f_OPUS.md](RELEASE_20260724f_OPUS.md). |

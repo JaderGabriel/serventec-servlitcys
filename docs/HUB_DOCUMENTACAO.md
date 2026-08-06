@@ -15,8 +15,8 @@ Versão interativa para **Cursor IDE:** [canvases/documentacao-hub.canvas.tsx](.
 | Indicador | Valor |
 |-----------|-------|
 | **Versão semântica** | **9.0.3** |
-| **Tag de deploy** | `20260725-Tyche` |
-| **Commit de referência** | `ab5a076` |
+| **Tag de deploy** | `20260806a-Polyhymnia` |
+| **Commit de referência** | `d3790c46` |
 | **Data de referência** | 2026-07-24 |
 | **Release** | [RELEASE_20260725_TYCHE.md](RELEASE_20260725_TYCHE.md) |
 | **Marco** | **Opus** — Canteiro + roadmaps `ROADMAP_*` + Portal Transparência |
