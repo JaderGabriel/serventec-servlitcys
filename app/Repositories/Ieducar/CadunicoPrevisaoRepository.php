@@ -4,6 +4,7 @@ namespace App\Repositories\Ieducar;
 
 use App\Models\City;
 use App\Repositories\CadunicoMunicipioSnapshotRepository;
+use App\Repositories\FundebMunicipioReferenceRepository;
 use App\Repositories\InepCensoMunicipioMatriculaRepository;
 use App\Services\Cadunico\CadunicoBeneficiosEscolarizacaoCalloutBuilder;
 use App\Services\Cadunico\CadunicoDemandaOfertaSlice;
