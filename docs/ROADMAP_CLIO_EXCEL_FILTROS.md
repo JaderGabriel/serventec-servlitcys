@@ -61,7 +61,8 @@ Rota: `clio.campaigns.export.xlsx-filtros` · Menu Downloads + card da home.
 | **03-Turmas** | Classificação + CH + alertas |
 | **04-Somatórios turmas** | Linhas ≠ profissionais |
 | **05-Demografia** | Cor/Raça + lista não declarados |
-| **06-NEE-TRS** | Totais K/L + lista L sem K |
+| **06-NEE-TRS** | Totais K/L; contador + lista de pessoas com deficiência/transtorno sem turma AEE; lista L sem K |
+| **Insights BI** | KPIs e observações usam o mesmo composer (`CampaignFiltrosOperacionaisComposer`) — NEE sem AEE, PNATE, tempo integral, alertas CH |
 | **07-PNATE** | Elegíveis / excluídos / veículos |
 | **08-Etapas aluno** | Curricular + AEE/AC |
 | **09-Tempo integral** | Pleno ≥35; proxy AC≥15; exclusões |

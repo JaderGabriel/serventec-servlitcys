@@ -15,6 +15,7 @@ use App\Models\Clio\ClioCampaignSchool;
 use App\Services\Clio\Analysis\CampaignAnalysisPresenter;
 use App\Services\Clio\Analysis\CampaignNeeCensusBuilder;
 use App\Services\Clio\Analysis\CampaignSchoolTimeComposer;
+use App\Services\Clio\Export\CampaignFiltrosOperacionaisComposer;
 use App\Services\Clio\Parse\CampaignParseService;
 use App\Support\Pulse\PulseOperationRecorder;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ final class ClioBiRefreshService
         private readonly CampaignNeeCensusBuilder $neeBuilder,
         private readonly ClioBiInsightComposer $insights,
         private readonly CampaignSchoolTimeComposer $schoolTime,
+        private readonly CampaignFiltrosOperacionaisComposer $filtros = new CampaignFiltrosOperacionaisComposer,
     ) {}
 
     public function refreshCampaign(ClioCampaign $campaign): void
@@ -47,6 +49,7 @@ final class ClioBiRefreshService
         $stats = $campaign->schoolScopeStats();
         $nee = $this->neeBuilder->build($campaign);
         $schoolTime = $this->schoolTime->compose($campaign);
+        $filtros = $this->filtros->compose($campaign);
 
         $mat = $this->payload($inferences->get('INF-MAT'));
         $dis = $this->payload($inferences->get('INF-DIS'));
@@ -67,6 +70,30 @@ final class ClioBiRefreshService
 
         $schoolsIncomplete = max(0, (int) ($stats['active'] ?? 0) - (int) ($stats['triade_complete'] ?? 0));
 
+        $filtrosNee = is_array($filtros['nee'] ?? null) ? $filtros['nee'] : [];
+        $filtrosPnate = is_array($filtros['pnate'] ?? null) ? $filtros['pnate'] : [];
+        $filtrosTi = is_array($filtros['tempo_integral'] ?? null) ? $filtros['tempo_integral'] : [];
+        $filtrosTurmaSums = is_array($filtros['somatarios_turmas'] ?? null) ? $filtros['somatarios_turmas'] : [];
+        $filtrosDemo = is_array($filtros['demografia'] ?? null) ? $filtros['demografia'] : [];
+        $filtrosAlerts = is_array($filtros['alerts'] ?? null) ? $filtros['alerts'] : [];
+        $filtrosMeta = is_array($filtros['meta'] ?? null) ? $filtros['meta'] : [];
+        $filtrosAcomp = is_array($filtros['somatarios_acomp'] ?? null) ? $filtros['somatarios_acomp'] : [];
+
+        $alertAc = 0;
+        $alertEja = 0;
+        foreach ($filtrosAlerts as $alert) {
+            $code = (string) ($alert['code'] ?? '');
+            if ($code === 'AC-CH-LT15') {
+                $alertAc++;
+            } elseif ($code === 'EJA-CH-LT20') {
+                $alertEja++;
+            }
+        }
+
+        $undeclaredCor = is_array($filtrosDemo['undeclared'] ?? null)
+            ? count($filtrosDemo['undeclared'])
+            : (int) ($dem['without_cor'] ?? 0);
+
         $snapshot = [
             'triade_pct' => is_numeric($triadePct) ? (float) $triadePct : null,
             'schools_active' => (int) ($stats['active'] ?? 0),
@@ -80,8 +107,26 @@ final class ClioBiRefreshService
             'turmas_sem_docente' => (int) ($doc['turmas_sem_docente'] ?? 0),
             'nee_people' => (int) ($nee['flagged'] ?? 0),
             'nee_people_scanned' => (int) ($nee['people_scanned'] ?? 0),
-            'nee_without_aee' => (int) ($nee['without_aee'] ?? 0),
+            'nee_without_aee' => (int) ($filtrosNee['with_nee_without_aee'] ?? $nee['without_aee'] ?? 0),
             'aee_without_nee' => (int) ($nee['aee_without_nee'] ?? 0),
+            'nee_with_k_rows' => (int) ($filtrosNee['with_k'] ?? 0),
+            'nee_with_l_rows' => (int) ($filtrosNee['with_l'] ?? 0),
+            'nee_l_without_k' => count($filtrosNee['l_without_k'] ?? []),
+            'schools_aptas' => (int) ($filtrosMeta['schools_aptas'] ?? $stats['active'] ?? 0),
+            'schools_fora' => (int) ($filtrosMeta['schools_fora'] ?? 0),
+            'pnate_elegivel' => (int) ($filtrosPnate['elegivel'] ?? 0),
+            'pnate_excluido' => (int) ($filtrosPnate['excluido_urbano_urbano'] ?? 0),
+            'pnate_sem_transporte' => (int) ($filtrosPnate['sem_transporte'] ?? 0),
+            'pnate_has_residence' => ! empty($filtrosPnate['residence_column']),
+            'tempo_integral_pleno' => (int) ($filtrosTi['pleno'] ?? 0),
+            'tempo_integral_proxy' => (int) ($filtrosTi['contraturno_proxy'] ?? 0),
+            'turmas_parcial' => (int) ($filtrosTurmaSums['parcial'] ?? 0),
+            'turmas_integral' => (int) ($filtrosTurmaSums['integral'] ?? 0),
+            'alert_ac_lt15' => $alertAc,
+            'alert_eja_lt20' => $alertEja,
+            'acomp_curricular' => (int) ($filtrosAcomp['total_curricular'] ?? $mat['acomp_curricular_sum'] ?? 0),
+            'acomp_aee' => (int) ($filtrosAcomp['total_aee'] ?? $mat['acomp_aee_sum'] ?? 0),
+            'acomp_ac' => (int) ($filtrosAcomp['total_ac'] ?? $mat['acomp_ac_sum'] ?? 0),
             'school_time_available' => (bool) ($schoolTime['available'] ?? false),
             'school_time_has_ch' => (bool) ($schoolTime['has_ch'] ?? false),
             'school_time_hours' => ($schoolTime['network']['horas_aluno_semana'] ?? null),
@@ -89,12 +134,31 @@ final class ClioBiRefreshService
             'tra_rural_pct_active' => $this->ruralPct($tra),
             'gap_clio_only' => (int) ($gap['only_clio'] ?? $gap['clio_only'] ?? 0),
             'gap_ieducar_only' => (int) ($gap['only_ieducar'] ?? $gap['ieducar_only'] ?? 0),
-            'without_cor' => (int) ($dem['without_cor'] ?? 0),
-            'dem_scanned' => (int) ($dem['scanned'] ?? 0),
+            'without_cor' => $undeclaredCor,
+            'dem_scanned' => (int) ($dem['scanned'] ?? $filtrosNee['total_rows'] ?? 0),
             'alunos_sem_turma' => (int) ($den['alunos_sem_turma'] ?? $mat['without_turma'] ?? 0),
         ];
 
-        DB::transaction(function () use ($campaign, $mat, $dis, $den, $doc, $nee, $stats, $triadePct, $errors, $warnings, $inferences, $snapshot): void {
+        $neeWithoutAeeByInep = is_array($filtrosNee['nee_without_aee_by_inep'] ?? null)
+            ? $filtrosNee['nee_without_aee_by_inep']
+            : [];
+
+        DB::transaction(function () use (
+            $campaign,
+            $mat,
+            $dis,
+            $den,
+            $doc,
+            $nee,
+            $stats,
+            $triadePct,
+            $errors,
+            $warnings,
+            $inferences,
+            $snapshot,
+            $neeWithoutAeeByInep,
+            $filtrosAcomp,
+        ): void {
             $this->purgeCampaign($campaign->id);
 
             BiClioCampaign::query()->create([
@@ -110,9 +174,9 @@ final class ClioBiRefreshService
                 'triade_pct' => is_numeric($triadePct) ? round((float) $triadePct, 1) : null,
                 'schools_active' => (int) ($stats['active'] ?? 0),
                 'schools_total' => (int) ($stats['total'] ?? $campaign->schools->count()),
-                'mat_curricular' => (int) ($mat['acomp_curricular_sum'] ?? 0),
-                'mat_aee' => (int) ($mat['acomp_aee_sum'] ?? 0),
-                'mat_ac' => (int) ($mat['acomp_ac_sum'] ?? 0),
+                'mat_curricular' => (int) ($filtrosAcomp['total_curricular'] ?? $mat['acomp_curricular_sum'] ?? 0),
+                'mat_aee' => (int) ($filtrosAcomp['total_aee'] ?? $mat['acomp_aee_sum'] ?? 0),
+                'mat_ac' => (int) ($filtrosAcomp['total_ac'] ?? $mat['acomp_ac_sum'] ?? 0),
                 'findings_errors' => $errors,
                 'findings_warnings' => $warnings,
                 'distortion_pct' => $snapshot['distortion_pct'],
@@ -179,6 +243,9 @@ final class ClioBiRefreshService
                 ]);
 
                 $schoolNee = $this->neeBuilder->build($campaign, (int) $school->id);
+                $withoutAee = array_key_exists($inep, $neeWithoutAeeByInep)
+                    ? (int) $neeWithoutAeeByInep[$inep]
+                    : (int) ($schoolNee['without_aee'] ?? 0);
                 BiClioInclusion::query()->create([
                     'campaign_id' => $campaign->id,
                     'inep' => $inep,
@@ -186,7 +253,7 @@ final class ClioBiRefreshService
                     'qt_deficiency' => (int) ($schoolNee['deficiency_flagged'] ?? 0),
                     'qt_disorder' => (int) ($schoolNee['disorder_flagged'] ?? 0),
                     'qt_ah' => (int) ($schoolNee['ah_flagged'] ?? 0),
-                    'qt_without_aee' => (int) ($schoolNee['without_aee'] ?? 0),
+                    'qt_without_aee' => $withoutAee,
                     'qt_aee_without_nee' => (int) ($schoolNee['aee_without_nee'] ?? 0),
                     'qt_underreporting' => (int) ($schoolNee['underreporting_flagged'] ?? 0),
                 ]);

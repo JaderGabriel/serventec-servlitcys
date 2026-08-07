@@ -4,6 +4,7 @@ namespace App\Services\Clio\Bi;
 
 /**
  * Textos profissionais para gestores educacionais (zero PII).
+ * Alinhados às métricas do Excel de filtros operacionais (CLI-XLS).
  */
 final class ClioBiInsightComposer
 {
@@ -26,6 +27,21 @@ final class ClioBiInsightComposer
         $neeScanned = (int) ($snapshot['nee_people_scanned'] ?? 0);
         $neeSemAee = (int) ($snapshot['nee_without_aee'] ?? 0);
         $aeeSemNee = (int) ($snapshot['aee_without_nee'] ?? 0);
+        $neeWithK = (int) ($snapshot['nee_with_k_rows'] ?? 0);
+        $neeWithL = (int) ($snapshot['nee_with_l_rows'] ?? 0);
+        $neeLSemK = (int) ($snapshot['nee_l_without_k'] ?? 0);
+        $schoolsAptas = (int) ($snapshot['schools_aptas'] ?? $schoolsActive);
+        $schoolsFora = (int) ($snapshot['schools_fora'] ?? 0);
+        $pnateElegivel = (int) ($snapshot['pnate_elegivel'] ?? 0);
+        $pnateExcluido = (int) ($snapshot['pnate_excluido'] ?? 0);
+        $pnateSem = (int) ($snapshot['pnate_sem_transporte'] ?? 0);
+        $pnateHasRes = (bool) ($snapshot['pnate_has_residence'] ?? false);
+        $tempoPleno = (int) ($snapshot['tempo_integral_pleno'] ?? 0);
+        $tempoProxy = (int) ($snapshot['tempo_integral_proxy'] ?? 0);
+        $turmasParcial = (int) ($snapshot['turmas_parcial'] ?? 0);
+        $turmasIntegral = (int) ($snapshot['turmas_integral'] ?? 0);
+        $alertAc = (int) ($snapshot['alert_ac_lt15'] ?? 0);
+        $alertEja = (int) ($snapshot['alert_eja_lt20'] ?? 0);
         $delta = $snapshot['delta_rede'] ?? null;
         $traRuralPct = $snapshot['tra_rural_pct_active'] ?? null;
         $gapClio = (int) ($snapshot['gap_clio_only'] ?? 0);
@@ -36,6 +52,20 @@ final class ClioBiInsightComposer
         $withoutCor = (int) ($snapshot['without_cor'] ?? 0);
         $demScanned = (int) ($snapshot['dem_scanned'] ?? 0);
         $alunosSemTurma = (int) ($snapshot['alunos_sem_turma'] ?? 0);
+
+        if ($schoolsAptas > 0 || $schoolsFora > 0) {
+            $insights[] = [
+                'code' => 'APTAS',
+                'severity' => $schoolsFora > 0 ? 'info' : 'info',
+                'title' => __('Escolas aptas (filtros operacionais)'),
+                'body' => __('No Excel de filtros: :a escola(s) apta(s) no arquivo geral (municipal ou filantrópica com parceria municipal, em atividade, localização válida). :f unidade(s) ficam fora do escopo operacional — veja a aba 11-Fora do escopo.', [
+                    'a' => $this->int($schoolsAptas),
+                    'f' => $this->int($schoolsFora),
+                ]),
+                'metric_value' => $this->int($schoolsAptas),
+                'sort' => 5,
+            ];
+        }
 
         if (is_numeric($triade)) {
             $sev = ((float) $triade) >= 90 ? 'info' : (((float) $triade) >= 70 ? 'warning' : 'error');
@@ -98,7 +128,7 @@ final class ClioBiInsightComposer
                 'code' => 'COR_RACA',
                 'severity' => ($pctCor !== null && $pctCor >= 20) ? 'warning' : 'info',
                 'title' => __('Cor/Raça não declarada'),
-                'body' => __('Há :n aluno(s) com Cor/Raça vazia ou «Não declarado»:pct. Complete no Educacenso para o perfil demográfico e as leituras de equidade ficarem confiáveis.', [
+                'body' => __('Como na aba 05-Demografia do Excel de filtros: :n aluno(s) com Cor/Raça vazia ou «Não declarado»:pct. Complete no Educacenso para o perfil demográfico e as leituras de equidade ficarem confiáveis.', [
                     'n' => $this->int($withoutCor),
                     'pct' => $pctCor !== null
                         ? __(' (:p% das :t pessoas lidas)', [
@@ -143,6 +173,34 @@ final class ClioBiInsightComposer
             ];
         }
 
+        if ($turmasParcial > 0 || $turmasIntegral > 0) {
+            $insights[] = [
+                'code' => 'JORNADA_TURMAS',
+                'severity' => 'info',
+                'title' => __('Turmas parcial × integral'),
+                'body' => __('No Excel de filtros (abas 03/04): :p turma(s) parcial(is) (&lt; 35 h) e :i integral(is) (≥ 35 h ou turno integral). EJA e AEE ficam fora do tempo integral canónico.', [
+                    'p' => $this->int($turmasParcial),
+                    'i' => $this->int($turmasIntegral),
+                ]),
+                'metric_value' => $this->int($turmasIntegral),
+                'sort' => 52,
+            ];
+        }
+
+        if ($tempoPleno > 0 || $tempoProxy > 0) {
+            $insights[] = [
+                'code' => 'TEMPO_INTEGRAL',
+                'severity' => 'info',
+                'title' => __('Tempo integral (filtros)'),
+                'body' => __('Aba 09-Tempo integral: :pleno aluno(s) em turmas plenas (≥ 35 h) e :proxy em AC ≥ 15 h (proxy de contraturno). O proxy não substitui CH curricular+AC ≥ 35 por pessoa.', [
+                    'pleno' => $this->int($tempoPleno),
+                    'proxy' => $this->int($tempoProxy),
+                ]),
+                'metric_value' => $this->int($tempoPleno),
+                'sort' => 54,
+            ];
+        }
+
         if ($schoolHasCh && is_numeric($schoolHours)) {
             $insights[] = [
                 'code' => 'SCHOOL_TIME',
@@ -165,7 +223,21 @@ final class ClioBiInsightComposer
             ];
         }
 
-        if ($nee > 0 || $neeSemAee > 0 || $aeeSemNee > 0) {
+        if ($alertAc > 0 || $alertEja > 0) {
+            $insights[] = [
+                'code' => 'ALERTAS_FILTROS',
+                'severity' => 'warning',
+                'title' => __('Alertas operacionais de carga horária'),
+                'body' => __('Como na aba 10-Alertas do Excel: :ac turma(s) de AC com CH &lt; 15 h e :eja turma(s) de EJA com CH &lt; 20 h. Ajuste a oferta ou documente a exceção antes do fechamento.', [
+                    'ac' => $this->int($alertAc),
+                    'eja' => $this->int($alertEja),
+                ]),
+                'metric_value' => $this->int($alertAc + $alertEja),
+                'sort' => 56,
+            ];
+        }
+
+        if ($nee > 0 || $neeSemAee > 0 || $aeeSemNee > 0 || $neeWithK > 0 || $neeWithL > 0) {
             $pctNee = ($neeScanned > 0 && $nee > 0)
                 ? round(100 * $nee / $neeScanned, 1)
                 : null;
@@ -173,8 +245,8 @@ final class ClioBiInsightComposer
             $insights[] = [
                 'code' => 'INCLUSION',
                 'severity' => ($neeSemAee > 0 || $aeeSemNee > 0) ? 'warning' : 'info',
-                'title' => __('Inclusão e AEE'),
-                'body' => __('Na Relação de alunos (pessoa única): :nee com marcador NEE, TEA ou AH:scanned. Destas, :sem sem matrícula AEE identificada:gap. Há ainda :aee pessoa(s) em AEE sem tipificação NEE/TEA/AH — revise oferta e declaração das condições.', [
+                'title' => __('Inclusão e AEE (filtros)'),
+                'body' => __('Alinhado à aba 06-NEE-TRS: :nee pessoa(s) com marcador NEE/TEA/AH:scanned. Contador do Excel — deficiência/transtorno sem turma AEE: :sem:gap. Há ainda :aee pessoa(s) em AEE sem tipificação. Linhas K=:k · L=:l.', [
                     'nee' => $this->int($nee),
                     'scanned' => $pctNee !== null
                         ? __(' (:p% das :t pessoas lidas)', [
@@ -187,9 +259,44 @@ final class ClioBiInsightComposer
                         ? __(' — lacuna relevante de AEE')
                         : '',
                     'aee' => $this->int($aeeSemNee),
+                    'k' => $this->int($neeWithK),
+                    'l' => $this->int($neeWithL),
                 ]),
-                'metric_value' => $this->int($nee),
+                'metric_value' => $this->int($neeSemAee),
                 'sort' => 60,
+            ];
+        }
+
+        if ($neeLSemK > 0) {
+            $insights[] = [
+                'code' => 'NEE_L_SEM_K',
+                'severity' => 'warning',
+                'title' => __('Transtorno sem deficiência tipificada'),
+                'body' => __('No Excel de filtros (06-NEE-TRS): :n linha(s) com transtorno (L) preenchido e deficiência/NEE (K) vazio. Confira tipificação no Educacenso — a listagem completa está na mesma aba.', [
+                    'n' => $this->int($neeLSemK),
+                ]),
+                'metric_value' => $this->int($neeLSemK),
+                'sort' => 62,
+            ];
+        }
+
+        if ($pnateElegivel > 0 || $pnateExcluido > 0 || $pnateSem > 0) {
+            $insights[] = [
+                'code' => 'PNATE',
+                'severity' => $pnateExcluido > 0 ? 'warning' : 'info',
+                'title' => __('PNATE (filtros)'),
+                'body' => $pnateHasRes
+                    ? __('Aba 07-PNATE: :e elegível(is), :x excluído(s) urbano–urbano (transporte Sim + escola Urbana + residência Urbana) e :s sem transporte. Use a listagem do Excel para conferência.', [
+                        'e' => $this->int($pnateElegivel),
+                        'x' => $this->int($pnateExcluido),
+                        's' => $this->int($pnateSem),
+                    ])
+                    : __('Aba 07-PNATE: :e elegível(is) e :s sem transporte. Sem coluna de residência — a exclusão urbano–urbano não foi aplicada.', [
+                        'e' => $this->int($pnateElegivel),
+                        's' => $this->int($pnateSem),
+                    ]),
+                'metric_value' => $this->int($pnateElegivel),
+                'sort' => 65,
             ];
         }
 

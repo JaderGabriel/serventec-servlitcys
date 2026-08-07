@@ -82,7 +82,16 @@ final class CampaignFiltrosOperacionaisComposer
         ];
         $alerts = [];
         $demo = ['by_cor' => [], 'undeclared' => []];
-        $nee = ['with_k' => 0, 'with_l' => 0, 'l_without_k' => [], 'total_rows' => 0];
+        $nee = [
+            'with_k' => 0,
+            'with_l' => 0,
+            'l_without_k' => [],
+            'with_nee_without_aee' => 0,
+            'nee_without_aee' => [],
+            'nee_without_aee_by_inep' => [],
+            'nee_without_aee_truncated' => false,
+            'total_rows' => 0,
+        ];
         $pnate = [
             'residence_column' => false,
             'elegivel' => 0,
@@ -197,6 +206,16 @@ final class CampaignFiltrosOperacionaisComposer
         }
 
         unset($schoolByInep);
+
+        if (! empty($nee['nee_without_aee_truncated'])) {
+            $alerts[] = [
+                'code' => 'NEE-SEM-AEE-TRUNC',
+                'school_inep' => '',
+                'school_name' => '',
+                'detail' => '',
+                'message' => __('Lista NEE/TRS sem AEE truncada (2000) — o contador mantém o total'),
+            ];
+        }
 
         return [
             'meta' => [
@@ -342,6 +361,9 @@ final class CampaignFiltrosOperacionaisComposer
         $nomeHeader = $this->findHeader($headers, ['Nome', 'Nome do aluno']);
         $idHeader = $this->findHeader($headers, ['Identificação única', 'ID']);
 
+        /** @var array<string, array{has_nee: bool, has_aee: bool, id: string, nome: string, deficiencia: string, transtorno: string}> $people */
+        $people = [];
+
         foreach ($rows as $row) {
             $nee['total_rows']++;
             $etapa = trim($this->csv->value($row, 'Etapa de ensino'));
@@ -371,15 +393,15 @@ final class CampaignFiltrosOperacionaisComposer
 
             $k = $defHeader !== null ? trim($this->csv->value($row, $defHeader)) : '';
             $l = $trsHeader !== null ? trim($this->csv->value($row, $trsHeader)) : '';
-            $kEmpty = $this->isEmptyDash($k);
-            $lEmpty = $this->isEmptyDash($l);
-            if (! $kEmpty) {
+            $kFilled = $this->isNeeMarkerFilled($k);
+            $lFilled = $this->isNeeMarkerFilled($l);
+            if ($kFilled) {
                 $nee['with_k']++;
             }
-            if (! $lEmpty) {
+            if ($lFilled) {
                 $nee['with_l']++;
             }
-            if (! $lEmpty && $kEmpty) {
+            if ($lFilled && ! $kFilled) {
                 $nee['l_without_k'][] = [
                     'inep' => (string) $school->inep_code,
                     'school' => (string) $school->name,
@@ -387,6 +409,29 @@ final class CampaignFiltrosOperacionaisComposer
                     'nome' => $nomeHeader ? trim($this->csv->value($row, $nomeHeader)) : '',
                     'transtorno' => $l,
                 ];
+            }
+
+            $personId = $this->personKey($row, $idHeader, $nomeHeader);
+            if (! isset($people[$personId])) {
+                $people[$personId] = [
+                    'has_nee' => false,
+                    'has_aee' => false,
+                    'id' => $idHeader ? trim($this->csv->value($row, $idHeader)) : '',
+                    'nome' => $nomeHeader ? trim($this->csv->value($row, $nomeHeader)) : '',
+                    'deficiencia' => '',
+                    'transtorno' => '',
+                ];
+            }
+            if ($kFilled) {
+                $people[$personId]['has_nee'] = true;
+                $people[$personId]['deficiencia'] = $k;
+            }
+            if ($lFilled) {
+                $people[$personId]['has_nee'] = true;
+                $people[$personId]['transtorno'] = $l;
+            }
+            if ($this->rowIsAee($turma, $etapa, $aeeTipo, $profiles)) {
+                $people[$personId]['has_aee'] = true;
             }
 
             if ($usoHeader !== null) {
@@ -425,6 +470,27 @@ final class CampaignFiltrosOperacionaisComposer
             ) {
                 // proxy contraturno: aluno em AC ≥15 (contagem auxiliar; pleno já veio das turmas)
                 $tempoIntegral['contraturno_proxy']++;
+            }
+        }
+
+        foreach ($people as $person) {
+            if (! $person['has_nee'] || $person['has_aee']) {
+                continue;
+            }
+            $nee['with_nee_without_aee']++;
+            $inepKey = (string) $school->inep_code;
+            $nee['nee_without_aee_by_inep'][$inepKey] = (int) ($nee['nee_without_aee_by_inep'][$inepKey] ?? 0) + 1;
+            if (count($nee['nee_without_aee']) < 2000) {
+                $nee['nee_without_aee'][] = [
+                    'inep' => (string) $school->inep_code,
+                    'school' => (string) $school->name,
+                    'id' => $person['id'],
+                    'nome' => $person['nome'],
+                    'deficiencia' => $person['deficiencia'],
+                    'transtorno' => $person['transtorno'],
+                ];
+            } else {
+                $nee['nee_without_aee_truncated'] = true;
             }
         }
 
@@ -527,6 +593,64 @@ final class CampaignFiltrosOperacionaisComposer
         $v = trim($value);
 
         return $v === '' || $v === '--' || $v === '—' || mb_strtolower($v) === 'não' || mb_strtolower($v) === 'nao';
+    }
+
+    /** Marcador K/L preenchido (ignora vazio, Não e «Não se aplica»). */
+    private function isNeeMarkerFilled(string $value): bool
+    {
+        if ($this->isEmptyDash($value)) {
+            return false;
+        }
+        $v = mb_strtolower(trim($value));
+
+        return ! str_contains($v, 'não se aplica') && ! str_contains($v, 'nao se aplica');
+    }
+
+    /**
+     * @param  array<string, string>  $row
+     */
+    private function personKey(array $row, ?string $idHeader, ?string $nomeHeader): string
+    {
+        if ($idHeader !== null) {
+            $id = trim($this->csv->value($row, $idHeader));
+            if ($id !== '') {
+                return 'id:'.$id;
+            }
+        }
+        $mat = trim($this->csv->value($row, 'Código da Matrícula'));
+        if ($mat !== '') {
+            return 'mat:'.$mat;
+        }
+        $nome = $nomeHeader !== null ? trim($this->csv->value($row, $nomeHeader)) : '';
+        $nasc = trim($this->csv->value($row, 'Data de nascimento'));
+
+        return 'fallback:'.$nome.'|'.$nasc;
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $profiles
+     */
+    private function rowIsAee(string $turma, string $etapa, string $aeeTipo, array $profiles): bool
+    {
+        $profile = is_array($profiles[$turma] ?? null) ? $profiles[$turma] : [];
+        if (($profile['bucket'] ?? '') === RelationCsvAggregator::BUCKET_AEE) {
+            return true;
+        }
+        $e = mb_strtolower($etapa);
+        if ($e !== '' && (
+            str_contains($e, 'atendimento educacional')
+            || preg_match('/\baee\b/u', $e) === 1
+        )) {
+            return true;
+        }
+        // Coluna tipo AEE preenchida + etapa «não se aplica» = linha de AEE (não AC).
+        if (! $this->isEmptyDash($aeeTipo) && (
+            str_contains($e, 'não se aplica') || str_contains($e, 'nao se aplica')
+        )) {
+            return true;
+        }
+
+        return false;
     }
 
     private function isUndeclared(string $value): bool

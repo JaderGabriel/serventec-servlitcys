@@ -301,12 +301,36 @@ final class CampaignFiltrosOperacionaisExcelExporter
      */
     private function fillNee(Worksheet $sheet, array $nee): void
     {
-        $this->writeHeaderRow($sheet, 1, [__('Indicador'), __('Valor')]);
-        $this->writeDataRow($sheet, 2, [__('Linhas aluno'), $nee['total_rows'] ?? 0]);
-        $this->writeDataRow($sheet, 3, [__('Com deficiência/NEE (K)'), $nee['with_k'] ?? 0]);
-        $this->writeDataRow($sheet, 4, [__('Com transtorno (L)'), $nee['with_l'] ?? 0]);
-        $this->writeDataRow($sheet, 5, [__('L preenchido e K vazio'), count($nee['l_without_k'] ?? [])]);
-        $r = 7;
+        $this->writeHeaderRow($sheet, 1, [__('Indicador'), __('Valor'), __('Nota')]);
+        $this->writeDataRow($sheet, 2, [__('Linhas aluno'), $nee['total_rows'] ?? 0, '']);
+        $this->writeDataRow($sheet, 3, [__('Com deficiência/NEE (K)'), $nee['with_k'] ?? 0, __('Por linha de matrícula')]);
+        $this->writeDataRow($sheet, 4, [__('Com transtorno (L)'), $nee['with_l'] ?? 0, __('Por linha de matrícula')]);
+        $this->writeDataRow($sheet, 5, [__('L preenchido e K vazio'), count($nee['l_without_k'] ?? []), __('Por linha')]);
+        $this->writeDataRow($sheet, 6, [
+            __('Com deficiência/transtorno sem turma AEE'),
+            $nee['with_nee_without_aee'] ?? 0,
+            __('Por pessoa — tem K ou L e nenhuma matrícula em turma AEE'),
+        ], self::COLOR_WARN);
+        $r = 8;
+        $sheet->setCellValue('A'.$r, __('Listagem — deficiência/transtorno sem turma AEE'));
+        $sheet->getStyle('A'.$r)->getFont()->setBold(true);
+        $r++;
+        $this->writeHeaderRow($sheet, $r, [
+            __('INEP'), __('Escola'), __('ID'), __('Nome'), __('Deficiência (K)'), __('Transtorno (L)'),
+        ]);
+        $r++;
+        foreach (is_array($nee['nee_without_aee'] ?? null) ? $nee['nee_without_aee'] : [] as $row) {
+            $this->writeDataRow($sheet, $r, [
+                $row['inep'] ?? '',
+                $row['school'] ?? '',
+                $row['id'] ?? '',
+                $row['nome'] ?? '',
+                $row['deficiencia'] ?? '',
+                $row['transtorno'] ?? '',
+            ], self::COLOR_WARN);
+            $r++;
+        }
+        $r += 1;
         $sheet->setCellValue('A'.$r, __('Listagem — transtorno sem deficiência'));
         $sheet->getStyle('A'.$r)->getFont()->setBold(true);
         $r++;
@@ -322,7 +346,7 @@ final class CampaignFiltrosOperacionaisExcelExporter
             ], self::COLOR_WARN);
             $r++;
         }
-        $this->autosize($sheet, 5);
+        $this->autosize($sheet, 6);
     }
 
     /**

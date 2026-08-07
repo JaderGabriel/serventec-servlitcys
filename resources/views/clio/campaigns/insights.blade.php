@@ -93,9 +93,18 @@
                 <section class="clio-bi-block" aria-labelledby="clio-bi-kpi-heading">
                     <div class="clio-bi-block__head">
                         <h3 id="clio-bi-kpi-heading" class="clio-bi-block__title">{{ __('Indicadores-chave') }}</h3>
-                        <p class="clio-bi-block__lead">{{ __('Resumo municipal da coleta — o mesmo grão do data mart.') }}</p>
+                        <p class="clio-bi-block__lead">{{ __('Mesmo grão do Excel de filtros operacionais e do data mart bi_clio_*.') }}</p>
                     </div>
+                    @php
+                        $insightByCode = $insights->keyBy('code');
+                        $metricOf = static fn (string $code): ?string => $insightByCode->get($code)?->metric_value;
+                    @endphp
                     <div class="clio-bi-kpi-grid">
+                        <div class="clio-bi-kpi clio-bi-kpi--teal">
+                            <p class="clio-bi-kpi__label">{{ __('Escolas aptas') }}</p>
+                            <p class="clio-bi-kpi__value">{{ $metricOf('APTAS') ?? number_format((int) $bi->schools_active) }}</p>
+                            <p class="clio-bi-kpi__hint">{{ __('Filtros · arquivo geral') }}</p>
+                        </div>
                         <div class="clio-bi-kpi clio-bi-kpi--teal">
                             <p class="clio-bi-kpi__label">{{ __('Tríade (ativas)') }}</p>
                             <p class="clio-bi-kpi__value">
@@ -110,17 +119,25 @@
                             </p>
                             <p class="clio-bi-kpi__hint">{{ __('Estimativa EF/EM · 31/03') }}</p>
                         </div>
-                        <div class="clio-bi-kpi clio-bi-kpi--ink">
-                            <p class="clio-bi-kpi__label">{{ __('Densidade curricular') }}</p>
-                            <p class="clio-bi-kpi__value">
-                                {{ $bi->density_avg === null ? '—' : number_format((float) $bi->density_avg, 1, ',', '.') }}
-                            </p>
-                            <p class="clio-bi-kpi__hint">{{ __('Alunos / turma curricular') }}</p>
+                        <div class="clio-bi-kpi clio-bi-kpi--mint">
+                            <p class="clio-bi-kpi__label">{{ __('NEE sem AEE') }}</p>
+                            <p class="clio-bi-kpi__value">{{ $metricOf('INCLUSION') ?? '—' }}</p>
+                            <p class="clio-bi-kpi__hint">{{ __('Aba 06 · pessoas com K/L sem turma AEE') }}</p>
                         </div>
                         <div class="clio-bi-kpi clio-bi-kpi--mint">
                             <p class="clio-bi-kpi__label">{{ __('NEE (pessoas)') }}</p>
                             <p class="clio-bi-kpi__value">{{ number_format((int) $bi->nee_people) }}</p>
                             <p class="clio-bi-kpi__hint">{{ __('Com marcador deficiência/TEA/AH') }}</p>
+                        </div>
+                        <div class="clio-bi-kpi clio-bi-kpi--ink">
+                            <p class="clio-bi-kpi__label">{{ __('PNATE elegíveis') }}</p>
+                            <p class="clio-bi-kpi__value">{{ $metricOf('PNATE') ?? '—' }}</p>
+                            <p class="clio-bi-kpi__hint">{{ __('Aba 07 · exclusões nos insights') }}</p>
+                        </div>
+                        <div class="clio-bi-kpi clio-bi-kpi--ink">
+                            <p class="clio-bi-kpi__label">{{ __('Tempo integral (pleno)') }}</p>
+                            <p class="clio-bi-kpi__value">{{ $metricOf('TEMPO_INTEGRAL') ?? '—' }}</p>
+                            <p class="clio-bi-kpi__hint">{{ __('Aba 09 · CH ≥ 35 h') }}</p>
                         </div>
                         <div class="clio-bi-kpi clio-bi-kpi--{{ $bi->findings_errors > 0 ? 'rose' : 'mint' }}">
                             <p class="clio-bi-kpi__label">{{ __('Erros na coleta') }}</p>
@@ -170,7 +187,7 @@
                                 'id' => 'inclusao',
                                 'eyebrow' => __('Inclusão'),
                                 'title' => __('NEE e AEE'),
-                                'lead' => __('Tipificação, lacunas de atendimento e escolas com mais NEE.'),
+                                'lead' => __('Mesmos contadores da aba 06 do Excel de filtros: tipificação, NEE sem AEE e escolas com mais NEE.'),
                                 'keys' => ['inclusao', 'aee_gap', 'subnotificacao', 'nee_escolas'],
                                 'wide' => ['nee_escolas'],
                                 'dense' => ['nee_escolas'],
@@ -272,7 +289,7 @@
                     <div class="clio-bi-block__head">
                         <p class="clio-bi-block__eyebrow">{{ __('Leitura gerencial') }}</p>
                         <h3 id="clio-insights-heading" class="clio-bi-block__title">{{ __('O que os indicadores mostram') }}</h3>
-                        <p class="clio-bi-block__lead">{{ __('Mensagens para decisão da gestão educacional — sem dados pessoais.') }}</p>
+                        <p class="clio-bi-block__lead">{{ __('Mensagens alinhadas ao Excel de filtros operacionais — sem dados pessoais.') }}</p>
                     </div>
 
                     @if ($insights->isEmpty())

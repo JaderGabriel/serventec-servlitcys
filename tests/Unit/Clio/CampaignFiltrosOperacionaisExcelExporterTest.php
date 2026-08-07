@@ -121,4 +121,66 @@ final class CampaignFiltrosOperacionaisExcelExporterTest extends TestCase
         $this->assertContains('07-PNATE', $titles);
         $this->assertContains('10-Alertas', $titles);
     }
+
+    #[Test]
+    public function composer_lista_nee_sem_turma_aee_por_pessoa(): void
+    {
+        Storage::fake('local');
+        config(['clio.disk' => 'local']);
+
+        $turmaCsv = implode("\n", [
+            'Código da turma;Tipo de turma;Etapa de ensino;Turno;Carga horária;Número de alunos',
+            'T1;Curricular (etapa de ensino);Ensino fundamental de 9 anos - 1º Ano;Manhã;25;2',
+            'T2;Atendimento educacional especializado (AEE);Não se aplica;Tarde;10;1',
+        ])."\n";
+        $alunoCsv = implode("\n", [
+            'Identificação única;Nome;Código da turma;Etapa de ensino;Tipo(s) de deficiência(s), transtorno(s) do espectro autista e altas habilidades ou superdotação;Tipo(s) de transtorno(s) que impacta(m) o desenvolvimento da aprendizagem',
+            'P1;Ana;T1;Ensino fundamental de 9 anos - 1º Ano;Deficiência intelectual;--',
+            'P1;Ana;T2;Não se aplica;Deficiência intelectual;--',
+            'P2;Bia;T1;Ensino fundamental de 9 anos - 1º Ano;--;Dislexia',
+            'P3;Caio;T1;Ensino fundamental de 9 anos - 1º Ano;--;--',
+        ])."\n";
+
+        Storage::disk('local')->put('clio/t.csv', $turmaCsv);
+        Storage::disk('local')->put('clio/a.csv', $alunoCsv);
+
+        $campaign = new ClioCampaign([
+            'municipality_name' => 'Saubara',
+            'uf' => 'BA',
+            'ibge_municipio' => '2929100',
+            'year' => 2026,
+        ]);
+        $campaign->uuid = (string) Str::uuid();
+        $campaign->id = 42;
+
+        $school = new ClioCampaignSchool([
+            'inep_code' => '29174651',
+            'name' => 'Alpha',
+            'dependency' => 'Municipal',
+            'functioning_status' => 'Em atividade',
+            'meta' => ['location' => 'Urbana', 'total_curricular' => 2],
+        ]);
+        $school->id = 1;
+        $turmaArt = new \App\Models\Clio\ClioCampaignArtifact([
+            'kind' => 'relacao_turma_escola',
+            'storage_path' => 'clio/t.csv',
+            'school_id' => 1,
+        ]);
+        $alunoArt = new \App\Models\Clio\ClioCampaignArtifact([
+            'kind' => 'relacao_aluno_escola',
+            'storage_path' => 'clio/a.csv',
+            'school_id' => 1,
+        ]);
+        $school->setRelation('artifacts', collect([$turmaArt, $alunoArt]));
+        $campaign->setRelation('schools', collect([$school]));
+        $campaign->setRelation('artifacts', collect([$turmaArt, $alunoArt]));
+
+        $payload = (new CampaignFiltrosOperacionaisComposer)->compose($campaign);
+        $nee = $payload['nee'];
+
+        $this->assertSame(1, $nee['with_nee_without_aee'], 'Só Bia tem NEE/TRS e não está em AEE');
+        $this->assertCount(1, $nee['nee_without_aee']);
+        $this->assertSame('Bia', $nee['nee_without_aee'][0]['nome']);
+        $this->assertSame('Dislexia', $nee['nee_without_aee'][0]['transtorno']);
+    }
 }
